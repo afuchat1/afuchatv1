@@ -31,7 +31,7 @@ const Index = () => {
     }
   };
 
-  // --- Skeleton Loading ---
+  // 🚀 CORRECTED: Skeleton Loading Implementation
   if (loading) {
     return (
       <div className="min-h-screen bg-background p-4 max-w-4xl mx-auto">
@@ -44,18 +44,35 @@ const Index = () => {
           </div>
         </div>
         
-        {/* Tabs Skeleton */}
+        {/* Tabs Skeleton (Feed left, Chats right) */}
         <div className="grid grid-cols-2 gap-4 mb-4">
-          <Skeleton className="h-10 w-full" />
-          <Skeleton className="h-10 w-full" />
+          <Skeleton className="h-10 w-full" /> {/* Feed Tab Skeleton */}
+          <Skeleton className="h-10 w-full" /> {/* Chats Tab Skeleton */}
         </div>
 
-        {/* Content/List Skeleton */}
+        {/* Content/List Skeleton (Simulating conversation/post items) */}
         <div className="space-y-3">
-          <Skeleton className="h-12 w-full" />
-          <Skeleton className="h-12 w-full" />
-          <Skeleton className="h-12 w-full" />
-          <Skeleton className="h-12 w-full" />
+          <div className="flex items-center space-x-3 p-2">
+             <Skeleton className="h-10 w-10 rounded-full" />
+             <div className="space-y-2 flex-1">
+                <Skeleton className="h-4 w-5/6" />
+                <Skeleton className="h-3 w-4/6" />
+             </div>
+          </div>
+          <div className="flex items-center space-x-3 p-2">
+             <Skeleton className="h-10 w-10 rounded-full" />
+             <div className="space-y-2 flex-1">
+                <Skeleton className="h-4 w-2/3" />
+                <Skeleton className="h-3 w-full" />
+             </div>
+          </div>
+          <div className="flex items-center space-x-3 p-2">
+             <Skeleton className="h-10 w-10 rounded-full" />
+             <div className="space-y-2 flex-1">
+                <Skeleton className="h-4 w-4/5" />
+                <Skeleton className="h-3 w-5/6" />
+             </div>
+          </div>
         </div>
       </div>
     );
@@ -86,7 +103,7 @@ const Index = () => {
       {/* Main Content */}
       <main className="flex-1 container mx-auto px-4 py-4 max-w-4xl">
         <Tabs value={activeTab} onValueChange={setActiveTab} className="h-full flex flex-col">
-          {/* --- MODIFIED: Tab Order (Feed left, Chats right) --- */}
+          {/* Tab Order: Feed (left), Chats (right) */}
           <TabsList className="grid w-full grid-cols-2 mb-4">
             <TabsTrigger value="feed" className="flex items-center gap-2">
               <Radio className="h-4 w-4" />
@@ -106,7 +123,6 @@ const Index = () => {
               <Feed />
             </TabsContent>
           </div>
-          {/* --- END: Tab Order Modification --- */}
         </Tabs>
       </main>
     </div>
