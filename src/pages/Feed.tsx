@@ -93,7 +93,7 @@ const Feed = () => {
     }
   };
   
-  // --- Rich Design: Card Skeleton ---
+  // --- Rich Design: Card Skeleton (Borders removed) ---
   const PostSkeleton = () => (
     <div className="p-4 rounded-xl bg-card shadow-xl space-y-3 animate-pulse"> 
       <div className="flex items-center space-x-3">
@@ -127,7 +127,7 @@ const Feed = () => {
     );
   }
 
-  // --- Rich Design: Post Card Component (Handle Positioned and Sized) ---
+  // --- Rich Design: Post Card Component (Borders removed) ---
   const PostCard = ({ post }: { post: Post }) => {
     const timeSince = new Date(post.created_at).toLocaleTimeString('en-UG', { hour: '2-digit', minute: '2-digit' });
 
@@ -140,18 +140,10 @@ const Feed = () => {
             <User className="h-4 w-4" />
           </div>
           
-          {/* 🎯 MODIFIED: Handle positioned before Display Name and sized small */}
-          <div className="flex-1 min-w-0">
-            <div className="flex items-baseline flex-wrap">
-                {/* Handle (very small and muted) */}
-                <span className="text-xs text-muted-foreground mr-1 whitespace-nowrap">
-                    @{post.profiles.handle}
-                </span>
-                {/* Display Name (larger and bold) */}
-                <span className="font-semibold text-foreground text-md truncate">
-                    {post.profiles.display_name}
-                </span>
-            </div>
+          {/* Display Name and Handle */}
+          <div className="flex-1">
+            <p className="font-semibold text-foreground text-md">{post.profiles.display_name}</p>
+            <p className="text-sm text-muted-foreground">@{post.profiles.handle}</p>
           </div>
           
           <span className="text-xs text-muted-foreground whitespace-nowrap">{timeSince}</span>
@@ -162,7 +154,7 @@ const Feed = () => {
           {post.content}
         </p>
 
-        {/* Post Footer - Actions */}
+        {/* Post Footer - Actions (Separator still needed for clarity, but minimal) */}
         <div className="flex justify-start space-x-6 text-sm text-muted-foreground pt-3 border-t border-muted-foreground/10"> 
           <button className="flex items-center gap-1 hover:text-primary transition-colors">
             <MessageSquare className="h-4 w-4" />
@@ -179,7 +171,7 @@ const Feed = () => {
 
   return (
     <div className="h-full flex flex-col">
-      {/* Post Creation Area - Elevated and Richer Input */}
+      {/* Post Creation Area - Elevated and Richer Input (No Borders) */}
       <Card className="p-4 rounded-xl shadow-xl mb-6 sticky top-0 z-10 bg-background/90 backdrop-blur-sm">
         <h3 className="text-lg font-semibold mb-3 text-foreground">Share an Update</h3>
         <Textarea
@@ -188,6 +180,7 @@ const Feed = () => {
           onChange={(e) => setNewPost(e.target.value)}
           maxLength={280}
           rows={3}
+          // Input borders are often part of the Input component; rely on default styling but ensure no outer border
           className="mb-3 resize-none focus-visible:ring-primary" 
         />
         <div className="flex justify-between items-center">
