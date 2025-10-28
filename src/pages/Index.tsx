@@ -8,6 +8,7 @@ import { supabase } from '@/integrations/supabase/client';
 import Chats from './Chats';
 import Feed from './Feed';
 import { toast } from 'sonner';
+import { Skeleton } from '@/components/ui/skeleton'; // Assuming you have a Skeleton component
 
 const Index = () => {
   const { user, loading } = useAuth();
@@ -30,13 +31,36 @@ const Index = () => {
     }
   };
 
+  // --- IMPLEMENTED: Skeleton Loading ---
   if (loading) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-background">
-        <p className="text-muted-foreground">Loading...</p>
+      <div className="min-h-screen bg-background p-4 max-w-4xl mx-auto">
+        {/* Header Skeleton */}
+        <div className="h-14 flex items-center justify-between border-b border-border bg-card mb-4 p-4">
+          <Skeleton className="h-6 w-24" />
+          <div className="flex gap-2">
+            <Skeleton className="h-8 w-8 rounded-full" />
+            <Skeleton className="h-8 w-8 rounded-full" />
+          </div>
+        </div>
+        
+        {/* Tabs Skeleton */}
+        <div className="grid grid-cols-2 gap-4 mb-4">
+          <Skeleton className="h-10 w-full" />
+          <Skeleton className="h-10 w-full" />
+        </div>
+
+        {/* Content/List Skeleton */}
+        <div className="space-y-3">
+          <Skeleton className="h-12 w-full" />
+          <Skeleton className="h-12 w-full" />
+          <Skeleton className="h-12 w-full" />
+          <Skeleton className="h-12 w-full" />
+        </div>
       </div>
     );
   }
+  // --- END: Skeleton Loading ---
 
   if (!user) {
     return null;
@@ -62,6 +86,7 @@ const Index = () => {
       {/* Main Content */}
       <main className="flex-1 container mx-auto px-4 py-4 max-w-4xl">
         <Tabs value={activeTab} onValueChange={setActiveTab} className="h-full flex flex-col">
+          {/* --- IMPLEMENTED: Tab Order (Chats left, Feed right) --- */}
           <TabsList className="grid w-full grid-cols-2 mb-4">
             <TabsTrigger value="chats" className="flex items-center gap-2">
               <MessageSquare className="h-4 w-4" />
@@ -81,6 +106,7 @@ const Index = () => {
               <Feed />
             </TabsContent>
           </div>
+          {/* --- END: Tab Order --- */}
         </Tabs>
       </main>
     </div>
