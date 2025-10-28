@@ -3,17 +3,41 @@ import { useNavigate } from 'react-router-dom';
 import { useAuth } from '@/contexts/AuthContext';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Button } from '@/components/ui/button';
-import { MessageSquare, Radio, Settings, LogOut } from 'lucide-react';
+import { MessageSquare, Radio, Settings, LogOut, Send, MessageSquarePlus } from 'lucide-react'; // Added Send and MessageSquarePlus
 import { supabase } from '@/integrations/supabase/client';
 import Chats from './Chats';
 import Feed from './Feed';
 import { toast } from 'sonner';
 import { Skeleton } from '@/components/ui/skeleton'; 
 
+// --- FAB Components (New UI for Instantaneous Utility) ---
+
+// FAB for creating a new post (for the Feed tab)
+const NewPostFAB = () => (
+    <Button 
+        size="lg" 
+        className="fixed bottom-6 right-6 rounded-full shadow-2xl h-14 w-14 transition-transform duration-200 hover:scale-105 bg-primary"
+        // onClick={() => console.log('Open New Post Modal')} // Placeholder action
+    >
+        <Send className="h-6 w-6" />
+    </Button>
+);
+
+// FAB for creating a new chat (for the Chats tab)
+const NewChatFAB = () => (
+    <Button 
+        size="lg" 
+        className="fixed bottom-6 right-6 rounded-full shadow-2xl h-14 w-14 transition-transform duration-200 hover:scale-105 bg-primary"
+        // onClick={() => console.log('Open New Chat Modal')} // Placeholder action
+    >
+        <MessageSquarePlus className="h-6 w-6" />
+    </Button>
+);
+// --- END FAB Components ---
+
 const Index = () => {
   const { user, loading } = useAuth();
   const navigate = useNavigate();
-  // Set activeTab default to 'feed'
   const [activeTab, setActiveTab] = useState('feed'); 
 
   useEffect(() => {
@@ -34,6 +58,7 @@ const Index = () => {
 
   // --- Skeleton Loading (Rich UI simulation) ---
   if (loading) {
+    // ... (Skeleton code remains the same as previous step for brevity)
     return (
       <div className="min-h-screen bg-background p-4 max-w-4xl mx-auto">
         {/* Header Skeleton */}
@@ -45,7 +70,7 @@ const Index = () => {
           </div>
         </div>
         
-        {/* Tabs Skeleton (Simulating the rich pill shape) */}
+        {/* Tabs Skeleton */}
         <div className="grid grid-cols-2 gap-4 mb-6">
           <Skeleton className="h-10 w-full rounded-full" /> 
           <Skeleton className="h-10 w-full rounded-full" /> 
@@ -53,7 +78,7 @@ const Index = () => {
 
         {/* Content/List Skeleton */}
         <div className="space-y-6 pt-2">
-          <div className="p-4 border border-border rounded-xl bg-card shadow-lg space-y-3">
+          <div className="p-4 rounded-xl bg-card shadow-xl space-y-3">
              <div className="flex items-center space-x-3">
                 <Skeleton className="h-8 w-8 rounded-full bg-muted" />
                 <Skeleton className="h-4 w-1/4 bg-muted" />
@@ -65,7 +90,7 @@ const Index = () => {
                 <Skeleton className="h-4 w-12" />
              </div>
           </div>
-          <div className="p-4 border border-border rounded-xl bg-card shadow-lg space-y-3">
+          <div className="p-4 rounded-xl bg-card shadow-xl space-y-3">
              <div className="flex items-center space-x-3">
                 <Skeleton className="h-8 w-8 rounded-full" />
                 <Skeleton className="h-4 w-1/3" />
@@ -78,6 +103,8 @@ const Index = () => {
              </div>
           </div>
         </div>
+        {/* FAB Skeleton */}
+        <Skeleton className="fixed bottom-6 right-6 h-14 w-14 rounded-full" />
       </div>
     );
   }
@@ -89,8 +116,8 @@ const Index = () => {
 
   return (
     <div className="min-h-screen bg-background flex flex-col">
-      {/* Header */}
-      <header className="border-b border-border bg-card shadow-md">
+      {/* Header (No borders used in previous step) */}
+      <header className="bg-card shadow-md">
         <div className="container mx-auto px-4 h-14 flex items-center justify-between">
           <h1 className="text-xl font-extrabold text-primary tracking-wide">AfuChat</h1>
           <div className="flex items-center gap-1">
@@ -107,30 +134,18 @@ const Index = () => {
       {/* Main Content */}
       <main className="flex-1 container mx-auto px-4 py-4 max-w-4xl">
         <Tabs value={activeTab} onValueChange={setActiveTab} className="h-full flex flex-col">
-          {/* 💊 Rich Pill Tabs: Use rounded-full for triggers and list, shadow-inner for depth */}
+          {/* Tabs - Rich Pill Tabs */}
           <TabsList className="grid w-full grid-cols-2 mb-6 p-1 bg-muted/50 rounded-full shadow-inner">
             <TabsTrigger 
               value="feed" 
-              className="flex items-center gap-2 py-2 rounded-full 
-                data-[state=active]:bg-primary 
-                data-[state=active]:text-primary-foreground 
-                data-[state=active]:shadow-lg 
-                data-[state=active]:shadow-primary/30 
-                data-[state=active]:font-bold
-                transition-all duration-300"
+              className="flex items-center gap-2 py-2 rounded-full data-[state=active]:bg-primary data-[state=active]:text-primary-foreground data-[state=active]:shadow-lg data-[state=active]:shadow-primary/30 data-[state=active]:font-bold transition-all duration-300"
             >
               <Radio className="h-4 w-4" />
               Feed
             </TabsTrigger>
             <TabsTrigger 
               value="chats" 
-              className="flex items-center gap-2 py-2 rounded-full 
-                data-[state=active]:bg-primary 
-                data-[state=active]:text-primary-foreground 
-                data-[state=active]:shadow-lg 
-                data-[state=active]:shadow-primary/30
-                data-[state=active]:font-bold
-                transition-all duration-300"
+              className="flex items-center gap-2 py-2 rounded-full data-[state=active]:bg-primary data-[state=active]:text-primary-foreground data-[state=active]:shadow-lg data-[state=active]:shadow-primary/30 data-[state=active]:font-bold transition-all duration-300"
             >
               <MessageSquare className="h-4 w-4" />
               Chats
@@ -147,6 +162,11 @@ const Index = () => {
           </div>
         </Tabs>
       </main>
+      
+      {/* --- FAB Renderer --- */}
+      {activeTab === 'feed' && <NewPostFAB />}
+      {activeTab === 'chats' && <NewChatFAB />}
+      {/* --- END FAB Renderer --- */}
     </div>
   );
 };
