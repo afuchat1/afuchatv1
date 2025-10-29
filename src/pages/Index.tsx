@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '@/contexts/AuthContext';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
@@ -20,7 +20,7 @@ const NewPostFAB = ({ onClick, visible }) => (
     size="lg" 
     onClick={onClick}
     aria-label="Create new post"
-    className={`fixed bottom-6 right-6 rounded-full shadow-2xl h-14 w-14 transition-transform duration-300 ease-in-out z-50 ${
+    className={`fixed bottom-6 right-6 rounded-full shadow-2xl h-14 w-14 transition-all duration-300 ease-in-out z-50 ${
       visible ? 'translate-y-0 opacity-100' : 'translate-y-20 opacity-0'
     }`}
   >
@@ -33,7 +33,7 @@ const NewChatFAB = ({ onClick, visible }) => (
     size="lg" 
     onClick={onClick}
     aria-label="Start new chat"
-    className={`fixed bottom-6 right-6 rounded-full shadow-2xl h-14 w-14 transition-transform duration-300 ease-in-out z-50 ${
+    className={`fixed bottom-6 right-6 rounded-full shadow-2xl h-14 w-14 transition-all duration-300 ease-in-out z-50 ${
       visible ? 'translate-y-0 opacity-100' : 'translate-y-20 opacity-0'
     }`}
   >
@@ -49,8 +49,9 @@ const Index = () => {
   const [activeTab, setActiveTab] = useState('feed'); 
   const [isPostModalOpen, setIsPostModalOpen] = useState(false); 
   const [isChatModalOpen, setIsChatModalOpen] = useState(false); 
+  const [headerVisible, setHeaderVisible] = useState(true);
   const [fabVisible, setFabVisible] = useState(true);
-  const [lastScrollY, setLastScrollY] = useState(0);
+  const lastScrollYRef = useRef(0);
 
   useEffect(() => {
     if (!loading && !user) {
@@ -59,21 +60,31 @@ const Index = () => {
   }, [user, loading, navigate]);
 
   useEffect(() => {
+    let ticking = false;
+
     const handleScroll = () => {
-      const currentScrollY = window.scrollY;
-      if (currentScrollY > lastScrollY && currentScrollY > 100) {
-        // Scrolling down beyond threshold, hide FAB
-        setFabVisible(false);
-      } else {
-        // Scrolling up or at top, show FAB
-        setFabVisible(true);
+      if (!ticking) {
+        requestAnimationFrame(() => {
+          const currentScrollY = window.scrollY;
+          if (currentScrollY > lastScrollYRef.current && currentScrollY > 100) {
+            // Scrolling down beyond threshold, hide header and FAB
+            setHeaderVisible(false);
+            setFabVisible(false);
+          } else {
+            // Scrolling up or near top, show header and FAB
+            setHeaderVisible(true);
+            setFabVisible(true);
+          }
+          lastScrollYRef.current = currentScrollY;
+          ticking = false;
+        });
+        ticking = true;
       }
-      setLastScrollY(currentScrollY);
     };
 
     window.addEventListener('scroll', handleScroll, { passive: true });
     return () => window.removeEventListener('scroll', handleScroll);
-  }, [lastScrollY]);
+  }, []);
 
   const handleSignOut = async () => {
     const { error } = await supabase.auth.signOut();
@@ -147,7 +158,11 @@ const Index = () => {
   return (
     <div className="min-h-screen bg-background flex flex-col">
       {/* Header - Defined by shadow, not borders */}
-      <header className="bg-card shadow-md sticky top-0 z-20">
+      <header 
+        className={`bg-card shadow-md sticky top-0 z-20 transition-all duration-300 ease-in-out ${
+          headerVisible ? 'translate-y-0' : '-translate-y-full'
+        }`}
+      >
         <div className="container mx-auto px-2 sm:px-4 h-14 flex items-center justify-between">
           <div className="flex items-center gap-3">
             <Logo size="sm" />
@@ -163,7 +178,7 @@ const Index = () => {
       </header>
 
       {/* Main Content */}
-      <main className="flex-1 container mx-auto px-2 sm:px-4 py-4 max-w-4xl">
+      <main className="flex-1 container mx-auto px-2 sm:px-4 py-4 max-w-4xl overflow-y-auto">
         <Tabs value={activeTab} onValueChange={setActiveTab} className="h-full flex flex-col">
           {/* Tabs - Rich Pill Tabs (3 tabs) */}
           <TabsList className="grid w-full grid-cols-3 mb-6 p-1 bg-muted/50 rounded-full shadow-inner">
