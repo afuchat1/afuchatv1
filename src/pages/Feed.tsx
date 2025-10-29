@@ -362,6 +362,17 @@ const Feed = () => {
 
   return (
     <div className="h-full flex flex-col">
+      {/* Sticky Tabs Header */}
+      <div className="sticky top-0 z-50 bg-background/95 backdrop-blur-sm border-b border-border px-4 py-2">
+        <div className="flex space-x-6">
+          <button className="flex items-center gap-1 px-3 py-2 rounded-full text-sm font-medium text-muted-foreground hover:text-foreground hover:bg-accent">
+            <span>For you</span>
+          </button>
+          <button className="flex items-center gap-1 px-3 py-2 rounded-full text-sm font-semibold text-foreground bg-accent">
+            <span>Following</span>
+          </button>
+        </div>
+      </div>
       <div className="flex-1 overflow-y-auto space-y-4 pb-4 px-2">
         {posts.length === 0 ? (
           <div className="text-center text-muted-foreground py-8">
