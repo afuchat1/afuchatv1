@@ -3,7 +3,7 @@ import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/contexts/AuthContext';
 import { Card } from '@/components/ui/card';
 import { toast } from 'sonner';
-import { MessageSquare, ThumbsUp, User, Check } from 'lucide-react';
+import { MessageSquare, ThumbsUp, User } from 'lucide-react';
 import { Skeleton } from '@/components/ui/skeleton';
 
 interface Post {
@@ -17,6 +17,26 @@ interface Post {
     is_verified?: boolean;
   };
 }
+
+// --- Exact Twitter Verified Badge ---
+const TwitterVerifiedBadge = () => (
+  <svg
+    xmlns="http://www.w3.org/2000/svg"
+    viewBox="0 0 24 24"
+    className="inline w-[14px] h-[14px] ml-[2px]"
+  >
+    <g fill="none" fillRule="evenodd">
+      <path
+        fill="#1DA1F2"
+        d="M12 0c6.627 0 12 5.373 12 12s-5.373 12-12 12S0 18.627 0 12 5.373 0 12 0z"
+      />
+      <path
+        fill="#FFF"
+        d="M10 16l8-8-1.414-1.414L10 13.172 7.414 10.586 6 12l4 4z"
+      />
+    </g>
+  </svg>
+);
 
 const Feed = () => {
   const { user } = useAuth();
@@ -97,6 +117,7 @@ const Feed = () => {
 
     return (
       <Card className="p-4 rounded-xl shadow-xl hover:shadow-2xl transition-shadow duration-300">
+        {/* Post Header */}
         <div className="flex items-center space-x-3 mb-3">
           <div className="h-8 w-8 rounded-full bg-primary flex items-center justify-center text-primary-foreground shadow-md">
             <User className="h-4 w-4" />
@@ -106,26 +127,7 @@ const Feed = () => {
             <div className="flex items-baseline flex-wrap gap-1">
               <span className="font-semibold text-foreground text-md truncate flex items-center gap-1">
                 {post.profiles.display_name}
-                {post.profiles.is_verified && (
-                  <span
-                    className="inline-flex items-center justify-center rounded-full shadow-sm"
-                    style={{
-                      backgroundColor: '#1DA1F2',
-                      width: '14px',
-                      height: '14px',
-                      marginLeft: '2px',
-                    }}
-                  >
-                    <Check
-                      className="text-white"
-                      style={{
-                        width: '8px',
-                        height: '8px',
-                        strokeWidth: 2.2,
-                      }}
-                    />
-                  </span>
-                )}
+                {post.profiles.is_verified && <TwitterVerifiedBadge />}
               </span>
               <span className="text-xs text-muted-foreground whitespace-nowrap">
                 @{post.profiles.handle}
@@ -133,13 +135,17 @@ const Feed = () => {
             </div>
           </div>
 
-          <span className="text-xs text-muted-foreground whitespace-nowrap">{timeSince}</span>
+          <span className="text-xs text-muted-foreground whitespace-nowrap">
+            {timeSince}
+          </span>
         </div>
 
+        {/* Post Content */}
         <p className="text-foreground text-base mb-4 leading-relaxed whitespace-pre-wrap">
           {post.content}
         </p>
 
+        {/* Post Footer */}
         <div className="flex justify-start space-x-6 text-sm text-muted-foreground pt-3 border-t border-muted-foreground/10">
           <button className="flex items-center gap-1 hover:text-primary transition-colors">
             <MessageSquare className="h-4 w-4" />
