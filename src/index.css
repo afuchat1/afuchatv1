@@ -10,13 +10,13 @@ All colors MUST be HSL.
 
 @layer base {
   :root {
-    /* Deep Teal Primary - #006666 */
-    --primary: 180 100% 20%;
+    /* Brand Blue Primary - #33CCFF */
+    --primary: 195 100% 60%;
     --primary-foreground: 0 0% 100%;
     
-    /* Bright Green Accent - #00FF88 */
-    --accent: 158 100% 50%;
-    --accent-foreground: 180 100% 10%;
+    /* Bright Accent Blue - #1E90FF */
+    --accent: 210 100% 56%;
+    --accent-foreground: 0 0% 100%;
     
     /* High contrast backgrounds */
     --background: 0 0% 100%;
@@ -61,13 +61,13 @@ All colors MUST be HSL.
   }
 
   .dark {
-    /* Deep Teal stays the same */
-    --primary: 180 100% 20%;
-    --primary-foreground: 0 0% 100%;
+    /* Brand Blue Primary - slightly adjusted for dark mode */
+    --primary: 195 100% 60%;
+    --primary-foreground: 0 0% 0%;
     
-    /* Bright Green Accent */
-    --accent: 158 100% 50%;
-    --accent-foreground: 0 0% 10%;
+    /* Bright Accent Blue */
+    --accent: 210 100% 56%;
+    --accent-foreground: 0 0% 100%;
     
     /* Dark mode backgrounds - pure black for OLED */
     --background: 0 0% 0%;
