@@ -242,14 +242,14 @@ const Index = () => {
             </TabsTrigger>
           </TabsList>
           
-          <div className="flex-1 overflow-hidden">
-            <TabsContent value="feed" className="h-full mt-0">
+          <div className="flex-1 relative">
+            <TabsContent value="feed" className={`${activeTab === 'feed' ? 'block' : 'hidden'} h-full mt-0`}>
               <Feed />
             </TabsContent>
-            <TabsContent value="search" className="h-full mt-0">
+            <TabsContent value="search" className={`${activeTab === 'search' ? 'block' : 'hidden'} h-full mt-0`}>
               <Search />
             </TabsContent>
-            <TabsContent value="chats" className="h-full mt-0">
+            <TabsContent value="chats" className={`${activeTab === 'chats' ? 'block' : 'hidden'} h-full mt-0`}>
               <Chats />
             </TabsContent>
           </div>
