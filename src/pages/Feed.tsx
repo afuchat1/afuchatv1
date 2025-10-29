@@ -1,10 +1,9 @@
 import { useEffect, useState, useCallback } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/contexts/AuthContext';
-import { useNavigate } from 'react-router-dom';
 import { Card } from '@/components/ui/card';
 import { toast } from 'sonner';
-import { MessageSquare, Heart, User } from 'lucide-react';
+import { MessageSquare, ThumbsUp, User } from 'lucide-react';
 import { Skeleton } from '@/components/ui/skeleton';
 
 interface Post {
@@ -19,8 +18,6 @@ interface Post {
     is_organization_verified?: boolean;
   };
   replies?: Reply[];
-  likes: number;
-  isLiked?: boolean;
 }
 
 interface Reply {
@@ -96,7 +93,6 @@ const TwitterOrganizationVerifiedBadge = () => (
 
 const Feed = () => {
   const { user } = useAuth();
-  const navigate = useNavigate();
   const [posts, setPosts] = useState<Post[]>([]);
   const [loading, setLoading] = useState(true);
 
@@ -115,75 +111,10 @@ const Feed = () => {
     );
   }, []);
 
-  const toggleLike = useCallback(async (postId: string, currentIsLiked: boolean) => {
-    if (!user) {
-      toast.info('Sign in to like posts!', {
-        action: {
-          label: 'Sign In',
-          onClick: () => navigate('/auth'),
-        },
-      });
-      return;
-    }
-
-    const newIsLiked = !currentIsLiked;
-    const delta = newIsLiked ? 1 : -1;
-
-    // Optimistic update
-    setPosts((cur) =>
-      cur.map((p) =>
-        p.id === postId
-          ? { ...p, likes: p.likes + delta, isLiked: newIsLiked }
-          : p
-      )
-    );
-
-    const table = 'post_acknowledgments';
-    const { error } = await supabase
-      .from(table)
-      .insert({ post_id: postId, user_id: user.id })
-      .select()
-      .single();
-
-    if (error && newIsLiked) {
-      // Revert if insert failed
-      setPosts((cur) =>
-        cur.map((p) =>
-          p.id === postId
-            ? { ...p, likes: p.likes - delta, isLiked: !newIsLiked }
-            : p
-        )
-      );
-      toast.error('Failed to like post');
-      return;
-    }
-
-    if (!newIsLiked) {
-      // Delete if unliking
-      const { error: deleteError } = await supabase
-        .from(table)
-        .delete()
-        .eq('post_id', postId)
-        .eq('user_id', user.id);
-
-      if (deleteError) {
-        // Revert if delete failed
-        setPosts((cur) =>
-          cur.map((p) =>
-            p.id === postId
-              ? { ...p, likes: p.likes - delta, isLiked: !newIsLiked }
-              : p
-          )
-        );
-        toast.error('Failed to unlike post');
-      }
-    }
-  }, [user, navigate]);
-
   useEffect(() => {
     fetchPosts();
 
-    // Realtime for new posts (public read)
+    // Realtime for new posts
     const postsChannel = supabase
       .channel('feed-updates')
       .on(
@@ -201,8 +132,6 @@ const Feed = () => {
               ...payload.new,
               profiles: profile,
               replies: [],
-              likes: 0,
-              isLiked: false,
             } as Post;
             setPosts((cur) => [newPost, ...cur]);
           }
@@ -210,7 +139,7 @@ const Feed = () => {
       )
       .subscribe();
 
-    // Realtime for new replies (public read)
+    // Realtime for new replies
     const repliesChannel = supabase
       .channel('replies-updates')
       .on(
@@ -245,60 +174,17 @@ const Feed = () => {
       )
       .subscribe();
 
-    // Realtime for likes
-    const likesChannel = supabase
-      .channel('likes-updates')
-      .on(
-        'postgres_changes',
-        { 
-          event: { type: 'INSERT', schema: 'public', table: 'post_acknowledgments' },
-          filter: 'user_id=eq.' + (user?.id || 'null')
-        },
-        (payload) => {
-          setPosts((cur) =>
-            cur.map((p) =>
-              p.id === payload.new.post_id
-                ? { ...p, likes: p.likes + 1, isLiked: true }
-                : p
-            )
-          );
-        }
-      )
-      .on(
-        'postgres_changes',
-        { 
-          event: { type: 'DELETE', schema: 'public', table: 'post_acknowledgments' },
-          filter: 'user_id=eq.' + (user?.id || 'null')
-        },
-        (payload) => {
-          setPosts((cur) =>
-            cur.map((p) =>
-              p.id === payload.old.post_id
-                ? { ...p, likes: p.likes - 1, isLiked: false }
-                : p
-            )
-          );
-        }
-      )
-      .subscribe();
-
     return () => {
       supabase.removeChannel(postsChannel);
       supabase.removeChannel(repliesChannel);
-      supabase.removeChannel(likesChannel);
     };
-  }, [user, toggleLike]);
+  }, [user]);
 
   const fetchPosts = async () => {
     try {
       let { data, error } = await supabase
         .from('posts')
-        .select(`
-          *,
-          profiles(display_name, handle, is_verified, is_organization_verified),
-          post_acknowledgments!post_id (count),
-          post_acknowledgments!inner(user_id = ${user?.id || 'null'})
-        `)
+        .select('*, profiles(display_name, handle, is_verified, is_organization_verified)')
         .order('created_at', { ascending: false })
         .limit(50);
 
@@ -326,11 +212,9 @@ const Feed = () => {
           repliesByPostId.get(r.post_id)?.push(reply);
         });
 
-        data = data.map((post: any) => ({
+        data = data.map((post) => ({
           ...post,
           replies: repliesByPostId.get(post.id) || [],
-          likes: post.post_acknowledgments?.count || 0,
-          isLiked: post.post_acknowledgments?.length > 0 || false,
         })) as Post[];
       }
 
@@ -373,29 +257,7 @@ const Feed = () => {
       minute: '2-digit',
     });
 
-    const promptLogin = () => {
-      toast.info('Sign in to reply!', {
-        action: {
-          label: 'Sign In',
-          onClick: () => navigate('/auth'),
-        },
-      });
-    };
-
-    const handleReplyClick = () => {
-      if (!user) {
-        promptLogin();
-        return;
-      }
-      setShowReply(!showReply);
-    };
-
     const handleReplySubmit = async () => {
-      if (!user) {
-        promptLogin();
-        return;
-      }
-
       if (!replyText.trim()) return;
 
       const { error } = await supabase.from('post_replies').insert({
@@ -427,10 +289,6 @@ const Feed = () => {
       addReply(post.id, optimisticReply);
       setReplyText('');
       setShowReply(false);
-    };
-
-    const handleLikeClick = () => {
-      toggleLike(post.id, post.isLiked || false);
     };
 
     const replyCount = post.replies?.length || 0;
@@ -509,7 +367,7 @@ const Feed = () => {
         {/* Post Footer */}
         <div className="flex justify-start space-x-6 text-sm text-muted-foreground pt-3">
           <button
-            onClick={handleReplyClick}
+            onClick={() => setShowReply(!showReply)}
             className="flex items-center gap-1 hover:text-primary transition-colors"
           >
             <MessageSquare className="h-4 w-4" />
@@ -517,25 +375,14 @@ const Feed = () => {
               {replyCount > 0 ? `${replyCount}` : 'Reply'}
             </span>
           </button>
-          <button 
-            onClick={handleLikeClick}
-            className={`flex items-center gap-1 transition-colors ${
-              post.isLiked 
-                ? 'text-red-500 hover:text-red-600' 
-                : 'text-muted-foreground hover:text-primary'
-            }`}
-          >
-            <Heart 
-              className={`h-4 w-4 ${post.isLiked ? 'fill-red-500' : ''}`} 
-            />
-            <span className="text-sm">
-              {post.likes > 0 ? post.likes : 'Like'}
-            </span>
+          <button className="flex items-center gap-1 hover:text-primary transition-colors">
+            <ThumbsUp className="h-4 w-4" />
+            <span className="text-sm">Acknowledge</span>
           </button>
         </div>
 
-        {/* Reply Input (only show if authenticated) */}
-        {showReply && user && (
+        {/* Reply Input */}
+        {showReply && (
           <div className="mt-3 flex space-x-2">
             <textarea
               value={replyText}
@@ -574,7 +421,8 @@ const Feed = () => {
       <div className="flex-1 overflow-y-auto space-y-4 pb-4 px-2">
         {posts.length === 0 ? (
           <div className="text-center text-muted-foreground py-8">
-            No posts yet. {!user ? 'Sign in to share your first post!' : 'Tap the <User className="inline h-4 w-4" /> button to share your first post!'}
+            No posts yet. Tap the <User className="inline h-4 w-4" /> button to
+            share your first post!
           </div>
         ) : (
           posts.map((post) => (
