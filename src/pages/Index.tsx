@@ -52,6 +52,9 @@ const Index = () => {
   const [headerVisible, setHeaderVisible] = useState(true);
   const [fabVisible, setFabVisible] = useState(true);
   const lastScrollYRef = useRef(0);
+  const touchStartXRef = useRef(0);
+  const touchEndXRef = useRef(0);
+  const tabOrder = ['feed', 'search', 'chats'];
 
   useEffect(() => {
     if (!loading && !user) {
@@ -85,6 +88,36 @@ const Index = () => {
     window.addEventListener('scroll', handleScroll, { passive: true });
     return () => window.removeEventListener('scroll', handleScroll);
   }, []);
+
+  const handleTouchStart = (e) => {
+    touchStartXRef.current = e.touches[0].clientX;
+  };
+
+  const handleTouchEnd = (e) => {
+    touchEndXRef.current = e.changedTouches[0].clientX;
+    handleSwipe();
+  };
+
+  const handleSwipe = () => {
+    const deltaX = touchEndXRef.current - touchStartXRef.current;
+    const absDeltaX = Math.abs(deltaX);
+    if (absDeltaX < 50) return; // Threshold for swipe
+
+    const currentIndex = tabOrder.indexOf(activeTab);
+    let newIndex = currentIndex;
+
+    if (deltaX > 0) {
+      // Swipe right - go to previous tab
+      newIndex = Math.max(0, currentIndex - 1);
+    } else {
+      // Swipe left - go to next tab
+      newIndex = Math.min(tabOrder.length - 1, currentIndex + 1);
+    }
+
+    if (newIndex !== currentIndex) {
+      setActiveTab(tabOrder[newIndex]);
+    }
+  };
 
   const handleSignOut = async () => {
     const { error } = await supabase.auth.signOut();
@@ -178,7 +211,11 @@ const Index = () => {
       </header>
 
       {/* Main Content */}
-      <main className="flex-1 container mx-auto px-2 sm:px-4 py-4 max-w-4xl overflow-y-auto">
+      <main 
+        className="flex-1 container mx-auto px-2 sm:px-4 py-4 max-w-4xl overflow-y-auto"
+        onTouchStart={handleTouchStart}
+        onTouchEnd={handleTouchEnd}
+      >
         <Tabs value={activeTab} onValueChange={setActiveTab} className="h-full flex flex-col">
           {/* Tabs - Rich Pill Tabs (3 tabs) */}
           <TabsList className="grid w-full grid-cols-3 mb-6 p-1 bg-muted/50 rounded-full shadow-inner">
