@@ -83,7 +83,7 @@ const Feed = () => {
   };
 
   const PostSkeleton = () => (
-    <div className="p-4 rounded-xl bg-card shadow-xl space-y-3 animate-pulse">
+    <div className="p-4 rounded-xl bg-card space-y-3 animate-pulse">
       <div className="flex items-center space-x-3">
         <Skeleton className="h-8 w-8 rounded-full bg-muted" />
         <Skeleton className="h-4 w-1/4 bg-muted" />
@@ -110,10 +110,10 @@ const Feed = () => {
     });
 
     return (
-      <Card className="p-4 rounded-xl shadow-xl hover:shadow-2xl transition-shadow duration-300">
+      <Card className="p-4 rounded-xl">
         {/* Post Header */}
         <div className="flex items-center space-x-3 mb-3">
-          <div className="h-8 w-8 rounded-full bg-primary flex items-center justify-center text-primary-foreground shadow-md">
+          <div className="h-8 w-8 rounded-full bg-primary flex items-center justify-center text-primary-foreground">
             <User className="h-4 w-4" />
           </div>
 
@@ -140,7 +140,7 @@ const Feed = () => {
         </p>
 
         {/* Post Footer */}
-        <div className="flex justify-start space-x-6 text-sm text-muted-foreground pt-3 border-t border-muted-foreground/10">
+        <div className="flex justify-start space-x-6 text-sm text-muted-foreground pt-3">
           <button className="flex items-center gap-1 hover:text-primary transition-colors">
             <MessageSquare className="h-4 w-4" />
             <span className="text-sm">Reply</span>
