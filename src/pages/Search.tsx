@@ -5,8 +5,7 @@ import { Card } from '@/components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
-// FIX: Added 'Clock' and cleaned up unused icons
-import { Search as SearchIcon, User, MessageSquare, Loader2, FileText, Clock } from 'lucide-react'; 
+import { Search as SearchIcon, User, CheckCircle2, MessageSquare, Loader2, Users, FileText } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { Skeleton } from '@/components/ui/skeleton';
 
@@ -105,30 +104,23 @@ const Search = () => {
     if (debouncedQuery.trim()) {
       handleSearch();
     } else {
-      // FIX: Also set loading to false here when query is cleared
-      setLoading(false); 
       setResults([]);
     }
-    // Added debouncedQuery and activeTab as a dependency
   }, [debouncedQuery, activeTab]);
 
   const handleSearch = async () => {
     if (!debouncedQuery.trim()) return;
     
     setLoading(true);
-    // Improvement: Clear previous results immediately for better UX
-    setResults([]); 
     try {
       let searchData = [];
       if (activeTab === 'users') {
         // Search users
-        const { data: userData, error: userError } = await supabase
+        const { data: userData } = await supabase
           .from('profiles')
           .select('id, display_name, handle, bio, is_verified, is_organization_verified, is_private')
           .or(`display_name.ilike.%${debouncedQuery}%,handle.ilike.%${debouncedQuery}%`)
           .limit(10);
-        
-        if (userError) throw userError;
 
         searchData = (userData || []).map((u: any) => ({
           type: 'user' as const,
@@ -136,7 +128,7 @@ const Search = () => {
         }));
       } else {
         // Search posts
-        const { data: postData, error: postError } = await supabase
+        const { data: postData } = await supabase
           .from('posts')
           .select(`
             id, content, created_at, author_id,
@@ -144,8 +136,6 @@ const Search = () => {
           `)
           .textSearch('content', debouncedQuery, { type: 'plain', config: 'english' })
           .limit(10);
-        
-        if (postError) throw postError;
 
         searchData = (postData || []).map((p: any) => ({
           type: 'post' as const,
@@ -160,8 +150,6 @@ const Search = () => {
       setResults(searchData);
     } catch (error) {
       console.error('Search error:', error);
-      // Ensure results are cleared on error
-      setResults([]); 
     } finally {
       setLoading(false);
     }
@@ -250,7 +238,6 @@ const Search = () => {
             onChange={(e) => setQuery(e.target.value)}
             className="flex-1 rounded-full"
           />
-          {/* NOTE: If you are relying on the button click, the debounce logic will still apply */}
           <Button onClick={handleSearch} disabled={loading || !query.trim()} className="rounded-full shadow-lg">
             {loading ? <Loader2 className="h-4 w-4 animate-spin" /> : <SearchIcon className="h-4 w-4" />}
           </Button>
@@ -312,7 +299,6 @@ const Search = () => {
                         )}
                       </div>
                     </div>
-                    {/* The MessageSquare icon needed to be imported, which is fixed above */}
                     <Button
                       variant="ghost"
                       size="sm"
@@ -350,9 +336,8 @@ const Search = () => {
                       {result.content}
                     </p>
                     <p className="text-xs text-muted-foreground flex items-center gap-1">
-                      {/* FIX: The Clock icon needed to be imported, which is fixed above */}
                       <Clock className="h-3 w-3" />
-                      {new Date(result.created_at).toLocaleDateString('en-UG', { year: 'numeric', month: 'short', day: 'numeric' })}
+                      {new Date(result.created_at).toLocaleDateString('en-UG')}
                     </p>
                   </div>
                 )}
