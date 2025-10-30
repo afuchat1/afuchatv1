@@ -15,6 +15,7 @@ interface SearchResult {
   handle?: string;
   bio?: string;
   is_verified?: boolean;
+  is_organization_verified?: boolean;
   is_private?: boolean;
   content?: string;
   created_at?: string;
@@ -22,6 +23,8 @@ interface SearchResult {
   author_profiles?: {
     display_name: string;
     handle: string;
+    is_verified?: boolean;
+    is_organization_verified?: boolean;
   };
 }
 
@@ -40,6 +43,44 @@ const SearchSkeleton = () => (
     ))}
   </div>
 );
+
+// --- Twitter Verified Badge (Blue) ---
+const TwitterVerifiedBadge = ({ size = 'w-4 h-4' }: { size?: string }) => (
+  <svg
+    viewBox="0 0 22 22"
+    xmlns="http://www.w3.org/2000/svg"
+    className={`${size} ml-1`}
+  >
+    <path
+      d="M20.396 11c-.018-.646-.215-1.275-.57-1.816-.354-.54-.852-.972-1.438-1.246.223-.607.27-1.264.14-1.897-.131-.634-.437-1.218-.882-1.687-.47-.445-1.053-.75-1.687-.882-.633-.13-1.29-.083-1.897.14-.273-.587-.704-1.086-1.245-1.44S11.647 1.62 11 1.604c-.646.017-1.273.213-1.813.568s-.969.854-1.24 1.44c-.608-.223-1.267-.272-1.902-.14-.635.13-1.22.436-1.69.882-.445.47-.749 1.055-.878 1.688-.13.633-.08 1.29.144 1.896-.587.274-1.087.705-1.443 1.245-.356.54-.555 1.17-.574 1.817.02.647.218 1.276.574 1.817.356.54.856.972 1.443 1.245-.224.606-.274 1.263-.144 1.896.13.634.433 1.218.877 1.688.47.443 1.054.747 1.687.878.633.132 1.29.084 1.897-.136.274.586.705 1.084 1.246 1.439.54.354 1.17.551 1.816.569.647-.016 1.276-.213 1.817-.567s.972-.854 1.245-1.44c.604.239 1.266.296 1.903.164.636-.132 1.22-.447 1.68-.907.46-.46.776-1.044.908-1.681s.075-1.299-.165-1.903c.586-.274 1.084-.705 1.439-1.246.354-.54.551-1.17.569-1.816zM9.662 14.85l-3.429-3.428 1.293-1.302 2.072 2.072 4.4-4.794 1.347 1.246z"
+      fill="#1d9bf0"
+    />
+  </svg>
+);
+
+// --- Gold Verified Badge (for Organizations) ---
+const GoldVerifiedBadge = ({ size = 'w-4 h-4' }: { size?: string }) => (
+  <svg
+    viewBox="0 0 22 22"
+    xmlns="http://www.w3.org/2000/svg"
+    className={`${size} ml-1`}
+  >
+    <path
+      d="M20.396 11c-.018-.646-.215-1.275-.57-1.816-.354-.54-.852-.972-1.438-1.246.223-.607.27-1.264.14-1.897-.131-.634-.437-1.218-.882-1.687-.47-.445-1.053-.75-1.687-.882-.633-.13-1.29-.083-1.897.14-.273-.587-.704-1.086-1.245-1.44S11.647 1.62 11 1.604c-.646.017-1.273.213-1.813.568s-.969.854-1.24 1.44c-.608-.223-1.267-.272-1.902-.14-.635.13-1.22.436-1.69.882-.445.47-.749 1.055-.878 1.688-.13.633-.08 1.29.144 1.896-.587.274-1.087.705-1.443 1.245-.356.54-.555 1.17-.574 1.817.02.647.218 1.276.574 1.817.356.54.856.972 1.443 1.245-.224.606-.274 1.263-.144 1.896.13.634.433 1.218.877 1.688.47.443 1.054.747 1.687.878.633.132 1.29.084 1.897-.136.274.586.705 1.084 1.246 1.439.54.354 1.17.551 1.816.569.647-.016 1.276-.213 1.817-.567s.972-.854 1.245-1.44c.604.239 1.266.296 1.903.164.636-.132 1.22-.447 1.68-.907.46-.46.776-1.044.908-1.681s.075-1.299-.165-1.903c.586-.274 1.084-.705 1.439-1.246.354-.54.551-1.17.569-1.816zM9.662 14.85l-3.429-3.428 1.293-1.302 2.072 2.072 4.4-4.794 1.347 1.246z"
+      fill="#FFD43B"
+    />
+  </svg>
+);
+
+const VerifiedBadge = ({ isVerified, isOrgVerified }: { isVerified?: boolean; isOrgVerified?: boolean }) => {
+  if (isOrgVerified) {
+    return <GoldVerifiedBadge />;
+  }
+  if (isVerified) {
+    return <TwitterVerifiedBadge />;
+  }
+  return null;
+};
 
 const Search = () => {
   const { user } = useAuth();
@@ -71,7 +112,7 @@ const Search = () => {
       // Search users
       const { data: userData } = await supabase
         .from('profiles')
-        .select('id, display_name, handle, bio, is_verified, is_private')
+        .select('id, display_name, handle, bio, is_verified, is_organization_verified, is_private')
         .or(`display_name.ilike.%${debouncedQuery}%,handle.ilike.%${debouncedQuery}%`)
         .limit(10);
 
@@ -80,7 +121,7 @@ const Search = () => {
         .from('posts')
         .select(`
           id, content, created_at, author_id,
-          profiles!author_id(id, display_name, handle)
+          profiles!author_id(id, display_name, handle, is_verified, is_organization_verified)
         `)
         .textSearch('content', debouncedQuery, { type: 'plain', config: 'english' })
         .limit(10);
@@ -180,19 +221,6 @@ const Search = () => {
     }
   };
 
-  const VerifiedBadge = ({ isVerified }: { isVerified?: boolean }) => isVerified ? (
-    <svg
-      viewBox="0 0 22 22"
-      xmlns="http://www.w3.org/2000/svg"
-      className="w-4 h-4 ml-1"
-    >
-      <path
-        d="M20.396 11c-.018-.646-.215-1.275-.57-1.816-.354-.54-.852-.972-1.438-1.246.223-.607.27-1.264.14-1.897-.131-.634-.437-1.218-.882-1.687-.47-.445-1.053-.75-1.687-.882-.633-.13-1.29-.083-1.897.14-.273-.587-.704-1.086-1.245-1.44S11.647 1.62 11 1.604c-.646.017-1.273.213-1.813.568s-.969.854-1.24 1.44c-.608-.223-1.267-.272-1.902-.14-.635.13-1.22.436-1.69.882-.445.47-.749 1.055-.878 1.688-.13.633-.08 1.29.144 1.896-.587.274-1.087.705-1.443 1.245-.356.54-.555 1.17-.574 1.817.02.647.218 1.276.574 1.817.356.54.856.972 1.443 1.245-.224.606-.274 1.263-.144 1.896.13.634.433 1.218.877 1.688.47.443 1.054.747 1.687.878.633.132 1.29.084 1.897-.136.274.586.705 1.084 1.246 1.439.54.354 1.17.551 1.816.569.647-.016 1.276-.213 1.817-.567s.972-.854 1.245-1.44c.604.239 1.266.296 1.903.164.636-.132 1.22-.447 1.68-.907.46-.46.776-1.044.908-1.681s.075-1.299-.165-1.903c.586-.274 1.084-.705 1.439-1.246.354-.54.551-1.17.569-1.816zM9.662 14.85l-3.429-3.428 1.293-1.302 2.072 2.072 4.4-4.794 1.347 1.246z"
-        fill="#1d9bf0"
-      />
-    </svg>
-  ) : null;
-
   return (
     <div className="h-full flex flex-col">
       <div className="p-4 bg-card shadow-sm sticky top-0 z-10">
@@ -234,7 +262,7 @@ const Search = () => {
                         <h3 className="font-semibold text-foreground truncate">
                           {result.display_name}
                         </h3>
-                        <VerifiedBadge isVerified={result.is_verified} />
+                        <VerifiedBadge isVerified={result.is_verified} isOrgVerified={result.is_organization_verified} />
                       </div>
                       <p className="text-sm text-muted-foreground">@{result.handle}</p>
                       {result.bio && (
@@ -267,7 +295,10 @@ const Search = () => {
                         <h4 className="font-semibold text-foreground truncate">
                           {result.author_profiles?.display_name}
                         </h4>
-                        <VerifiedBadge isVerified={result.author_profiles?.is_verified} />
+                        <VerifiedBadge 
+                          isVerified={result.author_profiles?.is_verified} 
+                          isOrgVerified={result.author_profiles?.is_organization_verified} 
+                        />
                       </div>
                       <p className="text-xs text-muted-foreground">@{result.author_profiles?.handle}</p>
                     </div>
