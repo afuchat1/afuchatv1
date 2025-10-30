@@ -3,7 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { useAuth } from '@/contexts/AuthContext';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Button } from '@/components/ui/button';
-import { MessageSquare, Radio, Settings, LogOut, Send, MessageSquarePlus, Search as SearchIcon } from 'lucide-react';
+import { MessageSquare, Radio, Settings, LogOut, Send, MessageSquarePlus, Search as SearchIcon, LogIn } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import Chats from './Chats';
 import Feed from './Feed';
@@ -55,12 +55,6 @@ const Index = () => {
   const touchStartXRef = useRef(0);
   const touchEndXRef = useRef(0);
   const tabOrder = ['feed', 'search', 'chats'];
-
-  useEffect(() => {
-    if (!loading && !user) {
-      navigate('/auth');
-    }
-  }, [user, loading, navigate]);
 
   useEffect(() => {
     let ticking = false;
@@ -129,6 +123,26 @@ const Index = () => {
     }
   };
 
+  const handleSignIn = () => {
+    navigate('/auth');
+  };
+
+  const handleNewPost = () => {
+    if (user) {
+      setIsPostModalOpen(true);
+    } else {
+      navigate('/auth');
+    }
+  };
+
+  const handleNewChat = () => {
+    if (user) {
+      setIsChatModalOpen(true);
+    } else {
+      navigate('/auth');
+    }
+  };
+
   // --- Skeleton Loading (Rich UI simulation for instantaneous utility) ---
   if (loading) {
     return (
@@ -180,14 +194,6 @@ const Index = () => {
     );
   }
 
-  if (!user) {
-    return (
-      <div className="flex items-center justify-center min-h-screen">
-        <p className="text-muted-foreground">Redirecting...</p>
-      </div>
-    );
-  }
-
   return (
     <div className="min-h-screen bg-background flex flex-col">
       {/* Header - Defined by shadow, not borders */}
@@ -202,10 +208,17 @@ const Index = () => {
             <h1 className="text-xl font-extrabold text-primary tracking-wide">AfuChat</h1>
           </div>
           <div className="flex items-center gap-1">
-            <Button size="icon" variant="ghost" onClick={handleSignOut} className="text-foreground hover:bg-muted rounded-full">
-              <LogOut className="h-5 w-5" />
-              <span className="sr-only">Sign out</span>
-            </Button>
+            {user ? (
+              <Button size="icon" variant="ghost" onClick={handleSignOut} className="text-foreground hover:bg-muted rounded-full">
+                <LogOut className="h-5 w-5" />
+                <span className="sr-only">Sign out</span>
+              </Button>
+            ) : (
+              <Button size="icon" variant="ghost" onClick={handleSignIn} className="text-foreground hover:bg-muted rounded-full">
+                <LogIn className="h-5 w-5" />
+                <span className="sr-only">Sign in</span>
+              </Button>
+            )}
           </div>
         </div>
       </header>
@@ -258,10 +271,10 @@ const Index = () => {
       
       {/* --- FAB Renderer --- */}
       {/* Show the Send FAB on the Feed tab */}
-      {activeTab === 'feed' && <NewPostFAB onClick={() => setIsPostModalOpen(true)} visible={fabVisible} />}
+      {activeTab === 'feed' && <NewPostFAB onClick={handleNewPost} visible={fabVisible} />}
       
       {/* Show the New Chat FAB on the Chats tab */}
-      {activeTab === 'chats' && <NewChatFAB onClick={() => setIsChatModalOpen(true)} visible={fabVisible} />}
+      {activeTab === 'chats' && <NewChatFAB onClick={handleNewChat} visible={fabVisible} />}
       
       {/* Modals */}
       <NewPostModal 
