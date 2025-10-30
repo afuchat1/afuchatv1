@@ -234,11 +234,15 @@ const Index = () => {
             >
               <MessageSquare className="h-4 w-4" />
               Chats
-            {/* --- THE FIX: Replaced '</Example' with '</TabsTrigger>' --- */}
             </TabsTrigger>
           </TabsList>
           
           <div className="flex-1 relative">
+            {/* --- THE FIX ---
+              Removed the conditional 'className' prop.
+              The TabsContent component handles this internally.
+              This stops the components from re-mounting.
+            */}
             <TabsContent value="feed" className="h-full mt-0">
               <Feed />
             </TabsContent>
