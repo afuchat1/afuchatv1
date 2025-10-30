@@ -66,13 +66,10 @@ const Index = () => {
   useEffect(() => {
     let ticking = false;
 
-    // This scroll handler controls the visibility of the Header and FAB
     const handleScroll = () => {
       if (!ticking) {
         requestAnimationFrame(() => {
-          // This uses the main window scroll. If your tabs scroll internally,
-          // this logic might need to be moved inside each tab component.
-          const currentScrollY = window.scrollY; 
+          const currentScrollY = window.scrollY;
           if (currentScrollY > lastScrollYRef.current && currentScrollY > 100) {
             setHeaderVisible(false);
             setFabVisible(false);
@@ -90,7 +87,6 @@ const Index = () => {
     window.addEventListener('scroll', handleScroll, { passive: true });
     return () => window.removeEventListener('scroll', handleScroll);
   }, []);
-
 
   const handleSignOut = async () => {
     const { error } = await supabase.auth.signOut();
@@ -132,7 +128,6 @@ const Index = () => {
     // Skeleton loading state
     return (
       <div className="min-h-screen bg-background p-4 max-w-4xl mx-auto">
-        {/* Header Skeleton */}
         <div className="h-14 flex items-center justify-between shadow-md rounded-b-lg">
           <Skeleton className="h-6 w-24" />
           <div className="flex gap-2">
@@ -140,15 +135,11 @@ const Index = () => {
             <Skeleton className="h-8 w-8 rounded-full" />
           </div>
         </div>
-        
-        {/* Tabs Skeleton */}
         <div className="grid grid-cols-3 gap-4 mb-6 pt-4">
           <Skeleton className="h-10 w-full rounded-full" /> 
           <Skeleton className="h-10 w-full rounded-full" /> 
           <Skeleton className="h-10 w-full rounded-full" /> 
         </div>
-
-        {/* Content/List Skeleton */}
         <div className="space-y-6 pt-2">
           <div className="p-4 rounded-xl shadow-xl space-y-3">
              <div className="flex items-center space-x-3">
@@ -218,7 +209,9 @@ const Index = () => {
       </header>
 
       {/* Main Content */}
-      <main className="flex-1 container mx-auto px-2 sm:px-4 py-4 max-w-4xl overflow-y-auto">
+      <main 
+        className="flex-1 container mx-auto px-2 sm:px-4 py-4 max-w-4xl overflow-y-auto"
+      >
         <Tabs value={activeTab} onValueChange={setActiveTab} className="h-full flex flex-col">
           <TabsList className="grid w-full grid-cols-3 mb-6 p-1 bg-muted/50 rounded-full shadow-inner">
             <TabsTrigger 
@@ -237,25 +230,23 @@ const Index = () => {
             </TabsTrigger>
             <TabsTrigger 
               value="chats" 
-              className="flex items-center gap-2 py-2 rounded-full data-[state=active]:bg-primary data-[state=active]:text-primary-foreground data-[state=active]:shadow-lg data-[state=active]:shadow-primary/30 data-[state=active]:font-bold transition-all duration-300"
-            >
-              <MessageSquare className="h-4 w-4" />
-              Chats
+              className="flex items-center gap-2 py-2 rounded-full data-[state=active]:bg-primary data-[state=active]:text-primary-foreground data-[state=active]:shadow-lg data-[state=active]:shadow-primary/30 data-[state=active]:font-bold transition-all duration-3Example
             </TabsTrigger>
           </TabsList>
           
-          {/* This is where the persistence happens.
-            All three components are rendered, but two are hidden with CSS.
-            This keeps their state (data, scroll position) alive.
-          */}
           <div className="flex-1 relative">
-            <TabsContent value="feed" className={`${activeTab === 'feed' ? 'block' : 'hidden'} h-full mt-0`}>
+            {/* --- THE FIX ---
+              Removed the conditional 'hidden' class.
+              The TabsContent component handles this internally.
+              This stops the components from re-mounting.
+            */}
+            <TabsContent value="feed" className="h-full mt-0">
               <Feed />
             </TabsContent>
-            <TabsContent value="search" className={`${activeTab === 'search' ? 'block' : 'hidden'} h-full mt-0`}>
+            <TabsContent value="search" className="h-full mt-0">
               <Search />
             </TabsContent>
-            <TabsContent value="chats" className={`${activeTab === 'chats' ? 'block' : 'hidden'} h-full mt-0`}>
+            <TabsContent value="chats" className="h-full mt-0">
               <Chats />
             </TabsContent>
           </div>
