@@ -6,7 +6,6 @@ import { toast } from 'sonner';
 import { MessageSquare, Heart, Share, User, Ellipsis } from 'lucide-react'; 
 import { Skeleton } from '@/components/ui/skeleton';
 import { Button } from '@/components/ui/button'; 
-// No Avatar components, as requested.
 
 interface Post {
   id: string;
@@ -331,8 +330,8 @@ const Feed = () => {
 
   if (effectiveLoading) {
     return (
+      // FIX: Removed header div, skeleton list starts at the top
       <div className="flex flex-col h-full">
-        <div className="sticky top-0 bg-background/80 backdrop-blur-sm z-10 border-b border-border py-3 px-4 h-[53px]"></div>
         {[...Array(5)].map((_, i) => (
           <PostSkeleton key={i} />
         ))}
@@ -513,11 +512,9 @@ const Feed = () => {
 
   return (
     <div className="h-full flex flex-col">
-      {/* Header (Text Removed) */}
-      <div className="sticky top-0 bg-background/80 backdrop-blur-sm z-10 border-b border-border py-3 px-4 h-[53px]">
-        {/* "Home" text removed */}
-      </div>
-
+      {/* FIX: Header Removed */}
+      
+      {/* The main content area now fills the whole component */}
       <div className="flex-1 overflow-y-auto">
         {posts.length === 0 && !effectiveLoading ? (
           <div className="text-center text-muted-foreground py-8">
