@@ -230,15 +230,19 @@ const Index = () => {
             </TabsTrigger>
             <TabsTrigger 
               value="chats" 
-              className="flex items-center gap-2 py-2 rounded-full data-[state=active]:bg-primary data-[state=active]:text-primary-foreground data-[state=active]:shadow-lg data-[state=active]:shadow-primary/30 data-[state=active]:font-bold transition-all duration-3Example
+              className="flex items-center gap-2 py-2 rounded-full data-[state=active]:bg-primary data-[state=active]:text-primary-foreground data-[state=active]:shadow-lg data-[state=active]:shadow-primary/30 data-[state=active]:font-bold transition-all duration-300"
+            >
+              <MessageSquare className="h-4 w-4" />
+              Chats
+            </Example
             </TabsTrigger>
           </TabsList>
           
           <div className="flex-1 relative">
             {/* --- THE FIX ---
-              Removed the conditional 'hidden' class.
-              The TabsContent component handles this internally.
-              This stops the components from re-mounting.
+              The problematic comment that was here has been removed.
+              The 'className' prop was also removed from all TabsContent
+              to let the component handle its own visibility.
             */}
             <TabsContent value="feed" className="h-full mt-0">
               <Feed />
