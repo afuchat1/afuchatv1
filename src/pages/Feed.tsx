@@ -1,5 +1,4 @@
 import { useEffect, useState, useCallback } from 'react';
-// Using react-router-dom as requested
 import { useNavigate } from 'react-router-dom'; 
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/contexts/AuthContext';
@@ -7,8 +6,7 @@ import { toast } from 'sonner';
 import { MessageSquare, Heart, Share, User, Ellipsis } from 'lucide-react'; 
 import { Skeleton } from '@/components/ui/skeleton';
 import { Button } from '@/components/ui/button'; 
-// FIX: Removed Avatar components
-// import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar'; 
+// Avatars are not used, so Avatar components are removed.
 
 interface Post {
   id: string;
@@ -146,7 +144,6 @@ const Feed = () => {
       )
     );
 
-    // Perform database operation
     if (currentHasLiked) {
       const { error } = await supabase
         .from('post_acknowledgments')
@@ -159,11 +156,7 @@ const Feed = () => {
         setPosts((currentPosts) =>
           currentPosts.map((p) =>
             p.id === postId
-              ? {
-                  ...p,
-                  has_liked: currentHasLiked,
-                  like_count: p.like_count - 1,
-                }
+              ? { ...p, has_liked: currentHasLiked, like_count: p.like_count - 1 }
               : p
           )
         );
@@ -179,11 +172,7 @@ const Feed = () => {
         setPosts((currentPosts) =>
           currentPosts.map((p) =>
             p.id === postId
-              ? {
-                  ...p,
-                  has_liked: currentHasLiked,
-                  like_count: p.like_count + 1,
-                }
+              ? { ...p, has_liked: currentHasLiked, like_count: p.like_count + 1 }
               : p
           )
         );
@@ -332,7 +321,6 @@ const Feed = () => {
     };
   }, [user, addReply]); 
 
-  // FIX: Skeleton updated to use a div instead of Avatar skeleton
   const PostSkeleton = () => (
     <div className="flex p-4 border-b border-border">
       <Skeleton className="h-10 w-10 rounded-full mr-3" />
@@ -406,7 +394,7 @@ const Feed = () => {
 
     return (
       <div className="flex border-b border-border py-3 px-4 transition-colors hover:bg-muted/5">
-        {/* FIX: Avatar Area Replaced */}
+        {/* Author Icon (No Avatar) */}
         <div 
           className="mr-3 flex-shrink-0 h-10 w-10 rounded-full bg-secondary flex items-center justify-center cursor-pointer" 
           onClick={() => handleViewProfile(post.author_id)}
@@ -417,12 +405,19 @@ const Feed = () => {
         <div className="flex-1 min-w-0">
           {/* Post Header (X-Style) */}
           <div className="flex items-center justify-between">
-            <div className="flex items-center flex-wrap gap-x-1 min-w-0">
-              <span className="font-bold text-foreground text-sm cursor-pointer hover:underline truncate" onClick={() => handleViewProfile(post.author_id)}>
+            {/* FIX: Removed flex-wrap, spans will now truncate */}
+            <div className="flex items-center gap-x-1 min-w-0">
+              <span 
+                className="font-bold text-foreground text-sm cursor-pointer hover:underline truncate" 
+                onClick={() => handleViewProfile(post.author_id)}
+              >
                 {post.profiles.display_name}
               </span>
               <VerifiedBadge isVerified={post.profiles.is_verified} isOrgVerified={post.profiles.is_organization_verified} />
-              <span className="text-muted-foreground text-sm hover:underline cursor-pointer truncate" onClick={() => handleViewProfile(post.author_id)}>
+              <span 
+                className="text-muted-foreground text-sm hover:underline cursor-pointer truncate" 
+                onClick={() => handleViewProfile(post.author_id)}
+              >
                 @{post.profiles.handle}
               </span>
               <span className="text-muted-foreground text-sm flex-shrink-0">·</span>
@@ -455,7 +450,6 @@ const Feed = () => {
 
           {/* --- IG-STYLE COMMENT SECTION --- */}
           <div className="mt-3">
-            {/* 1. "View all comments" link */}
             {post.reply_count > 0 && !showComments && (
                 <span 
                     className="text-sm text-muted-foreground cursor-pointer hover:underline"
@@ -465,7 +459,6 @@ const Feed = () => {
                 </span>
             )}
 
-            {/* 2. Comment List (Shown when expanded) */}
             {showComments && post.replies && post.replies.length > 0 && (
                 <div className="space-y-2 pt-2">
                     {post.replies.map((reply) => (
@@ -485,10 +478,9 @@ const Feed = () => {
                 </div>
             )}
 
-            {/* 3. "Add a comment" Input (IG Style) */}
             {user && (
                 <div className="mt-3 flex items-center gap-2">
-                    {/* FIX: Avatar Replaced */}
+                    {/* User Icon (No Avatar) */}
                     <div className="h-8 w-8 rounded-full bg-secondary flex items-center justify-center flex-shrink-0">
                       <User className="h-4 w-4 text-muted-foreground" />
                     </div>
