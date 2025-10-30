@@ -325,6 +325,7 @@ export type Database = {
           display_name: string
           handle: string
           id: string
+          is_organization_verified: boolean | null
           is_private: boolean | null
           is_verified: boolean | null
           last_seen: string | null
@@ -338,6 +339,7 @@ export type Database = {
           display_name: string
           handle: string
           id: string
+          is_organization_verified?: boolean | null
           is_private?: boolean | null
           is_verified?: boolean | null
           last_seen?: string | null
@@ -351,6 +353,7 @@ export type Database = {
           display_name?: string
           handle?: string
           id?: string
+          is_organization_verified?: boolean | null
           is_private?: boolean | null
           is_verified?: boolean | null
           last_seen?: string | null
