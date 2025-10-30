@@ -1,12 +1,11 @@
-import { useEffect, useState, useCallback, Fragment } from 'react';
+import { useEffect, useState, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/contexts/AuthContext';
 import { toast } from 'sonner';
-// Updated icons for X-style actions
-import { MessageSquare, Heart, Repeat2, Share, User, Ellipsis } from 'lucide-react'; 
+import { MessageSquare, Heart, Repeat2, Share, User, Ellipsis } from 'lucide-react';
 import { Skeleton } from '@/components/ui/skeleton';
-import { Button } from '@/components/ui/button'; 
+import { Button } from '@/components/ui/button';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar'; 
 
 interface Post {
@@ -20,7 +19,7 @@ interface Post {
     handle: string;
     is_verified: boolean;
     is_organization_verified: boolean;
-    avatar_url?: string; 
+    // avatar_url?: string; // REMOVED
   };
   replies?: Reply[];
   like_count?: number; 
@@ -38,14 +37,12 @@ interface Reply {
     handle: string;
     is_verified: boolean;
     is_organization_verified: boolean;
-    avatar_url?: string;
+    // avatar_url?: string; // REMOVED
   };
   like_count?: number;
 }
 
-// --- Verified Badge Logic ---
-
-// Twitter Verified Badge (Blue)
+// --- Verified Badge Logic (Unchanged) ---
 const TwitterVerifiedBadge = () => (
   <svg
     viewBox="0 0 22 22"
@@ -58,7 +55,6 @@ const TwitterVerifiedBadge = () => (
   </svg>
 );
 
-// Gold Verified Badge (for Organizations)
 const GoldVerifiedBadge = () => (
   <svg
     viewBox="0 0 22 22"
@@ -81,12 +77,11 @@ const VerifiedBadge = ({ isVerified, isOrgVerified }: { isVerified: boolean; isO
   return null;
 };
 
-// Helper to format time like X (e.g., "5m", "2h", "Feb 23")
+// Helper to format time (Unchanged)
 const formatTime = (isoString: string) => {
   const date = new Date(isoString);
   const now = new Date();
-  const diff = now.getTime() - date.getTime(); // Difference in milliseconds
-
+  const diff = now.getTime() - date.getTime(); 
   const seconds = Math.floor(diff / 1000);
   const minutes = Math.floor(seconds / 60);
   const hours = Math.floor(minutes / 60);
@@ -108,7 +103,6 @@ const Feed = () => {
   const [forceLoaded, setForceLoaded] = useState(false);
   const navigate = useNavigate(); 
 
-  // Force load check to prevent eternal skeleton state
   useEffect(() => {
     const timer = setTimeout(() => {
       setForceLoaded(true);
@@ -133,7 +127,6 @@ const Feed = () => {
     );
   }, []);
 
-  // Mock acknowledge handler to update post counts
   const updatePostCounts = useCallback(async (postId: string) => {
     setPosts(prevPosts => prevPosts.map(post => 
       post.id === postId ? {
@@ -142,8 +135,8 @@ const Feed = () => {
       } : post
     ));
     toast.success('Post acknowledged!');
-    // NOTE: In a real app, this would include an API call to record the 'like'
   }, []);
+
 
   useEffect(() => {
     fetchPosts();
@@ -157,7 +150,8 @@ const Feed = () => {
         async (payload) => {
           const { data: profile } = await supabase
             .from('profiles')
-            .select('display_name, handle, is_verified, is_organization_verified, avatar_url')
+            // FIX: Removed avatar_url
+            .select('display_name, handle, is_verified, is_organization_verified')
             .eq('id', payload.new.author_id)
             .single();
 
@@ -184,7 +178,8 @@ const Feed = () => {
         async (payload) => {
           const { data: profile } = await supabase
             .from('profiles')
-            .select('display_name, handle, is_verified, is_organization_verified, avatar_url')
+            // FIX: Removed avatar_url
+            .select('display_name, handle, is_verified, is_organization_verified')
             .eq('id', payload.new.author_id)
             .single();
 
@@ -210,7 +205,8 @@ const Feed = () => {
     try {
       let { data, error } = await supabase
         .from('posts')
-        .select('*, profiles(display_name, handle, is_verified, is_organization_verified, avatar_url)')
+        // FIX: Removed avatar_url from the profiles selection
+        .select('*, profiles(display_name, handle, is_verified, is_organization_verified)')
         .order('created_at', { ascending: false })
         .limit(50);
 
@@ -221,7 +217,8 @@ const Feed = () => {
 
         const { data: repliesData, error: repliesError } = await supabase
           .from('post_replies')
-          .select('*, profiles(display_name, handle, is_verified, is_organization_verified, avatar_url)')
+          // FIX: Removed avatar_url from the profiles selection
+          .select('*, profiles(display_name, handle, is_verified, is_organization_verified)')
           .in('post_id', postIds)
           .order('created_at', { ascending: true });
 
@@ -244,10 +241,9 @@ const Feed = () => {
             ...post.profiles,
             is_verified: post.profiles?.is_verified ?? false,
             is_organization_verified: post.profiles?.is_organization_verified ?? false,
-            avatar_url: post.profiles?.avatar_url,
+            // avatar_url: post.profiles?.avatar_url, // REMOVED
           },
           replies: repliesByPostId.get(post.id) || [],
-          // Mocking interaction counts if not available from a dedicated table/RPC
           like_count: Math.floor(Math.random() * 500), 
           repost_count: Math.floor(Math.random() * 100),
         })) as Post[];
@@ -256,6 +252,7 @@ const Feed = () => {
       setPosts(data || []);
     } catch (err) {
       console.error('Error fetching posts:', err);
+      toast.error('Could not fetch feed. Check console for errors.'); // Added a toast on error
     } finally {
       setLoading(false);
     }
@@ -314,7 +311,7 @@ const Feed = () => {
       }
 
       const optimisticReply: Reply = {
-        id: new Date().getTime().toString(), // Use temp ID until real-time updates it
+        id: new Date().getTime().toString(),
         post_id: post.id,
         author_id: user.id,
         content: replyText,
@@ -324,7 +321,7 @@ const Feed = () => {
           handle: user?.user_metadata?.handle || 'user',
           is_verified: user?.user_metadata?.is_verified || false,
           is_organization_verified: user?.user_metadata?.is_organization_verified || false,
-          avatar_url: user?.user_metadata?.avatar_url,
+          // avatar_url: user?.user_metadata?.avatar_url, // REMOVED
         },
         like_count: 0,
       };
@@ -334,12 +331,11 @@ const Feed = () => {
       setShowReplyInput(false);
     };
     
-    // Function to render reply author metadata
     const renderReplyAuthor = (reply: Reply) => (
         <div 
             className="flex items-center flex-wrap gap-x-1 cursor-pointer"
             onClick={(e) => {
-                e.stopPropagation(); // Prevent navigating to post detail if this is wrapped
+                e.stopPropagation(); 
                 handleViewProfile(reply.author_id);
             }}
         >
@@ -366,9 +362,10 @@ const Feed = () => {
         {/* Avatar Area */}
         <div className="mr-3 flex-shrink-0">
           <Avatar className="h-10 w-10 cursor-pointer" onClick={() => handleViewProfile(post.author_id)}>
-            <AvatarImage src={post.profiles.avatar_url} />
+            {/* FIX: Removed AvatarImage component. Fallback will now always show. */}
             <AvatarFallback>
-              {post.profiles.display_name[0]}
+              {/* Show first initial of display name */}
+              {post.profiles.display_name ? post.profiles.display_name[0].toUpperCase() : <User className="h-5 w-5"/>}
             </AvatarFallback>
           </Avatar>
         </div>
@@ -377,7 +374,6 @@ const Feed = () => {
           {/* Post Header */}
           <div className="flex items-center justify-between">
             <div className="flex items-center flex-wrap gap-x-1 min-w-0">
-              {/* Author Info */}
               <span 
                 className="font-bold text-foreground text-sm cursor-pointer hover:underline truncate"
                 onClick={() => handleViewProfile(post.author_id)}
@@ -409,7 +405,7 @@ const Feed = () => {
             {post.content}
           </p>
 
-          {/* Post Actions */}
+          {/* Post Actions (Unchanged) */}
           <div className="flex justify-between items-center text-sm text-muted-foreground mt-3 -ml-2 max-w-[420px]">
             <Button variant="ghost" size="sm" className="flex items-center gap-1 group" onClick={() => setShowReplyInput(!showReplyInput)}>
               <MessageSquare className="h-4 w-4 group-hover:text-primary transition-colors" />
@@ -445,7 +441,7 @@ const Feed = () => {
             {showReplyInput && user && (
                 <div className="flex space-x-2 pb-4 border-b border-border">
                   <Avatar className="h-8 w-8 flex-shrink-0">
-                    <AvatarImage src={user.user_metadata?.avatar_url} />
+                     {/* FIX: Removed AvatarImage */}
                     <AvatarFallback><User className="h-4 w-4 text-muted-foreground" /></AvatarFallback>
                   </Avatar>
                   <div className="flex-1">
@@ -485,8 +481,8 @@ const Feed = () => {
                         <div key={reply.id} className="flex">
                             <div className="flex-shrink-0 mr-3">
                                 <Avatar className="h-8 w-8 cursor-pointer" onClick={() => handleViewProfile(reply.author_id)}>
-                                    <AvatarImage src={reply.profiles.avatar_url} />
-                                    <AvatarFallback>{reply.profiles.display_name[0]}</AvatarFallback>
+                                    {/* FIX: Removed AvatarImage */}
+                                    <AvatarFallback>{reply.profiles.display_name ? reply.profiles.display_name[0].toUpperCase() : <User />}</AvatarFallback>
                                 </Avatar>
                             </div>
                             <div className="flex-1">
@@ -494,7 +490,6 @@ const Feed = () => {
                                 <p className="text-sm text-foreground mt-1 leading-relaxed whitespace-pre-wrap">
                                     {reply.content}
                                 </p>
-                                {/* Reply actions - simplified */}
                                 <div className="flex justify-start items-center text-xs text-muted-foreground mt-2 -ml-2">
                                     <Button variant="ghost" size="sm" className="flex items-center gap-1 group">
                                         <Heart className="h-3 w-3 group-hover:text-red-500 transition-colors" />
@@ -512,7 +507,6 @@ const Feed = () => {
                 </div>
             )}
             
-            {/* Login prompt for replies */}
             {!showReplyInput && !user && (
                 <div className="mt-3 text-center text-sm text-muted-foreground">
                     Please <a href="/auth" className="text-primary underline">log in</a> to reply.
@@ -526,7 +520,6 @@ const Feed = () => {
 
   return (
     <div className="h-full flex flex-col">
-      {/* Home Header */}
       <div className="sticky top-0 bg-background/80 backdrop-blur-sm z-10 border-b border-border py-3 px-4">
         <h2 className="text-xl font-bold">Home</h2>
       </div>
