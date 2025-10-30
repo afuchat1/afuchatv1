@@ -1,11 +1,12 @@
 import { useEffect, useState, useCallback } from 'react';
-import { useNavigate } from 'react-router-dom';
+// FIX: Reverted to react-router-dom
+import { useNavigate } from 'react-router-dom'; 
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/contexts/AuthContext';
 import { toast } from 'sonner';
-import { MessageSquare, Heart, Repeat2, Share, User, Ellipsis } from 'lucide-react';
+import { MessageSquare, Heart, Share, User, Ellipsis } from 'lucide-react'; 
 import { Skeleton } from '@/components/ui/skeleton';
-import { Button } from '@/components/ui/button';
+import { Button } from '@/components/ui/button'; 
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar'; 
 
 interface Post {
@@ -19,11 +20,11 @@ interface Post {
     handle: string;
     is_verified: boolean;
     is_organization_verified: boolean;
-    // avatar_url?: string; // REMOVED
   };
-  replies?: Reply[];
-  like_count?: number; 
-  repost_count?: number;
+  replies: Reply[];
+  like_count: number;
+  reply_count: number;
+  has_liked: boolean;
 }
 
 interface Reply {
@@ -37,9 +38,7 @@ interface Reply {
     handle: string;
     is_verified: boolean;
     is_organization_verified: boolean;
-    // avatar_url?: string; // REMOVED
   };
-  like_count?: number;
 }
 
 // --- Verified Badge Logic (Unchanged) ---
@@ -49,9 +48,7 @@ const TwitterVerifiedBadge = () => (
     xmlns="http://www.w3.org/2000/svg"
     className="inline w-[16px] h-[16px] ml-0.5 text-[#1d9bf0] fill-[#1d9bf0] flex-shrink-0"
   >
-    <path
-      d="m20.396 11c-.018-.646-.215-1.275-.57-1.816-.354-.54-.852-.972-1.438-1.246.223-.607.27-1.264.14-1.897-.131-.634-.437-1.218-.882-1.687-.47-.445-1.053-.75-1.687-.882-.633-.13-1.29-.083-1.897.14-.273-.587-.704-1.086-1.245-1.44S11.647 1.62 11 1.604c-.646.017-1.273.213-1.813.568s-.969.854-1.24 1.44c-.608-.223-1.267-.272-1.902-.14-.635.13-1.22.436-1.69.882-.445.47-.749 1.055-.878 1.688-.13.633-.08 1.29.144 1.896-.587.274-1.087.705-1.443 1.245-.356.54-.555 1.17-.574 1.817.02.647.218 1.276.574 1.817.356.54.856.972 1.443 1.245-.224.606-.274 1.263-.144 1.896.13.634.433 1.218.877 1.688.47.443 1.054.747 1.687.878.633.132 1.29.084 1.897-.136.274.586.705 1.084 1.246 1.439.54.354 1.17.551 1.816.569.647-.016 1.276-.213 1.817-.567s.972-.854 1.245-1.44c.604.239 1.266.296 1.903.164.636-.132 1.22-.447 1.68-.907.46-.46.776-1.044.908-1.681s.075-1.299-.165-1.903c.586-.274 1.084-.705 1.439-1.246.354-.54.551-1.17.569-1.816zM9.662 14.85l-3.429-3.428 1.293-1.302 2.072 2.072 4.4-4.794 1.347 1.246z"
-    />
+    <path d="m20.396 11c-.018-.646-.215-1.275-.57-1.816-.354-.54-.852-.972-1.438-1.246.223-.607.27-1.264.14-1.897-.131-.634-.437-1.218-.882-1.687-.47-.445-1.053-.75-1.687-.882-.633-.13-1.29-.083-1.897.14-.273-.587-.704-1.086-1.245-1.44S11.647 1.62 11 1.604c-.646.017-1.273.213-1.813.568s-.969.854-1.24 1.44c-.608-.223-1.267-.272-1.902-.14-.635.13-1.22.436-1.69.882-.445.47-.749 1.055-.878 1.688-.13.633-.08 1.29.144 1.896-.587.274-1.087.705-1.443 1.245-.356.54-.555 1.17-.574 1.817.02.647.218 1.276.574 1.817.356.54.856.972 1.443 1.245-.224.606-.274 1.263-.144 1.896.13.634.433 1.218.877 1.688.47.443 1.054.747 1.687.878.633.132 1.29.084 1.897-.136.274.586.705 1.084 1.246 1.439.54.354 1.17.551 1.816.569.647-.016 1.276-.213 1.817-.567s.972-.854 1.245-1.44c.604.239 1.266.296 1.903.164.636-.132 1.22-.447 1.68-.907.46-.46.776-1.044.908-1.681s.075-1.299-.165-1.903c.586-.274 1.084-.705 1.439-1.246.354-.54.551-1.17.569-1.816zM9.662 14.85l-3.429-3.428 1.293-1.302 2.072 2.072 4.4-4.794 1.347 1.246z" />
   </svg>
 );
 
@@ -61,9 +58,7 @@ const GoldVerifiedBadge = () => (
     xmlns="http://www.w3.org/2000/svg"
     className="inline w-[16px] h-[16px] ml-0.5 text-[#FFD43B] fill-[#FFD43B] flex-shrink-0"
   >
-    <path
-      d="m20.396 11c-.018-.646-.215-1.275-.57-1.816-.354-.54-.852-.972-1.438-1.246.223-.607.27-1.264.14-1.897-.131-.634-.437-1.218-.882-1.687-.47-.445-1.053-.75-1.687-.882-.633-.13-1.29-.083-1.897.14-.273-.587-.704-1.086-1.245-1.44S11.647 1.62 11 1.604c-.646.017-1.273.213-1.813.568s-.969.854-1.24 1.44c-.608-.223-1.267-.272-1.902-.14-.635.13-1.22.436-1.69.882-.445.47-.749 1.055-.878 1.688-.13.633-.08 1.29.144 1.896-.587.274-1.087.705-1.443 1.245-.356.54-.555 1.17-.574 1.817.02.647.218 1.276.574 1.817.356.54.856.972 1.443 1.245-.224.606-.274 1.263-.144 1.896.13.634.433 1.218.877 1.688.47.443 1.054.747 1.687.878.633.132 1.29.084 1.897-.136.274.586.705 1.084 1.246 1.439.54.354 1.17.551 1.816.569.647-.016 1.276-.213 1.817-.567s.972-.854 1.245-1.44c.604.239 1.266.296 1.903.164.636-.132 1.22-.447 1.68-.907.46-.46.776-1.044.908-1.681s.075-1.299-.165-1.903c.586-.274 1.084-.705 1.439-1.246.354-.54.551-1.17.569-1.816zM9.662 14.85l-3.429-3.428 1.293-1.302 2.072 2.072 4.4-4.794 1.347 1.246z"
-    />
+    <path d="m20.396 11c-.018-.646-.215-1.275-.57-1.816-.354-.54-.852-.972-1.438-1.246.223-.607.27-1.264.14-1.897-.131-.634-.437-1.218-.882-1.687-.47-.445-1.053-.75-1.687-.882-.633-.13-1.29-.083-1.897.14-.273-.587-.704-1.086-1.245-1.44S11.647 1.62 11 1.604c-.646.017-1.273.213-1.813.568s-.969.854-1.24 1.44c-.608-.223-1.267-.272-1.902-.14-.635.13-1.22.436-1.69.882-.445.47-.749 1.055-.878 1.688-.13.633-.08 1.29.144 1.896-.587.274-1.087.705-1.443 1.245-.356.54-.555 1.17-.574 1.817.02.647.218 1.276.574 1.817.356.54.856.972 1.443 1.245-.224.606-.274 1.263-.144 1.896.13.634.433 1.218.877 1.688.47.443 1.054.747 1.687.878.633.132 1.29.084 1.897-.136.274.586.705 1.084 1.246 1.439.54.354 1.17.551 1.816.569.647-.016 1.276-.213 1.817-.567s.972-.854 1.245-1.44c.604.239 1.266.296 1.903.164.636-.132 1.22-.447 1.68-.907.46-.46.776-1.044.908-1.681s.075-1.299-.165-1.903c.586-.274 1.084-.705 1.439-1.246.354-.54.551-1.17.569-1.816zM9.662 14.85l-3.429-3.428 1.293-1.302 2.072 2.072 4.4-4.794 1.347 1.246z" />
   </svg>
 );
 
@@ -101,6 +96,7 @@ const Feed = () => {
   const [posts, setPosts] = useState<Post[]>([]);
   const [loading, setLoading] = useState(true);
   const [forceLoaded, setForceLoaded] = useState(false);
+  // FIX: Use react-router-dom's useNavigate
   const navigate = useNavigate(); 
 
   useEffect(() => {
@@ -121,27 +117,162 @@ const Feed = () => {
               replies: [...(p.replies || []), newReply].sort(
                 (a, b) => new Date(a.created_at).getTime() - new Date(b.created_at).getTime()
               ),
+              reply_count: (p.reply_count || 0) + 1,
             }
           : p
       )
     );
   }, []);
 
-  const updatePostCounts = useCallback(async (postId: string) => {
-    setPosts(prevPosts => prevPosts.map(post => 
-      post.id === postId ? {
-        ...post,
-        like_count: (post.like_count || 0) + 1,
-      } : post
-    ));
-    toast.success('Post acknowledged!');
-  }, []);
+  // --- Real Acknowledge (Like/Unlike) Function (Unchanged) ---
+  const handleAcknowledge = useCallback(async (postId: string, currentHasLiked: boolean) => {
+    if (!user) {
+      toast.error('You must be logged in to like a post');
+      return;
+    }
+
+    const currentUserId = user.id;
+
+    // Optimistic UI Update
+    setPosts((currentPosts) =>
+      currentPosts.map((p) =>
+        p.id === postId
+          ? {
+              ...p,
+              has_liked: !currentHasLiked,
+              like_count: p.like_count + (!currentHasLiked ? 1 : -1),
+            }
+          : p
+      )
+    );
+
+    // Perform database operation
+    if (currentHasLiked) {
+      const { error } = await supabase
+        .from('post_acknowledgments')
+        .delete()
+        .match({ post_id: postId, user_id: currentUserId });
+
+      if (error) {
+        toast.error('Failed to unacknowledge post');
+        // Rollback
+        setPosts((currentPosts) =>
+          currentPosts.map((p) =>
+            p.id === postId
+              ? {
+                  ...p,
+                  has_liked: currentHasLiked,
+                  like_count: p.like_count - 1,
+                }
+              : p
+          )
+        );
+      }
+    } else {
+      const { error } = await supabase
+        .from('post_acknowledgments')
+        .insert({ post_id: postId, user_id: currentUserId });
+
+      if (error) {
+        toast.error('Failed to acknowledge post');
+        // Rollback
+        setPosts((currentPosts) =>
+          currentPosts.map((p) =>
+            p.id === postId
+              ? {
+                  ...p,
+                  has_liked: currentHasLiked,
+                  like_count: p.like_count + 1,
+                }
+              : p
+          )
+        );
+      }
+    }
+  }, [user]);
 
 
   useEffect(() => {
+    // Moved fetchPosts inside useEffect as it's only called here
+    const fetchPosts = async () => {
+      setLoading(true);
+      try {
+        // 1. Fetch posts and their authors
+        let { data: postData, error: postsError } = await supabase
+          .from('posts')
+          .select('*, profiles(display_name, handle, is_verified, is_organization_verified)')
+          .order('created_at', { ascending: false })
+          .limit(50);
+  
+        if (postsError) throw postsError;
+        if (!postData) postData = [];
+  
+        const postIds = postData.map((p) => p.id);
+  
+        // 2. Fetch all replies for these posts
+        const { data: repliesData, error: repliesError } = await supabase
+          .from('post_replies')
+          .select('*, profiles(display_name, handle, is_verified, is_organization_verified)')
+          .in('post_id', postIds)
+          .order('created_at', { ascending: true });
+  
+        if (repliesError) throw repliesError;
+  
+        // 3. Fetch all acknowledgments (likes) for these posts
+        const { data: ackData, error: ackError } = await supabase
+          .from('post_acknowledgments')
+          .select('post_id, user_id')
+          .in('post_id', postIds);
+        
+        if (ackError) throw ackError;
+  
+        // 4. Map replies and acknowledgments for efficient lookup
+        const repliesByPostId = new Map<string, Reply[]>();
+        (repliesData || []).forEach((r) => {
+          if (!repliesByPostId.has(r.post_id)) {
+            repliesByPostId.set(r.post_id, []);
+          }
+          repliesByPostId.get(r.post_id)!.push(r as Reply);
+        });
+
+        const acksByPostId = new Map<string, string[]>(); // Map<postId, userId[]>
+        (ackData || []).forEach((ack) => {
+            if (!acksByPostId.has(ack.post_id)) {
+                acksByPostId.set(ack.post_id, []);
+            }
+            acksByPostId.get(ack.post_id)!.push(ack.user_id);
+        });
+  
+        // 5. Combine all data
+        const finalPosts: Post[] = postData.map((post) => {
+          const replies = repliesByPostId.get(post.id) || [];
+          const acks = acksByPostId.get(post.id) || [];
+          const currentUserId = user?.id || null;
+
+          return {
+            ...post,
+            profiles: post.profiles || { display_name: 'Unknown', handle: 'unknown', is_verified: false, is_organization_verified: false },
+            replies: replies,
+            reply_count: replies.length, // REAL count
+            like_count: acks.length, // REAL count
+            has_liked: acks.includes(currentUserId), // REAL check
+          } as Post;
+        });
+  
+        setPosts(finalPosts);
+      } catch (err) {
+        console.error('Error fetching posts:', err);
+        if (err instanceof Error) {
+            toast.error('Could not fetch feed. Check RLS policies or console.');
+        }
+      } finally {
+        setLoading(false);
+      }
+    };
+
     fetchPosts();
 
-    // Realtime for new posts
+    // --- Realtime Subscriptions (Unchanged) ---
     const postsChannel = supabase
       .channel('feed-updates')
       .on(
@@ -150,7 +281,6 @@ const Feed = () => {
         async (payload) => {
           const { data: profile } = await supabase
             .from('profiles')
-            // FIX: Removed avatar_url
             .select('display_name, handle, is_verified, is_organization_verified')
             .eq('id', payload.new.author_id)
             .single();
@@ -161,7 +291,8 @@ const Feed = () => {
               profiles: profile,
               replies: [],
               like_count: 0,
-              repost_count: 0,
+              reply_count: 0,
+              has_liked: false,
             } as Post;
             setPosts((cur) => [newPost, ...cur]);
           }
@@ -169,7 +300,6 @@ const Feed = () => {
       )
       .subscribe();
 
-    // Realtime for new replies
     const repliesChannel = supabase
       .channel('replies-updates')
       .on(
@@ -178,85 +308,35 @@ const Feed = () => {
         async (payload) => {
           const { data: profile } = await supabase
             .from('profiles')
-            // FIX: Removed avatar_url
             .select('display_name, handle, is_verified, is_organization_verified')
             .eq('id', payload.new.author_id)
             .single();
 
           if (profile) {
-            const newReply = {
-              ...payload.new,
-              profiles: profile,
-              like_count: 0,
-            } as Reply;
+            const newReply = { ...payload.new, profiles: profile } as Reply;
             addReply(payload.new.post_id, newReply);
           }
         }
       )
       .subscribe();
+      
+    const acksChannel = supabase
+        .channel('acks-updates')
+        .on(
+            'postgres_changes',
+            { event: '*', schema: 'public', table: 'post_acknowledgments' },
+            (payload) => {
+                fetchPosts(); // Re-fetch all
+            }
+        )
+        .subscribe();
 
     return () => {
       supabase.removeChannel(postsChannel);
       supabase.removeChannel(repliesChannel);
+      supabase.removeChannel(acksChannel);
     };
-  }, [user, addReply]);
-
-  const fetchPosts = async () => {
-    try {
-      let { data, error } = await supabase
-        .from('posts')
-        // FIX: Removed avatar_url from the profiles selection
-        .select('*, profiles(display_name, handle, is_verified, is_organization_verified)')
-        .order('created_at', { ascending: false })
-        .limit(50);
-
-      if (error) throw error;
-
-      if (data && data.length > 0) {
-        const postIds = data.map((p) => p.id);
-
-        const { data: repliesData, error: repliesError } = await supabase
-          .from('post_replies')
-          // FIX: Removed avatar_url from the profiles selection
-          .select('*, profiles(display_name, handle, is_verified, is_organization_verified)')
-          .in('post_id', postIds)
-          .order('created_at', { ascending: true });
-
-        if (repliesError) throw repliesError;
-
-        const repliesByPostId = new Map<string, Reply[]>();
-        postIds.forEach((id) => repliesByPostId.set(id, []));
-
-        repliesData?.forEach((r) => {
-          const reply = {
-            ...r,
-            profiles: r.profiles,
-          } as Reply;
-          repliesByPostId.get(r.post_id)?.push(reply);
-        });
-
-        data = data.map((post) => ({
-          ...post,
-          profiles: {
-            ...post.profiles,
-            is_verified: post.profiles?.is_verified ?? false,
-            is_organization_verified: post.profiles?.is_organization_verified ?? false,
-            // avatar_url: post.profiles?.avatar_url, // REMOVED
-          },
-          replies: repliesByPostId.get(post.id) || [],
-          like_count: Math.floor(Math.random() * 500), 
-          repost_count: Math.floor(Math.random() * 100),
-        })) as Post[];
-      }
-
-      setPosts(data || []);
-    } catch (err) {
-      console.error('Error fetching posts:', err);
-      toast.error('Could not fetch feed. Check console for errors.'); // Added a toast on error
-    } finally {
-      setLoading(false);
-    }
-  };
+  }, [user, addReply]); 
 
   const PostSkeleton = () => (
     <div className="flex p-4 border-b border-border">
@@ -280,6 +360,7 @@ const Feed = () => {
   if (effectiveLoading) {
     return (
       <div className="flex flex-col h-full">
+        <div className="sticky top-0 bg-background/80 backdrop-blur-sm z-10 border-b border-border py-3 px-4 h-[53px]"></div>
         {[...Array(5)].map((_, i) => (
           <PostSkeleton key={i} />
         ))}
@@ -287,17 +368,20 @@ const Feed = () => {
     );
   }
 
+  // --- X-Style Post Card with IG-Style Comments ---
   const PostCard = ({ post, addReply, user, navigate, onAcknowledge }: 
-    { post: Post; addReply: (postId: string, reply: Reply) => void; user: any; navigate: any; onAcknowledge: (postId: string) => void }) => {
-    const [showReplyInput, setShowReplyInput] = useState(false);
+    { post: Post; addReply: (postId: string, reply: Reply) => void; user: any; navigate: any; onAcknowledge: (postId: string, hasLiked: boolean) => void }) => {
+    
+    const [showComments, setShowComments] = useState(false); 
     const [replyText, setReplyText] = useState('');
 
     const handleViewProfile = (userId: string) => {
+        // FIX: Use navigate
         navigate(`/profile/${userId}`);
     };
 
     const handleReplySubmit = async () => {
-      if (!replyText.trim()) return;
+      if (!replyText.trim() || !user) return;
 
       const { error } = await supabase.from('post_replies').insert({
         post_id: post.id,
@@ -305,10 +389,7 @@ const Feed = () => {
         content: replyText,
       });
 
-      if (error) {
-        toast.error('Failed to post reply');
-        return;
-      }
+      if (error) { toast.error('Failed to post reply'); return; }
 
       const optimisticReply: Reply = {
         id: new Date().getTime().toString(),
@@ -321,195 +402,120 @@ const Feed = () => {
           handle: user?.user_metadata?.handle || 'user',
           is_verified: user?.user_metadata?.is_verified || false,
           is_organization_verified: user?.user_metadata?.is_organization_verified || false,
-          // avatar_url: user?.user_metadata?.avatar_url, // REMOVED
         },
-        like_count: 0,
       };
 
       addReply(post.id, optimisticReply);
       setReplyText('');
-      setShowReplyInput(false);
+      setShowComments(true); 
     };
-    
-    const renderReplyAuthor = (reply: Reply) => (
-        <div 
-            className="flex items-center flex-wrap gap-x-1 cursor-pointer"
-            onClick={(e) => {
-                e.stopPropagation(); 
-                handleViewProfile(reply.author_id);
-            }}
-        >
-            <span className="font-bold text-foreground text-sm hover:underline">
-                {reply.profiles.display_name}
-            </span>
-            <VerifiedBadge 
-                isVerified={reply.profiles.is_verified} 
-                isOrgVerified={reply.profiles.is_organization_verified} 
-            />
-            <span className="text-muted-foreground text-sm hover:underline">
-                @{reply.profiles.handle}
-            </span>
-            <span className="text-muted-foreground text-sm">·</span>
-            <span className="text-muted-foreground text-sm whitespace-nowrap">
-                {formatTime(reply.created_at)}
-            </span>
-        </div>
-    );
-
 
     return (
       <div className="flex border-b border-border py-3 px-4 transition-colors hover:bg-muted/5">
         {/* Avatar Area */}
         <div className="mr-3 flex-shrink-0">
           <Avatar className="h-10 w-10 cursor-pointer" onClick={() => handleViewProfile(post.author_id)}>
-            {/* FIX: Removed AvatarImage component. Fallback will now always show. */}
-            <AvatarFallback>
-              {/* Show first initial of display name */}
-              {post.profiles.display_name ? post.profiles.display_name[0].toUpperCase() : <User className="h-5 w-5"/>}
-            </AvatarFallback>
+            <AvatarFallback>{post.profiles.display_name ? post.profiles.display_name[0].toUpperCase() : <User />}</AvatarFallback>
           </Avatar>
         </div>
 
         <div className="flex-1 min-w-0">
-          {/* Post Header */}
+          {/* Post Header (X-Style) */}
           <div className="flex items-center justify-between">
             <div className="flex items-center flex-wrap gap-x-1 min-w-0">
-              <span 
-                className="font-bold text-foreground text-sm cursor-pointer hover:underline truncate"
-                onClick={() => handleViewProfile(post.author_id)}
-              >
+              <span className="font-bold text-foreground text-sm cursor-pointer hover:underline truncate" onClick={() => handleViewProfile(post.author_id)}>
                 {post.profiles.display_name}
               </span>
-              <VerifiedBadge 
-                isVerified={post.profiles.is_verified} 
-                isOrgVerified={post.profiles.is_organization_verified} 
-              />
-              <span 
-                className="text-muted-foreground text-sm hover:underline cursor-pointer truncate"
-                onClick={() => handleViewProfile(post.author_id)}
-              >
+              <VerifiedBadge isVerified={post.profiles.is_verified} isOrgVerified={post.profiles.is_organization_verified} />
+              <span className="text-muted-foreground text-sm hover:underline cursor-pointer truncate" onClick={() => handleViewProfile(post.author_id)}>
                 @{post.profiles.handle}
               </span>
               <span className="text-muted-foreground text-sm flex-shrink-0">·</span>
-              <span className="text-muted-foreground text-sm whitespace-nowrap flex-shrink-0">
-                {formatTime(post.created_at)}
-              </span>
+              <span className="text-muted-foreground text-sm whitespace-nowrap flex-shrink-0">{formatTime(post.created_at)}</span>
             </div>
             <Button variant="ghost" size="icon" className="h-8 w-8 rounded-full flex-shrink-0">
               <Ellipsis className="h-4 w-4 text-muted-foreground" />
             </Button>
           </div>
 
-          {/* Post Content */}
+          {/* Post Content (X-Style) */}
           <p className="text-foreground text-base mt-1 mb-2 leading-relaxed whitespace-pre-wrap">
             {post.content}
           </p>
 
-          {/* Post Actions (Unchanged) */}
+          {/* Post Actions (X-Style) */}
           <div className="flex justify-between items-center text-sm text-muted-foreground mt-3 -ml-2 max-w-[420px]">
-            <Button variant="ghost" size="sm" className="flex items-center gap-1 group" onClick={() => setShowReplyInput(!showReplyInput)}>
+            <Button variant="ghost" size="sm" className="flex items-center gap-1 group" onClick={() => setShowComments(!showComments)}>
               <MessageSquare className="h-4 w-4 group-hover:text-primary transition-colors" />
-              <span className="group-hover:text-primary transition-colors text-xs">
-                {post.replies?.length > 0 ? post.replies.length : ''}
-              </span>
+              <span className="group-hover:text-primary transition-colors text-xs">{post.reply_count > 0 ? post.reply_count : ''}</span>
             </Button>
-            <Button variant="ghost" size="sm" className="flex items-center gap-1 group">
-              <Repeat2 className="h-4 w-4 group-hover:text-green-500 transition-colors" />
-              <span className="group-hover:text-green-500 transition-colors text-xs">
-                {post.repost_count || ''}
-              </span>
-            </Button>
-            <Button 
-                variant="ghost" 
-                size="sm" 
-                className="flex items-center gap-1 group"
-                onClick={() => onAcknowledge(post.id)}
-            >
-              <Heart className="h-4 w-4 group-hover:text-red-500 transition-colors" />
-              <span className="group-hover:text-red-500 transition-colors text-xs">
-                {post.like_count || ''}
-              </span>
+            <Button variant="ghost" size="sm" className="flex items-center gap-1 group" onClick={() => onAcknowledge(post.id, post.has_liked)}>
+              <Heart className={`h-4 w-4 group-hover:text-red-500 transition-colors ${post.has_liked ? 'text-red-500 fill-red-500' : ''}`} />
+              <span className={`group-hover:text-red-500 transition-colors text-xs ${post.has_liked ? 'text-red-500' : ''}`}>{post.like_count > 0 ? post.like_count : ''}</span>
             </Button>
             <Button variant="ghost" size="sm" className="flex items-center gap-1 group">
               <Share className="h-4 w-4 group-hover:text-primary transition-colors" />
             </Button>
           </div>
 
-          {/* Replies & Reply Input */}
-          <div className="mt-4">
-            {/* Reply Input Area */}
-            {showReplyInput && user && (
-                <div className="flex space-x-2 pb-4 border-b border-border">
-                  <Avatar className="h-8 w-8 flex-shrink-0">
-                     {/* FIX: Removed AvatarImage */}
-                    <AvatarFallback><User className="h-4 w-4 text-muted-foreground" /></AvatarFallback>
-                  </Avatar>
-                  <div className="flex-1">
-                    <textarea
-                      value={replyText}
-                      onChange={(e) => setReplyText(e.target.value)}
-                      placeholder="Post your reply..."
-                      className="w-full p-2 border-b border-input bg-transparent text-foreground resize-none focus:outline-none focus:ring-0 focus:border-primary text-sm"
-                      rows={1}
-                      maxLength={280}
-                    />
-                    <div className="flex justify-end mt-2 space-x-2">
-                      <Button 
-                        variant="ghost" 
-                        size="sm" 
-                        onClick={() => { setShowReplyInput(false); setReplyText(''); }}
-                        className="text-sm text-muted-foreground hover:bg-muted"
-                      >
-                        Cancel
-                      </Button>
-                      <Button
-                        onClick={handleReplySubmit}
-                        disabled={!replyText.trim()}
-                        className="px-4 py-2 bg-primary text-primary-foreground rounded-full text-sm font-bold disabled:opacity-50 disabled:cursor-not-allowed"
-                      >
-                        Reply
-                      </Button>
-                    </div>
-                  </div>
-                </div>
+          {/* --- IG-STYLE COMMENT SECTION --- */}
+          <div className="mt-3">
+            {/* 1. "View all comments" link */}
+            {post.reply_count > 0 && !showComments && (
+                <span 
+                    className="text-sm text-muted-foreground cursor-pointer hover:underline"
+                    onClick={() => setShowComments(true)}
+                >
+                    View all {post.reply_count} {post.reply_count === 1 ? 'comment' : 'comments'}
+                </span>
             )}
-            
-            {/* Replies List */}
-            {post.replies && post.replies.length > 0 && (
-                <div className="space-y-3 pt-4">
+
+            {/* 2. Comment List (Shown when expanded) */}
+            {showComments && post.replies && post.replies.length > 0 && (
+                <div className="space-y-2 pt-2">
                     {post.replies.map((reply) => (
-                        <div key={reply.id} className="flex">
-                            <div className="flex-shrink-0 mr-3">
-                                <Avatar className="h-8 w-8 cursor-pointer" onClick={() => handleViewProfile(reply.author_id)}>
-                                    {/* FIX: Removed AvatarImage */}
-                                    <AvatarFallback>{reply.profiles.display_name ? reply.profiles.display_name[0].toUpperCase() : <User />}</AvatarFallback>
-                                </Avatar>
-                            </div>
-                            <div className="flex-1">
-                                {renderReplyAuthor(reply)}
-                                <p className="text-sm text-foreground mt-1 leading-relaxed whitespace-pre-wrap">
-                                    {reply.content}
-                                </p>
-                                <div className="flex justify-start items-center text-xs text-muted-foreground mt-2 -ml-2">
-                                    <Button variant="ghost" size="sm" className="flex items-center gap-1 group">
-                                        <Heart className="h-3 w-3 group-hover:text-red-500 transition-colors" />
-                                        <span className="group-hover:text-red-500 transition-colors">
-                                            {reply.like_count || ''}
-                                        </span>
-                                    </Button>
-                                    <Button variant="ghost" size="sm" className="flex items-center gap-1 group">
-                                        <MessageSquare className="h-3 w-3 group-hover:text-primary transition-colors" />
-                                    </Button>
-                                </div>
-                            </div>
+                        <div key={reply.id} className="text-sm flex">
+                            <span 
+                                className="font-bold text-foreground cursor-pointer hover:underline flex-shrink-0"
+                                onClick={() => handleViewProfile(reply.author_id)}
+                            >
+                                {reply.profiles.handle}
+                            </span>
+                            <VerifiedBadge isVerified={reply.profiles.is_verified} isOrgVerified={reply.profiles.is_organization_verified} />
+                            <p className="text-foreground ml-1.5 whitespace-pre-wrap break-words">
+                                {reply.content}
+                            </p>
                         </div>
                     ))}
                 </div>
             )}
-            
-            {!showReplyInput && !user && (
-                <div className="mt-3 text-center text-sm text-muted-foreground">
-                    Please <a href="/auth" className="text-primary underline">log in</a> to reply.
+
+            {/* 3. "Add a comment" Input (IG Style) */}
+            {user && (
+                <div className="mt-3 flex items-center gap-2">
+                    <Avatar className="h-8 w-8">
+                        <AvatarFallback><User size={16} /></AvatarFallback>
+                    </Avatar>
+                    <input
+                        value={replyText}
+                        onChange={(e) => setReplyText(e.target.value)}
+                        placeholder="Add a comment..."
+                        className="flex-1 bg-transparent border-b border-input text-sm text-foreground focus:outline-none focus:ring-0 focus:border-primary"
+                    />
+                    <Button 
+                        variant="ghost" 
+                        size="sm" 
+                        disabled={!replyText.trim()} 
+                        onClick={handleReplySubmit}
+                        className="text-primary font-bold disabled:text-muted-foreground disabled:opacity-70 p-0"
+                    >
+                        Post
+                    </Button>
+                </div>
+            )}
+            {!user && (
+                <div className="mt-3 text-sm text-muted-foreground">
+                    Please <a href="/auth" className="text-primary underline">log in</a> to comment.
                 </div>
             )}
           </div>
@@ -518,16 +524,20 @@ const Feed = () => {
     );
   };
 
+
   return (
     <div className="h-full flex flex-col">
-      <div className="sticky top-0 bg-background/80 backdrop-blur-sm z-10 border-b border-border py-3 px-4">
-        <h2 className="text-xl font-bold">Home</h2>
+      {/* Header (Text Removed) */}
+      <div className="sticky top-0 bg-background/80 backdrop-blur-sm z-10 border-b border-border py-3 px-4 h-[53px]">
+        {/* "Home" text removed */}
       </div>
+
+      {/* Stories component removed */}
 
       <div className="flex-1 overflow-y-auto">
         {posts.length === 0 && !effectiveLoading ? (
           <div className="text-center text-muted-foreground py-8">
-            No posts yet. Tap the post button to share your first post!
+            No posts yet. Follow users or share your first post!
           </div>
         ) : (
           posts.map((post) => (
@@ -536,8 +546,8 @@ const Feed = () => {
               post={post}
               addReply={addReply}
               user={user}
-              navigate={navigate}
-              onAcknowledge={updatePostCounts} 
+              navigate={navigate} // Pass navigate
+              onAcknowledge={handleAcknowledge} 
             />
           ))
         )}
@@ -546,4 +556,4 @@ const Feed = () => {
   );
 };
 
-export default Feed;
+export default
