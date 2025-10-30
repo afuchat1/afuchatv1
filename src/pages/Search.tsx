@@ -5,7 +5,6 @@ import { Card } from '@/components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
-// FIX: Added 'Clock' to the lucide-react import
 import { Search as SearchIcon, User, MessageSquare, Loader2, FileText, Clock } from 'lucide-react'; 
 import { useNavigate } from 'react-router-dom';
 import { Skeleton } from '@/components/ui/skeleton';
@@ -92,34 +91,31 @@ const Search = () => {
   const [activeTab, setActiveTab] = useState<'users' | 'posts'>('users');
   const [results, setResults] = useState<SearchResult[]>([]);
   const [loading, setLoading] = useState(false);
-  const [debouncedQuery, setDebouncedQuery] = useState('');
+
   const navigate = useNavigate();
 
-  // Debounce search
+  // Optimized useEffect for instant feedback
   useEffect(() => {
-    const timer = setTimeout(() => setDebouncedQuery(query), 300);
-    return () => clearTimeout(timer);
-  }, [query]);
-
-  useEffect(() => {
-    // Only run search if debouncedQuery has a value
-    if (debouncedQuery.trim()) {
-      handleSearch();
+    if (query.trim()) {
+      // 1. Immediately clear results and show loader when typing starts or tab changes
+      setLoading(true);
+      setResults([]);
+      // 2. Run search logic (which will update results and set loading=false later)
+      handleSearch(query); 
     } else {
+      // Clear results and stop loading if the query is empty
+      setLoading(false);
       setResults([]);
     }
-    // Added activeTab as a dependency to trigger search when switching tabs
-  }, [debouncedQuery, activeTab]);
+  }, [query, activeTab]); 
 
-  const handleSearch = async () => {
-    // Added a safeguard check just in case
-    if (!debouncedQuery.trim()) {
-        setResults([]);
-        return;
+  // Function now accepts the current query directly
+  const handleSearch = async (currentQuery: string) => {
+    if (!currentQuery.trim()) {
+        return; // Early exit, results and loading state already handled by useEffect
     }
     
-    setLoading(true);
-    setResults([]); // Clear previous results immediately
+    // setLoading(true) and setResults([]) moved to useEffect
 
     try {
       let searchData = [];
@@ -128,7 +124,7 @@ const Search = () => {
         const { data: userData, error: userError } = await supabase
           .from('profiles')
           .select('id, display_name, handle, bio, is_verified, is_organization_verified, is_private')
-          .or(`display_name.ilike.%${debouncedQuery}%,handle.ilike.%${debouncedQuery}%`)
+          .or(`display_name.ilike.%${currentQuery}%,handle.ilike.%${currentQuery}%`)
           .limit(10);
         
         if (userError) throw userError;
@@ -145,11 +141,7 @@ const Search = () => {
             id, content, created_at, author_id,
             profiles!author_id(display_name, handle, is_verified, is_organization_verified)
           `)
-          // Using a case-insensitive LIKE search as a fallback if FTS is not configured, 
-          // or you can stick to textSearch if FTS is guaranteed:
-          .textSearch('content', debouncedQuery, { type: 'plain', config: 'english' })
-          // Alternatively, if you need a simpler search:
-          // .ilike('content', `%${debouncedQuery}%`)
+          .textSearch('content', currentQuery, { type: 'plain', config: 'english' })
           .limit(10);
 
         if (postError) throw postError;
@@ -160,7 +152,6 @@ const Search = () => {
           content: p.content,
           created_at: p.created_at,
           author_id: p.author_id,
-          // Supabase returns the single related profile object directly
           author_profiles: p.profiles as SearchResult['author_profiles'],
         }));
       }
@@ -168,10 +159,10 @@ const Search = () => {
       setResults(searchData);
     } catch (error) {
       console.error(`Search ${activeTab} error:`, error);
-      // You might want to show an error message to the user here
       setResults([]); 
     } finally {
-      setLoading(false);
+      // This runs after data is fetched/error occurs, stopping the loader
+      setLoading(false); 
     }
   };
 
@@ -180,7 +171,7 @@ const Search = () => {
   };
 
   const handleViewPost = (postId: string) => {
-    navigate(`/post/${postId}`); // Assuming post detail route
+    navigate(`/post/${postId}`); 
   };
 
   const handleStartChat = async (targetUserId: string) => {
@@ -247,6 +238,11 @@ const Search = () => {
     }
   };
 
+  // Simplified change handler to just update the query state
+  const handleQueryChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    setQuery(e.target.value);
+  };
+
   return (
     <div className="h-full flex flex-col">
       <div className="p-4 bg-card shadow-sm sticky top-0 z-10">
@@ -255,10 +251,11 @@ const Search = () => {
           <Input
             placeholder="Search users or posts..."
             value={query}
-            onChange={(e) => setQuery(e.target.value)}
+            onChange={handleQueryChange} 
             className="flex-1 rounded-full"
           />
-          <Button onClick={handleSearch} disabled={loading || !query.trim()} className="rounded-full shadow-lg">
+          {/* Button is now only decorative/loading indicator */}
+          <Button disabled={loading || !query.trim()} className="rounded-full shadow-lg">
             {loading ? <Loader2 className="h-4 w-4 animate-spin" /> : <SearchIcon className="h-4 w-4" />}
           </Button>
         </div>
@@ -291,8 +288,8 @@ const Search = () => {
               <div className={`h-16 w-16 rounded-full flex items-center justify-center mb-4 ${activeTab === 'users' ? 'bg-primary/10' : 'bg-muted/10'}`}>
                 {activeTab === 'users' ? <User className="h-8 w-8 text-primary" /> : <FileText className="h-8 w-8 text-muted-foreground" />}
               </div>
-              <p className="font-semibold text-foreground mb-1">{debouncedQuery ? 'No results found' : `Search for ${activeTab}`}</p>
-              <p className="text-sm">{debouncedQuery ? 'Try a different query' : 'Start typing to discover'}</p>
+              <p className="font-semibold text-foreground mb-1">{query ? 'No results found' : `Search for ${activeTab}`}</p>
+              <p className="text-sm">{query ? 'Try a different query' : 'Start typing to discover'}</p>
             </div>
           ) : (
             results.map((result) => (
@@ -360,7 +357,6 @@ const Search = () => {
                     </p>
                     <p className="text-xs text-muted-foreground flex items-center gap-1">
                       <Clock className="h-3 w-3" />
-                      {/* Check for created_at before formatting to prevent errors */}
                       {result.created_at ? new Date(result.created_at).toLocaleDateString('en-UG', { year: 'numeric', month: 'short', day: 'numeric' }) : 'Unknown Date'}
                     </p>
                   </div>
