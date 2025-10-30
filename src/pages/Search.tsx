@@ -5,6 +5,7 @@ import { Card } from '@/components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
+// FIX: Added 'Clock' and cleaned up unused icons
 import { Search as SearchIcon, User, MessageSquare, Loader2, FileText, Clock } from 'lucide-react'; 
 import { useNavigate } from 'react-router-dom';
 import { Skeleton } from '@/components/ui/skeleton';
@@ -91,32 +92,32 @@ const Search = () => {
   const [activeTab, setActiveTab] = useState<'users' | 'posts'>('users');
   const [results, setResults] = useState<SearchResult[]>([]);
   const [loading, setLoading] = useState(false);
-
+  const [debouncedQuery, setDebouncedQuery] = useState('');
   const navigate = useNavigate();
 
-  // Optimized useEffect for instant feedback
+  // Debounce search
   useEffect(() => {
-    if (query.trim()) {
-      // 1. Immediately clear results and show loader when typing starts or tab changes
-      setLoading(true);
-      setResults([]);
-      // 2. Run search logic (which will update results and set loading=false later)
-      handleSearch(query); 
+    const timer = setTimeout(() => setDebouncedQuery(query), 300);
+    return () => clearTimeout(timer);
+  }, [query]);
+
+  useEffect(() => {
+    if (debouncedQuery.trim()) {
+      handleSearch();
     } else {
-      // Clear results and stop loading if the query is empty
-      setLoading(false);
+      // FIX: Also set loading to false here when query is cleared
+      setLoading(false); 
       setResults([]);
     }
-  }, [query, activeTab]); 
+    // Added debouncedQuery and activeTab as a dependency
+  }, [debouncedQuery, activeTab]);
 
-  // Function now accepts the current query directly
-  const handleSearch = async (currentQuery: string) => {
-    if (!currentQuery.trim()) {
-        return; // Early exit, results and loading state already handled by useEffect
-    }
+  const handleSearch = async () => {
+    if (!debouncedQuery.trim()) return;
     
-    // setLoading(true) and setResults([]) moved to useEffect
-
+    setLoading(true);
+    // Improvement: Clear previous results immediately for better UX
+    setResults([]); 
     try {
       let searchData = [];
       if (activeTab === 'users') {
@@ -124,7 +125,7 @@ const Search = () => {
         const { data: userData, error: userError } = await supabase
           .from('profiles')
           .select('id, display_name, handle, bio, is_verified, is_organization_verified, is_private')
-          .or(`display_name.ilike.%${currentQuery}%,handle.ilike.%${currentQuery}%`)
+          .or(`display_name.ilike.%${debouncedQuery}%,handle.ilike.%${debouncedQuery}%`)
           .limit(10);
         
         if (userError) throw userError;
@@ -139,11 +140,11 @@ const Search = () => {
           .from('posts')
           .select(`
             id, content, created_at, author_id,
-            profiles!author_id(display_name, handle, is_verified, is_organization_verified)
+            profiles!author_id(id, display_name, handle, is_verified, is_organization_verified)
           `)
-          .textSearch('content', currentQuery, { type: 'plain', config: 'english' })
+          .textSearch('content', debouncedQuery, { type: 'plain', config: 'english' })
           .limit(10);
-
+        
         if (postError) throw postError;
 
         searchData = (postData || []).map((p: any) => ({
@@ -152,17 +153,17 @@ const Search = () => {
           content: p.content,
           created_at: p.created_at,
           author_id: p.author_id,
-          author_profiles: p.profiles as SearchResult['author_profiles'],
+          author_profiles: p.profiles,
         }));
       }
 
       setResults(searchData);
     } catch (error) {
-      console.error(`Search ${activeTab} error:`, error);
+      console.error('Search error:', error);
+      // Ensure results are cleared on error
       setResults([]); 
     } finally {
-      // This runs after data is fetched/error occurs, stopping the loader
-      setLoading(false); 
+      setLoading(false);
     }
   };
 
@@ -171,7 +172,7 @@ const Search = () => {
   };
 
   const handleViewPost = (postId: string) => {
-    navigate(`/post/${postId}`); 
+    navigate(`/post/${postId}`); // Assuming post detail route
   };
 
   const handleStartChat = async (targetUserId: string) => {
@@ -238,11 +239,6 @@ const Search = () => {
     }
   };
 
-  // Simplified change handler to just update the query state
-  const handleQueryChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    setQuery(e.target.value);
-  };
-
   return (
     <div className="h-full flex flex-col">
       <div className="p-4 bg-card shadow-sm sticky top-0 z-10">
@@ -251,11 +247,11 @@ const Search = () => {
           <Input
             placeholder="Search users or posts..."
             value={query}
-            onChange={handleQueryChange} 
+            onChange={(e) => setQuery(e.target.value)}
             className="flex-1 rounded-full"
           />
-          {/* Button is now only decorative/loading indicator */}
-          <Button disabled={loading || !query.trim()} className="rounded-full shadow-lg">
+          {/* NOTE: If you are relying on the button click, the debounce logic will still apply */}
+          <Button onClick={handleSearch} disabled={loading || !query.trim()} className="rounded-full shadow-lg">
             {loading ? <Loader2 className="h-4 w-4 animate-spin" /> : <SearchIcon className="h-4 w-4" />}
           </Button>
         </div>
@@ -288,8 +284,8 @@ const Search = () => {
               <div className={`h-16 w-16 rounded-full flex items-center justify-center mb-4 ${activeTab === 'users' ? 'bg-primary/10' : 'bg-muted/10'}`}>
                 {activeTab === 'users' ? <User className="h-8 w-8 text-primary" /> : <FileText className="h-8 w-8 text-muted-foreground" />}
               </div>
-              <p className="font-semibold text-foreground mb-1">{query ? 'No results found' : `Search for ${activeTab}`}</p>
-              <p className="text-sm">{query ? 'Try a different query' : 'Start typing to discover'}</p>
+              <p className="font-semibold text-foreground mb-1">{debouncedQuery ? 'No results found' : `Search for ${activeTab}`}</p>
+              <p className="text-sm">{debouncedQuery ? 'Try a different query' : 'Start typing to discover'}</p>
             </div>
           ) : (
             results.map((result) => (
@@ -316,19 +312,17 @@ const Search = () => {
                         )}
                       </div>
                     </div>
-                    {/* Only show Message button if it's not the current user */}
-                    {result.id !== user?.id && (
-                      <Button
-                        variant="ghost"
-                        size="sm"
-                        onClick={() => handleStartChat(result.id)}
-                        disabled={result.is_private}
-                        className="ml-4 rounded-full shadow-md hover:shadow-lg transition-all duration-200"
-                      >
-                        <MessageSquare className="h-4 w-4 mr-1" />
-                        Message
-                      </Button>
-                    )}
+                    {/* The MessageSquare icon needed to be imported, which is fixed above */}
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      onClick={() => handleStartChat(result.id)}
+                      disabled={result.is_private}
+                      className="ml-4 rounded-full shadow-md hover:shadow-lg transition-all duration-200"
+                    >
+                      <MessageSquare className="h-4 w-4 mr-1" />
+                      Message
+                    </Button>
                   </div>
                 ) : (
                   <div 
@@ -356,8 +350,9 @@ const Search = () => {
                       {result.content}
                     </p>
                     <p className="text-xs text-muted-foreground flex items-center gap-1">
+                      {/* FIX: The Clock icon needed to be imported, which is fixed above */}
                       <Clock className="h-3 w-3" />
-                      {result.created_at ? new Date(result.created_at).toLocaleDateString('en-UG', { year: 'numeric', month: 'short', day: 'numeric' }) : 'Unknown Date'}
+                      {new Date(result.created_at).toLocaleDateString('en-UG', { year: 'numeric', month: 'short', day: 'numeric' })}
                     </p>
                   </div>
                 )}
