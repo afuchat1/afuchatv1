@@ -5,10 +5,13 @@ import { useAuth } from '@/contexts/AuthContext';
 import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { toast } from 'sonner';
-import { User, ArrowLeft, MessageSquare, UserPlus, Pencil, Calendar } from 'lucide-react';
+// FIX: Added 'Lock' icon which was used but not imported
+import { User, ArrowLeft, MessageSquare, UserPlus, Pencil, Calendar, Lock } from 'lucide-react';
 import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/ui/tabs';
 import { Separator } from '@/components/ui/separator';
 import { Skeleton } from '@/components/ui/skeleton';
+// NEW: Import Popover components
+import { Popover, PopoverTrigger, PopoverContent } from '@/components/ui/popover';
 
 // --- Extended Profile and Post Interfaces ---
 interface Profile {
@@ -17,7 +20,7 @@ interface Profile {
   handle: string;
   bio?: string;
   is_verified?: boolean;
-  is_organization_verified?: boolean; // Included organization verification
+  is_organization_verified?: boolean;
   is_private?: boolean;
   created_at?: string;
 }
@@ -57,16 +60,51 @@ const TwitterVerifiedBadge = ({ size = 'w-5 h-5' }: { size?: string }) => (
   </svg>
 );
 
-// --- Unified Badge Component ---
-const VerifiedBadge = ({ isVerified, isOrgVerified }: { isVerified?: boolean; isOrgVerified?: boolean }) => {
-  if (isOrgVerified) {
-    return <GoldVerifiedBadge />;
+// --- NEW: Unified Badge Component with Popover ---
+const VerifiedBadge = ({ isVerified, isOrgVerified, handle }: { isVerified?: boolean; isOrgVerified?: boolean; handle?: string }) => {
+  if (!isVerified && !isOrgVerified) {
+    return null;
   }
-  if (isVerified) {
-    return <TwitterVerifiedBadge />;
-  }
-  return null;
+
+  const trigger = isOrgVerified ? <GoldVerifiedBadge /> : <TwitterVerifiedBadge />;
+  
+  const content = isOrgVerified ? (
+    // Gold Badge Content
+    <div className="p-4 max-w-sm">
+      <GoldVerifiedBadge size="w-6 h-6" />
+      <h3 className="font-bold text-lg mt-2 text-foreground">Verified Organization</h3>
+      <p className="text-sm text-muted-foreground mt-1">
+        This account is verified because it's a notable organization on AfuChat.
+        {handle && <span className="block mt-2 font-bold text-foreground">@{handle}</span>}
+      </p>
+    </div>
+  ) : (
+    // Blue Badge Content
+    <div className="p-4 max-w-sm">
+      <TwitterVerifiedBadge size="w-6 h-6" />
+      <h3 className="font-bold text-lg mt-2 text-foreground">Verified Account</h3>
+      <p className="text-sm text-muted-foreground mt-1">
+        This account is verified because it’s notable in government, news, entertainment, or another designated category.
+        {handle && <span className="block mt-2 font-bold text-foreground">@{handle}</span>}
+      </p>
+    </div>
+  );
+
+  return (
+    <Popover>
+      <PopoverTrigger asChild>
+        <span className="cursor-pointer" onClick={(e) => e.stopPropagation()}>
+          {trigger}
+        </span>
+      </PopoverTrigger>
+      {/* Added stopPropagation to prevent clicks inside popover from closing other UI */}
+      <PopoverContent className="w-auto p-0 border-none shadow-xl rounded-2xl" onClick={(e) => e.stopPropagation()}>
+        {content}
+      </PopoverContent>
+    </Popover>
+  );
 };
+// --- END NEW BADGE ---
 
 
 // --- Component Definition ---
@@ -99,7 +137,6 @@ const Profile = () => {
   }, []);
 
   const fetchProfile = useCallback(async () => {
-    // NOTE: Ensure your Supabase RLS allows selecting is_organization_verified
     const { data, error } = await supabase
       .from('profiles')
       .select('*, created_at')
@@ -112,7 +149,7 @@ const Profile = () => {
       return;
     }
 
-    setProfile(data as Profile); // Cast data to Profile type
+    setProfile(data as Profile);
   }, [userId, navigate]);
 
   const checkFollowStatus = useCallback(async () => {
@@ -140,8 +177,9 @@ const Profile = () => {
     if (!error && data) {
       setPosts(data.map(p => ({
         ...p,
-        acknowledgment_count: Math.floor(Math.random() * 100), // MOCK DATA
-        reply_count: Math.floor(Math.random() * 10),           // MOCK DATA
+        // NOTE: This is still MOCK DATA. You will need to implement real counts from your tables.
+        acknowledgment_count: Math.floor(Math.random() * 100),
+        reply_count: Math.floor(Math.random() * 10),
       } as Post)));
     }
   }, [userId]);
@@ -160,7 +198,7 @@ const Profile = () => {
   }, [userId, user, fetchProfile, fetchFollowCounts, fetchUserPosts, checkFollowStatus]);
 
 
-  // --- Follow/Unfollow Logic (Optimistic update included) ---
+  // --- Follow/Unfollow Logic (Unchanged) ---
   const handleFollow = async () => {
     if (!user) {
       navigate('/auth');
@@ -259,9 +297,8 @@ const Profile = () => {
     navigate(`/chat/${newChat.id}`);
   };
 
-  // --- Loading and Error States (Slightly improved) ---
+  // --- Loading and Error States (Unchanged) ---
   if (loading) {
-    // Uses the rich loading skeleton from the previous update
     return (
       <div className="h-full flex flex-col">
         <div className="p-4 border-b border-border">
@@ -338,7 +375,6 @@ const Profile = () => {
         {/* Profile Info and Buttons */}
         <div className="p-4">
           <div className="flex justify-between items-end -mt-20 sm:-mt-16">
-            {/* Avatar */}
             <div className="h-24 w-24 sm:h-32 sm:w-32 rounded-full bg-primary flex items-center justify-center text-primary-foreground border-4 border-background shadow-lg">
               <User className="h-12 w-12 sm:h-16 sm:w-16" />
             </div>
@@ -378,10 +414,11 @@ const Profile = () => {
           <div className="mt-3">
             <div className="flex items-center gap-1">
               <h1 className="text-xl font-extrabold leading-tight">{profile.display_name}</h1>
-              {/* FIX: Using the Unified VerifiedBadge Component */}
+              {/* FIX: Using the Unified VerifiedBadge Component and passing handle */}
               <VerifiedBadge 
                 isVerified={profile.is_verified} 
                 isOrgVerified={profile.is_organization_verified} 
+                handle={profile.handle}
               />
             </div>
             <p className="text-muted-foreground text-sm">@{profile.handle}</p>
