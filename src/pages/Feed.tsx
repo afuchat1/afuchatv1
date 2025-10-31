@@ -1,4 +1,4 @@
-import { useEffect, useState, useCallback, useMemo } from 'react';
+import { useEffect, useState, useCallback, useMemo, useRef } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/contexts/AuthContext';
@@ -158,18 +158,20 @@ const PostCard = ({ post, addReply, user, navigate, onAcknowledge }:
   
   const [replyText, setReplyText] = useState('');
   
-  // Ref for checking if the text has truly overflowed (Unchanged)
+  // Ref for checking if the text has truly overflowed
   const contentRef = useRef<HTMLParagraphElement>(null);
   const [isContentOverflowing, setIsContentOverflowing] = useState(false);
 
   useEffect(() => {
-    if (contentRef.current) {
-      // Check if scrollHeight (total content height) is greater than clientHeight (visible height)
+    // Check if scrollHeight (total content height) is greater than clientHeight (visible height)
+    if (contentRef.current && !isTextExpanded) {
       setIsContentOverflowing(
         contentRef.current.scrollHeight > contentRef.current.clientHeight
       );
+    } else {
+       setIsContentOverflowing(false);
     }
-  }, [post.content, isTextExpanded]);
+  }, [post.content, isTextExpanded]); // Recalculate if post or expanded state changes
 
 
   const handleViewProfile = (userId: string) => {
@@ -215,7 +217,7 @@ const PostCard = ({ post, addReply, user, navigate, onAcknowledge }:
   };
 
   
-  // 🎯 REPLIES: No collapse logic needed here, just display if the user toggled 'isReplying'
+  // 🎯 REPLIES: Show all replies if 'isReplying' is true (no internal collapse logic needed here)
   const repliesToDisplay = post.replies;
 
 
@@ -267,12 +269,14 @@ const PostCard = ({ post, addReply, user, navigate, onAcknowledge }:
               text-foreground text-base mt-1 mb-2 leading-relaxed whitespace-pre-wrap 
               ${!isTextExpanded ? 'max-h-[120px] overflow-hidden relative' : ''}
             `}
+            // Set max height style explicitly for the initial overflow check
+            style={!isTextExpanded ? { maxHeight: '120px' } : {}}
           >
             {parsePostContent(post.content, navigate)}
           </p>
 
           {/* Read More/Less Button */}
-          {isContentOverflowing && (
+          {(isContentOverflowing || isTextExpanded) && (
             <button
               type="button"
               onClick={(e) => {
@@ -295,7 +299,7 @@ const PostCard = ({ post, addReply, user, navigate, onAcknowledge }:
 
         {/* Post Actions (Unchanged) */}
         <div className="flex justify-between items-center text-sm text-muted-foreground mt-3 -ml-2 max-w-[420px]">
-          {/* 🎯 CHANGED: Toggle the reply INPUT only */}
+          {/* 🎯 CHANGED: Toggle the reply INPUT and visible replies */}
           <Button variant="ghost" size="sm" className="flex items-center gap-1 group" onClick={() => setIsReplying(!isReplying)}>
             <MessageSquare className="h-4 w-4 group-hover:text-primary transition-colors" />
             <span className="group-hover:text-primary transition-colors text-xs">{post.reply_count > 0 ? post.reply_count : ''}</span>
@@ -309,11 +313,11 @@ const PostCard = ({ post, addReply, user, navigate, onAcknowledge }:
           </Button>
         </div>
 
-        {/* --- COMMENT SECTION (Now driven by isReplying) --- */}
+        {/* --- COMMENT SECTION --- */}
         <div className="mt-3">
           
-          {/* 🎯 REPLIES LIST: Show if there are replies OR if the user is replying */}
-          {(post.reply_count > 0 || isReplying) && (
+          {/* 🎯 REPLIES LIST: Show ONLY if 'isReplying' is true */}
+          {isReplying && post.reply_count > 0 && (
             <div className="space-y-2 pt-1">
               {repliesToDisplay.map((reply) => (
                 <div key={reply.id} className="text-sm flex items-center">
@@ -330,18 +334,13 @@ const PostCard = ({ post, addReply, user, navigate, onAcknowledge }:
                   </p>
                 </div>
               ))}
-              
-              {/* 🎯 MESSAGE IF NO REPLIES YET */}
-              {post.reply_count === 0 && isReplying && (
-                <p className="text-sm text-muted-foreground pt-2">No replies yet. Be the first!</p>
-              )}
             </div>
           )}
 
 
           {/* Comment input */}
           {isReplying && user && (
-            <div className="mt-3 flex items-center gap-2 border-t pt-2 border-border">
+            <div className={`mt-3 flex items-center gap-2 pt-2 ${post.reply_count > 0 ? 'border-t border-border' : ''}`}>
               <div className="h-8 w-8 rounded-full bg-secondary flex items-center justify-center flex-shrink-0">
                 <User className="h-4 w-4 text-muted-foreground" />
               </div>
@@ -370,6 +369,12 @@ const PostCard = ({ post, addReply, user, navigate, onAcknowledge }:
               Please <a href="/auth" className="text-primary underline">log in</a> to comment.
             </div>
           )}
+          
+          {/* 🎯 Message for 0 replies */}
+          {post.reply_count === 0 && isReplying && (
+            <p className="text-sm text-muted-foreground pt-2">No replies yet. Be the first!</p>
+          )}
+
         </div>
       </div>
     </div>
