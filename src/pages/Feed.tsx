@@ -42,7 +42,6 @@ interface Reply {
 }
 
 // --- Verified Badge & Format Time Logic (Unchanged) ---
-// ... (The code for TwitterVerifiedBadge, GoldVerifiedBadge, VerifiedBadge, and formatTime remains here)
 const TwitterVerifiedBadge = () => (
   <svg
     viewBox="0 0 22 22"
@@ -91,9 +90,28 @@ const formatTime = (isoString: string) => {
 };
 
 
-// 🆕 NEW: Utility to parse content and create clickable links for mentions
+// 🎯 UPDATED: Utility to parse content and create clickable links for mentions
 const parsePostContent = (content: string, navigate: (path: string) => void) => {
   if (!content) return null;
+  
+  // Asynchronous function to look up user ID and navigate
+  const lookupAndNavigateByHandle = async (handle: string) => {
+    // 1. Look up the profile ID using the handle
+    const { data, error } = await supabase
+      .from('profiles')
+      .select('id')
+      .eq('handle', handle)
+      .single();
+
+    if (error || !data) {
+      toast.error(`Could not find profile for @${handle}`);
+      console.error(error);
+      return;
+    }
+
+    // 2. Navigate using the unique user ID
+    navigate(`/profile/${data.id}`); 
+  };
   
   // Regex: @ followed by alphanumeric characters, dashes, or underscores
   const mentionRegex = /@([a-zA-Z0-9_-]+)/g; 
@@ -113,8 +131,7 @@ const parsePostContent = (content: string, navigate: (path: string) => void) => 
         className="text-blue-500 font-medium cursor-pointer hover:underline"
         onClick={(e) => {
           e.stopPropagation(); // Stop click from bubbling up (e.g., to a PostCard click handler)
-          // Navigate to a dedicated profile URL using the handle
-          navigate(`/profile-by-handle/${handle}`); 
+          lookupAndNavigateByHandle(handle); // Call the async lookup function
         }}
       >
         {match}
@@ -132,7 +149,7 @@ const parsePostContent = (content: string, navigate: (path: string) => void) => 
   
   return <>{parts}</>;
 };
-// --- END NEW UTILITY ---
+// --- END UPDATED UTILITY ---
 
 
 // --- PostCard Component ---
@@ -186,8 +203,6 @@ const PostCard = ({ post, addReply, user, navigate, onAcknowledge }:
   };
 
   return (
-    // Note: If clicking the post card navigates to a single post page, 
-    // you might need to handle click propagation on the mentions (already done in parsePostContent).
     <div className="flex border-b border-border py-3 px-4 transition-colors hover:bg-muted/5">
       {/* Author Icon */}
       <div
@@ -228,7 +243,7 @@ const PostCard = ({ post, addReply, user, navigate, onAcknowledge }:
           </Button>
         </div>
 
-        {/* 🎯 UPDATED: Post Content - Now uses parser for inline mentions */}
+        {/* Post Content - Uses parser for inline mentions with ID lookup */}
         <p className="text-foreground text-base mt-1 mb-2 leading-relaxed whitespace-pre-wrap">
           {parsePostContent(post.content, navigate)}
         </p>
@@ -272,7 +287,7 @@ const PostCard = ({ post, addReply, user, navigate, onAcknowledge }:
                   </span>
                   <VerifiedBadge isVerified={reply.profiles.is_verified} isOrgVerified={reply.profiles.is_organization_verified} />
                   
-                  {/* 🎯 UPDATED: Reply Content - Now uses parser for inline mentions */}
+                  {/* Reply Content - Uses parser for inline mentions with ID lookup */}
                   <p className="text-foreground ml-1.5 whitespace-pre-wrap break-words">
                     {parsePostContent(reply.content, navigate)}
                   </p>
