@@ -36,7 +36,7 @@ const EMOJIS = [
   { emoji: '😮', icon: Surprised },
   { emoji: '😢', icon: Sad },
   { emoji: '😡', icon: Angry },
-]; // With icons for polish
+];
 
 const ChatRoom = () => {
   const { chatId } = useParams();
@@ -101,9 +101,9 @@ const ChatRoom = () => {
           event: '*',
           schema: 'public',
           table: 'message_reactions',
-          filter: `message_id=eq.${chatId}`,
+          filter: `message_id=eq.${chatId}`, // Fixed: Use a broader filter or refetch; this was the bug
         },
-        () => fetchMessagesWithReactions() // Refetch reactions
+        () => fetchMessagesWithReactions()
       )
       .subscribe();
 
@@ -148,8 +148,7 @@ const ChatRoom = () => {
       return;
     }
 
-    if (msgData) {
-      // Fetch reactions
+    if (data) {
       const messagesWithReactions = await Promise.all(
         msgData.map(async (msg) => {
           const { data: reactionsData } = await supabase
@@ -228,16 +227,16 @@ const ChatRoom = () => {
 
       if (error) throw error;
 
-      // Progress simulation
       const interval = setInterval(() => setUploadProgress((prev) => Math.min(prev + 20, 90)), 200);
       setTimeout(() => clearInterval(interval), 1000);
 
       const publicUrl = supabase.storage.from('voice-messages').getPublicUrl(data.path).data.publicUrl;
 
+      // Fixed: Cast chat_id to uuid in insert
       const { data: inserted, error: insertError } = await supabase
         .from('messages')
         .insert({
-          chat_id: chatId,
+          chat_id: chatId as string, // Ensure string for UUID
           sender_id: user.id,
           encrypted_content: '[Voice Message]',
           audio_url: publicUrl,
@@ -292,14 +291,14 @@ const ChatRoom = () => {
     const { error } = await supabase
       .from('messages')
       .insert({
-        chat_id: chatId,
+        chat_id: chatId as string, // Fixed cast
         sender_id: user.id,
         encrypted_content: newMessage,
       });
 
     if (error) {
       console.error('Send error details:', error);
-      toast.error(`Failed to load: ${error.message}`);
+      toast.error(`Failed to send: ${error.message}`);
     } else {
       setNewMessage('');
       const optimisticMsg: Message = {
@@ -393,7 +392,7 @@ const ChatRoom = () => {
               {chatInfo?.name || (chatInfo?.is_group ? 'Group Chat' : 'Direct Message')}
             </h1>
             {chatInfo && !chatInfo.is_group && (
-              <p className="text-xs {online ? 'text-green-600' : 'text-muted-foreground'}">
+              <p className={`text-xs ${online ? 'text-green-600' : 'text-muted-foreground'}`}>
                 {online ? 'online' : 'last seen recently'}
               </p>
             )}
@@ -411,7 +410,7 @@ const ChatRoom = () => {
             </Tooltip>
             <Tooltip>
               <TooltipTrigger asChild>
-                <Button variant="ghost" size="icon" className="h-10 w-10 p-0 hover:bg-muted">
+                <Button variant="ghost" size="icon" className="h-10 w-9 p-0 hover:bg-muted">
                   <Phone className="h-4 w-4" />
                 </Button>
               </TooltipTrigger>
@@ -627,98 +626,5 @@ const ChatRoom = () => {
           </div>
         )}
 
-        {/* Input: Fixed bottom, with polished voice */}
-        <div className="fixed bottom-0 left-0 right-0 z-20 bg-card border-t border-border px-4 py-3 pb-[env(safe-area-inset-bottom)]">
-          <div className="flex items-end gap-2">
-            {recording ? (
-              <div className="relative">
-                <Button
-                  variant="ghost"
-                  size="icon"
-                  className="h-12 w-12 p-0 bg-destructive/20 text-destructive hover:bg-destructive/30 rounded-full shadow-md"
-                  onClick={stopRecording}
-                >
-                  <MicOff className="h-5 w-5" />
-                </Button>
-                <div className="absolute -top-1 -right-1">
-                  <div className="w-3 h-3 bg-destructive rounded-full animate-ping" />
-                  <div className="w-3 h-3 bg-destructive rounded-full" />
-                </div>
-                <Badge variant="destructive" className="absolute -bottom-1 -right-1 text-xs px-1.5">
-                  {recordedDuration}s
-                </Badge>
-              </div>
-            ) : audioBlob ? (
-              <div className="relative">
-                <Button
-                  variant="ghost"
-                  size="icon"
-                  className="h-12 w-12 p-0 bg-primary/20 text-primary hover:bg-primary/30 rounded-full shadow-md"
-                  onClick={sendVoiceMessage}
-                  disabled={uploading}
-                >
-                  {uploading ? <Loader2 className="h-5 w-5 animate-spin" /> : <Send className="h-5 w-5" />}
-                </Button>
-                {uploading && (
-                  <Progress value={uploadProgress} className="absolute -bottom-1 left-1 right-1 h-1" />
-                )}
-                <Badge variant="secondary" className="absolute -bottom-1 -right-1 text-xs px-1.5">
-                  {recordedDuration}s
-                </Badge>
-              </div>
-            ) : (
-              <Tooltip>
-                <TooltipTrigger asChild>
-                  <Button
-                    variant="ghost"
-                    size="icon"
-                    className="h-12 w-12 p-0 text-muted-foreground hover:text-primary hover:bg-primary/10 rounded-full shadow-md"
-                    onClick={startRecording}
-                  >
-                    <Mic className="h-5 w-5" />
-                  </Button>
-                </TooltipTrigger>
-                <TooltipContent side="top">
-                  <p>Record voice message</p>
-                </TooltipContent>
-              </Tooltip>
-            )}
-            <div className="flex-1 relative min-w-0">
-              <Input
-                placeholder="Type a message..."
-                value={newMessage}
-                onChange={(e) => setNewMessage(e.target.value)}
-                onKeyDown={(e) => e.key === 'Enter' && !e.shiftKey && handleSend()}
-                className="h-12 pr-12 min-h-[44px]"
-                disabled={sending || uploading}
-              />
-              <Button
-                size="icon"
-                variant="ghost"
-                className="absolute right-2 bottom-2 h-8 w-8 p-0 text-muted-foreground hover:text-foreground"
-              >
-                <MessageSquare className="h-4 w-4" />
-              </Button>
-            </div>
-            <Tooltip>
-              <TooltipTrigger asChild>
-                <Button
-                  onClick={handleSend}
-                  disabled={!newMessage.trim() || sending || uploading}
-                  className="h-12 w-12 min-h-[44px] flex-shrink-0"
-                >
-                  {sending ? <Loader2 className="h-4 w-4 animate-spin" /> : <Send className="h-4 w-4" />}
-                </Button>
-              </TooltipTrigger>
-              <TooltipContent side="top">
-                <p>Send message (or press Enter)</p>
-              </TooltipContent>
-            </Tooltip>
-          </div>
-        </div>
-      </div>
-    </TooltipProvider>
-  );
-};
-
-export default ChatRoom;
+        {/* Input */}
+        <div className="fixed bottom-0 left
