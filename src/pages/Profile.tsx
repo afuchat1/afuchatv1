@@ -1,5 +1,5 @@
 import { useEffect, useState, useCallback } from 'react';
-import { useParams, useNavigate, Link } from 'react-router-dom'; // Import Link for Mentions
+import { useParams, useNavigate, Link } from 'react-router-dom';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/contexts/AuthContext';
 import { Card } from '@/components/ui/card';
@@ -9,10 +9,9 @@ import { User, ArrowLeft, MessageSquare, UserPlus, Pencil, Calendar, Lock } from
 import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/ui/tabs';
 import { Separator } from '@/components/ui/separator';
 import { Skeleton } from '@/components/ui/skeleton';
-// Import Popover components
 import { Popover, PopoverTrigger, PopoverContent } from '@/components/ui/popover';
 
-// --- Extended Profile and Post Interfaces ---
+// --- Extended Profile and Post Interfaces (Unchanged) ---
 interface Profile {
   id: string;
   display_name: string;
@@ -32,7 +31,14 @@ interface Post {
   reply_count: number;
 }
 
-// --- Golden Verified Badge (for Organizations) ---
+// --- Helper: Check if a string is a valid UUID ---
+// This regex is a simple check for a standard UUID format (8-4-4-4-12 hex digits)
+const isUUID = (str: string): boolean => {
+  const uuidRegex = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+  return uuidRegex.test(str);
+};
+
+// --- Badges (Unchanged) ---
 const GoldVerifiedBadge = ({ size = 'w-5 h-5' }: { size?: string }) => (
   <svg
     viewBox="0 0 22 22"
@@ -45,8 +51,6 @@ const GoldVerifiedBadge = ({ size = 'w-5 h-5' }: { size?: string }) => (
   </svg>
 );
 
-
-// --- Twitter Verified Badge (for Users) ---
 const TwitterVerifiedBadge = ({ size = 'w-5 h-5' }: { size?: string }) => (
   <svg
     viewBox="0 0 22 22"
@@ -59,7 +63,6 @@ const TwitterVerifiedBadge = ({ size = 'w-5 h-5' }: { size?: string }) => (
   </svg>
 );
 
-// --- Simplified Badge Icon Component (No Popover) ---
 const VerifiedBadgeIcon = ({ isVerified, isOrgVerified }: { isVerified?: boolean; isOrgVerified?: boolean }) => {
   if (isOrgVerified) {
     return <GoldVerifiedBadge />;
@@ -70,7 +73,7 @@ const VerifiedBadgeIcon = ({ isVerified, isOrgVerified }: { isVerified?: boolean
   return null;
 };
 
-// --- NEW: Post Content Parser Component for @Mentions ---
+// --- Post Content Parser Component for @Mentions (Unchanged) ---
 const MENTION_REGEX = /@(\w+)/g;
 
 const PostContentParser: React.FC<{ content: string }> = ({ content }) => {
@@ -78,45 +81,38 @@ const PostContentParser: React.FC<{ content: string }> = ({ content }) => {
   let lastIndex = 0;
   let match;
 
-  // We use Link from react-router-dom to navigate without a full page reload
   while ((match = MENTION_REGEX.exec(content)) !== null) {
-    const mentionText = match[0]; // e.g., "@handle"
-    const handle = match[1];     // e.g., "handle"
+    const mentionText = match[0];
+    const handle = match[1];
 
-    // 1. Push the text segment *before* the current match
     if (match.index > lastIndex) {
       parts.push(content.substring(lastIndex, match.index));
     }
 
-    // 2. Push the clickable <Link> component for the mention
     parts.push(
       <Link
         key={`mention-${match.index}-${handle}`}
-        to={`/profile/${handle}`} // Link to the user profile using the extracted handle
+        to={`/profile/${handle}`}
         className="text-blue-500 hover:text-blue-400 font-medium transition-colors"
-        onClick={(e) => e.stopPropagation()} // Prevent potential card click/navigation 
+        onClick={(e) => e.stopPropagation()}
       >
         {mentionText}
       </Link>
     );
 
-    // 3. Update the last index to the end of the current match
     lastIndex = match.index + mentionText.length;
   }
 
-  // 4. Push the remaining text after the last match
   if (lastIndex < content.length) {
     parts.push(content.substring(lastIndex));
   }
 
   return <p className="text-foreground whitespace-pre-wrap leading-relaxed">{parts}</p>;
 };
-// --- END NEW PARSER ---
-
 
 // --- Component Definition ---
 const Profile = () => {
-  const { userId } = useParams();
+  const { userId: urlParam } = useParams<{ userId: string }>(); // Use a clearer name for the URL parameter
   const navigate = useNavigate();
   const { user } = useAuth();
   const [profile, setProfile] = useState<Profile | null>(null);
@@ -124,9 +120,15 @@ const Profile = () => {
   const [isFollowing, setIsFollowing] = useState(false);
   const [followCount, setFollowCount] = useState({ followers: 0, following: 0 });
   const [loading, setLoading] = useState(true);
+  
+  // State to hold the definitive user ID once the profile is loaded
+  const [profileId, setProfileId] = useState<string | null>(null);
 
   // Function to aggregate follow/follower counts
   const fetchFollowCounts = useCallback(async (id: string) => {
+    // Only fetch if a valid ID is provided
+    if (!id) return;
+    
     const { count: followerCount } = await supabase
       .from('follows')
       .select('id', { count: 'exact', head: true })
@@ -143,78 +145,111 @@ const Profile = () => {
     });
   }, []);
 
+  // --- THE CRUCIAL FIX IS HERE ---
   const fetchProfile = useCallback(async () => {
-    // NOTE: This assumes userId in useParams is actually the ID for fetching.
-    // If you intend to pass a HANDLE in the URL, you'll need to modify the Supabase query.
-    const { data, error } = await supabase
+    setLoading(true);
+    setProfile(null);
+    setProfileId(null);
+    
+    // Determine if the URL parameter is a UUID (id) or a handle
+    const isParamUUID = urlParam ? isUUID(urlParam) : false;
+    
+    let query = supabase
       .from('profiles')
       .select('*, created_at')
-      .eq('id', userId)
-      .single();
+      .limit(1);
 
-    if (error) {
-      toast.error('Failed to load profile');
+    if (isParamUUID) {
+      // Query by ID
+      query = query.eq('id', urlParam);
+    } else if (urlParam) {
+      // Query by handle
+      query = query.eq('handle', urlParam);
+    } else {
+      // No param, maybe redirect to current user's profile or home
       navigate('/');
+      setLoading(false);
       return;
     }
-
+    
+    const { data, error } = await query.single();
+    
+    if (error || !data) {
+        toast.error('Failed to load profile or profile not found');
+        console.error('Profile fetch error:', error);
+        setLoading(false);
+        return;
+    }
+    
     setProfile(data as Profile);
-  }, [userId, navigate]);
+    setProfileId(data.id); // Store the actual UUID for use in other fetches
+    
+  }, [urlParam, navigate]); // Depend on urlParam
 
-  const checkFollowStatus = useCallback(async () => {
-    if (!user) return;
+  const checkFollowStatus = useCallback(async (id: string) => {
+    if (!user || !id) return;
 
     const { data } = await supabase
       .from('follows')
       .select('id')
       .eq('follower_id', user.id)
-      .eq('following_id', userId)
+      .eq('following_id', id) // Use the actual profile ID
       .limit(1)
       .single();
 
     setIsFollowing(!!data);
-  }, [user, userId]);
+  }, [user]);
 
-  const fetchUserPosts = useCallback(async () => {
+  const fetchUserPosts = useCallback(async (id: string) => {
+    if (!id) return;
+
     const { data, error } = await supabase
       .from('posts')
       .select('id, content, created_at')
-      .eq('author_id', userId)
+      .eq('author_id', id) // Use the actual profile ID
       .order('created_at', { ascending: false })
       .limit(20);
 
     if (!error && data) {
       setPosts(data.map(p => ({
         ...p,
-        // NOTE: This is still MOCK DATA. You will need to implement real counts from your tables.
+        // NOTE: Keep mock counts for now
         acknowledgment_count: Math.floor(Math.random() * 100),
         reply_count: Math.floor(Math.random() * 10),
       } as Post)));
+    } else {
+        setPosts([]); // Clear posts on error or no data
     }
-  }, [userId]);
+  }, []);
+
 
   useEffect(() => {
-    if (userId) {
-      setLoading(true);
-      fetchProfile();
-      fetchFollowCounts(userId);
-      fetchUserPosts();
-      if (user && user.id !== userId) {
-        checkFollowStatus();
+    // 1. Fetch the profile first (determines the actual UUID)
+    fetchProfile();
+  }, [fetchProfile]);
+  
+  useEffect(() => {
+    // 2. Once the profileId (UUID) is set, fetch everything else
+    if (profileId) {
+      fetchFollowCounts(profileId);
+      fetchUserPosts(profileId);
+      if (user && user.id !== profileId) {
+        checkFollowStatus(profileId);
       }
       setLoading(false);
     }
-  }, [userId, user, fetchProfile, fetchFollowCounts, fetchUserPosts, checkFollowStatus]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [profileId, user]); // Only re-run when profileId or user changes
 
-
-  // --- Follow/Unfollow Logic (Unchanged) ---
+  // --- Follow/Unfollow Logic (Updated to use profileId) ---
   const handleFollow = async () => {
-    if (!user) {
+    if (!user || !profileId) {
       navigate('/auth');
       return;
     }
     const currentIsFollowing = isFollowing;
 
+    // Optimistic UI Update
     setIsFollowing(!currentIsFollowing);
     setFollowCount(prev => ({
       ...prev,
@@ -226,9 +261,10 @@ const Profile = () => {
         .from('follows')
         .delete()
         .eq('follower_id', user.id)
-        .eq('following_id', userId);
+        .eq('following_id', profileId); // Use profileId
 
       if (error) {
+        // Revert on error
         setIsFollowing(true);
         setFollowCount(prev => ({ ...prev, followers: prev.followers + 1 }));
         toast.error('Failed to unfollow');
@@ -238,9 +274,10 @@ const Profile = () => {
     } else {
       const { error } = await supabase
         .from('follows')
-        .insert({ follower_id: user.id, following_id: userId });
+        .insert({ follower_id: user.id, following_id: profileId }); // Use profileId
 
       if (error) {
+        // Revert on error
         setIsFollowing(false);
         setFollowCount(prev => ({ ...prev, followers: prev.followers - 1 }));
         toast.error('Failed to follow');
@@ -250,9 +287,9 @@ const Profile = () => {
     }
   };
 
-  // --- Start Chat Logic (Unchanged) ---
+  // --- Start Chat Logic (Updated to use profileId) ---
   const handleStartChat = async () => {
-    if (!user) {
+    if (!user || !profileId) {
       navigate('/auth');
       return;
     }
@@ -270,7 +307,7 @@ const Profile = () => {
           .select('user_id')
           .eq('chat_id', chat.chat_id);
 
-        if (members && members.length === 2 && members.some(m => m.user_id === userId)) {
+        if (members && members.length === 2 && members.some(m => m.user_id === profileId)) { // Use profileId
           navigate(`/chat/${chat.chat_id}`);
           return;
         }
@@ -292,7 +329,7 @@ const Profile = () => {
       .from('chat_members')
       .insert([
         { chat_id: newChat.id, user_id: user.id },
-        { chat_id: newChat.id, user_id: userId },
+        { chat_id: newChat.id, user_id: profileId }, // Use profileId
       ]);
 
     if (membersError) {
@@ -303,7 +340,7 @@ const Profile = () => {
     navigate(`/chat/${newChat.id}`);
   };
 
-  // --- Loading and Error States (Unchanged) ---
+  // --- Loading State Render (Unchanged) ---
   if (loading) {
     return (
       <div className="h-full flex flex-col">
@@ -335,6 +372,7 @@ const Profile = () => {
     );
   }
 
+  // --- Profile Not Found Render (Unchanged) ---
   if (!profile) {
     return (
       <div className="flex items-center justify-center h-full">
@@ -343,6 +381,7 @@ const Profile = () => {
     );
   }
 
+  // --- Utility (Unchanged) ---
   const formatCount = (count: number) => {
     if (count >= 1000) {
       return (count / 1000).toFixed(1) + 'K';
@@ -350,7 +389,7 @@ const Profile = () => {
     return count;
   };
 
-  // --- Main Render (Rich UI with Badge logic) ---
+  // --- Main Render (Unchanged from last version, except for the new profileId usage in handlers) ---
   return (
     <div className="h-full flex flex-col">
       {/* HEADER BAR */}
@@ -386,7 +425,7 @@ const Profile = () => {
             </div>
 
             {/* Buttons */}
-            {user && user.id === userId ? (
+            {user && user.id === profileId ? ( // Use profileId for comparison
               <Button variant="outline" className="rounded-full px-4 font-bold">
                 <Pencil className="h-4 w-4 mr-2" />
                 Edit Profile
@@ -423,7 +462,6 @@ const Profile = () => {
             {(profile.is_verified || profile.is_organization_verified) ? (
               <Popover>
                 <PopoverTrigger asChild>
-                  {/* This entire div is now the clickable trigger */}
                   <div className="flex items-center gap-1 cursor-pointer w-fit">
                     <h1 className="text-xl font-extrabold leading-tight">{profile.display_name}</h1>
                     <VerifiedBadgeIcon
@@ -511,7 +549,7 @@ const Profile = () => {
           </TabsList>
 
           <TabsContent value="posts">
-            {profile.is_private && user?.id !== userId ? (
+            {profile.is_private && user?.id !== profileId ? (
               <div className="text-center text-muted-foreground py-12">
                 <Lock className="h-8 w-8 mx-auto mb-2" />
                 <p className="font-semibold">This profile is private</p>
@@ -525,7 +563,6 @@ const Profile = () => {
               <div className="space-y-0 divide-y divide-border">
                 {posts.map((post) => (
                   <Card key={post.id} className="p-4 rounded-none border-x-0 border-t-0 hover:bg-muted/10 cursor-pointer transition-colors">
-                    {/* 👇 Using the new component for clickable mentions 👇 */}
                     <PostContentParser content={post.content} /> 
                     <div className="flex justify-between items-center text-xs text-muted-foreground mt-2">
                         <span>{new Date(post.created_at).toLocaleString('en-US', { hour: '2-digit', minute: '2-digit', day: 'numeric', month: 'short' })}</span>
