@@ -95,24 +95,32 @@ const NewChatDialog = ({ isOpen, onClose }: NewChatDialogProps) => {
     }
   };
 
-  // --- THIS IS THE UPDATED FUNCTION ---
+  // --- UPDATED FUNCTION WITH .single() AND BETTER ERROR LOGGING ---
   const handleStartChat = async (targetUserId: string) => {
     setCreating(true);
     try {
-      // Just call the one function!
       const { data: chatId, error } = await supabase
         .rpc('get_or_create_chat', {
           other_user_id: targetUserId
-        });
+        })
+        .single();  // Ensures single scalar return (UUID)
 
       if (error) throw error;
+
+      if (!chatId) throw new Error('No chat ID returned from server');
 
       onClose();
       navigate(`/chat/${chatId}`);
 
     } catch (error) {
-      console.error('Error starting chat:', error);
-      toast.error('Failed to start chat');
+      console.error('Chat error details:', {
+        message: error.message,
+        code: error.code,
+        details: error.details,
+        hint: error.hint,
+        targetUserId  // For debugging
+      });
+      toast.error(error.message || 'Failed to start chat');
     } finally {
       setCreating(false);
     }
