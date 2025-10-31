@@ -2,7 +2,7 @@ import { useEffect, useState } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/contexts/AuthContext';
 import { Skeleton } from '@/components/ui/skeleton';
-import { Link } from 'react-router-dom'; // <-- THE FIX IS HERE
+import { Link } from 'react-router-dom';
 import { Heart, MessageSquare, UserPlus } from 'lucide-react';
 import { cn } from '@/lib/utils'; // Assuming you have a cn utility for classnames
 
@@ -85,14 +85,10 @@ const Notifications = () => {
   const [notifications, setNotifications] = useState<Notification[]>([]);
   const [loading, setLoading] = useState(true);
 
-  // This function calls our database to mark all unread messages as 'read'
   const markAsRead = async () => {
     if (!user) return;
     try {
-      // We will create this 'mark_notifications_as_read' function in the next step
       await supabase.rpc('mark_notifications_as_read');
-      
-      // Optimistically update the UI so the highlights disappear
       setNotifications(prev => 
         prev.map(n => ({ ...n, is_read: true }))
       );
@@ -104,19 +100,21 @@ const Notifications = () => {
   useEffect(() => {
     if (!user) return;
 
-    // Fetch all notifications
     const fetchNotifications = async () => {
       setLoading(true);
       try {
+        
+        // --- THIS IS THE CORRECTED QUERY ---
         const { data, error } = await supabase
           .from('notifications')
           .select(`
             id, created_at, type, is_read, post_id,
-            actor:profiles!actor_id (display_name, handle),
-            post:posts!post_id (content)
+            actor:actor_id ( display_name, handle ),
+            post:post_id ( content )
           `)
           .eq('user_id', user.id)
           .order('created_at', { ascending: false });
+        // ------------------------------------
 
         if (error) throw error;
         setNotifications(data as any);
@@ -129,7 +127,6 @@ const Notifications = () => {
 
     fetchNotifications();
 
-    // Mark as read when the page is opened (after a short delay)
     const timer = setTimeout(markAsRead, 1500); 
     return () => clearTimeout(timer);
 
@@ -138,16 +135,21 @@ const Notifications = () => {
   if (loading) {
     // Skeleton loading state
     return (
-      <div className="p-4 space-y-4">
-        {[...Array(10)].map((_, i) => (
-          <div key={i} className="flex items-center space-x-4">
-            <Skeleton className="h-10 w-10 rounded-full" />
-            <div className="space-y-2">
-              <Skeleton className="h-4 w-[250px]" />
-              <Skeleton className="h-4 w-[200px]" />
+      <div className="h-full flex flex-col">
+        <div className="p-4 border-b border-border sticky top-0 bg-background/95 backdrop-blur-sm z-10">
+          <h1 className="text-xl font-extrabold text-foreground">Notifications</h1>
+        </div>
+        <div className="p-4 space-y-4">
+          {[...Array(10)].map((_, i) => (
+            <div key={i} className="flex items-center space-x-4">
+              <Skeleton className="h-10 w-10 rounded-full" />
+              <div className="space-y-2">
+                <Skeleton className="h-4 w-[250px]" />
+                <Skeleton className="h-4 w-[200px]" />
+              </div>
             </div>
-          </div>
-        ))}
+          ))}
+        </div>
       </div>
     );
   }
