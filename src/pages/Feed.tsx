@@ -1,5 +1,6 @@
 import { useEffect, useState, useCallback } from 'react';
 import { useNavigate, Link } from 'react-router-dom'; // 🎯 ADDED LINK
+import { motion } from 'framer-motion';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/contexts/AuthContext';
 import { toast } from 'sonner';
@@ -147,11 +148,12 @@ const parsePostContent = (content: string, navigate: (path: string) => void) => 
 
 
 // --- PostCard Component ---
-const PostCard = ({ post, addReply, user, navigate, onAcknowledge }:
-  { post: Post; addReply: (postId: string, reply: Reply) => void; user: any; navigate: any; onAcknowledge: (postId: string, hasLiked: boolean) => void }) => {
+const PostCard = ({ post, addReply, user, navigate, onAcknowledge, index = 0 }:
+  { post: Post; addReply: (postId: string, reply: Reply) => void; user: any; navigate: any; onAcknowledge: (postId: string, hasLiked: boolean) => void; index?: number }) => {
 
   const [showComments, setShowComments] = useState(false);
   const [showAllReplies, setShowAllReplies] = useState(false);
+  const [showFullPost, setShowFullPost] = useState(false);
   const [replyText, setReplyText] = useState('');
   
   const handleViewProfile = (userId: string) => {
@@ -198,10 +200,20 @@ const PostCard = ({ post, addReply, user, navigate, onAcknowledge }:
     }
   };
 
+  const MAX_POST_LENGTH = 280; // Twitter-like limit, adjust as needed
+  const isPostLong = post.content.length > MAX_POST_LENGTH;
+  const displayContent = showFullPost ? post.content : (isPostLong ? post.content.slice(0, MAX_POST_LENGTH) + '...' : post.content);
+  const collapsedMaxHeight = 80; // Approximate height for 4 lines in px
+
   const hasMoreReplies = post.replies.length > 3;
 
   return (
-    <div className="flex border-b border-border py-3 px-4 transition-colors hover:bg-muted/5">
+    <motion.div
+      initial={{ opacity: 0, y: 20 }}
+      animate={{ opacity: 1, y: 0 }}
+      transition={{ duration: 0.5, delay: index * 0.1 }}
+      className="flex border-b border-border py-3 px-4 transition-colors hover:bg-muted/5"
+    >
       {/* Author Icon */}
       <div
         className="mr-3 flex-shrink-0 h-10 w-10 rounded-full bg-secondary flex items-center justify-center cursor-pointer"
@@ -241,11 +253,44 @@ const PostCard = ({ post, addReply, user, navigate, onAcknowledge }:
           </Button>
         </div>
 
-        {/* 🎯 POST CONTENT WRAPPED IN LINK TO DETAIL PAGE */}
+        {/* 🎯 POST CONTENT WRAPPED IN LINK TO DETAIL PAGE WITH COLLAPSE/EXPAND */}
         <Link to={`/post/${post.id}`} className="block">
-          <p className="text-foreground text-base mt-1 mb-2 leading-relaxed whitespace-pre-wrap">
-            {parsePostContent(post.content, navigate)}
-          </p>
+          <motion.div
+            className="overflow-hidden"
+            initial={false}
+            animate={{
+              maxHeight: (showFullPost || !isPostLong) ? 1000 : collapsedMaxHeight
+            }}
+            transition={{ duration: 0.3, ease: "easeInOut" }}
+          >
+            <p className="text-foreground text-base mt-1 mb-2 leading-relaxed whitespace-pre-wrap">
+              {parsePostContent(displayContent, navigate)}
+            </p>
+            {isPostLong && (
+              <Button
+                variant="link"
+                size="sm"
+                className="p-0 h-auto text-primary text-sm -ml-1.5 mt-1"
+                onClick={(e) => {
+                  e.preventDefault();
+                  e.stopPropagation();
+                  setShowFullPost(!showFullPost);
+                }}
+              >
+                {showFullPost ? (
+                  <>
+                    <ChevronUp className="h-3 w-3 inline mr-1" />
+                    Show less
+                  </>
+                ) : (
+                  <>
+                    <ChevronDown className="h-3 w-3 inline mr-1" />
+                    Read more
+                  </>
+                )}
+              </Button>
+            )}
+          </motion.div>
         </Link>
         {/* END POST CONTENT LINK */}
 
@@ -295,12 +340,14 @@ const PostCard = ({ post, addReply, user, navigate, onAcknowledge }:
                   </div>
                 ))}
                 {hasMoreReplies && (
-                  <div 
-                    className={`overflow-hidden transition-all duration-300 ease-in-out -mt-2 ${
-                      showAllReplies 
-                        ? 'max-h-[1000px] opacity-100' 
-                        : 'max-h-0 opacity-0'
-                    }`}
+                  <motion.div 
+                    initial={false}
+                    animate={{
+                      opacity: showAllReplies ? 1 : 0,
+                      maxHeight: showAllReplies ? 1000 : 0
+                    }}
+                    transition={{ duration: 0.3, ease: "easeInOut" }}
+                    className="overflow-hidden -mt-2"
                   >
                     {post.replies.slice(3).map((reply) => (
                       <div key={reply.id} className="text-sm flex items-start p-0">
@@ -317,7 +364,7 @@ const PostCard = ({ post, addReply, user, navigate, onAcknowledge }:
                         </p>
                       </div>
                     ))}
-                  </div>
+                  </motion.div>
                 )}
               </div>
 
@@ -378,7 +425,7 @@ const PostCard = ({ post, addReply, user, navigate, onAcknowledge }:
         </div>
         {/* --- END COMMENT SECTION --- */}
       </div>
-    </div>
+    </motion.div>
   );
 };
 
@@ -643,7 +690,7 @@ const Feed = () => {
             No posts yet. Follow users or share your first post!
           </div>
         ) : (
-          posts.map((post) => (
+          posts.map((post, index) => (
             <PostCard
               key={post.id}
               post={post}
@@ -651,6 +698,7 @@ const Feed = () => {
               user={user}
               navigate={navigate}
               onAcknowledge={handleAcknowledge}
+              index={index}
             />
           ))
         )}
