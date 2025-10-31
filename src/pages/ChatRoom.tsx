@@ -4,12 +4,15 @@ import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/contexts/AuthContext';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
-import { ArrowLeft, Send, User, Loader2, Phone, Video, MoreVertical, Check, MessageSquare } from 'lucide-react';
+import { Badge } from '@/components/ui/badge';
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
+import { ArrowLeft, Send, User, Loader2, Phone, Video, MoreVertical, Check, MessageSquare, HelpCircle, Info, Mic, MicOff, Play, Pause, Volume2 } from 'lucide-react';
 import { toast } from 'sonner';
 
 interface Message {
   id: string;
   encrypted_content: string;
+  audio_url?: string; // New: For voice messages
   sender_id: string;
   sent_at: string;
   profiles: {
@@ -33,8 +36,14 @@ const ChatRoom = () => {
   const [loading, setLoading] = useState(true);
   const [sending, setSending] = useState(false);
   const [online, setOnline] = useState(false);
-  const [showReactions, setShowReactions] = useState<{ messageId: string; x: number; y: number } | null>(null);
+  const [showHelp, setShowHelp] = useState(true);
+  const [recording, setRecording] = useState(false);
+  const [audioBlob, setAudioBlob] = useState<Blob | null>(null);
+  const [uploading, setUploading] = useState(false);
+  const [audioPlayers, setAudioPlayers] = useState<{ [key: string]: { isPlaying: boolean; audio: HTMLAudioElement | null } }>({});
   const messagesEndRef = useRef<HTMLDivElement>(null);
+  const mediaRecorderRef = useRef<MediaRecorder | null>(null);
+  const streamRef = useRef<MediaStream | null>(null);
 
   useEffect(() => {
     if (!chatId || !user) return;
@@ -79,6 +88,7 @@ const ChatRoom = () => {
 
     return () => {
       supabase.removeChannel(channel);
+      stopRecording();
     };
   }, [chatId, user]);
 
@@ -121,6 +131,87 @@ const ChatRoom = () => {
     setLoading(false);
   };
 
+  const startRecording = async () => {
+    try {
+      const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+      streamRef.current = stream;
+      const mediaRecorder = new MediaRecorder(stream);
+      mediaRecorderRef.current = mediaRecorder;
+
+      const chunks: BlobPart[] = [];
+      mediaRecorder.ondataavailable = (e) => chunks.push(e.data);
+      mediaRecorder.onstop = () => {
+        const blob = new Blob(chunks, { type: 'audio/webm' });
+        setAudioBlob(blob);
+        stream.getTracks().forEach(track => track.stop());
+      };
+
+      mediaRecorder.start();
+      setRecording(true);
+      toast.success('Recording... Tap to stop');
+    } catch (err) {
+      toast.error('Microphone access denied');
+      console.error('Recording error:', err);
+    }
+  };
+
+  const stopRecording = async () => {
+    if (mediaRecorderRef.current && recording) {
+      mediaRecorderRef.current.stop();
+      setRecording(false);
+      toast.success('Recorded! Tap send to share.');
+    }
+  };
+
+  const sendVoiceMessage = async () => {
+    if (!audioBlob || !user || !chatId) return;
+
+    setUploading(true);
+    try {
+      const fileName = `voice-${Date.now()}.webm`;
+      const { data, error } = await supabase.storage
+        .from('voice-messages') // Assume bucket created
+        .upload(fileName, audioBlob, { contentType: 'audio/webm' });
+
+      if (error) throw error;
+
+      const { data: inserted, error: insertError } = await supabase
+        .from('messages')
+        .insert({
+          chat_id: chatId,
+          sender_id: user.id,
+          encrypted_content: '[Voice Message]', // Placeholder text
+          audio_url: supabase.storage.from('voice-messages').getPublicUrl(data.path).data.publicUrl,
+        })
+        .select()
+        .single();
+
+      if (insertError) throw insertError;
+
+      setMessages((prev) => [...prev, { ...inserted, profiles: { display_name: user.display_name || 'You', handle: user.handle || '@you' } }]);
+      setAudioBlob(null);
+    } catch (err) {
+      toast.error('Failed to send voice message');
+      console.error(err);
+    }
+    setUploading(false);
+  };
+
+  const toggleAudio = (messageId: string, audioUrl: string) => {
+    setAudioPlayers((prev) => {
+      const current = prev[messageId];
+      if (current?.isPlaying) {
+        current.audio?.pause();
+        return { ...prev, [messageId]: { ...current, isPlaying: false } };
+      } else {
+        const audio = new Audio(audioUrl);
+        audio.play();
+        audio.onended = () => setAudioPlayers((p) => ({ ...p, [messageId]: { ...p[messageId], isPlaying: false } }));
+        return { ...prev, [messageId]: { audio, isPlaying: true } };
+      }
+    });
+  };
+
   const handleSend = async () => {
     if (!newMessage.trim() || !user || !chatId) return;
 
@@ -154,10 +245,8 @@ const ChatRoom = () => {
     navigate(-1);
   };
 
-  const handleLongPress = (e: React.MouseEvent | React.TouchEvent, messageId: string) => {
-    e.preventDefault();
-    const rect = e.currentTarget.getBoundingClientRect();
-    setShowReactions({ messageId, x: rect.left + window.scrollX, y: rect.top + window.scrollY });
+  const dismissHelp = () => {
+    setShowHelp(false);
   };
 
   if (loading) {
@@ -172,128 +261,259 @@ const ChatRoom = () => {
   }
 
   return (
-    <div className="h-dvh flex flex-col bg-background overflow-hidden"> {/* h-dvh for dynamic viewport height */}
-      {/* Header: Sticky, touch-friendly */}
-      <div className="bg-card border-b border-border sticky top-0 z-10 flex items-center px-4 py-3 gap-3 min-h-[60px]">
-        <Button
-          variant="ghost"
-          size="icon"
-          className="h-12 w-12 p-0 hover:bg-muted flex-shrink-0" // 48px touch target
-          onClick={handleBack}
-        >
-          <ArrowLeft className="h-5 w-5" />
-        </Button>
-        <div className="flex-1 min-w-0 overflow-hidden">
-          <h1 className="text-base font-semibold text-foreground truncate"> {/* Smaller font on mobile */}
-            {chatInfo?.name || (chatInfo?.is_group ? 'Group Chat' : 'Direct Message')}
-          </h1>
-          {chatInfo && !chatInfo.is_group && (
-            <p className={`text-xs ${online ? 'text-green-600' : 'text-muted-foreground'}`}>
-              {online ? 'online' : 'last seen recently'}
-            </p>
-          )}
-        </div>
-        <div className="flex items-center gap-1 flex-shrink-0">
-          <Button variant="ghost" size="icon" className="h-10 w-10 p-0 hover:bg-muted">
-            <Video className="h-4 w-4" />
-          </Button>
-          <Button variant="ghost" size="icon" className="h-10 w-10 p-0 hover:bg-muted">
-            <Phone className="h-4 w-4" />
-          </Button>
-          <Button variant="ghost" size="icon" className="h-10 w-10 p-0 hover:bg-muted">
-            <MoreVertical className="h-4 w-4" />
-          </Button>
-        </div>
-      </div>
-
-      {/* Messages: Scrollable, mobile padding */}
-      <div className="flex-1 overflow-y-auto p-3 space-y-3" style={{ paddingBottom: '100px' }}> {/* Reduced p-3 for mobile */}
-        {messages.length === 0 ? (
-          <div className="flex flex-col items-center justify-center h-full text-center text-muted-foreground space-y-2 px-4">
-            <MessageSquare className="h-12 w-12 opacity-50" />
-            <p className="text-sm">No messages yet. Start the conversation!</p>
-            <p className="text-xs text-muted-foreground">Messages are encrypted end-to-end</p>
-          </div>
-        ) : (
-          messages.map((message) => {
-            const isOwn = message.sender_id === user?.id;
-            const time = new Date(message.sent_at).toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' });
-            return (
-              <div
-                key={message.id}
-                className={`flex ${isOwn ? 'justify-end' : 'justify-start'} w-full py-1`} // py-1 for tighter spacing
-                onTouchStart={(e) => handleLongPress(e, message.id)} // Mobile touch
-                onContextMenu={(e) => handleLongPress(e, message.id)} // Desktop fallback
+    <TooltipProvider delayDuration={200}>
+      <div className="h-dvh flex flex-col bg-background overflow-hidden">
+        {/* Header */}
+        <div className="bg-card border-b border-border sticky top-0 z-10 flex items-center px-4 py-3 gap-3 min-h-[60px]">
+          <Tooltip>
+            <TooltipTrigger asChild>
+              <Button
+                variant="ghost"
+                size="icon"
+                className="h-12 w-12 p-0 hover:bg-muted flex-shrink-0"
+                onClick={handleBack}
               >
-                {!isOwn ? (
-                  <div className="flex items-end gap-2 max-w-[85%]"> {/* Wider max-w for mobile */}
-                    <div className="h-8 w-8 rounded-full bg-muted flex items-center justify-center flex-shrink-0">
-                      <User className="h-4 w-4 text-foreground" />
-                    </div>
-                    <div className="flex flex-col min-w-0">
-                      <div className="flex items-baseline gap-2 mb-1">
-                        <span className="text-xs font-semibold text-foreground truncate">
-                          {message.profiles.display_name}
-                        </span>
-                        <span className="text-xs text-muted-foreground"> {time}</span>
-                      </div>
-                      <div className="bg-card text-foreground px-3 py-2 rounded-lg shadow-sm border border-border max-w-full"> {/* Reduced padding */}
-                        <p className="text-sm whitespace-pre-wrap break-words">
-                          {message.encrypted_content}
-                        </p>
-                      </div>
-                    </div>
-                  </div>
-                ) : (
-                  <div className="flex flex-col items-end max-w-[85%]">
-                    <div className="bg-primary text-primary-foreground px-3 py-2 rounded-lg shadow-sm max-w-full"> {/* Reduced padding */}
-                      <p className="text-sm whitespace-pre-wrap break-words">
-                        {message.encrypted_content}
-                      </p>
-                    </div>
-                    <div className="flex items-center gap-1 mt-1">
-                      <span className="text-xs text-primary-foreground/70"> {time}</span>
-                      <Check className="h-3 w-3 text-primary-foreground/70" />
-                    </div>
-                  </div>
-                )}
-              </div>
-            );
-          })
-        )}
-        <div ref={messagesEndRef} />
-      </div>
+                <ArrowLeft className="h-5 w-5" />
+              </Button>
+            </TooltipTrigger>
+            <TooltipContent side="bottom" className="max-w-xs">
+              <p>Go back to your chats</p>
+            </TooltipContent>
+          </Tooltip>
+          <div className="flex-1 min-w-0 overflow-hidden">
+            <h1 className="text-base font-semibold text-foreground truncate">
+              {chatInfo?.name || (chatInfo?.is_group ? 'Group Chat' : 'Direct Message')}
+            </h1>
+            {chatInfo && !chatInfo.is_group && (
+              <p className={`text-xs ${online ? 'text-green-600' : 'text-muted-foreground'}`}>
+                {online ? 'online' : 'last seen recently'}
+              </p>
+            )}
+          </div>
+          <div className="flex items-center gap-1 flex-shrink-0">
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <Button variant="ghost" size="icon" className="h-10 w-10 p-0 hover:bg-muted">
+                  <Video className="h-4 w-4" />
+                </Button>
+              </TooltipTrigger>
+              <TooltipContent side="bottom">
+                <p>Start video call</p>
+              </TooltipContent>
+            </Tooltip>
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <Button variant="ghost" size="icon" className="h-10 w-10 p-0 hover:bg-muted">
+                  <Phone className="h-4 w-4" />
+                </Button>
+              </TooltipTrigger>
+              <TooltipContent side="bottom">
+                <p>Start voice call</p>
+              </TooltipContent>
+            </Tooltip>
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <Button variant="ghost" size="icon" className="h-10 w-10 p-0 hover:bg-muted">
+                  <MoreVertical className="h-4 w-4" />
+                </Button>
+              </TooltipTrigger>
+              <TooltipContent side="bottom">
+                <p>More options</p>
+              </TooltipContent>
+            </Tooltip>
+          </div>
+        </div>
 
-      {/* Input: Fixed bottom, mobile keyboard-safe */}
-      <div className="fixed bottom-0 left-0 right-0 z-20 bg-card border-t border-border px-4 py-3 pb-[env(safe-area-inset-bottom)]"> {/* Safe area for iOS */}
-        <div className="flex items-end gap-2">
-          <div className="flex-1 relative min-w-0">
-            <Input
-              placeholder="Type a message..."
-              value={newMessage}
-              onChange={(e) => setNewMessage(e.target.value)}
-              onKeyDown={(e) => e.key === 'Enter' && !e.shiftKey && handleSend()}
-              className="h-12 pr-12 min-h-[44px]" // 44px min touch target
-              disabled={sending}
-            />
+        {/* Messages */}
+        <div className="flex-1 overflow-y-auto p-3 space-y-3" style={{ paddingBottom: '120px' }}> {/* Extra for voice UI */}
+          {messages.length === 0 ? (
+            <div className="flex flex-col items-center justify-center h-full text-center text-muted-foreground space-y-2 px-4">
+              <MessageSquare className="h-12 w-12 opacity-50" />
+              <p className="text-sm">No messages yet. Start the conversation!</p>
+              <p className="text-xs text-muted-foreground">Messages are encrypted end-to-end</p>
+            </div>
+          ) : (
+            messages.map((message) => {
+              const isOwn = message.sender_id === user?.id;
+              const time = new Date(message.sent_at).toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' });
+              const isVoice = !!message.audio_url;
+              const playerKey = message.id;
+              const playerState = audioPlayers[playerKey];
+              return (
+                <div
+                  key={message.id}
+                  className={`flex ${isOwn ? 'justify-end' : 'justify-start'} w-full py-1`}
+                >
+                  {!isOwn ? (
+                    <div className="flex items-end gap-2 max-w-[85%]">
+                      <div className="h-8 w-8 rounded-full bg-muted flex items-center justify-center flex-shrink-0">
+                        <User className="h-4 w-4 text-foreground" />
+                      </div>
+                      <div className="flex flex-col min-w-0">
+                        <div className="flex items-baseline gap-2 mb-1">
+                          <span className="text-xs font-semibold text-foreground truncate">
+                            {message.profiles.display_name}
+                          </span>
+                          <span className="text-xs text-muted-foreground"> {time}</span>
+                        </div>
+                        {isVoice ? (
+                          <div className="bg-card px-3 py-2 rounded-lg shadow-sm border border-border max-w-full">
+                            <Button
+                              variant="ghost"
+                              size="sm"
+                              className="flex items-center gap-2 w-full justify-start text-left"
+                              onClick={() => toggleAudio(playerKey, message.audio_url!)}
+                            >
+                              {playerState?.isPlaying ? <Pause className="h-4 w-4" /> : <Play className="h-4 w-4" />}
+                              <Volume2 className="h-4 w-4" />
+                              <span className="text-sm text-muted-foreground">Voice message ({Math.round((new Blob([message.audio_url!]).size / 1024))} KB)</span>
+                            </Button>
+                          </div>
+                        ) : (
+                          <div className="bg-card text-foreground px-3 py-2 rounded-lg shadow-sm border border-border max-w-full">
+                            <p className="text-sm whitespace-pre-wrap break-words">
+                              {message.encrypted_content}
+                            </p>
+                          </div>
+                        )}
+                      </div>
+                    </div>
+                  ) : (
+                    <div className="flex flex-col items-end max-w-[85%]">
+                      {isVoice ? (
+                        <div className="bg-primary text-primary-foreground px-3 py-2 rounded-lg shadow-sm max-w-full">
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            className="flex items-center gap-2 w-full justify-end text-right"
+                            onClick={() => toggleAudio(playerKey, message.audio_url!)}
+                          >
+                            {playerState?.isPlaying ? <Pause className="h-4 w-4" /> : <Play className="h-4 w-4" />}
+                            <Volume2 className="h-4 w-4" />
+                            <span className="text-sm text-primary-foreground/90">Voice message ({Math.round((new Blob([message.audio_url!]).size / 1024))} KB)</span>
+                          </Button>
+                        </div>
+                      ) : (
+                        <div className="bg-primary text-primary-foreground px-3 py-2 rounded-lg shadow-sm max-w-full">
+                          <p className="text-sm whitespace-pre-wrap break-words">
+                            {message.encrypted_content}
+                          </p>
+                        </div>
+                      )}
+                      <div className="flex items-center gap-1 mt-1">
+                        <span className="text-xs text-primary-foreground/70"> {time}</span>
+                        <Check className="h-3 w-3 text-primary-foreground/70" />
+                      </div>
+                    </div>
+                  )}
+                </div>
+              );
+            })
+          )}
+          <div ref={messagesEndRef} />
+        </div>
+
+        {/* Beginner Help Overlay */}
+        {showHelp && (
+          <div className="fixed inset-0 z-50 bg-black/50 flex items-center justify-center p-4">
+            <div className="bg-card rounded-xl p-6 max-w-sm w-full border border-border">
+              <div className="flex items-center gap-2 mb-4">
+                <HelpCircle className="h-5 w-5 text-primary" />
+                <h2 className="text-lg font-semibold text-foreground">Welcome to your chat!</h2>
+              </div>
+              <ul className="space-y-2 text-sm text-muted-foreground mb-4">
+                <li className="flex items-start gap-2">
+                  <Badge variant="secondary" className="flex-shrink-0 mt-0.5">1</Badge>
+                  <span>Type your message below and hit send (or Enter).</span>
+                </li>
+                <li className="flex items-start gap-2">
+                  <Badge variant="secondary" className="flex-shrink-0 mt-0.5">2</Badge>
+                  <span>Tap the mic icon to record voice messages.</span>
+                </li>
+                <li className="flex items-start gap-2">
+                  <Badge variant="secondary" className="flex-shrink-0 mt-0.5">3</Badge>
+                  <span>Use the back arrow to return to your chats.</span>
+                </li>
+              </ul>
+              <div className="flex gap-2">
+                <Button variant="outline" onClick={dismissHelp} className="flex-1">
+                  Got it!
+                </Button>
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <Button variant="ghost" size="icon" className="h-10 w-10">
+                      <Info className="h-4 w-4" />
+                    </Button>
+                  </TooltipTrigger>
+                  <TooltipContent>
+                    <p>Need more help? Check our guide.</p>
+                  </TooltipContent>
+                </Tooltip>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* Input: Fixed bottom, with voice recording */}
+        <div className="fixed bottom-0 left-0 right-0 z-20 bg-card border-t border-border px-4 py-3 pb-[env(safe-area-inset-bottom)]">
+          <div className="flex items-end gap-2">
+            {recording ? (
+              <Button
+                variant="ghost"
+                size="icon"
+                className="h-12 w-12 p-0 bg-destructive/10 text-destructive hover:bg-destructive/20"
+                onClick={stopRecording}
+              >
+                <MicOff className="h-5 w-5" />
+              </Button>
+            ) : audioBlob ? (
+              <Button
+                variant="ghost"
+                size="icon"
+                className="h-12 w-12 p-0 bg-primary/10 text-primary hover:bg-primary/20"
+                onClick={sendVoiceMessage}
+                disabled={uploading}
+              >
+                {uploading ? <Loader2 className="h-5 w-5 animate-spin" /> : <Send className="h-5 w-5" />}
+              </Button>
+            ) : (
+              <Button
+                variant="ghost"
+                size="icon"
+                className="h-12 w-12 p-0 text-muted-foreground hover:text-foreground hover:bg-muted"
+                onClick={startRecording}
+              >
+                <Mic className="h-5 w-5" />
+              </Button>
+            )}
+            <div className="flex-1 relative min-w-0">
+              <Input
+                placeholder="Type a message..."
+                value={newMessage}
+                onChange={(e) => setNewMessage(e.target.value)}
+                onKeyDown={(e) => e.key === 'Enter' && !e.shiftKey && handleSend()}
+                className="h-12 pr-12 min-h-[44px]"
+                disabled={sending || uploading}
+              />
+              <Button
+                size="icon"
+                variant="ghost"
+                className="absolute right-2 bottom-2 h-8 w-8 p-0 text-muted-foreground hover:text-foreground"
+              >
+                <MessageSquare className="h-4 w-4" />
+              </Button>
+            </div>
             <Button
-              size="icon"
-              variant="ghost"
-              className="absolute right-2 bottom-2 h-8 w-8 p-0 text-muted-foreground hover:text-foreground"
+              onClick={handleSend}
+              disabled={!newMessage.trim() || sending || uploading}
+              className="h-12 w-12 min-h-[44px] flex-shrink-0"
             >
-              <MessageSquare className="h-4 w-4" />
+              {sending ? <Loader2 className="h-4 w-4 animate-spin" /> : <Send className="h-4 w-4" />}
             </Button>
           </div>
-          <Button
-            onClick={handleSend}
-            disabled={!newMessage.trim() || sending}
-            className="h-12 w-12 min-h-[44px] flex-shrink-0" // Touch target
-          >
-            {sending ? <Loader2 className="h-4 w-4 animate-spin" /> : <Send className="h-4 w-4" />}
-          </Button>
         </div>
       </div>
-    </div>
+    </TooltipProvider>
   );
 };
 
