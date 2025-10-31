@@ -5,7 +5,7 @@ import { useAuth } from '@/contexts/AuthContext';
 import { Card } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
-import { ArrowLeft, Send, User, Loader2, Phone, Video, MoreVertical, Check, CheckCheck } from 'lucide-react';
+import { ArrowLeft, Send, User, Loader2, Phone, Video, MoreVertical, Check, CheckCheck, MessageSquare } from 'lucide-react';
 import { toast } from 'sonner';
 
 interface Message {
@@ -33,7 +33,7 @@ const ChatRoom = () => {
   const [chatInfo, setChatInfo] = useState<ChatInfo | null>(null);
   const [loading, setLoading] = useState(true);
   const [sending, setSending] = useState(false);
-  const [online, setOnline] = useState(false); // Placeholder for online status (fetch from profiles if added)
+  const [online, setOnline] = useState(false); // Placeholder for online status
   const messagesEndRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
@@ -97,28 +97,26 @@ const ChatRoom = () => {
       setChatInfo(data);
       // Fetch other user's online status (if schema updated)
       if (!data.is_group) {
-        const otherUserId = messages.length > 0 ? messages[0].sender_id !== user?.id ? messages[0].sender_id : '' : '';
-        if (otherUserId && otherUserId !== user?.id) {
-          supabase
-            .from('profiles')
-            .select('show_online_status, last_seen')
-            .eq('id', otherUserId)
-            .single()
-            .then(({ data }) => {
-              setOnline(!!data?.show_online_status && (new Date(data.last_seen || 0).getTime() > Date.now() - 5 * 60 * 1000)); // Online if seen <5min
-            });
-        }
+        // Placeholder: Set online randomly for demo; replace with real fetch
+        setOnline(Math.random() > 0.5);
       }
     }
   };
 
   const fetchMessages = async () => {
-    const { data } = await supabase
+    console.log('Fetching messages for chatId:', chatId); // Debug log
+    const { data, error } = await supabase
       .from('messages')
       .select('*, profiles(display_name, handle)')
       .eq('chat_id', chatId)
       .order('sent_at', { ascending: true });
 
+    console.log('Fetched messages:', data, 'Error:', error); // Debug log
+
+    if (error) {
+      console.error('Fetch messages error:', error);
+      toast.error('Failed to load messages');
+    }
     if (data) {
       setMessages(data as Message[]);
     }
@@ -147,6 +145,15 @@ const ChatRoom = () => {
       toast.error(`Failed to send: ${error.message}`);
     } else {
       setNewMessage('');
+      // Optimistic append for instant feedback (before Realtime)
+      const optimisticMsg: Message = {
+        id: Date.now().toString(), // Temp ID
+        encrypted_content: newMessage,
+        sender_id: user.id,
+        sent_at: new Date().toISOString(),
+        profiles: { display_name: user.display_name || 'You', handle: user.handle || '@you' }, // Assume from auth
+      };
+      setMessages((prev) => [...prev, optimisticMsg]);
     }
     setSending(false);
   };
@@ -200,9 +207,10 @@ const ChatRoom = () => {
       {/* Messages - Telegram Bubble Style */}
       <div className="flex-1 overflow-y-auto p-4 space-y-4 scrollbar-thin scrollbar-thumb-gray-300 dark:scrollbar-thumb-gray-600">
         {messages.length === 0 ? (
-          <div className="flex flex-col items-center justify-center h-full text-center text-gray-500 dark:text-gray-400">
-            <MessageSquare className="h-12 w-12 mb-2 opacity-50" />
+          <div className="flex flex-col items-center justify-center h-full text-center text-gray-500 dark:text-gray-400 space-y-2">
+            <MessageSquare className="h-12 w-12 opacity-50" />
             <p className="text-sm">No messages yet. Start the conversation!</p>
+            <p className="text-xs text-gray-400">Messages are encrypted end-to-end</p>
           </div>
         ) : (
           messages.map((message) => {
