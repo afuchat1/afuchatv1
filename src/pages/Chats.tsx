@@ -4,7 +4,9 @@ import { useAuth } from '@/contexts/AuthContext';
 import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { MessageSquarePlus, Users, User, Clock } from 'lucide-react';
-import { Skeleton } from '@/components/ui/skeleton'; // Import Skeleton
+import { Skeleton } from '@/components/ui/skeleton';
+import { useNavigate } from 'react-router-dom';
+import NewChatDialog from '@/components/ui/NewChatDialog';
 
 interface Chat {
   id: string;
@@ -29,9 +31,11 @@ const formatTime = (isoString: string) => {
 
 const Chats = () => {
   const { user } = useAuth();
+  const navigate = useNavigate();
   const [chats, setChats] = useState<Chat[]>([]);
   const [loading, setLoading] = useState(true);
   const [forceLoaded, setForceLoaded] = useState(false);
+  const [isNewChatDialogOpen, setIsNewChatDialogOpen] = useState(false);
 
   useEffect(() => {
     const timer = setTimeout(() => {
@@ -131,10 +135,8 @@ const Chats = () => {
     return (
       <Card
         key={chat.id}
-        // Applying rich design styles: shadow-lg, no border
         className="p-4 rounded-xl shadow-lg hover:shadow-xl hover:bg-muted/30 cursor-pointer transition-all duration-200"
-        // Placeholder for navigation
-        // onClick={() => navigate(`/chat/${chat.id}`)} 
+        onClick={() => navigate(`/chat/${chat.id}`)}
       >
         <div className="flex items-center space-x-4">
           {/* Visual Indicator (Text-only profile concept) */}
@@ -167,7 +169,12 @@ const Chats = () => {
       {/* Header - Defined by shadow, not border */}
       <div className="p-4 bg-card shadow-sm flex items-center justify-between sticky top-0 z-10">
         <h1 className="text-xl font-extrabold text-foreground">Conversations</h1>
-        <Button size="icon" variant="default" className="rounded-full shadow-md">
+        <Button 
+          size="icon" 
+          variant="default" 
+          className="rounded-full shadow-md"
+          onClick={() => setIsNewChatDialogOpen(true)}
+        >
           <MessageSquarePlus className="h-5 w-5" />
         </Button>
       </div>
@@ -187,6 +194,11 @@ const Chats = () => {
           ))
         )}
       </div>
+      
+      <NewChatDialog
+        isOpen={isNewChatDialogOpen}
+        onClose={() => setIsNewChatDialogOpen(false)}
+      />
     </div>
   );
 };

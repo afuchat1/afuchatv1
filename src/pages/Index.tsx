@@ -12,6 +12,7 @@ import NewPostModal from '@/components/ui/NewPostModal';
 import Logo from '@/components/Logo';
 import { toast } from 'sonner';
 import { Skeleton } from '@/components/ui/skeleton';
+import NewChatDialog from '@/components/ui/NewChatDialog';
 
 // --- FAB Components (Unchanged) ---
 
@@ -266,13 +267,10 @@ const Index = () => {
         onClose={() => setIsPostModalOpen(false)} 
       />
       
-      {isChatModalOpen && (
-        <div className="fixed inset-0 bg-black/50 z-[100] flex items-center justify-center p-4" onClick={() => setIsChatModalOpen(false)}>
-          <div className="bg-card p-8 rounded-xl max-w-md w-full max-h-[80vh] overflow-auto" onClick={(e) => e.stopPropagation()}>
-            <p className="text-foreground">New Chat Modal Placeholder (To be built next)</p>
-          </div>
-        </div>
-      )}
+      <NewChatDialog
+        isOpen={isChatModalOpen}
+        onClose={() => setIsChatModalOpen(false)}
+      />
     </div>
   );
 };
