@@ -15,7 +15,15 @@ export default defineConfig(({ mode }) => ({
     mode === "development" && componentTagger(),
     VitePWA({
       registerType: 'autoUpdate',
-      includeAssets: ['logo.jpg', 'robots.txt'],
+      
+      // --- THIS IS THE KEY CHANGE ---
+      // We are switching to a custom service worker to handle push notifications
+      strategies: 'injectManifest',
+      srcDir: 'src',
+      filename: 'sw.ts', // We will create this file next
+      // ---------------------------------
+
+      // Your existing manifest is perfect
       manifest: {
         name: 'AfuChat',
         short_name: 'AfuChat',
@@ -36,22 +44,8 @@ export default defineConfig(({ mode }) => ({
           }
         ]
       },
-      workbox: {
-        globPatterns: ['**/*.{js,css,html,ico,jpg,png,svg}'],
-        runtimeCaching: [
-          {
-            urlPattern: /^https:\/\/rhnsjqqtdzlkvqazfcbg\.supabase\.co\/.*/i,
-            handler: 'NetworkFirst',
-            options: {
-              cacheName: 'supabase-cache',
-              expiration: {
-                maxEntries: 50,
-                maxAgeSeconds: 60 * 60 * 24 // 24 hours
-              }
-            }
-          }
-        ]
-      }
+      // The 'workbox' config is no longer needed here,
+      // as we will define caching rules in our custom 'src/sw.ts' file.
     })
   ].filter(Boolean),
   resolve: {
