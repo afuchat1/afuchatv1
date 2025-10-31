@@ -1,7 +1,8 @@
 import { useEffect, useState, useCallback } from 'react';
 import { useParams, useNavigate, Link } from 'react-router-dom';
 import { supabase } from '@/integrations/supabase/client';
-import { useAuth } from '@/contexts/Auth/AuthContext'; // Assuming correct path
+// 🛑 CRITICAL FIX: Changed from '@/contexts/Auth/AuthContext' to match the likely correct direct path.
+import { useAuth } from '@/contexts/AuthContext'; 
 import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { toast } from 'sonner';
@@ -496,7 +497,7 @@ const Profile = () => {
           </div>
           {/* --- END Name/Handle Section --- */}
 
-          {/* Bio - NOW USING THE PARSER COMPONENT */}
+          {/* Bio - NOW USING THE PARSER COMPONENT with isBio=true */}
           {profile.bio && (
             <ContentParser content={profile.bio} isBio={true} />
           )}
