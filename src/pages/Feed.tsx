@@ -1,9 +1,9 @@
 import { useEffect, useState, useCallback } from 'react';
-import { useNavigate, Link } from 'react-router-dom'; // 🎯 ADDED LINK
+import { useNavigate, Link } from 'react-router-dom';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/contexts/AuthContext';
 import { toast } from 'sonner';
-import { MessageSquare, Heart, Share, User, Ellipsis } from 'lucide-react';
+import { MessageSquare, Heart, Share, User, Ellipsis, ChevronDown, ChevronUp } from 'lucide-react'; // 🎯 ADDED Chevron icons
 import { Skeleton } from '@/components/ui/skeleton';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -196,9 +196,16 @@ const PostCard = ({ post, addReply, user, navigate, onAcknowledge }:
     }
   };
 
+  // 🎯 NEW LOGIC: Determine which replies to show
+  const hasTooManyReplies = post.replies.length > 3;
+  const repliesToShow = showComments || !hasTooManyReplies
+    ? post.replies 
+    : post.replies.slice(-3); // Show the 3 most recent replies when collapsed
+
+
   return (
     <div className="flex border-b border-border py-3 px-4 transition-colors hover:bg-muted/5">
-      {/* Author Icon */}
+      {/* Author Icon (Unchanged) */}
       <div
         className="mr-3 flex-shrink-0 h-10 w-10 rounded-full bg-secondary flex items-center justify-center cursor-pointer"
         onClick={() => handleViewProfile(post.author_id)}
@@ -207,7 +214,7 @@ const PostCard = ({ post, addReply, user, navigate, onAcknowledge }:
       </div>
 
       <div className="flex-1 min-w-0">
-        {/* Post Header */}
+        {/* Post Header (Unchanged) */}
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-x-1 min-w-0">
             <span
@@ -218,7 +225,6 @@ const PostCard = ({ post, addReply, user, navigate, onAcknowledge }:
             </span>
             <VerifiedBadge isVerified={post.profiles.is_verified} isOrgVerified={post.profiles.is_organization_verified} />
 
-            {/* Post Author Handle and Time */}
             <span
               className="text-muted-foreground text-sm hover:underline cursor-pointer truncate flex-shrink min-w-0"
               onClick={() => handleViewProfile(post.author_id)}
@@ -237,16 +243,15 @@ const PostCard = ({ post, addReply, user, navigate, onAcknowledge }:
           </Button>
         </div>
 
-        {/* 🎯 POST CONTENT WRAPPED IN LINK TO DETAIL PAGE */}
+        {/* POST CONTENT WRAPPED IN LINK (Unchanged) */}
         <Link to={`/post/${post.id}`} className="block">
           <p className="text-foreground text-base mt-1 mb-2 leading-relaxed whitespace-pre-wrap">
             {parsePostContent(post.content, navigate)}
           </p>
         </Link>
-        {/* END POST CONTENT LINK */}
 
 
-        {/* Post Actions */}
+        {/* Post Actions (Unchanged) */}
         <div className="flex justify-between items-center text-sm text-muted-foreground mt-3 -ml-2 max-w-[420px]">
           <Button variant="ghost" size="sm" className="flex items-center gap-1 group" onClick={() => setShowComments(!showComments)}>
             <MessageSquare className="h-4 w-4 group-hover:text-primary transition-colors" />
@@ -261,20 +266,24 @@ const PostCard = ({ post, addReply, user, navigate, onAcknowledge }:
           </Button>
         </div>
 
-        {/* --- IG-STYLE COMMENT SECTION (Unchanged) --- */}
+        {/* --- COMMENT SECTION --- */}
         <div className="mt-3">
-          {post.reply_count > 0 && !showComments && (
+          
+          {/* 🎯 TOGGLE BUTTON: Show only if replies exist and are collapsed */}
+          {post.reply_count > 0 && hasTooManyReplies && !showComments && (
             <span
-              className="text-sm text-muted-foreground cursor-pointer hover:underline"
+              className="text-sm text-primary cursor-pointer hover:underline flex items-center gap-1"
               onClick={() => setShowComments(true)}
             >
-              View all {post.reply_count} {post.reply_count === 1 ? 'comment' : 'comments'}
+              <ChevronDown className="h-4 w-4" />
+              View all {post.reply_count} replies
             </span>
           )}
 
-          {showComments && post.replies && post.replies.length > 0 && (
+          {/* 🎯 REPLIES LIST */}
+          {repliesToShow.length > 0 && (
             <div className="space-y-2 pt-2">
-              {post.replies.map((reply) => (
+              {repliesToShow.map((reply) => (
                 <div key={reply.id} className="text-sm flex items-center">
                   <span
                     className="font-bold text-muted-foreground cursor-pointer hover:underline flex-shrink-0"
@@ -289,12 +298,23 @@ const PostCard = ({ post, addReply, user, navigate, onAcknowledge }:
                   </p>
                 </div>
               ))}
+              
+              {/* 🎯 COLLAPSE BUTTON: Show if expanded and has many replies */}
+              {showComments && hasTooManyReplies && (
+                <span
+                  className="text-sm text-primary cursor-pointer hover:underline flex items-center gap-1 pt-1"
+                  onClick={() => setShowComments(false)}
+                >
+                  <ChevronUp className="h-4 w-4" />
+                  Collapse replies
+                </span>
+              )}
             </div>
           )}
 
-          {/* Comment input */}
+          {/* Comment input (Unchanged) */}
           {showComments && user && (
-            <div className="mt-3 flex items-center gap-2">
+            <div className="mt-3 flex items-center gap-2 border-t pt-2 border-border">
               <div className="h-8 w-8 rounded-full bg-secondary flex items-center justify-center flex-shrink-0">
                 <User className="h-4 w-4 text-muted-foreground" />
               </div>
@@ -323,6 +343,11 @@ const PostCard = ({ post, addReply, user, navigate, onAcknowledge }:
               Please <a href="/auth" className="text-primary underline">log in</a> to comment.
             </div>
           )}
+          
+          {post.reply_count === 0 && showComments && (
+            <p className="text-sm text-muted-foreground pt-2">No replies yet. Be the first!</p>
+          )}
+
         </div>
       </div>
     </div>
@@ -542,7 +567,7 @@ const Feed = () => {
     };
   }, [user, addReply, fetchPosts]);
 
-  // --- Post Skeleton Component ---
+  // --- Post Skeleton Component (Unchanged) ---
   const PostSkeleton = () => (
     <div className="flex p-4 border-b border-border">
       <Skeleton className="h-10 w-10 rounded-full mr-3" />
@@ -563,7 +588,7 @@ const Feed = () => {
   );
 
 
-  // --- Render Logic ---
+  // --- Render Logic (Unchanged) ---
   const effectiveLoading = loading && !forceLoaded;
   useEffect(() => {
     const timer = setTimeout(() => {
