@@ -10,6 +10,9 @@ import ChatRoom from "./pages/ChatRoom";
 import Profile from "./pages/Profile";
 import NotFound from "./pages/NotFound";
 
+// --- 1. ADD THIS NEW IMPORT ---
+import Notifications from "./pages/Notifications";
+
 const queryClient = new QueryClient();
 
 const App = () => (
@@ -24,6 +27,10 @@ const App = () => (
             <Route path="/auth" element={<Auth />} />
             <Route path="/chat/:chatId" element={<ChatRoom />} />
             <Route path="/profile/:userId" element={<Profile />} />
+            
+            {/* --- 2. ADD THIS NEW ROUTE --- */}
+            <Route path="/notifications" element={<Notifications />} />
+
             {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
             <Route path="*" element={<NotFound />} />
           </Routes>
