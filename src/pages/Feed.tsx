@@ -1,10 +1,9 @@
-import { useEffect, useState, useCallback, useRef } from 'react';
+import { useEffect, useState, useCallback } from 'react';
 import { useNavigate, Link } from 'react-router-dom'; // 🎯 ADDED LINK
-import { motion } from 'framer-motion';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/contexts/AuthContext';
 import { toast } from 'sonner';
-import { MessageSquare, Heart, Share, User, Ellipsis, ChevronDown, ChevronUp } from 'lucide-react';
+import { MessageSquare, Heart, Share, User, Ellipsis } from 'lucide-react';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -148,47 +147,15 @@ const parsePostContent = (content: string, navigate: (path: string) => void) => 
 
 
 // --- PostCard Component ---
-const PostCard = ({ post, addReply, user, navigate, onAcknowledge, index = 0 }:
-  { post: Post; addReply: (postId: string, reply: Reply) => void; user: any; navigate: any; onAcknowledge: (postId: string, hasLiked: boolean) => void; index?: number }) => {
+const PostCard = ({ post, addReply, user, navigate, onAcknowledge }:
+  { post: Post; addReply: (postId: string, reply: Reply) => void; user: any; navigate: any; onAcknowledge: (postId: string, hasLiked: boolean) => void }) => {
 
   const [showComments, setShowComments] = useState(false);
-  const [showAllReplies, setShowAllReplies] = useState(false);
-  const [showFullPost, setShowFullPost] = useState(false);
   const [replyText, setReplyText] = useState('');
-  const [isPostLong, setIsPostLong] = useState(false);
-  const contentRef = useRef<HTMLParagraphElement>(null);
   
   const handleViewProfile = (userId: string) => {
     navigate(`/profile/${userId}`);
   };
-
-  // Detect if post content overflows (needs truncation)
-  useEffect(() => {
-    if (contentRef.current && !showFullPost) {
-      setTimeout(() => {
-        const element = contentRef.current;
-        if (!element) return;
-
-        // Temporarily remove any truncation to measure full height
-        const originalOverflow = element.style.overflow;
-        const originalMaxHeight = element.style.maxHeight;
-        element.style.overflow = 'visible';
-        element.style.maxHeight = 'none';
-
-        const fullHeight = element.scrollHeight;
-        const computedStyle = getComputedStyle(element);
-        const lineHeight = parseFloat(computedStyle.lineHeight);
-        const maxVisibleLines = 4;
-        const maxVisibleHeight = lineHeight * maxVisibleLines;
-
-        setIsPostLong(fullHeight > maxVisibleHeight);
-
-        // Restore truncation styles
-        element.style.overflow = originalOverflow;
-        element.style.maxHeight = originalMaxHeight;
-      }, 0);
-    }
-  }, [post.content, showFullPost]);
 
   const handleReplySubmit = async () => {
     if (!replyText.trim() || !user) {
@@ -215,7 +182,6 @@ const PostCard = ({ post, addReply, user, navigate, onAcknowledge, index = 0 }:
     };
     addReply(post.id, optimisticReply);
     setShowComments(true);
-    setShowAllReplies(true); // Expand to show the new reply
 
     // Database Write
     const { error } = await supabase.from('post_replies').insert({
@@ -230,17 +196,8 @@ const PostCard = ({ post, addReply, user, navigate, onAcknowledge, index = 0 }:
     }
   };
 
-  const collapsedMaxHeight = '96px'; // Approx 4 lines
-
-  const hasMoreReplies = post.replies.length > 3;
-
   return (
-    <motion.div
-      initial={{ opacity: 0, y: 20 }}
-      animate={{ opacity: 1, y: 0 }}
-      transition={{ duration: 0.5, delay: index * 0.1 }}
-      className="flex border-b border-border py-3 px-4 transition-colors hover:bg-muted/5"
-    >
+    <div className="flex border-b border-border py-3 px-4 transition-colors hover:bg-muted/5">
       {/* Author Icon */}
       <div
         className="mr-3 flex-shrink-0 h-10 w-10 rounded-full bg-secondary flex items-center justify-center cursor-pointer"
@@ -270,7 +227,7 @@ const PostCard = ({ post, addReply, user, navigate, onAcknowledge, index = 0 }:
             </span>
 
             <span className="text-muted-foreground text-sm flex-shrink-0">·</span>
-            <span className="text-muted-foreground text-sm whitespace-nowrap flex-shrink-0">
+            <span className="text-muted-foreground text-sm whitespace-nowlrap flex-shrink-0">
               {formatTime(post.created_at)}
             </span>
           </div>
@@ -280,53 +237,11 @@ const PostCard = ({ post, addReply, user, navigate, onAcknowledge, index = 0 }:
           </Button>
         </div>
 
-        {/* 🎯 POST CONTENT WRAPPED IN LINK TO DETAIL PAGE WITH COLLAPSE/EXPAND */}
+        {/* 🎯 POST CONTENT WRAPPED IN LINK TO DETAIL PAGE */}
         <Link to={`/post/${post.id}`} className="block">
-          <motion.div
-            className="overflow-hidden"
-            initial={false}
-            animate={{
-              maxHeight: showFullPost || !isPostLong ? 1000 : collapsedMaxHeight
-            }}
-            transition={{ duration: 0.3, ease: "easeInOut" }}
-          >
-            <p 
-              ref={contentRef}
-              className={`text-foreground text-base mt-1 mb-2 leading-relaxed whitespace-pre-wrap transition-all duration-300 ${!showFullPost && isPostLong ? 'line-clamp-4' : ''}`}
-            >
-              {parsePostContent(post.content, navigate)}
-            </p>
-            {isPostLong && (
-              <motion.div
-                initial={false}
-                animate={{ opacity: showFullPost ? 1 : 1 }}
-                transition={{ duration: 0.2 }}
-              >
-                <Button
-                  variant="link"
-                  size="sm"
-                  className="p-0 h-auto text-primary text-sm -ml-1.5 mt-1"
-                  onClick={(e) => {
-                    e.preventDefault();
-                    e.stopPropagation();
-                    setShowFullPost(!showFullPost);
-                  }}
-                >
-                  {showFullPost ? (
-                    <>
-                      <ChevronUp className="h-3 w-3 inline mr-1" />
-                      Show less
-                    </>
-                  ) : (
-                    <>
-                      <ChevronDown className="h-3 w-3 inline mr-1" />
-                      Read more
-                    </>
-                  )}
-                </Button>
-              </motion.div>
-            )}
-          </motion.div>
+          <p className="text-foreground text-base mt-1 mb-2 leading-relaxed whitespace-pre-wrap">
+            {parsePostContent(post.content, navigate)}
+          </p>
         </Link>
         {/* END POST CONTENT LINK */}
 
@@ -346,7 +261,7 @@ const PostCard = ({ post, addReply, user, navigate, onAcknowledge, index = 0 }:
           </Button>
         </div>
 
-        {/* --- IG-STYLE COMMENT SECTION WITH COLLAPSE/EXPAND --- */}
+        {/* --- IG-STYLE COMMENT SECTION (Unchanged) --- */}
         <div className="mt-3">
           {post.reply_count > 0 && !showComments && (
             <span
@@ -358,73 +273,23 @@ const PostCard = ({ post, addReply, user, navigate, onAcknowledge, index = 0 }:
           )}
 
           {showComments && post.replies && post.replies.length > 0 && (
-            <>
-              <div className="space-y-2 pt-2">
-                {post.replies.slice(0, 3).map((reply) => (
-                  <div key={reply.id} className="text-sm flex items-start">
-                    <span
-                      className="font-bold text-muted-foreground cursor-pointer hover:underline flex-shrink-0"
-                      onClick={() => handleViewProfile(reply.author_id)}
-                    >
-                      {reply.profiles.handle}
-                    </span>
-                    <VerifiedBadge isVerified={reply.profiles.is_verified} isOrgVerified={reply.profiles.is_organization_verified} />
-                    
-                    <p className="text-foreground ml-1.5 whitespace-pre-wrap break-words">
-                      {parsePostContent(reply.content, navigate)}
-                    </p>
-                  </div>
-                ))}
-                {hasMoreReplies && (
-                  <motion.div 
-                    initial={false}
-                    animate={{
-                      opacity: showAllReplies ? 1 : 0,
-                      maxHeight: showAllReplies ? 1000 : 0
-                    }}
-                    transition={{ duration: 0.3, ease: "easeInOut" }}
-                    className="overflow-hidden -mt-2"
+            <div className="space-y-2 pt-2">
+              {post.replies.map((reply) => (
+                <div key={reply.id} className="text-sm flex items-center">
+                  <span
+                    className="font-bold text-muted-foreground cursor-pointer hover:underline flex-shrink-0"
+                    onClick={() => handleViewProfile(reply.author_id)}
                   >
-                    {post.replies.slice(3).map((reply) => (
-                      <div key={reply.id} className="text-sm flex items-start p-0">
-                        <span
-                          className="font-bold text-muted-foreground cursor-pointer hover:underline flex-shrink-0"
-                          onClick={() => handleViewProfile(reply.author_id)}
-                        >
-                          {reply.profiles.handle}
-                        </span>
-                        <VerifiedBadge isVerified={reply.profiles.is_verified} isOrgVerified={reply.profiles.is_organization_verified} />
-                        
-                        <p className="text-foreground ml-1.5 whitespace-pre-wrap break-words">
-                          {parsePostContent(reply.content, navigate)}
-                        </p>
-                      </div>
-                    ))}
-                  </motion.div>
-                )}
-              </div>
-
-              {hasMoreReplies && (
-                <Button
-                  variant="link"
-                  size="sm"
-                  className="p-0 h-auto text-muted-foreground text-sm -ml-1.5 mt-1"
-                  onClick={() => setShowAllReplies(!showAllReplies)}
-                >
-                  {showAllReplies ? (
-                    <>
-                      <ChevronUp className="h-3 w-3 inline mr-1" />
-                      View {post.replies.length - 3} fewer replies
-                    </>
-                  ) : (
-                    <>
-                      <ChevronDown className="h-3 w-3 inline mr-1" />
-                      View {post.replies.length - 3} more replies
-                    </>
-                  )}
-                </Button>
-              )}
-            </>
+                    {reply.profiles.handle}
+                  </span>
+                  <VerifiedBadge isVerified={reply.profiles.is_verified} isOrgVerified={reply.profiles.is_organization_verified} />
+                  
+                  <p className="text-foreground ml-1.5 whitespace-pre-wrap break-words">
+                    {parsePostContent(reply.content, navigate)}
+                  </p>
+                </div>
+              ))}
+            </div>
           )}
 
           {/* Comment input */}
@@ -459,9 +324,8 @@ const PostCard = ({ post, addReply, user, navigate, onAcknowledge, index = 0 }:
             </div>
           )}
         </div>
-        {/* --- END COMMENT SECTION --- */}
       </div>
-    </motion.div>
+    </div>
   );
 };
 
@@ -726,7 +590,7 @@ const Feed = () => {
             No posts yet. Follow users or share your first post!
           </div>
         ) : (
-          posts.map((post, index) => (
+          posts.map((post) => (
             <PostCard
               key={post.id}
               post={post}
@@ -734,7 +598,6 @@ const Feed = () => {
               user={user}
               navigate={navigate}
               onAcknowledge={handleAcknowledge}
-              index={index}
             />
           ))
         )}
