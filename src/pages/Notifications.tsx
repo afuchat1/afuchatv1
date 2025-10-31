@@ -62,7 +62,7 @@ const NotificationRow = ({ notification }: { notification: Notification }) => {
     }
   };
 
-  // --- UPDATED: This component now creates the links ---
+  // --- This function now creates the links ---
   const renderMessage = () => {
     // This is the link to the actor's profile, with their name and badge
     const ActorLink = (
@@ -88,27 +88,26 @@ const NotificationRow = ({ notification }: { notification: Notification }) => {
     }
   };
   
-  // --- UPDATED: The main link is now dynamic ---
-  // We remove the row-level link to prevent nested links
+  // --- The outer element is now a DIV, not a Link ---
   return (
     <div className={cn(
-      "flex items-start gap-4 p-4 border-b border-border",
+      "flex items-start gap-4 p-4 border-b border-border relative", // Added 'relative'
       !notification.is_read && "bg-primary/5"
     )}>
       <div className="mt-1">{renderIcon()}</div>
       <div className="flex-1">
         <div className="text-sm text-foreground">{renderMessage()}</div>
         
-        {/* If it's a follow, link the whole row to the actor's profile */}
+        {/* If it's a follow, we make the whole row clickable */}
         {type === 'new_follower' && (
-          <Link to={`/profile/${actor.handle}`} className="absolute inset-0" />
+          <Link to={`/profile/${actor.handle}`} className="absolute inset-0" aria-label={`View ${actor.display_name}'s profile`} />
         )}
 
-        {/* --- UPDATED: This post snippet is now its own link --- */}
+        {/* --- This post snippet is its own link --- */}
         {post?.content && (
           <Link 
             to={`/post/${notification.post_id}`} 
-            className="block"
+            className="block relative z-10" // Added z-10
           >
             <p className="text-sm text-muted-foreground mt-1 p-2 border border-border rounded-md hover:bg-muted/50 transition-colors">
               {post.content.substring(0, 100)}...
@@ -149,7 +148,7 @@ const Notifications = () => {
       setLoading(true);
       try {
         
-        // --- THIS IS THE UPDATED QUERY ---
+        // --- This is the UPDATED QUERY ---
         const { data, error } = await supabase
           .from('notifications')
           .select(`
