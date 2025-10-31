@@ -6,7 +6,7 @@ import { toast } from 'sonner';
 import { MessageSquare, Heart, Share, User, Ellipsis } from 'lucide-react';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input'; // Corrected and ensured import
+import { Input } from '@/components/ui/input';
 
 // --- Type Definitions ---
 interface Post {
@@ -41,7 +41,7 @@ interface Reply {
   };
 }
 
-// --- Verified Badge Logic ---
+// --- Verified Badge Logic (Unchanged) ---
 const TwitterVerifiedBadge = () => (
   <svg
     viewBox="0 0 22 22"
@@ -72,7 +72,7 @@ const VerifiedBadge = ({ isVerified, isOrgVerified }: { isVerified: boolean; isO
   return null;
 };
 
-// Helper to format time
+// Helper to format time (Unchanged)
 const formatTime = (isoString: string) => {
   const date = new Date(isoString);
   const now = new Date();
@@ -163,8 +163,9 @@ const PostCard = ({ post, addReply, user, navigate, onAcknowledge }:
             </span>
             <VerifiedBadge isVerified={post.profiles.is_verified} isOrgVerified={post.profiles.is_organization_verified} />
 
+            {/* 🎯 UPDATED: Blue and clickable handle for Post Author */}
             <span
-              className="text-muted-foreground text-sm hover:underline cursor-pointer truncate flex-shrink min-w-0"
+              className="text-blue-500 text-sm hover:underline cursor-pointer truncate flex-shrink min-w-0"
               onClick={() => handleViewProfile(post.author_id)}
             >
               @{post.profiles.handle}
@@ -215,9 +216,10 @@ const PostCard = ({ post, addReply, user, navigate, onAcknowledge }:
           {showComments && post.replies && post.replies.length > 0 && (
             <div className="space-y-2 pt-2">
               {post.replies.map((reply) => (
-                <div key={reply.id} className="text-sm flex">
+                <div key={reply.id} className="text-sm flex items-center">
+                  {/* 🎯 UPDATED: Blue and clickable handle for Reply Author */}
                   <span
-                    className="font-bold text-foreground cursor-pointer hover:underline flex-shrink-0"
+                    className="font-bold text-blue-500 cursor-pointer hover:underline flex-shrink-0"
                     onClick={() => handleViewProfile(reply.author_id)}
                   >
                     {reply.profiles.handle}
@@ -268,7 +270,7 @@ const PostCard = ({ post, addReply, user, navigate, onAcknowledge }:
   );
 };
 
-// --- Feed Component ---
+// --- Feed Component (Unchanged) ---
 const Feed = () => {
   const { user } = useAuth();
   const [posts, setPosts] = useState<Post[]>([]);
@@ -277,7 +279,6 @@ const Feed = () => {
   const navigate = useNavigate();
 
   useEffect(() => {
-    // Timeout to stop showing skeleton after 5 seconds
     const timer = setTimeout(() => {
       setForceLoaded(true);
     }, 5000);
@@ -286,7 +287,6 @@ const Feed = () => {
 
   const effectiveLoading = loading && !forceLoaded;
 
-  // Function to optimistically add a new reply to a post's state
   const addReply = useCallback((postId: string, newReply: Reply) => {
     setPosts((cur) =>
       cur.map((p) =>
@@ -303,7 +303,6 @@ const Feed = () => {
     );
   }, []);
 
-  // Function to handle liking/unliking a post
   const handleAcknowledge = useCallback(async (postId: string, currentHasLiked: boolean) => {
     if (!user) {
       toast.error('You must be logged in to like a post');
@@ -311,7 +310,6 @@ const Feed = () => {
     }
     const currentUserId = user.id;
 
-    // Optimistic UI Update
     setPosts((currentPosts) =>
       currentPosts.map((p) =>
         p.id === postId
@@ -320,7 +318,6 @@ const Feed = () => {
       )
     );
 
-    // Database operation
     if (currentHasLiked) {
       const { error } = await supabase
         .from('post_acknowledgments')
@@ -329,7 +326,6 @@ const Feed = () => {
 
       if (error) {
         toast.error('Failed to unacknowledge post');
-        // Rollback optimistic update on error
         setPosts((currentPosts) =>
           currentPosts.map((p) =>
             p.id === postId
@@ -345,7 +341,6 @@ const Feed = () => {
 
       if (error) {
         toast.error('Failed to acknowledge post');
-        // Rollback optimistic update on error
         setPosts((currentPosts) =>
           currentPosts.map((p) =>
             p.id === postId
@@ -358,11 +353,9 @@ const Feed = () => {
   }, [user]);
 
 
-  // Main data fetching function
   const fetchPosts = useCallback(async () => {
     setLoading(true);
     try {
-      // 1. Fetch Posts and Profiles
       let { data: postData, error: postsError } = await supabase
         .from('posts')
         .select('*, profiles(display_name, handle, is_verified, is_organization_verified)')
@@ -374,7 +367,6 @@ const Feed = () => {
 
       const postIds = postData.map((p) => p.id);
 
-      // 2. Fetch Replies for all posts
       const { data: repliesData, error: repliesError } = await supabase
         .from('post_replies')
         .select('*, profiles(display_name, handle, is_verified, is_organization_verified)')
@@ -383,7 +375,6 @@ const Feed = () => {
 
       if (repliesError) throw repliesError;
 
-      // 3. Fetch Likes (Acknowledgments) for all posts
       const { data: ackData, error: ackError } = await supabase
         .from('post_acknowledgments')
         .select('post_id, user_id')
@@ -391,7 +382,6 @@ const Feed = () => {
 
       if (ackError) throw ackError;
 
-      // 4. Map Replies to Posts
       const repliesByPostId = new Map<string, Reply[]>();
       (repliesData || []).forEach((r) => {
         if (!repliesByPostId.has(r.post_id)) {
@@ -400,7 +390,6 @@ const Feed = () => {
         repliesByPostId.get(r.post_id)!.push(r as Reply);
       });
 
-      // 5. Map Likes/Acks to Posts
       const acksByPostId = new Map<string, string[]>();
       (ackData || []).forEach((ack) => {
         if (!acksByPostId.has(ack.post_id)) {
@@ -409,7 +398,6 @@ const Feed = () => {
         acksByPostId.get(ack.post_id)!.push(ack.user_id);
       });
 
-      // 6. Construct Final Post Objects
       const currentUserId = user?.id || null;
       const finalPosts: Post[] = postData.map((post) => {
         const replies = repliesByPostId.get(post.id) || [];
@@ -436,11 +424,8 @@ const Feed = () => {
     }
   }, [user]);
 
-  // useEffect for initial data fetch and realtime subscriptions
   useEffect(() => {
     fetchPosts();
-
-    // --- Realtime Subscriptions ---
 
     const postsChannel = supabase
       .channel('feed-updates')
@@ -495,7 +480,7 @@ const Feed = () => {
         'postgres_changes',
         { event: '*', schema: 'public', table: 'post_acknowledgments' },
         (payload) => {
-          fetchPosts(); // Re-fetch all to get accurate counts and has_liked status
+          fetchPosts();
         }
       )
       .subscribe();
