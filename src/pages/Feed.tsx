@@ -1,4 +1,4 @@
-import { useEffect, useState, useCallback, useMemo } from 'react'; // 🎯 Added useMemo
+import { useEffect, useState, useCallback, useMemo } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/contexts/AuthContext';
@@ -150,12 +150,28 @@ const parsePostContent = (content: string, navigate: (path: string) => void) => 
 const PostCard = ({ post, addReply, user, navigate, onAcknowledge }:
   { post: Post; addReply: (postId: string, reply: Reply) => void; user: any; navigate: any; onAcknowledge: (postId: string, hasLiked: boolean) => void }) => {
 
-  // 🎯 INITIAL STATE: Check if post has more than 3 replies to set initial collapse state
-  const initiallyCollapsed = useMemo(() => post.replies.length > 3, [post.replies.length]);
-  const [isCollapsed, setIsCollapsed] = useState(initiallyCollapsed);
-  const [isReplying, setIsReplying] = useState(false); // New state for input visibility
+  // 🎯 NEW STATE: Controls the main post text collapse
+  const [isTextExpanded, setIsTextExpanded] = useState(false);
+  
+  // 🎯 NEW STATE: Controls the visibility of the replies list/input
+  const [isReplying, setIsReplying] = useState(false); 
+  
   const [replyText, setReplyText] = useState('');
   
+  // Ref for checking if the text has truly overflowed (Unchanged)
+  const contentRef = useRef<HTMLParagraphElement>(null);
+  const [isContentOverflowing, setIsContentOverflowing] = useState(false);
+
+  useEffect(() => {
+    if (contentRef.current) {
+      // Check if scrollHeight (total content height) is greater than clientHeight (visible height)
+      setIsContentOverflowing(
+        contentRef.current.scrollHeight > contentRef.current.clientHeight
+      );
+    }
+  }, [post.content, isTextExpanded]);
+
+
   const handleViewProfile = (userId: string) => {
     navigate(`/profile/${userId}`);
   };
@@ -185,9 +201,6 @@ const PostCard = ({ post, addReply, user, navigate, onAcknowledge }:
     };
     addReply(post.id, optimisticReply);
     
-    // Ensure the list is expanded after a new comment
-    setIsCollapsed(false); 
-    
     // Database Write
     const { error } = await supabase.from('post_replies').insert({
       post_id: post.id,
@@ -201,12 +214,9 @@ const PostCard = ({ post, addReply, user, navigate, onAcknowledge }:
     }
   };
 
-  // 🎯 LOGIC: Determine which replies to show (the last 3 if collapsed)
-  const repliesToDisplay = isCollapsed && post.replies.length > 3
-    ? post.replies.slice(-3) 
-    : post.replies;
-
-  const showCollapseExpandButtons = post.replies.length > 3;
+  
+  // 🎯 REPLIES: No collapse logic needed here, just display if the user toggled 'isReplying'
+  const repliesToDisplay = post.replies;
 
 
   return (
@@ -249,11 +259,37 @@ const PostCard = ({ post, addReply, user, navigate, onAcknowledge }:
           </Button>
         </div>
 
-        {/* POST CONTENT WRAPPED IN LINK (Unchanged) */}
-        <Link to={`/post/${post.id}`} className="block">
-          <p className="text-foreground text-base mt-1 mb-2 leading-relaxed whitespace-pre-wrap">
+        {/* 🎯 POST CONTENT with Collapse/Expand */}
+        <Link to={`/post/${post.id}`} className="block relative">
+          <p
+            ref={contentRef}
+            className={`
+              text-foreground text-base mt-1 mb-2 leading-relaxed whitespace-pre-wrap 
+              ${!isTextExpanded ? 'max-h-[120px] overflow-hidden relative' : ''}
+            `}
+          >
             {parsePostContent(post.content, navigate)}
           </p>
+
+          {/* Read More/Less Button */}
+          {isContentOverflowing && (
+            <button
+              type="button"
+              onClick={(e) => {
+                e.preventDefault(); // Prevent navigating to post detail when clicking Read More
+                e.stopPropagation();
+                setIsTextExpanded(!isTextExpanded);
+              }}
+              className="text-primary text-sm font-semibold hover:underline mt-1 block"
+            >
+              {isTextExpanded ? 'Show Less' : 'Read More...'}
+            </button>
+          )}
+
+          {/* Overlay to create the blur effect when collapsed */}
+          {!isTextExpanded && isContentOverflowing && (
+            <div className="absolute bottom-0 left-0 right-0 h-10 bg-gradient-to-t from-background to-transparent pointer-events-none"></div>
+          )}
         </Link>
 
 
@@ -273,22 +309,11 @@ const PostCard = ({ post, addReply, user, navigate, onAcknowledge }:
           </Button>
         </div>
 
-        {/* --- COMMENT SECTION --- */}
+        {/* --- COMMENT SECTION (Now driven by isReplying) --- */}
         <div className="mt-3">
           
-          {/* 🎯 EXPAND BUTTON */}
-          {isCollapsed && showCollapseExpandButtons && (
-            <span
-              className="text-sm text-primary cursor-pointer hover:underline flex items-center gap-1 mb-2"
-              onClick={() => setIsCollapsed(false)}
-            >
-              <ChevronDown className="h-4 w-4" />
-              View all {post.reply_count} replies
-            </span>
-          )}
-
-          {/* 🎯 REPLIES LIST */}
-          {post.reply_count > 0 && (
+          {/* 🎯 REPLIES LIST: Show if there are replies OR if the user is replying */}
+          {(post.reply_count > 0 || isReplying) && (
             <div className="space-y-2 pt-1">
               {repliesToDisplay.map((reply) => (
                 <div key={reply.id} className="text-sm flex items-center">
@@ -306,18 +331,13 @@ const PostCard = ({ post, addReply, user, navigate, onAcknowledge }:
                 </div>
               ))}
               
-              {/* 🎯 COLLAPSE BUTTON */}
-              {!isCollapsed && showCollapseExpandButtons && (
-                <span
-                  className="text-sm text-primary cursor-pointer hover:underline flex items-center gap-1 pt-1"
-                  onClick={() => setIsCollapsed(true)}
-                >
-                  <ChevronUp className="h-4 w-4" />
-                  Collapse replies
-                </span>
+              {/* 🎯 MESSAGE IF NO REPLIES YET */}
+              {post.reply_count === 0 && isReplying && (
+                <p className="text-sm text-muted-foreground pt-2">No replies yet. Be the first!</p>
               )}
             </div>
           )}
+
 
           {/* Comment input */}
           {isReplying && user && (
@@ -350,12 +370,6 @@ const PostCard = ({ post, addReply, user, navigate, onAcknowledge }:
               Please <a href="/auth" className="text-primary underline">log in</a> to comment.
             </div>
           )}
-          
-          {/* 🎯 Message for 0 replies */}
-          {post.reply_count === 0 && isReplying && (
-            <p className="text-sm text-muted-foreground pt-2">No replies yet. Be the first!</p>
-          )}
-
         </div>
       </div>
     </div>
