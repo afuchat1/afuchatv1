@@ -5,12 +5,32 @@
 declare const self: ServiceWorkerGlobalScope;
 
 import { cleanupOutdatedCaches, precacheAndRoute } from 'workbox-precaching';
+import { registerRoute } from 'workbox-routing';
+import { NetworkFirst } from 'workbox-strategies';
+import { ExpirationPlugin } from 'workbox-expiration';
 
 // This line is automatically injected by vite-plugin-pwa
 // It contains the list of all your app's files to cache for offline use
 precacheAndRoute(self.__WB_MANIFEST || []);
 
 cleanupOutdatedCaches();
+
+// --- Re-implementing your runtimeCaching logic from vite.config.ts ---
+// This will cache Supabase requests
+registerRoute(
+  // The URL of your Supabase project
+  ({ url }) => url.origin === 'https://rhnsjqqtdzlkvqazfcbg.supabase.co',
+  // Use a "Network First" strategy
+  new NetworkFirst({
+    cacheName: 'supabase-cache',
+    plugins: [
+      new ExpirationPlugin({
+        maxEntries: 50,
+        maxAgeSeconds: 60 * 60 * 24 // 24 hours
+      })
+    ]
+  })
+);
 
 // --- This is the new code for Push Notifications ---
 
@@ -25,8 +45,8 @@ self.addEventListener('push', (event) => {
   const title = data.title || 'AfuChat';
   const options = {
     body: data.body,
-    icon: '/icons/icon-192x192.png', // Make sure you have an icon here in public/icons/
-    badge: '/icons/icon-96x96.png',  // And here
+    icon: '/logo.jpg', // Using your logo from manifest
+    badge: '/logo.jpg', // Using your logo
     data: {
       url: data.url || '/', // We can send a URL to open on click
     },
