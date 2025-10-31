@@ -159,59 +159,57 @@ const ChatRoom = () => {
 
   if (loading) {
     return (
-      <div className="flex-1 flex items-center justify-center bg-gradient-to-br from-indigo-50 to-purple-50">
+      <div className="flex-1 flex items-center justify-center bg-background">
         <div className="text-center">
-          <Loader2 className="h-8 w-8 animate-spin mx-auto mb-2 text-indigo-600" />
-          <p className="text-gray-600">Loading chat...</p>
+          <Loader2 className="h-8 w-8 animate-spin mx-auto mb-2 text-primary" />
+          <p className="text-muted-foreground">Loading chat...</p>
         </div>
       </div>
     );
   }
 
   return (
-    <div className="h-screen flex flex-col bg-gradient-to-br from-indigo-50 via-white to-purple-50 overflow-hidden">
-      {/* Unique Header: Modern with subtle glow */}
-      <div className="bg-white/90 backdrop-blur-md border-b border-indigo-100 sticky top-0 z-10 flex items-center px-4 py-3 gap-3 shadow-sm">
+    <div className="h-screen flex flex-col bg-background overflow-hidden">
+      {/* Header: Sticky top, platform colors */}
+      <div className="bg-card border-b border-border sticky top-0 z-10 flex items-center px-4 py-3 gap-3">
         <Button
           variant="ghost"
           size="icon"
-          className="hover:bg-indigo-100 h-10 w-10 p-0 rounded-lg"
-          onClick={() => navigate('/')}
+          className="h-10 w-10 p-0 hover:bg-muted"
+          onClick={() => navigate(-1)}
         >
-          <ArrowLeft className="h-5 w-5 text-indigo-600" />
+          <ArrowLeft className="h-5 w-5" />
         </Button>
         <div className="flex-1 min-w-0">
-          <h1 className="text-lg font-bold text-gray-900 truncate">
+          <h1 className="text-lg font-semibold text-foreground truncate">
             {chatInfo?.name || (chatInfo?.is_group ? 'Group Chat' : 'Direct Message')}
           </h1>
           {chatInfo && !chatInfo.is_group && (
-            <p className={`text-xs font-medium ${online ? 'text-green-600' : 'text-gray-500'}`}>
+            <p className={`text-xs ${online ? 'text-green-600' : 'text-muted-foreground'}`}>
               {online ? 'online' : 'last seen recently'}
             </p>
           )}
         </div>
-        <div className="flex items-center gap-2">
-          <Button variant="ghost" size="icon" className="h-9 w-9 p-0 hover:bg-indigo-100 rounded-lg">
-            <Video className="h-4 w-4 text-indigo-600" />
+        <div className="flex items-center gap-1">
+          <Button variant="ghost" size="icon" className="h-9 w-9 p-0 hover:bg-muted">
+            <Video className="h-4 w-4" />
           </Button>
-          <Button variant="ghost" size="icon" className="h-9 w-9 p-0 hover:bg-indigo-100 rounded-lg">
-            <Phone className="h-4 w-4 text-indigo-600" />
+          <Button variant="ghost" size="icon" className="h-9 w-9 p-0 hover:bg-muted">
+            <Phone className="h-4 w-4" />
           </Button>
-          <Button variant="ghost" size="icon" className="h-9 w-9 p-0 hover:bg-indigo-100 rounded-lg">
-            <MoreVertical className="h-4 w-4 text-indigo-600" />
+          <Button variant="ghost" size="icon" className="h-9 w-9 p-0 hover:bg-muted">
+            <MoreVertical className="h-4 w-4" />
           </Button>
         </div>
       </div>
 
-      {/* Messages: Unique Bubble Style with Glow & Curves */}
-      <div className="flex-1 overflow-y-auto p-4 space-y-4 pr-2 scrollbar-thin scrollbar-thumb-indigo-300">
+      {/* Messages: Full height minus header/input, platform colors */}
+      <div className="flex-1 overflow-y-auto p-4 space-y-4" style={{ paddingBottom: '80px' }}>
         {messages.length === 0 ? (
-          <div className="flex flex-col items-center justify-center h-full text-center text-gray-500 space-y-3">
-            <div className="h-16 w-16 bg-indigo-100 rounded-full flex items-center justify-center">
-              <MessageSquare className="h-8 w-8 text-indigo-500" />
-            </div>
-            <p className="text-sm font-medium text-gray-700">No messages yet. Start the conversation!</p>
-            <p className="text-xs text-gray-400 bg-white/50 px-3 py-1 rounded-full">End-to-end encrypted</p>
+          <div className="flex flex-col items-center justify-center h-full text-center text-muted-foreground space-y-2">
+            <MessageSquare className="h-12 w-12 opacity-50" />
+            <p className="text-sm">No messages yet. Start the conversation!</p>
+            <p className="text-xs text-muted-foreground">Messages are encrypted end-to-end</p>
           </div>
         ) : (
           messages.map((message) => {
@@ -220,24 +218,24 @@ const ChatRoom = () => {
             return (
               <div
                 key={message.id}
-                className={`flex ${isOwn ? 'justify-end' : 'justify-start'} fade-in-up`}
+                className={`flex ${isOwn ? 'justify-end' : 'justify-start'}`}
               >
                 {!isOwn ? (
-                  <div className="flex items-start gap-3 max-w-[75%]">
-                    {/* Avatar with Glow */}
-                    <div className="h-10 w-10 rounded-2xl bg-gradient-to-r from-indigo-500 to-purple-600 flex items-center justify-center text-white text-sm font-bold shadow-lg ring-2 ring-indigo-100/50">
-                      {message.profiles.display_name.charAt(0).toUpperCase()}
+                  <div className="flex items-end gap-2 max-w-[75%]">
+                    {/* Avatar */}
+                    <div className="h-8 w-8 rounded-full bg-muted flex items-center justify-center">
+                      <User className="h-4 w-4 text-foreground" />
                     </div>
                     {/* Bubble */}
                     <div className="flex flex-col">
-                      <div className="flex items-baseline gap-2 mb-2">
-                        <span className="text-sm font-semibold text-gray-800">
+                      <div className="flex items-baseline gap-2 mb-1">
+                        <span className="text-xs font-semibold text-foreground">
                           {message.profiles.display_name}
                         </span>
-                        <span className="text-xs text-gray-500"> {time}</span>
+                        <span className="text-xs text-muted-foreground">• {time}</span>
                       </div>
-                      <div className="bg-white text-gray-900 px-5 py-4 rounded-2xl shadow-md border border-gray-200/50 max-w-full ring-1 ring-indigo-100/30">
-                        <p className="text-sm leading-relaxed break-words">
+                      <div className="bg-card text-foreground px-4 py-3 rounded-lg shadow-sm border border-border max-w-full">
+                        <p className="text-sm whitespace-pre-wrap break-words">
                           {message.encrypted_content}
                         </p>
                       </div>
@@ -245,14 +243,14 @@ const ChatRoom = () => {
                   </div>
                 ) : (
                   <div className="flex flex-col items-end max-w-[75%]">
-                    <div className="bg-gradient-to-r from-indigo-600 to-purple-600 text-white px-5 py-4 rounded-2xl shadow-lg ring-1 ring-indigo-500/30 max-w-full">
-                      <p className="text-sm leading-relaxed break-words">
+                    <div className="bg-primary text-primary-foreground px-4 py-3 rounded-lg shadow-sm">
+                      <p className="text-sm whitespace-pre-wrap break-words">
                         {message.encrypted_content}
                       </p>
                     </div>
-                    <div className="flex items-center gap-1 mt-2">
-                      <span className="text-xs text-white/80"> {time}</span>
-                      <Check className="h-3 w-3 text-white/80" />
+                    <div className="flex items-center gap-1 mt-1">
+                      <span className="text-xs text-primary-foreground/70"> {time}</span>
+                      <Check className="h-3 w-3 text-primary-foreground/70" />
                     </div>
                   </div>
                 )}
@@ -263,22 +261,22 @@ const ChatRoom = () => {
         <div ref={messagesEndRef} />
       </div>
 
-      {/* Input: Unique Pill with Glow Effect */}
-      <div className="bg-white/90 backdrop-blur-md border-t border-indigo-100 px-4 py-3 shadow-sm">
-        <div className="flex items-end gap-3">
+      {/* Input: Fixed bottom, platform colors, doesn't move */}
+      <div className="fixed bottom-0 left-0 right-0 z-20 bg-card border-t border-border px-4 py-3">
+        <div className="flex items-end gap-2">
           <div className="flex-1 relative">
             <Input
               placeholder="Type a message..."
               value={newMessage}
               onChange={(e) => setNewMessage(e.target.value)}
               onKeyDown={(e) => e.key === 'Enter' && !e.shiftKey && handleSend()}
-              className="h-14 pr-14 bg-indigo-50/50 dark:bg-purple-900/20 border-indigo-200 dark:border-purple-800 rounded-2xl placeholder-gray-600 focus-visible:ring-2 focus-visible:ring-indigo-500 focus-visible:border-transparent text-sm pl-4"
+              className="h-12 pr-12"
               disabled={sending}
             />
             <Button
               size="icon"
               variant="ghost"
-              className="absolute right-3 bottom-3 h-8 w-8 p-0 text-gray-500 hover:text-indigo-600 hover:bg-indigo-100 rounded-full transition-colors"
+              className="absolute right-2 bottom-2 h-8 w-8 p-0 text-muted-foreground hover:text-foreground"
             >
               <MessageSquare className="h-4 w-4" />
             </Button>
@@ -286,9 +284,9 @@ const ChatRoom = () => {
           <Button
             onClick={handleSend}
             disabled={!newMessage.trim() || sending}
-            className="h-14 w-14 rounded-2xl bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-700 hover:to-purple-700 disabled:opacity-50 disabled:cursor-not-allowed shadow-lg ring-1 ring-indigo-500/20 transition-all duration-200"
+            className="h-12 w-12"
           >
-            {sending ? <Loader2 className="h-4 w-4 animate-spin" /> : <Send className="h-4 w-4 rotate-45" />}
+            {sending ? <Loader2 className="h-4 w-4 animate-spin" /> : <Send className="h-4 w-4" />}
           </Button>
         </div>
       </div>
