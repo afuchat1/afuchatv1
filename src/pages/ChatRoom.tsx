@@ -11,9 +11,9 @@ import {
 } from 'lucide-react';
 import { toast } from 'sonner';
 
-// --- Import New Components ---
-import { MessageBubble } from './MessageBubble';
-import { DateDivider } from './DateDivider';
+// --- Import New Components (FIXED PATHS) ---
+import { MessageBubble } from '../components/chat/MessageBubble';
+import { DateDivider } from '../components/chat/DateDivider';
 
 // --- Types (Export for MessageBubble) ---
 export interface Reaction {
@@ -207,7 +207,7 @@ const ChatRoom = () => {
      if (mediaRecorderRef.current && recording) {
       mediaRecorderRef.current.stop();
       setRecording(false);
-      toast.success('Recorded! Tap send to share.');
+      toast.success('Recorded! Tap to share.');
     }
   };
 
