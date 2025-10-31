@@ -6,7 +6,27 @@ import { Link } from 'react-router-dom';
 import { Heart, MessageSquare, UserPlus } from 'lucide-react';
 import { cn } from '@/lib/utils'; // Assuming you have a cn utility for classnames
 
-// Define the notification type
+// --- START: Verified Badge Components ---
+// I've added these from your Search.tsx for you
+const TwitterVerifiedBadge = ({ size = 'w-4 h-4' }: { size?: string }) => (
+  <svg viewBox="0 0 22 22" xmlns="http://www.w3.org/2000/svg" className={`${size} ml-1`}>
+    <path d="M20.396 11c-.018-.646-.215-1.275-.57-1.816-.354-.54-.852-.972-1.438-1.246.223-.607.27-1.264.14-1.897-.131-.634-.437-1.218-.882-1.687-.47-.445-1.053-.75-1.687-.882-.633-.13-1.29-.083-1.897.14-.273-.587-.704-1.086-1.245-1.44S11.647 1.62 11 1.604c-.646.017-1.273.213-1.813.568s-.969.854-1.24 1.44c-.608-.223-1.267-.272-1.902-.14-.635.13-1.22.436-1.69.882-.445.47-.749 1.055-.878 1.688-.13.633-.08 1.29.144 1.896-.587.274-1.087.705-1.443 1.245-.356.54-.555 1.17-.574 1.817.02.647.218 1.276.574 1.817.356.54.856.972 1.443 1.245-.224.606-.274 1.263-.144 1.896.13.634.433 1.218.877 1.688.47.443 1.054.747 1.687.878.633.132 1.29.084 1.897-.136.274.586.705 1.084 1.246 1.439.54.354 1.17.551 1.816.569.647-.016 1.276-.213 1.817-.567s.972-.854 1.245-1.44c.604.239 1.266.296 1.903.164.636-.132 1.22-.447 1.68-.907.46-.46.776-1.044.908-1.681s.075-1.299-.165-1.903c.586-.274 1.084-.705 1.439-1.246.354-.54.551-1.17.569-1.816zM9.662 14.85l-3.429-3.428 1.293-1.302 2.072 2.072 4.4-4.794 1.347 1.246z" fill="#1d9bf0" />
+  </svg>
+);
+const GoldVerifiedBadge = ({ size = 'w-4 h-4' }: { size?: string }) => (
+  <svg viewBox="0 0 22 22" xmlns="http://www.w3.org/2000/svg" className={`${size} ml-1`}>
+    <path d="M20.396 11c-.018-.646-.215-1.275-.57-1.816-.354-.54-.852-.972-1.438-1.246.223-.607.27-1.264.14-1.897-.131-.634-.437-1.218-.882-1.687-.47-.445-1.053-.75-1.687-.882-.633-.13-1.29-.083-1.897.14-.273-.587-.704-1.086-1.245-1.44S11.647 1.62 11 1.604c-.646.017-1.273.213-1.813.568s-.969.854-1.24 1.44c-.608-.223-1.267-.272-1.902-.14-.635.13-1.22.436-1.69.882-.445.47-.749 1.055-.878 1.688-.13.633-.08 1.29.144 1.896-.587.274-1.087.705-1.443 1.245-.356.54-.555 1.17-.574 1.817.02.647.218 1.276.574 1.817.356.54.856.972 1.443 1.245-.224.606-.274 1.263-.144 1.896.13.634.433 1.218.877 1.688.47.443 1.054.747 1.687.878.633.132 1.29.084 1.897-.136.274.586.705 1.084 1.246 1.439.54.354 1.17.551 1.816.569.647-.016 1.276-.213 1.817-.567s.972-.854 1.245-1.44c.604.239 1.266.296 1.903.164.636-.132 1.22-.447 1.68-.907.46-.46.776-1.044.908-1.681s.075-1.299-.165-1.903c.586-.274 1.084-.705 1.439-1.246.354-.54.551-1.17.569-1.816zM9.662 14.85l-3.429-3.428 1.293-1.302 2.072 2.072 4.4-4.794 1.347 1.246z" fill="#FFD43B" />
+  </svg>
+);
+const VerifiedBadge = ({ isVerified, isOrgVerified }: { isVerified?: boolean; isOrgVerified?: boolean }) => {
+  if (isOrgVerified) return <GoldVerifiedBadge />;
+  if (isVerified) return <TwitterVerifiedBadge />;
+  return null;
+};
+// --- END: Verified Badge Components ---
+
+
+// --- Define the UPDATED notification type ---
 export interface Notification {
   id: string;
   created_at: string;
@@ -16,6 +36,9 @@ export interface Notification {
   actor: {
     display_name: string;
     handle: string;
+    // --- ADDED THESE FIELDS ---
+    is_verified?: boolean;
+    is_organization_verified?: boolean;
   };
   post?: {
     content: string;
@@ -39,43 +62,65 @@ const NotificationRow = ({ notification }: { notification: Notification }) => {
     }
   };
 
+  // --- UPDATED: This component now creates the links ---
   const renderMessage = () => {
+    // This is the link to the actor's profile, with their name and badge
+    const ActorLink = (
+      <Link 
+        to={`/profile/${actor.handle}`} 
+        className="font-semibold hover:underline flex items-center gap-1"
+        onClick={(e) => e.stopPropagation()} // Stops the click from bubbling up
+      >
+        {actor.display_name}
+        <VerifiedBadge isVerified={actor.is_verified} isOrgVerified={actor.is_organization_verified} />
+      </Link>
+    );
+
     switch (type) {
       case 'new_like':
-        return <><span className="font-semibold">{actor.display_name}</span> liked your post</>;
+        return <div className="flex flex-wrap items-center gap-1">{ActorLink} liked your post</div>;
       case 'new_reply':
-        return <><span className="font-semibold">{actor.display_name}</span> replied to your post</>;
+        return <div className="flex flex-wrap items-center gap-1">{ActorLink} replied to your post</div>;
       case 'new_follower':
-        return <><span className="font-semibold">{actor.display_name}</span> started following you</>;
+        return <div className="flex flex-wrap items-center gap-1">{ActorLink} started following you</div>;
       default:
         return 'New notification';
     }
   };
-
-  // Link to the user's profile for a follow, or the post for a like/reply
-  const linkTo = type === 'new_follower' ? `/profile/${actor.handle}` : `/post/${notification.post_id}`;
-
+  
+  // --- UPDATED: The main link is now dynamic ---
+  // We remove the row-level link to prevent nested links
   return (
-    <Link to={linkTo} className="block">
-      <div className={cn(
-        "flex items-start gap-4 p-4 border-b border-border transition-colors hover:bg-muted/50",
-        !notification.is_read && "bg-primary/5" // Highlight unread
-      )}>
-        <div className="mt-1">{renderIcon()}</div>
-        <div className="flex-1">
-          <p className="text-sm text-foreground">{renderMessage()}</p>
-          {/* Show a snippet of the post if it's a like or reply */}
-          {post?.content && (
-            <p className="text-sm text-muted-foreground mt-1 p-2 border border-border rounded-md">
+    <div className={cn(
+      "flex items-start gap-4 p-4 border-b border-border",
+      !notification.is_read && "bg-primary/5"
+    )}>
+      <div className="mt-1">{renderIcon()}</div>
+      <div className="flex-1">
+        <div className="text-sm text-foreground">{renderMessage()}</div>
+        
+        {/* If it's a follow, link the whole row to the actor's profile */}
+        {type === 'new_follower' && (
+          <Link to={`/profile/${actor.handle}`} className="absolute inset-0" />
+        )}
+
+        {/* --- UPDATED: This post snippet is now its own link --- */}
+        {post?.content && (
+          <Link 
+            to={`/post/${notification.post_id}`} 
+            className="block"
+          >
+            <p className="text-sm text-muted-foreground mt-1 p-2 border border-border rounded-md hover:bg-muted/50 transition-colors">
               {post.content.substring(0, 100)}...
             </p>
-          )}
-          <p className="text-xs text-muted-foreground mt-1">
-            {new Date(created_at).toLocaleString('en-UG')}
-          </p>
-        </div>
+          </Link>
+        )}
+        
+        <p className="text-xs text-muted-foreground mt-1">
+          {new Date(created_at).toLocaleString('en-UG')}
+        </p>
       </div>
-    </Link>
+    </div>
   );
 };
 
@@ -104,12 +149,12 @@ const Notifications = () => {
       setLoading(true);
       try {
         
-        // --- THIS IS THE CORRECTED QUERY ---
+        // --- THIS IS THE UPDATED QUERY ---
         const { data, error } = await supabase
           .from('notifications')
           .select(`
             id, created_at, type, is_read, post_id,
-            actor:actor_id ( display_name, handle ),
+            actor:actor_id ( display_name, handle, is_verified, is_organization_verified ),
             post:post_id ( content )
           `)
           .eq('user_id', user.id)
