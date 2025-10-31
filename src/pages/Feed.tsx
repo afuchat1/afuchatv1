@@ -165,23 +165,28 @@ const PostCard = ({ post, addReply, user, navigate, onAcknowledge, index = 0 }:
   // Detect if post content overflows (needs truncation)
   useEffect(() => {
     if (contentRef.current && !showFullPost) {
-      const element = contentRef.current;
-      // Temporarily remove any truncation to measure full height
-      const originalOverflow = element.style.overflow;
-      const originalMaxHeight = element.style.maxHeight;
-      element.style.overflow = 'visible';
-      element.style.maxHeight = 'none';
+      setTimeout(() => {
+        const element = contentRef.current;
+        if (!element) return;
 
-      const fullHeight = element.scrollHeight;
-      const lineHeight = parseFloat(getComputedStyle(element).lineHeight) || 20;
-      const maxVisibleLines = 4;
-      const maxVisibleHeight = lineHeight * maxVisibleLines;
+        // Temporarily remove any truncation to measure full height
+        const originalOverflow = element.style.overflow;
+        const originalMaxHeight = element.style.maxHeight;
+        element.style.overflow = 'visible';
+        element.style.maxHeight = 'none';
 
-      setIsPostLong(fullHeight > maxVisibleHeight);
+        const fullHeight = element.scrollHeight;
+        const computedStyle = getComputedStyle(element);
+        const lineHeight = parseFloat(computedStyle.lineHeight);
+        const maxVisibleLines = 4;
+        const maxVisibleHeight = lineHeight * maxVisibleLines;
 
-      // Restore truncation styles
-      element.style.overflow = originalOverflow;
-      element.style.maxHeight = originalMaxHeight;
+        setIsPostLong(fullHeight > maxVisibleHeight);
+
+        // Restore truncation styles
+        element.style.overflow = originalOverflow;
+        element.style.maxHeight = originalMaxHeight;
+      }, 0);
     }
   }, [post.content, showFullPost]);
 
