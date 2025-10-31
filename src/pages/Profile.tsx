@@ -1,5 +1,5 @@
 import { useEffect, useState, useCallback } from 'react';
-import { useParams, useNavigate } from 'react-router-dom';
+import { useParams, useNavigate, Link } from 'react-router-dom'; // Import Link for Mentions
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/contexts/AuthContext';
 import { Card } from '@/components/ui/card';
@@ -19,7 +19,7 @@ interface Profile {
   handle: string;
   bio?: string;
   is_verified?: boolean;
-  is_organization_verified?: boolean; 
+  is_organization_verified?: boolean;
   is_private?: boolean;
   created_at?: string;
 }
@@ -28,7 +28,7 @@ interface Post {
   id: string;
   content: string;
   created_at: string;
-  acknowledgment_count: number; 
+  acknowledgment_count: number;
   reply_count: number;
 }
 
@@ -59,7 +59,7 @@ const TwitterVerifiedBadge = ({ size = 'w-5 h-5' }: { size?: string }) => (
   </svg>
 );
 
-// --- NEW: Simplified Badge Icon Component (No Popover) ---
+// --- Simplified Badge Icon Component (No Popover) ---
 const VerifiedBadgeIcon = ({ isVerified, isOrgVerified }: { isVerified?: boolean; isOrgVerified?: boolean }) => {
   if (isOrgVerified) {
     return <GoldVerifiedBadge />;
@@ -69,7 +69,49 @@ const VerifiedBadgeIcon = ({ isVerified, isOrgVerified }: { isVerified?: boolean
   }
   return null;
 };
-// --- END NEW BADGE ---
+
+// --- NEW: Post Content Parser Component for @Mentions ---
+const MENTION_REGEX = /@(\w+)/g;
+
+const PostContentParser: React.FC<{ content: string }> = ({ content }) => {
+  const parts: React.ReactNode[] = [];
+  let lastIndex = 0;
+  let match;
+
+  // We use Link from react-router-dom to navigate without a full page reload
+  while ((match = MENTION_REGEX.exec(content)) !== null) {
+    const mentionText = match[0]; // e.g., "@handle"
+    const handle = match[1];     // e.g., "handle"
+
+    // 1. Push the text segment *before* the current match
+    if (match.index > lastIndex) {
+      parts.push(content.substring(lastIndex, match.index));
+    }
+
+    // 2. Push the clickable <Link> component for the mention
+    parts.push(
+      <Link
+        key={`mention-${match.index}-${handle}`}
+        to={`/profile/${handle}`} // Link to the user profile using the extracted handle
+        className="text-blue-500 hover:text-blue-400 font-medium transition-colors"
+        onClick={(e) => e.stopPropagation()} // Prevent potential card click/navigation 
+      >
+        {mentionText}
+      </Link>
+    );
+
+    // 3. Update the last index to the end of the current match
+    lastIndex = match.index + mentionText.length;
+  }
+
+  // 4. Push the remaining text after the last match
+  if (lastIndex < content.length) {
+    parts.push(content.substring(lastIndex));
+  }
+
+  return <p className="text-foreground whitespace-pre-wrap leading-relaxed">{parts}</p>;
+};
+// --- END NEW PARSER ---
 
 
 // --- Component Definition ---
@@ -95,13 +137,15 @@ const Profile = () => {
       .select('id', { count: 'exact', head: true })
       .eq('follower_id', id);
 
-    setFollowCount({ 
-      followers: followerCount || 0, 
-      following: followingCount || 0 
+    setFollowCount({
+      followers: followerCount || 0,
+      following: followingCount || 0
     });
   }, []);
 
   const fetchProfile = useCallback(async () => {
+    // NOTE: This assumes userId in useParams is actually the ID for fetching.
+    // If you intend to pass a HANDLE in the URL, you'll need to modify the Supabase query.
     const { data, error } = await supabase
       .from('profiles')
       .select('*, created_at')
@@ -134,7 +178,7 @@ const Profile = () => {
   const fetchUserPosts = useCallback(async () => {
     const { data, error } = await supabase
       .from('posts')
-      .select('id, content, created_at') 
+      .select('id, content, created_at')
       .eq('author_id', userId)
       .order('created_at', { ascending: false })
       .limit(20);
@@ -213,6 +257,7 @@ const Profile = () => {
       return;
     }
     
+    // Logic to find or create a 1-on-1 chat
     const { data: existingChats } = await supabase
       .from('chat_members')
       .select('chat_id, chats!inner(is_group)')
@@ -263,7 +308,7 @@ const Profile = () => {
     return (
       <div className="h-full flex flex-col">
         <div className="p-4 border-b border-border">
-            <Button variant="ghost" size="sm" className="mb-4"><ArrowLeft className="h-4 w-4 mr-2" />Back</Button>
+            <Button variant="ghost" size="sm" onClick={() => navigate(-1)} className="mb-4"><ArrowLeft className="h-4 w-4 mr-2" />Back</Button>
             <Skeleton className="h-4 w-1/4 mb-4" />
         </div>
         <div className="p-4">
@@ -353,14 +398,14 @@ const Profile = () => {
                     <MessageSquare className="h-5 w-5" />
                     </Button>
                 )}
-                <Button 
-                    onClick={handleFollow} 
-                    variant={isFollowing ? "outline" : "default"} 
+                <Button
+                    onClick={handleFollow}
+                    variant={isFollowing ? "outline" : "default"}
                     className="rounded-full px-4 font-bold transition-colors"
                     onMouseEnter={e => isFollowing && (e.currentTarget.textContent = 'Unfollow')}
                     onMouseLeave={e => isFollowing && (e.currentTarget.textContent = 'Following')}
                 >
-                    {isFollowing ? 'Following' : 
+                    {isFollowing ? 'Following' :
                       <>
                         <UserPlus className="h-4 w-4 mr-2" />
                         Follow
@@ -371,7 +416,7 @@ const Profile = () => {
             )}
           </div>
 
-          {/* --- FIX: Name and Handle Section --- */}
+          {/* Name and Handle Section */}
           <div className="mt-3">
             
             {/* Check if verified to decide whether to wrap in Popover */}
@@ -381,9 +426,9 @@ const Profile = () => {
                   {/* This entire div is now the clickable trigger */}
                   <div className="flex items-center gap-1 cursor-pointer w-fit">
                     <h1 className="text-xl font-extrabold leading-tight">{profile.display_name}</h1>
-                    <VerifiedBadgeIcon 
-                      isVerified={profile.is_verified} 
-                      isOrgVerified={profile.is_organization_verified} 
+                    <VerifiedBadgeIcon
+                      isVerified={profile.is_verified}
+                      isOrgVerified={profile.is_organization_verified}
                     />
                   </div>
                 </PopoverTrigger>
@@ -424,7 +469,7 @@ const Profile = () => {
             
             <p className="text-muted-foreground text-sm">@{profile.handle}</p>
           </div>
-          {/* --- END FIX --- */}
+          {/* --- END Name/Handle Section --- */}
 
           {/* Bio */}
           {profile.bio && <p className="mt-3 text-sm">{profile.bio}</p>}
@@ -480,7 +525,8 @@ const Profile = () => {
               <div className="space-y-0 divide-y divide-border">
                 {posts.map((post) => (
                   <Card key={post.id} className="p-4 rounded-none border-x-0 border-t-0 hover:bg-muted/10 cursor-pointer transition-colors">
-                    <p className="text-foreground whitespace-pre-wrap leading-relaxed">{post.content}</p>
+                    {/* 👇 Using the new component for clickable mentions 👇 */}
+                    <PostContentParser content={post.content} /> 
                     <div className="flex justify-between items-center text-xs text-muted-foreground mt-2">
                         <span>{new Date(post.created_at).toLocaleString('en-US', { hour: '2-digit', minute: '2-digit', day: 'numeric', month: 'short' })}</span>
                     </div>
