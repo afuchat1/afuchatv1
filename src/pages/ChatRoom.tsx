@@ -5,7 +5,7 @@ import { useAuth } from '@/contexts/AuthContext';
 import { Card } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
-import { ArrowLeft, Send, User } from 'lucide-react';
+import { ArrowLeft, Send, User, Loader2 } from 'lucide-react';
 import { toast } from 'sonner';
 
 interface Message {
@@ -32,6 +32,7 @@ const ChatRoom = () => {
   const [newMessage, setNewMessage] = useState('');
   const [chatInfo, setChatInfo] = useState<ChatInfo | null>(null);
   const [loading, setLoading] = useState(true);
+  const [sending, setSending] = useState(false);
   const messagesEndRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
@@ -50,8 +51,28 @@ const ChatRoom = () => {
           table: 'messages',
           filter: `chat_id=eq.${chatId}`,
         },
-        () => {
-          fetchMessages();
+        (payload) => {
+          // Append new message with sender profile (more efficient than full refetch)
+          supabase
+            .from('profiles')
+            .select('display_name, handle')
+            .eq('id', payload.new.sender_id)
+            .single()
+            .then(({ data: profile, error }) => {
+              if (error) {
+                console.error('Error fetching sender profile:', error);
+                return;
+              }
+              if (profile) {
+                setMessages((prev) => [
+                  ...prev,
+                  {
+                    ...payload.new,
+                    profiles: profile,
+                  },
+                ]);
+              }
+            });
         }
       )
       .subscribe();
@@ -93,6 +114,7 @@ const ChatRoom = () => {
   const handleSend = async () => {
     if (!newMessage.trim() || !user || !chatId) return;
 
+    setSending(true);
     const { error } = await supabase
       .from('messages')
       .insert({
@@ -102,10 +124,17 @@ const ChatRoom = () => {
       });
 
     if (error) {
-      toast.error('Failed to send message');
+      console.error('Send error details:', {
+        message: error.message,
+        code: error.code,
+        details: error.details,
+        hint: error.hint,
+      });
+      toast.error(`Failed to send: ${error.message}`);
     } else {
       setNewMessage('');
     }
+    setSending(false);
   };
 
   if (loading) {
@@ -191,9 +220,10 @@ const ChatRoom = () => {
             onChange={(e) => setNewMessage(e.target.value)}
             onKeyDown={(e) => e.key === 'Enter' && !e.shiftKey && handleSend()}
             className="flex-1"
+            disabled={sending}
           />
-          <Button onClick={handleSend} disabled={!newMessage.trim()}>
-            <Send className="h-4 w-4" />
+          <Button onClick={handleSend} disabled={!newMessage.trim() || sending}>
+            {sending ? <Loader2 className="h-4 w-4 animate-spin" /> : <Send className="h-4 w-4" />}
           </Button>
         </div>
       </div>
