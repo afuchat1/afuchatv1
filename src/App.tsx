@@ -9,9 +9,10 @@ import Auth from "./pages/Auth";
 import ChatRoom from "./pages/ChatRoom";
 import Profile from "./pages/Profile";
 import NotFound from "./pages/NotFound";
-
-// --- 1. ADD THIS NEW IMPORT ---
 import Notifications from "./pages/Notifications";
+
+// --- 1. IMPORT THE NEW POSTDETAIL PAGE ---
+import PostDetail from "./pages/PostDetail";
 
 const queryClient = new QueryClient();
 
@@ -27,11 +28,12 @@ const App = () => (
             <Route path="/auth" element={<Auth />} />
             <Route path="/chat/:chatId" element={<ChatRoom />} />
             <Route path="/profile/:userId" element={<Profile />} />
-            
-            {/* --- 2. ADD THIS NEW ROUTE --- */}
             <Route path="/notifications" element={<Notifications />} />
+            
+            {/* --- 2. ADD THE NEW ROUTE FOR POSTS --- */}
+            <Route path="/post/:postId" element={<PostDetail />} />
 
-            {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
+            {/* CATCH-ALL "*" ROUTE MUST BE LAST */}
             <Route path="*" element={<NotFound />} />
           </Routes>
         </BrowserRouter>
