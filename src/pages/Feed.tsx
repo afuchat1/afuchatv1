@@ -8,7 +8,7 @@ import { Skeleton } from '@/components/ui/skeleton';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 
-// --- Type Definitions (Unchanged) ---
+// --- Type Definitions ---
 interface Post {
   id: string;
   content: string;
@@ -41,7 +41,7 @@ interface Reply {
   };
 }
 
-// --- Verified Badge & Format Time Logic (Unchanged) ---
+// --- Verified Badge Logic (Unchanged) ---
 const TwitterVerifiedBadge = () => (
   <svg
     viewBox="0 0 22 22"
@@ -72,6 +72,7 @@ const VerifiedBadge = ({ isVerified, isOrgVerified }: { isVerified: boolean; isO
   return null;
 };
 
+// Helper to format time (Unchanged)
 const formatTime = (isoString: string) => {
   const date = new Date(isoString);
   const now = new Date();
@@ -90,7 +91,7 @@ const formatTime = (isoString: string) => {
 };
 
 
-// 🎯 UPDATED: Utility to parse content and create clickable links for mentions
+// 🎯 UPDATED: Utility to parse content and create clickable links for mentions with ID lookup
 const parsePostContent = (content: string, navigate: (path: string) => void) => {
   if (!content) return null;
   
@@ -124,14 +125,14 @@ const parsePostContent = (content: string, navigate: (path: string) => void) => 
       parts.push(content.substring(lastIndex, index));
     }
 
-    // 2. Add the clickable mention element
+    // 2. Add the clickable mention element (BLUE)
     const MentionComponent = (
       <span
         key={`mention-${index}-${handle}`}
         className="text-blue-500 font-medium cursor-pointer hover:underline"
         onClick={(e) => {
-          e.stopPropagation(); // Stop click from bubbling up (e.g., to a PostCard click handler)
-          lookupAndNavigateByHandle(handle); // Call the async lookup function
+          e.stopPropagation(); 
+          lookupAndNavigateByHandle(handle); 
         }}
       >
         {match}
@@ -224,9 +225,9 @@ const PostCard = ({ post, addReply, user, navigate, onAcknowledge }:
             </span>
             <VerifiedBadge isVerified={post.profiles.is_verified} isOrgVerified={post.profiles.is_organization_verified} />
 
-            {/* Post Author Handle (Blue and clickable) */}
+            {/* 🎯 REVERTED: Post Author Handle is now text-muted-foreground (gray) and still clickable */}
             <span
-              className="text-blue-500 text-sm hover:underline cursor-pointer truncate flex-shrink min-w-0"
+              className="text-muted-foreground text-sm hover:underline cursor-pointer truncate flex-shrink min-w-0"
               onClick={() => handleViewProfile(post.author_id)}
             >
               @{post.profiles.handle}
@@ -243,12 +244,12 @@ const PostCard = ({ post, addReply, user, navigate, onAcknowledge }:
           </Button>
         </div>
 
-        {/* Post Content - Uses parser for inline mentions with ID lookup */}
+        {/* Post Content (Uses parser for blue/clickable inline mentions) */}
         <p className="text-foreground text-base mt-1 mb-2 leading-relaxed whitespace-pre-wrap">
           {parsePostContent(post.content, navigate)}
         </p>
 
-        {/* Post Actions (Unchanged) */}
+        {/* Post Actions */}
         <div className="flex justify-between items-center text-sm text-muted-foreground mt-3 -ml-2 max-w-[420px]">
           <Button variant="ghost" size="sm" className="flex items-center gap-1 group" onClick={() => setShowComments(!showComments)}>
             <MessageSquare className="h-4 w-4 group-hover:text-primary transition-colors" />
@@ -278,16 +279,16 @@ const PostCard = ({ post, addReply, user, navigate, onAcknowledge }:
             <div className="space-y-2 pt-2">
               {post.replies.map((reply) => (
                 <div key={reply.id} className="text-sm flex items-center">
-                  {/* Reply Author Handle (Blue and clickable) */}
+                  {/* 🎯 REVERTED: Reply Author Handle is now text-muted-foreground (gray) and still clickable */}
                   <span
-                    className="font-bold text-blue-500 cursor-pointer hover:underline flex-shrink-0"
+                    className="font-bold text-muted-foreground cursor-pointer hover:underline flex-shrink-0"
                     onClick={() => handleViewProfile(reply.author_id)}
                   >
                     {reply.profiles.handle}
                   </span>
                   <VerifiedBadge isVerified={reply.profiles.is_verified} isOrgVerified={reply.profiles.is_organization_verified} />
                   
-                  {/* Reply Content - Uses parser for inline mentions with ID lookup */}
+                  {/* Reply Content (Uses parser for blue/clickable inline mentions) */}
                   <p className="text-foreground ml-1.5 whitespace-pre-wrap break-words">
                     {parsePostContent(reply.content, navigate)}
                   </p>
@@ -296,7 +297,7 @@ const PostCard = ({ post, addReply, user, navigate, onAcknowledge }:
             </div>
           )}
 
-          {/* Comment input (Unchanged) */}
+          {/* Comment input */}
           {showComments && user && (
             <div className="mt-3 flex items-center gap-2">
               <div className="h-8 w-8 rounded-full bg-secondary flex items-center justify-center flex-shrink-0">
@@ -333,7 +334,7 @@ const PostCard = ({ post, addReply, user, navigate, onAcknowledge }:
   );
 };
 
-// --- Feed Component (Unchanged) ---
+// --- Feed Component (Unchanged from previous versions) ---
 const Feed = () => {
   const { user } = useAuth();
   const [posts, setPosts] = useState<Post[]>([]);
@@ -555,7 +556,7 @@ const Feed = () => {
     };
   }, [user, addReply, fetchPosts]);
 
-  // --- Post Skeleton Component (Unchanged) ---
+  // --- Post Skeleton Component ---
   const PostSkeleton = () => (
     <div className="flex p-4 border-b border-border">
       <Skeleton className="h-10 w-10 rounded-full mr-3" />
@@ -576,7 +577,7 @@ const Feed = () => {
   );
 
 
-  // --- Render Logic (Unchanged) ---
+  // --- Render Logic ---
   if (effectiveLoading) {
     return (
       <div className="flex flex-col h-full">
