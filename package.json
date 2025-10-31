@@ -61,7 +61,8 @@
     "tailwindcss-animate": "^1.0.7",
     "vaul": "^0.9.9",
     "vite-plugin-pwa": "^1.1.0",
-    "zod": "^3.25.76"
+    "zod": "^3.25.76",
+    "framer-motion": "^11.3.8"
   },
   "devDependencies": {
     "@eslint/js": "^9.32.0",
