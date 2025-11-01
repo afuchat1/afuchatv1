@@ -1,3 +1,5 @@
+// src/pages/EditProfile.tsx
+
 import { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { useAuth } from '@/contexts/AuthContext';
@@ -8,49 +10,47 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
-import { Separator } from '@/components/ui/separator'; // **NEW IMPORT for clean visual breaks**
-import { Loader2, User, Link, MapPin } from 'lucide-react'; // **NEW ICONS**
+import { Separator } from '@/components/ui/separator'; 
+import { Loader2, User, Link, MapPin } from 'lucide-react'; 
 
 // Import Supabase types (assuming types/supabase.ts exists)
 import type { Database } from '@/types/supabase';
 
+// Assuming your Supabase 'profiles' table has been updated with 'location' and 'website'
 type ProfileRow = Database['public']['Tables']['profiles']['Row'];
 type ProfileUpdate = Database['public']['Tables']['profiles']['Update'];
 
+// UPDATED: Added location and website fields
 interface EditProfileForm {
   display_name: string;
   handle: string;
   bio: string;
+  location: string; // NEW
+  website: string;  // NEW
 }
 
 const EditProfile: React.FC = () => {
   const { user } = useAuth();
   const navigate = useNavigate();
-  const { id } = useParams<{ id: string }>();
 
   const [profile, setProfile] = useState<EditProfileForm>({
     display_name: '',
     handle: '',
     bio: '',
+    location: '', // Initialize new fields
+    website: '',  // Initialize new fields
   });
   const [loading, setLoading] = useState<boolean>(true);
   const [saving, setSaving] = useState<boolean>(false);
 
-  // --- Data Fetching Logic (Unchanged for optimization) ---
   useEffect(() => {
-    if (!user) {
-      navigate('/auth');
-      return;
-    }
-
     const fetchProfile = async () => {
-      // NOTE: Added a check to ensure user.id exists before fetching
-      if (!user.id) {
+      if (!user?.id) {
           setLoading(false);
-          toast.error("User ID not found.");
+          toast.error("User ID not found for fetching profile.");
           return;
       }
-
+      
       try {
         const { data, error } = await supabase
           .from('profiles')
@@ -65,6 +65,8 @@ const EditProfile: React.FC = () => {
             display_name: data.display_name,
             handle: data.handle,
             bio: data.bio || '',
+            location: data.location || '', // Populate new field
+            website: data.website || '',   // Populate new field
           });
         }
       } catch (error: any) {
@@ -75,18 +77,13 @@ const EditProfile: React.FC = () => {
       }
     };
 
-    // NOTE: Conditional fetch based on user presence and ID consistency (though id is from useParams and user.id is from context)
-    // For simplicity, sticking to user.id for the fetch, assuming the route param is for viewing, but edit is always for the logged in user.
-    if (user.id) {
-        fetchProfile();
-    }
+    fetchProfile();
   }, [user, navigate]);
 
   const handleInputChange = (
     e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>
   ) => {
     const { name, value } = e.target;
-    // Simple client-side validation for handle: ensure no spaces/special chars (optional but good UX)
     if (name === 'handle') {
       const sanitizedValue = value.toLowerCase().replace(/[^a-z0-9_]/g, '');
       setProfile((prev) => ({ ...prev, [name as keyof EditProfileForm]: sanitizedValue }));
@@ -97,19 +94,21 @@ const EditProfile: React.FC = () => {
 
   const handleSave = async () => {
     if (!user) return;
-    
-    // Quick validation check
+
     if (!profile.display_name.trim() || !profile.handle.trim()) {
         toast.error("Display Name and Handle are required.");
         return;
     }
-
+    
     setSaving(true);
     try {
+      // UPDATED: Include new fields in the update object
       const updateData: ProfileUpdate = {
         display_name: profile.display_name.trim(),
         handle: profile.handle.trim(),
         bio: profile.bio.trim() || null,
+        location: profile.location.trim() || null, // NEW: Save location or null
+        website: profile.website.trim() || null,   // NEW: Save website or null
         updated_at: new Date().toISOString(),
       };
 
@@ -121,11 +120,10 @@ const EditProfile: React.FC = () => {
       if (error) throw error;
 
       toast.success('Profile updated successfully!');
-      navigate(`/profile/${user.id}`);
+      navigate(`/${user.id}`);
     } catch (error: any) {
       console.error('Update error:', error);
-      // More specific error for handle conflict
-      if (error.code === '23505') { // PostgreSQL unique violation code
+      if (error.code === '23505') { 
           toast.error('The handle is already taken. Please choose another.');
       } else {
           toast.error('Failed to update profile');
@@ -136,7 +134,7 @@ const EditProfile: React.FC = () => {
   };
 
   const handleCancel = () => {
-    navigate(`/profile/${user.id}`);
+    navigate(`/${user?.id}`);
   };
 
   if (loading) {
@@ -149,7 +147,7 @@ const EditProfile: React.FC = () => {
 
   return (
     <div className="min-h-screen bg-background flex justify-center p-4 md:p-8">
-      <Card className="w-full max-w-4xl border-none md:border md:shadow-none bg-card/80 backdrop-blur-sm"> {/* Wider for two columns */}
+      <Card className="w-full max-w-4xl border-none md:border md:shadow-none bg-card/80 backdrop-blur-sm"> 
         <CardHeader className="pb-4 border-b border-border/50">
           <CardTitle className="text-3xl font-extrabold text-foreground flex items-center gap-2">
             <User className="h-6 w-6 text-primary" /> Edit Profile
@@ -176,7 +174,7 @@ const EditProfile: React.FC = () => {
                   onChange={handleInputChange}
                   placeholder="Your display name"
                   disabled={saving}
-                  className="text-base h-11 bg-input/50 border border-border/80 focus:border-primary/50" // Flat style
+                  className="text-base h-11 bg-input/50 border border-border/80 focus:border-primary/50" 
                 />
               </div>
 
@@ -192,7 +190,7 @@ const EditProfile: React.FC = () => {
                     onChange={handleInputChange}
                     placeholder="unique_handle"
                     disabled={saving}
-                    className="pl-7 text-base h-11 bg-input/50 border border-border/80 focus:border-primary/50" // Flat style
+                    className="pl-7 text-base h-11 bg-input/50 border border-border/80 focus:border-primary/50" 
                   />
                 </div>
                 <p className="text-xs text-muted-foreground pt-1">
@@ -212,7 +210,7 @@ const EditProfile: React.FC = () => {
                   rows={4}
                   maxLength={150}
                   disabled={saving}
-                  className="text-base resize-none bg-input/50 border border-border/80 focus:border-primary/50" // Flat style
+                  className="text-base resize-none bg-input/50 border border-border/80 focus:border-primary/50" 
                 />
                 <p className="text-xs text-muted-foreground flex justify-between">
                   <span>Keep it short and punchy!</span>
@@ -225,24 +223,40 @@ const EditProfile: React.FC = () => {
             <div className="md:col-span-1 space-y-6 md:border-l md:pl-8 border-border/50">
               <h3 className="text-lg font-semibold border-b pb-2 text-primary">Additional Details</h3>
               
-              {/* Location - Coming Soon (Improved UX) */}
+              {/* Location - NOW FUNCTIONAL */}
               <div className="space-y-2">
-                <Label className="text-sm font-medium text-foreground flex items-center gap-1">
+                <Label htmlFor="location" className="text-sm font-medium text-foreground flex items-center gap-1">
                   <MapPin className="h-4 w-4" /> Location
                 </Label>
-                <div className="p-3 bg-muted/50 flex items-center justify-start rounded-lg text-sm text-muted-foreground border border-dashed border-border/80">
-                  Feature coming soon to allow users to set their location.
-                </div>
+                <Input
+                  id="location"
+                  name="location"
+                  value={profile.location}
+                  onChange={handleInputChange}
+                  placeholder="e.g., Kampala, Uganda"
+                  disabled={saving}
+                  className="text-base h-11 bg-input/50 border border-border/80 focus:border-primary/50" 
+                />
               </div>
 
-              {/* Website - Coming Soon (Improved UX) */}
+              {/* Website - NOW FUNCTIONAL */}
               <div className="space-y-2">
-                <Label className="text-sm font-medium text-foreground flex items-center gap-1">
+                <Label htmlFor="website" className="text-sm font-medium text-foreground flex items-center gap-1">
                   <Link className="h-4 w-4" /> Website/Portfolio
                 </Label>
-                <div className="p-3 bg-muted/50 flex items-center justify-start rounded-lg text-sm text-muted-foreground border border-dashed border-border/80">
-                  Link your personal website or portfolio.
-                </div>
+                <Input
+                  id="website"
+                  name="website"
+                  type="url"
+                  value={profile.website}
+                  onChange={handleInputChange}
+                  placeholder="https://yourwebsite.com"
+                  disabled={saving}
+                  className="text-base h-11 bg-input/50 border border-border/80 focus:border-primary/50" 
+                />
+                <p className="text-xs text-muted-foreground pt-1">
+                  Must be a valid URL starting with `http://` or `https://`.
+                </p>
               </div>
             </div>
             
