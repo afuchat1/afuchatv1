@@ -1,4 +1,4 @@
-// src/pages/EditProfile.tsx - UPDATED TO GUARD AGAINST NULL USER
+// src/pages/EditProfile.tsx
 
 import { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
@@ -16,81 +16,69 @@ import { Loader2, User, Link, MapPin } from 'lucide-react';
 // Import Supabase types (assuming types/supabase.ts exists)
 import type { Database } from '@/types/supabase';
 
+// Assuming your Supabase 'profiles' table has been updated with 'location' and 'website'
 type ProfileRow = Database['public']['Tables']['profiles']['Row'];
 type ProfileUpdate = Database['public']['Tables']['profiles']['Update'];
 
+// UPDATED: Added location and website fields
 interface EditProfileForm {
   display_name: string;
   handle: string;
   bio: string;
-  location: string;
-  website: string;
+  location: string; // NEW
+  website: string;  // NEW
 }
 
 const EditProfile: React.FC = () => {
-  const { user, loading: authLoading } = useAuth(); // Import authLoading state
+  const { user } = useAuth();
   const navigate = useNavigate();
 
   const [profile, setProfile] = useState<EditProfileForm>({
     display_name: '',
     handle: '',
     bio: '',
-    location: '',
-    website: '',
+    location: '', // Initialize new fields
+    website: '',  // Initialize new fields
   });
   const [loading, setLoading] = useState<boolean>(true);
   const [saving, setSaving] = useState<boolean>(false);
 
-  // --- CRITICAL GUARD EFFECT (Runs first) ---
   useEffect(() => {
-    // 1. Wait until the AuthContext has finished its initial loading check
-    if (authLoading) return;
-
-    // 2. If the user is null after the check, redirect to login
-    if (!user) {
-      toast.info("Please log in to edit your profile.");
-      navigate('/auth', { replace: true });
-      return;
-    }
-    
-    // 3. If user is present, proceed to fetch the profile data
     const fetchProfile = async () => {
-      // The user is guaranteed to exist here
-      if (!user.id) {
-          // This path should ideally not happen if user object is valid
+      if (!user?.id) {
           setLoading(false);
-          toast.error("Authentication data is incomplete."); 
+          toast.error("User ID not found for fetching profile.");
           return;
       }
       
       try {
         const { data, error } = await supabase
           .from('profiles')
-          .select('display_name, handle, bio, location, website')
+          .select('*')
           .eq('id', user.id)
-          .single() as { data: ProfileRow | null; error: any }; // Note: RLS must allow reading
+          .single() as { data: ProfileRow | null; error: any };
 
         if (error) throw error;
 
         if (data) {
           setProfile({
-            display_name: data.display_name || '',
-            handle: data.handle || '',
+            display_name: data.display_name,
+            handle: data.handle,
             bio: data.bio || '',
-            location: data.location || '',
-            website: data.website || '',
+            location: data.location || '', // Populate new field
+            website: data.website || '',   // Populate new field
           });
         }
       } catch (error: any) {
         console.error('Error fetching profile:', error);
-        toast.error('Failed to load profile data.');
+        toast.error('Failed to load profile');
       } finally {
         setLoading(false);
       }
     };
 
     fetchProfile();
-  }, [user, authLoading, navigate]); // Depend on user and authLoading
+  }, [user, navigate]);
 
   const handleInputChange = (
     e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>
@@ -105,30 +93,22 @@ const EditProfile: React.FC = () => {
   };
 
   const handleSave = async () => {
-    // User is guaranteed to exist by the effect, but we keep the guard
-    if (!user) return; 
+    if (!user) return;
 
     if (!profile.display_name.trim() || !profile.handle.trim()) {
         toast.error("Display Name and Handle are required.");
         return;
     }
     
-    // --- WEBSITE URL VALIDATION (NEW UX improvement) ---
-    const websiteValue = profile.website.trim();
-    if (websiteValue && !websiteValue.startsWith('http://') && !websiteValue.startsWith('https://')) {
-        toast.error("Website URL must start with http:// or https://");
-        return;
-    }
-    // ---------------------------------------------------
-    
     setSaving(true);
     try {
+      // UPDATED: Include new fields in the update object
       const updateData: ProfileUpdate = {
         display_name: profile.display_name.trim(),
         handle: profile.handle.trim(),
         bio: profile.bio.trim() || null,
-        location: profile.location.trim() || null, 
-        website: websiteValue || null, 
+        location: profile.location.trim() || null, // NEW: Save location or null
+        website: profile.website.trim() || null,   // NEW: Save website or null
         updated_at: new Date().toISOString(),
       };
 
@@ -154,22 +134,16 @@ const EditProfile: React.FC = () => {
   };
 
   const handleCancel = () => {
-    navigate(`/${user?.id || ''}`); // Navigate to root if user somehow disappeared
+    navigate(`/${user?.id}`);
   };
 
-
-  // --- Render Logic ---
-
-  // Display initial loading state while context checks and data fetches
-  if (authLoading || loading) {
+  if (loading) {
     return (
       <div className="min-h-screen bg-background flex items-center justify-center p-4">
         <Loader2 className="h-8 w-8 animate-spin text-primary" />
       </div>
     );
   }
-  
-  // NOTE: If execution reaches here, the user is guaranteed to be authenticated and profile data is loaded.
 
   return (
     <div className="min-h-screen bg-background flex justify-center p-4 md:p-8">
