@@ -54,7 +54,8 @@ const PostPreview: React.FC<{ content: string }> = ({ content }) => (
                     <TrendingUp className="h-3 w-3" />
                     <span>Visible to followers</span>
                 </div>
-            </CardContent>
+            </div> {/* <--- FIX: Correctly close the wrapper div */}
+        </CardContent> {/* <--- FIX: Correctly close CardContent */}
     </Card>
 );
 
@@ -163,20 +164,6 @@ const NewPostModal: React.FC<NewPostModalProps> = ({ isOpen, onClose }) => {
                             <Sparkles className="h-5 w-5 text-primary animate-pulse" />
                             Create Post
                         </DialogTitle>
-                        {/* // --- REMOVED: Cancel icon (X) to ensure only one cancel mechanism exists ---
-                            <Button 
-                                variant="ghost" 
-                                size="icon" 
-                                onClick={onClose} 
-                                className="rounded-full hover:bg-muted/50 transition-colors"
-                                disabled={isPosting}
-                            >
-                                <X className="h-5 w-5" />
-                            </Button>
-                        */}
-                        {/* NOTE: Dialog will close when the backdrop is clicked, 
-                            which serves as the single "cancel" action. 
-                        */}
                     </MotionDiv>
                     
                     {/* Post Input Area: Elevated Card Style with interactive toolbar */}
