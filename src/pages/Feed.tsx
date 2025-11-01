@@ -267,14 +267,14 @@ const PostCard = ({ post, addReply, user, navigate, onAcknowledge }:
 
             {/* Post Author Handle and Time */}
             <span
-              className="text-muted-foreground text-sm hover:underline cursor-pointer truncate flex-shrink min-w-0"
+              className="text-muted-foreground text-xs hover:underline cursor-pointer truncate flex-shrink min-w-0"
               onClick={() => handleViewProfile(post.author_id)}
             >
               @{post.profiles.handle}
             </span>
 
-            <span className="text-muted-foreground text-sm flex-shrink-0">·</span>
-            <span className="text-muted-foreground text-sm whitespace-nowrap flex-shrink-0">
+            <span className="text-muted-foreground text-xs flex-shrink-0">·</span>
+            <span className="text-muted-foreground text-xs whitespace-nowrap flex-shrink-0">
               {formatTime(post.created_at)}
             </span>
           </div>
@@ -312,7 +312,7 @@ const PostCard = ({ post, addReply, user, navigate, onAcknowledge }:
         <div className="mt-3 ml-[-12px] pr-[12px]"> {/* Adjusted margin for better visual alignment with post content */}
           {post.reply_count > 0 && !showComments && (
             <span
-              className="text-sm text-muted-foreground cursor-pointer hover:underline"
+              className="text-xs text-muted-foreground cursor-pointer hover:underline"
               onClick={() => setShowComments(true)}
             >
               View all {post.reply_count} {post.reply_count === 1 ? 'comment' : 'comments'}
@@ -360,7 +360,7 @@ const PostCard = ({ post, addReply, user, navigate, onAcknowledge }:
             </div>
           )}
           {showComments && !user && (
-            <div className="mt-3 text-sm text-muted-foreground">
+            <div className="mt-3 text-xs text-muted-foreground">
               Please <a href="/auth" className="text-primary underline">log in</a> to comment.
             </div>
           )}
@@ -627,7 +627,7 @@ const Feed = () => {
     <div className="h-full flex flex-col">
       <div className="flex-1 overflow-y-auto">
         {posts.length === 0 && !effectiveLoading ? (
-          <div className="text-center text-muted-foreground py-8">
+          <div className="text-center text-muted-foreground py-8 text-sm">
             No posts yet. Follow users or share your first post!
           </div>
         ) : (
