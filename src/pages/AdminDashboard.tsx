@@ -19,6 +19,10 @@ import {
   Tooltip,
   Legend,
   ResponsiveContainer,
+  AreaChart,
+  Area,
+  ComposedChart,
+  Bar,
 } from 'recharts';
 
 interface Stats {
@@ -47,6 +51,16 @@ interface Post {
   author_id: string;
   created_at: string;
 }
+
+// Helper to calculate simple moving average
+const calculateSMA = (data: { date: string; count: number }[], period: number) => {
+  return data.map((point, index) => {
+    if (index < period - 1) return { ...point, sma: null };
+    const slice = data.slice(index - period + 1, index + 1);
+    const avg = slice.reduce((sum, p) => sum + p.count, 0) / period;
+    return { ...point, sma: avg };
+  });
+};
 
 const AdminDashboard = () => {
   const { user } = useAuth();
@@ -170,13 +184,16 @@ const AdminDashboard = () => {
           .map(([date, count]) => ({ date, count }));
       };
 
+      const processedMessages30 = groupByDay(messages30Days || []);
+      const sma7 = calculateSMA(processedMessages30, 7);
+
       setStats({
         totalUsers: userCount || 0,
         totalMessages: messageCount || 0,
         totalChats: chatCount || 0,
         activeToday: activeTodayCount,
         messagesLast7Days: groupByDay(messages7Days || []),
-        messagesLast30Days: groupByDay(messages30Days || []),
+        messagesLast30Days: processedMessages30,
         newUsersLast30Days: groupByDay(newUsers30Days || []),
       });
     } catch (error) {
@@ -391,30 +408,36 @@ const AdminDashboard = () => {
               </Card>
             </div>
 
-            {/* User Growth Chart */}
+            {/* User Growth Chart - Professional Area Chart */}
             <Card className="mb-6">
               <CardHeader>
                 <CardTitle className="flex items-center gap-2">
                   <UsersIcon className="h-4 w-4" />
                   User Growth - Last 30 Days
                 </CardTitle>
-                <CardDescription>Daily new user registrations</CardDescription>
+                <CardDescription>Daily new user registrations with trend analysis</CardDescription>
               </CardHeader>
-              <CardContent>
+              <CardContent className="bg-gradient-to-br from-gray-900 to-gray-800 p-4 rounded-lg">
                 <ResponsiveContainer width="100%" height={300}>
-                  <LineChart data={stats?.newUsersLast30Days || []}>
-                    <CartesianGrid strokeDasharray="3 3" />
-                    <XAxis dataKey="date" />
-                    <YAxis />
-                    <Tooltip />
-                    <Legend />
-                    <Line type="monotone" dataKey="count" stroke="#8884d8" strokeWidth={2} />
-                  </LineChart>
+                  <AreaChart data={stats?.newUsersLast30Days || []} margin={{ top: 10, right: 30, left: 0, bottom: 0 }}>
+                    <defs>
+                      <linearGradient id="userGrowth" x1="0" y1="0" x2="0" y2="1">
+                        <stop offset="5%" stopColor="#8884d8" stopOpacity={0.8}/>
+                        <stop offset="95%" stopColor="#8884d8" stopOpacity={0}/>
+                      </linearGradient>
+                    </defs>
+                    <CartesianGrid strokeDasharray="3 3" stroke="#374151" />
+                    <XAxis dataKey="date" stroke="#9CA3AF" fontSize={12} tickLine={false} />
+                    <YAxis stroke="#9CA3AF" fontSize={12} tickLine={false} />
+                    <Tooltip contentStyle={{ backgroundColor: '#1f2937', border: 'none', borderRadius: '8px' }} />
+                    <Legend verticalAlign="top" />
+                    <Area type="monotone" dataKey="count" stroke="#8884d8" fillOpacity={1} fill="url(#userGrowth)" strokeWidth={2} />
+                  </AreaChart>
                 </ResponsiveContainer>
               </CardContent>
             </Card>
 
-            {/* Activity Timeline */}
+            {/* Activity Timeline - Trading-Style Composed Chart */}
             <Tabs value={activityTab} onValueChange={setActivityTab} className="w-full">
               <TabsList className="grid w-full grid-cols-2 mb-4">
                 <TabsTrigger value="7days">Last 7 Days</TabsTrigger>
@@ -428,18 +451,23 @@ const AdminDashboard = () => {
                       <BarChart3 className="h-4 w-4" />
                       Message Activity - Last 7 Days
                     </CardTitle>
-                    <CardDescription>Daily message volume</CardDescription>
+                    <CardDescription>Volume and trend with moving average (trading view style)</CardDescription>
                   </CardHeader>
-                  <CardContent>
-                    <ResponsiveContainer width="100%" height={300}>
-                      <LineChart data={stats?.messagesLast7Days || []}>
-                        <CartesianGrid strokeDasharray="3 3" />
-                        <XAxis dataKey="date" />
-                        <YAxis />
-                        <Tooltip />
-                        <Legend />
-                        <Line type="monotone" dataKey="count" stroke="#10b981" strokeWidth={2} />
-                      </LineChart>
+                  <CardContent className="bg-gradient-to-br from-gray-900 to-gray-800 p-4 rounded-lg">
+                    <ResponsiveContainer width="100%" height={400}>
+                      <ComposedChart data={stats?.messagesLast7Days || []} margin={{ top: 10, right: 30, left: 0, bottom: 0 }}>
+                        <CartesianGrid strokeDasharray="3 3" stroke="#374151" />
+                        <XAxis dataKey="date" stroke="#9CA3AF" fontSize={12} tickLine={false} />
+                        <YAxis yAxisId="left" stroke="#9CA3AF" fontSize={12} tickLine={false} />
+                        <YAxis yAxisId="right" orientation="right" stroke="#9CA3AF" fontSize={12} tickLine={false} />
+                        <Tooltip 
+                          contentStyle={{ backgroundColor: '#1f2937', border: 'none', borderRadius: '8px' }}
+                          labelStyle={{ color: '#f3f4f6' }}
+                        />
+                        <Legend verticalAlign="top" wrapperStyle={{ color: '#f3f4f6' }} />
+                        <Bar yAxisId="left" dataKey="count" fill="#ef4444" name="Volume" barSize={20} />
+                        <Line yAxisId="right" type="monotone" dataKey="count" stroke="#10b981" strokeWidth={2} name="Price" dot={false} />
+                      </ComposedChart>
                     </ResponsiveContainer>
                   </CardContent>
                 </Card>
@@ -452,18 +480,24 @@ const AdminDashboard = () => {
                       <BarChart3 className="h-4 w-4" />
                       Message Activity - Last 30 Days
                     </CardTitle>
-                    <CardDescription>Daily message volume</CardDescription>
+                    <CardDescription>Advanced volume bars with SMA(7) overlay for trend analysis</CardDescription>
                   </CardHeader>
-                  <CardContent>
-                    <ResponsiveContainer width="100%" height={300}>
-                      <LineChart data={stats?.messagesLast30Days || []}>
-                        <CartesianGrid strokeDasharray="3 3" />
-                        <XAxis dataKey="date" />
-                        <YAxis />
-                        <Tooltip />
-                        <Legend />
-                        <Line type="monotone" dataKey="count" stroke="#10b981" strokeWidth={2} />
-                      </LineChart>
+                  <CardContent className="bg-gradient-to-br from-gray-900 to-gray-800 p-4 rounded-lg">
+                    <ResponsiveContainer width="100%" height={400}>
+                      <ComposedChart data={stats?.messagesLast30Days || []} margin={{ top: 10, right: 30, left: 0, bottom: 0 }}>
+                        <CartesianGrid strokeDasharray="3 3" stroke="#374151" />
+                        <XAxis dataKey="date" stroke="#9CA3AF" fontSize={12} tickLine={false} />
+                        <YAxis yAxisId="left" stroke="#9CA3AF" fontSize={12} tickLine={false} />
+                        <YAxis yAxisId="right" orientation="right" stroke="#9CA3AF" fontSize={12} tickLine={false} />
+                        <Tooltip 
+                          contentStyle={{ backgroundColor: '#1f2937', border: 'none', borderRadius: '8px' }}
+                          labelStyle={{ color: '#f3f4f6' }}
+                        />
+                        <Legend verticalAlign="top" wrapperStyle={{ color: '#f3f4f6' }} />
+                        <Bar yAxisId="left" dataKey="count" fill="#ef4444" name="Volume" barSize={20} />
+                        <Line yAxisId="right" type="monotone" dataKey="count" stroke="#10b981" strokeWidth={2} name="Daily" dot={false} />
+                        <Line yAxisId="right" type="monotone" dataKey="sma" stroke="#f59e0b" strokeWidth={2} strokeDasharray="5 5" name="SMA(7)" dot={false} />
+                      </ComposedChart>
                     </ResponsiveContainer>
                   </CardContent>
                 </Card>
