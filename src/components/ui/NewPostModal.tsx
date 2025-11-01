@@ -46,8 +46,8 @@ const PostPreview: React.FC<{ content: string }> = ({ content }) => (
     // Ensured outer card and content are hidden if overflow occurs
     <Card className="mt-4 p-3 sm:p-4 bg-gradient-to-r from-muted/20 to-accent/20 border-border/50 rounded-xl overflow-hidden">
         <CardContent className="p-0">
-            {/* KEY FIX: Ensure the text paragraph itself does not allow horizontal overflow */}
-            <p className="text-sm leading-relaxed whitespace-pre-wrap text-foreground/90 overflow-hidden">
+            {/* KEY FIX: Added 'break-words' to force long strings to wrap and prevent horizontal expansion */}
+            <p className="text-sm leading-relaxed whitespace-pre-wrap text-foreground/90 overflow-hidden break-words">
                 {content || "Your post will appear here..."}
             </p>
             <div className="flex flex-wrap items-center gap-2 mt-3 pt-3 border-t border-border/20">
