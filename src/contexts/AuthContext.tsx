@@ -28,22 +28,25 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    // Set up auth state listener FIRST
+    // Step 1: Restore session from localStorage FIRST (synchronous load)
+    supabase.auth.getSession().then(({ data: { session } }) => {
+      setSession(session);
+      setUser(session?.user ?? null);
+    }).finally(() => {
+      // Only set loading false after initial session restore
+      setLoading(false);
+    });
+
+    // Step 2: Set up real-time listener for subsequent changes (sign-in, sign-out, refresh)
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
       (_event, session) => {
         setSession(session);
         setUser(session?.user ?? null);
-        setLoading(false);
+        // No need to set loading false here; it's already false after initial load
       }
     );
 
-    // THEN check for existing session
-    supabase.auth.getSession().then(({ data: { session } }) => {
-      setSession(session);
-      setUser(session?.user ?? null);
-      setLoading(false);
-    });
-
+    // Cleanup listener on unmount
     return () => subscription.unsubscribe();
   }, []);
 
