@@ -23,6 +23,7 @@ import {
   Area,
   ComposedChart,
   Bar,
+  Cell, // <-- NEW: Added for custom bar colors
 } from 'recharts';
 
 interface Stats {
@@ -60,6 +61,17 @@ const calculateSMA = (data: { date: string; count: number }[], period: number) =
     const avg = slice.reduce((sum, p) => sum + p.count, 0) / period;
     return { ...point, sma: avg };
   });
+};
+
+// Helper to determine bar color based on day-over-day change (Green for higher/equal, Red for lower)
+const getColorForBar = (data: { date: string; count: number }[], index: number): string => {
+  if (index === 0) return '#4ade80'; // Default green for the first day
+  
+  const currentCount = data[index].count;
+  const previousCount = data[index - 1].count;
+  
+  // Use professional green/red from Tailwind: Emerald 400, Rose 500
+  return currentCount >= previousCount ? '#4ade80' : '#f43f5e'; 
 };
 
 const AdminDashboard = () => {
@@ -417,24 +429,52 @@ const AdminDashboard = () => {
                 </CardTitle>
                 <CardDescription className="text-xs sm:text-sm">Daily new user registrations with trend analysis</CardDescription>
               </CardHeader>
-              <CardContent className="bg-gradient-to-br from-gray-900 to-gray-800 p-2 sm:p-4">
-                <ResponsiveContainer width="100%" height={250} className="sm:h-300">
-                  <AreaChart data={stats?.newUsersLast30Days || []} margin={{ top: 5, right: 20, left: 0, bottom: 5 }}>
-                    <defs>
-                      <linearGradient id="userGrowth" x1="0" y1="0" x2="0" y2="1">
-                        <stop offset="5%" stopColor="#8884d8" stopOpacity={0.8}/>
-                        <stop offset="95%" stopColor="#8884d8" stopOpacity={0}/>
-                      </linearGradient>
-                    </defs>
-                    <CartesianGrid strokeDasharray="3 3" stroke="#374151" />
-                    <XAxis dataKey="date" stroke="#9CA3AF" fontSize={10} tickLine={false} interval={Math.max(0, stats?.newUsersLast30Days.length - 5)} />
-                    <YAxis stroke="#9CA3AF" fontSize={10} tickLine={false} />
-                    <Tooltip contentStyle={{ backgroundColor: '#1f2937', border: 'none', borderRadius: '8px', fontSize: '12px' }} />
-                    <Legend verticalAlign="top" wrapperStyle={{ fontSize: '12px' }} />
-                    <Area type="monotone" dataKey="count" stroke="#8884d8" fillOpacity={1} fill="url(#userGrowth)" strokeWidth={2} />
-                  </AreaChart>
-                </ResponsiveContainer>
+              {/* === CHART CONTENT START - STYLED === */}
+              <CardContent className="p-0 sm:p-0">
+                <div className="p-2 sm:p-4 bg-gray-900 rounded-b-lg"> 
+                  <ResponsiveContainer width="100%" height={250} className="sm:h-[300px]">
+                    <AreaChart data={stats?.newUsersLast30Days || []} margin={{ top: 10, right: 10, left: -10, bottom: 0 }}>
+                      <defs>
+                        <linearGradient id="userGrowthGradient" x1="0" y1="0" x2="0" y2="1">
+                          <stop offset="5%" stopColor="#0E9F6E" stopOpacity={0.6}/> {/* Green for growth */}
+                          <stop offset="95%" stopColor="#0E9F6E" stopOpacity={0}/>
+                        </linearGradient>
+                      </defs>
+                      <CartesianGrid strokeDasharray="3 3" stroke="#374151" strokeOpacity={0.5} />
+                      <XAxis 
+                        dataKey="date" 
+                        stroke="#9CA3AF" 
+                        fontSize={10} 
+                        tickLine={false} 
+                        axisLine={false}
+                        interval="preserveStartEnd" // Better mobile control
+                        tickFormatter={(tick) => new Date(tick).toLocaleDateString(undefined, { day: 'numeric', month: 'short' })}
+                      />
+                      <YAxis 
+                        stroke="#9CA3AF" 
+                        fontSize={10} 
+                        tickLine={false} 
+                        axisLine={false} 
+                      />
+                      <Tooltip 
+                        labelFormatter={(label) => `Date: ${label}`}
+                        contentStyle={{ backgroundColor: '#1f2937', border: '1px solid #374151', borderRadius: '8px', fontSize: '12px' }} 
+                        itemStyle={{ color: '#0E9F6E' }}
+                      />
+                      <Area 
+                        type="monotone" 
+                        dataKey="count" 
+                        stroke="#0E9F6E" 
+                        fillOpacity={1} 
+                        fill="url(#userGrowthGradient)" 
+                        name="New Users" 
+                        strokeWidth={3} 
+                      />
+                    </AreaChart>
+                  </ResponsiveContainer>
+                </div>
               </CardContent>
+              {/* === CHART CONTENT END - STYLED === */}
             </Card>
 
             {/* Activity Timeline - Trading-Style Composed Chart */}
@@ -451,25 +491,40 @@ const AdminDashboard = () => {
                       <BarChart3 className="h-3 w-3 sm:h-4 sm:w-4" />
                       Message Activity - Last 7 Days
                     </CardTitle>
-                    <CardDescription className="text-xs sm:text-sm">Volume and trend with moving average (trading view style)</CardDescription>
+                    <CardDescription className="text-xs sm:text-sm">Volume and trend with moving average</CardDescription>
                   </CardHeader>
-                  <CardContent className="bg-gradient-to-br from-gray-900 to-gray-800 p-2 sm:p-4">
-                    <ResponsiveContainer width="100%" height={300} className="sm:h-400">
-                      <ComposedChart data={stats?.messagesLast7Days || []} margin={{ top: 5, right: 20, left: 0, bottom: 5 }}>
-                        <CartesianGrid strokeDasharray="3 3" stroke="#374151" />
-                        <XAxis dataKey="date" stroke="#9CA3AF" fontSize={10} tickLine={false} />
-                        <YAxis yAxisId="left" stroke="#9CA3AF" fontSize={10} tickLine={false} />
-                        <YAxis yAxisId="right" orientation="right" stroke="#9CA3AF" fontSize={10} tickLine={false} />
-                        <Tooltip 
-                          contentStyle={{ backgroundColor: '#1f2937', border: 'none', borderRadius: '8px', fontSize: '12px' }}
-                          labelStyle={{ color: '#f3f4f6', fontSize: '12px' }}
-                        />
-                        <Legend verticalAlign="top" wrapperStyle={{ fontSize: '12px' }} />
-                        <Bar yAxisId="left" dataKey="count" fill="#ef4444" name="Volume" barSize={15} className="sm:barSize-20" />
-                        <Line yAxisId="right" type="monotone" dataKey="count" stroke="#10b981" strokeWidth={2} name="Daily" dot={false} />
-                      </ComposedChart>
-                    </ResponsiveContainer>
+                  {/* === CHART CONTENT START - STYLED === */}
+                  <CardContent className="p-0 sm:p-0">
+                    <div className="p-2 sm:p-4 bg-gray-900 rounded-b-lg"> 
+                      <ResponsiveContainer width="100%" height={300} className="sm:h-[400px]">
+                        <ComposedChart data={stats?.messagesLast7Days || []} margin={{ top: 10, right: 10, left: -10, bottom: 0 }}>
+                          <CartesianGrid strokeDasharray="3 3" stroke="#374151" strokeOpacity={0.5} />
+                          <XAxis 
+                            dataKey="date" 
+                            stroke="#9CA3AF" 
+                            fontSize={10} 
+                            tickLine={false} 
+                            axisLine={false}
+                            interval="preserveStartEnd"
+                            tickFormatter={(tick) => new Date(tick).toLocaleDateString(undefined, { day: 'numeric', month: 'short' })}
+                          />
+                          <YAxis yAxisId="left" stroke="#9CA3AF" fontSize={10} tickLine={false} axisLine={false} label={{ value: 'Volume', angle: -90, position: 'insideLeft', fill: '#9CA3AF', fontSize: 10 }} />
+                          <YAxis yAxisId="right" orientation="right" stroke="#9CA3AF" fontSize={10} tickLine={false} axisLine={false} />
+                          <Tooltip 
+                            labelFormatter={(label) => `Date: ${label}`}
+                            contentStyle={{ backgroundColor: '#1f2937', border: '1px solid #374151', borderRadius: '8px', fontSize: '12px' }} 
+                            labelStyle={{ color: '#f3f4f6' }}
+                          />
+                          <Legend verticalAlign="top" wrapperStyle={{ fontSize: '12px', paddingBottom: '10px' }} />
+                          {/* Bars (Volume) - Simple Red for all days in 7-day view */}
+                          <Bar yAxisId="left" dataKey="count" fill="#f43f5e" name="Volume" barSize={15} /> 
+                          {/* Line (Daily) - Green for Daily Trend */}
+                          <Line yAxisId="right" type="monotone" dataKey="count" stroke="#4ade80" strokeWidth={2} name="Daily" dot={false} />
+                        </ComposedChart>
+                      </ResponsiveContainer>
+                    </div>
                   </CardContent>
+                  {/* === CHART CONTENT END - STYLED === */}
                 </Card>
               </TabsContent>
 
@@ -480,26 +535,50 @@ const AdminDashboard = () => {
                       <BarChart3 className="h-3 w-3 sm:h-4 sm:w-4" />
                       Message Activity - Last 30 Days
                     </CardTitle>
-                    <CardDescription className="text-xs sm:text-sm">Advanced volume bars with SMA(7) overlay for trend analysis</CardDescription>
+                    <CardDescription className="text-xs sm:text-sm">Advanced volume bars (Green/Red) with SMA(7) overlay for trend analysis</CardDescription>
                   </CardHeader>
-                  <CardContent className="bg-gradient-to-br from-gray-900 to-gray-800 p-2 sm:p-4">
-                    <ResponsiveContainer width="100%" height={300} className="sm:h-400">
-                      <ComposedChart data={stats?.messagesLast30Days || []} margin={{ top: 5, right: 20, left: 0, bottom: 5 }}>
-                        <CartesianGrid strokeDasharray="3 3" stroke="#374151" />
-                        <XAxis dataKey="date" stroke="#9CA3AF" fontSize={10} tickLine={false} interval={Math.max(0, stats?.messagesLast30Days.length - 8)} />
-                        <YAxis yAxisId="left" stroke="#9CA3AF" fontSize={10} tickLine={false} />
-                        <YAxis yAxisId="right" orientation="right" stroke="#9CA3AF" fontSize={10} tickLine={false} />
-                        <Tooltip 
-                          contentStyle={{ backgroundColor: '#1f2937', border: 'none', borderRadius: '8px', fontSize: '12px' }}
-                          labelStyle={{ color: '#f3f4f6', fontSize: '12px' }}
-                        />
-                        <Legend verticalAlign="top" wrapperStyle={{ fontSize: '12px' }} />
-                        <Bar yAxisId="left" dataKey="count" fill="#ef4444" name="Volume" barSize={15} className="sm:barSize-20" />
-                        <Line yAxisId="right" type="monotone" dataKey="count" stroke="#10b981" strokeWidth={2} name="Daily" dot={false} />
-                        <Line yAxisId="right" type="monotone" dataKey="sma" stroke="#f59e0b" strokeWidth={2} strokeDasharray="5 5" name="SMA(7)" dot={false} />
-                      </ComposedChart>
-                    </ResponsiveContainer>
+                  {/* === CHART CONTENT START - STYLED & COLOR LOGIC APPLIED === */}
+                  <CardContent className="p-0 sm:p-0">
+                    <div className="p-2 sm:p-4 bg-gray-900 rounded-b-lg"> 
+                      <ResponsiveContainer width="100%" height={300} className="sm:h-[400px]">
+                        <ComposedChart data={stats?.messagesLast30Days || []} margin={{ top: 10, right: 10, left: -10, bottom: 0 }}>
+                          <CartesianGrid strokeDasharray="3 3" stroke="#374151" strokeOpacity={0.5} />
+                          <XAxis 
+                            dataKey="date" 
+                            stroke="#9CA3AF" 
+                            fontSize={10} 
+                            tickLine={false} 
+                            axisLine={false}
+                            interval="preserveStartEnd"
+                            tickFormatter={(tick) => new Date(tick).toLocaleDateString(undefined, { day: 'numeric', month: 'short' })}
+                          />
+                          <YAxis yAxisId="left" stroke="#9CA3AF" fontSize={10} tickLine={false} axisLine={false} label={{ value: 'Volume', angle: -90, position: 'insideLeft', fill: '#9CA3AF', fontSize: 10 }} />
+                          <YAxis yAxisId="right" orientation="right" stroke="#9CA3AF" fontSize={10} tickLine={false} axisLine={false} label={{ value: 'Trend', angle: 90, position: 'insideRight', fill: '#9CA3AF', fontSize: 10 }} />
+                          <Tooltip 
+                            labelFormatter={(label) => `Date: ${label}`}
+                            contentStyle={{ backgroundColor: '#1f2937', border: '1px solid #374151', borderRadius: '8px', fontSize: '12px' }}
+                            labelStyle={{ color: '#f3f4f6' }}
+                          />
+                          <Legend verticalAlign="top" wrapperStyle={{ fontSize: '12px', paddingBottom: '10px' }} />
+                          
+                          {/* Custom Bar for Green/Red logic */}
+                          <Bar yAxisId="left" dataKey="count" name="Daily Messages (Volume)" barSize={15}>
+                            {stats?.messagesLast30Days?.map((entry, index) => (
+                              <Cell 
+                                key={`cell-${index}`} 
+                                fill={getColorForBar(stats.messagesLast30Days, index)} 
+                                opacity={0.9} // Slight transparency
+                              />
+                            ))}
+                          </Bar>
+                          
+                          {/* SMA Line - Clear, solid color for trend */}
+                          <Line yAxisId="right" type="monotone" dataKey="sma" stroke="#f59e0b" strokeWidth={2} name="SMA (7-Day Trend)" dot={false} />
+                        </ComposedChart>
+                      </ResponsiveContainer>
+                    </div>
                   </CardContent>
+                  {/* === CHART CONTENT END - STYLED & COLOR LOGIC APPLIED === */}
                 </Card>
               </TabsContent>
             </Tabs>
