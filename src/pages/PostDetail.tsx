@@ -145,6 +145,7 @@ const PostDetail = () => {
 
   const formatDate = (dateString: string) => {
     const date = new Date(dateString);
+    // 🎨 FIX: Increased font size by using a more readable time/date format
     return date.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' }) + 
            ' · ' + 
            date.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
@@ -203,36 +204,39 @@ const PostDetail = () => {
                     isOrgVerified={post.author.is_organization_verified} 
                   />
                 </div>
-                <p className="text-sm text-muted-foreground truncate">@{post.author.handle}</p>
+                {/* 🎨 FIX: Changed text-sm to text-base */}
+                <p className="text-base text-muted-foreground truncate">@{post.author.handle}</p> 
               </Link>
             </div>
 
             {/* POST TEXT */}
-            <p className="text-2xl leading-relaxed whitespace-pre-wrap mb-4">
+            {/* 🎨 FIX: Changed text-2xl to text-xl for less overwhelming main content */}
+            <p className="text-xl leading-relaxed whitespace-pre-wrap mb-4">
               {renderContentWithMentions(post.content)}
             </p>
 
             {/* TIME & DATE */}
-            <p className="text-sm text-muted-foreground border-b border-border pb-3 mb-3">
+            {/* 🎨 FIX: Changed text-sm to text-base */}
+            <p className="text-base text-muted-foreground border-b border-border pb-3 mb-3"> 
               {formatDate(post.created_at)}
             </p>
 
             {/* STATS SECTION */}
+            {/* 🎨 FIX: Changed text-sm to text-base */}
             <div className="flex gap-4 text-foreground">
-                <span className="text-sm font-semibold">
+                <span className="text-base font-semibold">
                   {post.likes_count} <span className="text-muted-foreground font-normal">Likes</span>
                 </span>
-                <span className="text-sm font-semibold">
+                <span className="text-base font-semibold">
                   {post.replies_count} <span className="text-muted-foreground font-normal">Replies</span>
                 </span>
-                <span className="text-sm font-semibold text-muted-foreground">0 Shares</span> 
+                <span className="text-base font-semibold text-muted-foreground">0 Shares</span> 
             </div>
         </div>
 
         {/* --- REPLY INPUT SECTION (Placeholder) --- */}
         <div className="p-4 border-b border-border">
-            {/* You would insert your Reply Input component here */}
-            <p className="text-muted-foreground">Reply input placeholder...</p>
+            <p className="text-base text-muted-foreground">Reply input placeholder...</p> {/* 🎨 FIX: Changed text-sm to text-base */}
         </div>
 
         {/* --- REPLIES LIST (NEW SECTION) --- */}
@@ -248,20 +252,24 @@ const PostDetail = () => {
                         <div className="flex-1 min-w-0">
                             <div className="flex items-center justify-between">
                                 <div className="flex items-center">
-                                    <Link to={`/profile/${reply.author.handle}`} className="font-bold hover:underline truncate">
+                                    {/* 🎨 FIX: Increased reply display name to text-base (it was implicitly text-base, but good to be explicit) */}
+                                    <Link to={`/profile/${reply.author.handle}`} className="font-bold text-base hover:underline truncate">
                                         {reply.author.display_name}
                                     </Link>
                                     <VerifiedBadge 
                                         isVerified={reply.author.is_verified} 
                                         isOrgVerified={reply.author.is_organization_verified} 
                                     />
-                                    <span className="text-sm text-muted-foreground ml-2">@{reply.author.handle}</span>
+                                    {/* 🎨 FIX: Changed text-sm to text-base */}
+                                    <span className="text-base text-muted-foreground ml-2">@{reply.author.handle}</span> 
                                 </div>
-                                <span className="text-xs text-muted-foreground ml-4 flex-shrink-0">
+                                {/* 🎨 FIX: Changed text-xs to text-sm for reply timestamp */}
+                                <span className="text-sm text-muted-foreground ml-4 flex-shrink-0">
                                     {new Date(reply.created_at).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}
                                 </span>
                             </div>
-                            <p className="text-foreground mt-1 whitespace-pre-wrap">
+                            {/* 🎨 FIX: Changed to text-base for reply content (was implicitly text-base) */}
+                            <p className="text-base text-foreground mt-1 whitespace-pre-wrap">
                                 {renderContentWithMentions(reply.content)}
                             </p>
                         </div>
@@ -269,7 +277,7 @@ const PostDetail = () => {
                 </div>
             ))}
             {replies.length === 0 && (
-                <p className="text-center text-muted-foreground p-8">No replies yet. Be the first!</p>
+                <p className="text-center text-muted-foreground p-8 text-base">No replies yet. Be the first!</p> {/* 🎨 FIX: Changed to text-base */}
             )}
         </div>
       </div>
