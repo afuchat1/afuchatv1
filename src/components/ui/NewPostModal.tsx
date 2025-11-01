@@ -43,9 +43,11 @@ const useCharacterCount = (text: string) => {
 
 // Unique preview component for post
 const PostPreview: React.FC<{ content: string }> = ({ content }) => (
-    <Card className="mt-4 p-3 sm:p-4 bg-gradient-to-r from-muted/20 to-accent/20 border-border/50 rounded-xl">
+    // Ensured outer card and content are hidden if overflow occurs
+    <Card className="mt-4 p-3 sm:p-4 bg-gradient-to-r from-muted/20 to-accent/20 border-border/50 rounded-xl overflow-hidden">
         <CardContent className="p-0">
-            <p className="text-sm leading-relaxed whitespace-pre-wrap text-foreground/90">
+            {/* KEY FIX: Ensure the text paragraph itself does not allow horizontal overflow */}
+            <p className="text-sm leading-relaxed whitespace-pre-wrap text-foreground/90 overflow-hidden">
                 {content || "Your post will appear here..."}
             </p>
             <div className="flex flex-wrap items-center gap-2 mt-3 pt-3 border-t border-border/20">
@@ -147,7 +149,7 @@ const NewPostModal: React.FC<NewPostModalProps> = ({ isOpen, onClose }) => {
         <ErrorBoundary>
             {/* The Dialog component handles the backdrop click close (the implicit "cancel") */}
             <Dialog open={isOpen} onOpenChange={onClose}>
-                {/* DialogContent Styling: Enforced small centered size (max-w-sm and 90vw) */}
+                {/* DialogContent Styling: Enforced small centered size (90vw and max-w-sm) */}
                 <DialogContent className={cn(
                     "w-[90vw] max-w-sm sm:max-w-md rounded-xl shadow-2xl p-0 overflow-hidden border-2 border-primary/50",
                     "data-[state=open]:fixed data-[state=open]:top-[50%] data-[state=open]:left-[50%] data-[state=open]:translate-x-[-50%] data-[state=open]:translate-y-[-50%] data-[state=open]:duration-300",
@@ -167,29 +169,9 @@ const NewPostModal: React.FC<NewPostModalProps> = ({ isOpen, onClose }) => {
                     </MotionDiv>
                     
                     {/* Post Input Area */}
-                    <div className="p-4 space-y-4">
-                        
-                        {/* --- REMOVED: Inactive Toolbar Features ---
-                        <div className="flex items-center gap-2 flex-wrap">
-                            <Button variant="ghost" size="sm" className="h-8 px-2 text-xs rounded-full" disabled>
-                                <ImageIcon className="h-4 w-4 mr-1" />
-                                Media (Coming Soon)
-                            </Button>
-                            <Button variant="ghost" size="sm" className="h-8 px-2 text-xs rounded-full" disabled>
-                                <AtSign className="h-4 w-4 mr-1" />
-                                Mention
-                            </Button>
-                            <Button variant="ghost" size="sm" className="h-8 px-2 text-xs rounded-full" disabled>
-                                <Hash className="h-4 w-4 mr-1" />
-                                Hashtag
-                            </Button>
-                            <Button variant="ghost" size="sm" className="h-8 px-2 text-xs rounded-full" disabled>
-                                <Smile className="h-4 w-4 mr-1" />
-                                Emoji
-                            </Button>
-                        </div>
-                        */}
+                    <div className="p-4 space-y-4 overflow-hidden"> 
 
+                        {/* Textarea: Max height and forced vertical scroll, blocked horizontal expansion */}
                         <Textarea
                             placeholder="Share your thoughts... What's on your mind today? (Text-only, max 280 characters)"
                             value={newPost}
