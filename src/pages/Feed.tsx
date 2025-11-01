@@ -177,7 +177,7 @@ const ReplyItem = ({ reply, navigate, handleViewProfile }: { reply: Reply; navig
                         @{reply.profiles.handle}
                     </span>
                     <span className="text-muted-foreground text-xs flex-shrink-0">·</span>
-                    <span className="text-muted-foreground text-xs whitespace-nowlrap flex-shrink-0">
+                    <span className="text-muted-foreground text-xs whitespace-nowrap flex-shrink-0">
                       {formatTime(reply.created_at)}
                     </span>
                 </div>
@@ -274,7 +274,7 @@ const PostCard = ({ post, addReply, user, navigate, onAcknowledge }:
             </span>
 
             <span className="text-muted-foreground text-sm flex-shrink-0">·</span>
-            <span className="text-muted-foreground text-sm whitespace-nowlrap flex-shrink-0">
+            <span className="text-muted-foreground text-sm whitespace-nowrap flex-shrink-0">
               {formatTime(post.created_at)}
             </span>
           </div>
@@ -286,7 +286,7 @@ const PostCard = ({ post, addReply, user, navigate, onAcknowledge }:
 
         {/* 🎯 POST CONTENT WRAPPED IN LINK TO DETAIL PAGE */}
         <Link to={`/post/${post.id}`} className="block">
-          <p className="text-foreground text-base mt-1 mb-2 leading-relaxed whitespace-pre-wrap">
+          <p className="text-foreground text-sm mt-1 mb-2 leading-relaxed whitespace-pre-wrap">
             {parsePostContent(post.content, navigate)}
           </p>
         </Link>
