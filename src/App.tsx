@@ -8,6 +8,7 @@ import Index from "./pages/Index";
 import Auth from "./pages/Auth";
 import ChatRoom from "./pages/ChatRoom";
 import Profile from "./pages/Profile";
+import EditProfile from "./pages/EditProfile";
 import NotFound from "./pages/NotFound";
 import Notifications from "./pages/Notifications";
 import PostDetail from "./pages/PostDetail";
@@ -15,7 +16,6 @@ import AdminDashboard from "./pages/AdminDashboard";
 
 const queryClient = new QueryClient();
 
-// 🔁 Redirect component for old /profile/:userId URLs
 const ProfileRedirect = () => {
   const { userId } = useParams();
   return <Navigate to={`/${userId}`} replace />;
@@ -29,7 +29,6 @@ const App = () => (
         <Sonner />
         <BrowserRouter>
           <Routes>
-            {/* 🏠 Main routes */}
             <Route path="/" element={<Index />} />
             <Route path="/auth" element={<Auth />} />
             <Route path="/chat/:chatId" element={<ChatRoom />} />
@@ -37,13 +36,11 @@ const App = () => (
             <Route path="/post/:postId" element={<PostDetail />} />
             <Route path="/admin" element={<AdminDashboard />} />
 
-            {/* 🔁 Redirect old /profile/:userId -> /:userId */}
             <Route path="/profile/:userId" element={<ProfileRedirect />} />
 
-            {/* 👤 Clean username-based route (placed last) */}
             <Route path="/:userId" element={<Profile />} />
+            <Route path="/:userId/edit" element={<EditProfile />} />
 
-            {/* 🚫 404 Fallback */}
             <Route path="*" element={<NotFound />} />
           </Routes>
         </BrowserRouter>
