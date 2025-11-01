@@ -244,7 +244,7 @@ const PostCard = ({ post, addReply, user, navigate, onAcknowledge }:
   };
 
   return (
-    <div className="flex border-b border-border py-3 px-4 transition-colors hover:bg-muted/5">
+    <div className="flex border-b border-border py-2 px-4 transition-colors hover:bg-muted/5">
       {/* Author Icon */}
       <div
         className="mr-3 flex-shrink-0 h-10 w-10 rounded-full bg-secondary flex items-center justify-center cursor-pointer"
@@ -294,7 +294,7 @@ const PostCard = ({ post, addReply, user, navigate, onAcknowledge }:
 
 
         {/* Post Actions */}
-        <div className="flex justify-between items-center text-xs text-muted-foreground mt-3 -ml-2 max-w-[420px]">
+        <div className="flex justify-between items-center text-xs text-muted-foreground mt-2 -ml-2 max-w-[420px]">
           <Button variant="ghost" size="sm" className="flex items-center gap-1 group" onClick={() => setShowComments(!showComments)}>
             <MessageSquare className="h-4 w-4 group-hover:text-primary transition-colors" />
             <span className="group-hover:text-primary transition-colors text-xs">{post.reply_count > 0 ? post.reply_count : ''}</span>
@@ -309,7 +309,7 @@ const PostCard = ({ post, addReply, user, navigate, onAcknowledge }:
         </div>
 
         {/* --- ENHANCED COMMENT SECTION --- */}
-        <div className="mt-3 ml-[-12px] pr-[12px]"> {/* Adjusted margin for better visual alignment with post content */}
+        <div className="mt-2 ml-[-12px] pr-[12px]"> {/* Adjusted margin for better visual alignment with post content */}
           {post.reply_count > 0 && !showComments && (
             <span
               className="text-xs text-muted-foreground cursor-pointer hover:underline"
@@ -335,7 +335,7 @@ const PostCard = ({ post, addReply, user, navigate, onAcknowledge }:
 
           {/* Comment input */}
           {showComments && user && (
-            <div className="mt-3 flex items-center gap-2">
+            <div className="mt-2 flex items-center gap-2">
               <div className="h-8 w-8 rounded-full bg-secondary flex items-center justify-center flex-shrink-0">
                 <User className="h-4 w-4 text-muted-foreground" />
               </div>
@@ -360,7 +360,7 @@ const PostCard = ({ post, addReply, user, navigate, onAcknowledge }:
             </div>
           )}
           {showComments && !user && (
-            <div className="mt-3 text-xs text-muted-foreground">
+            <div className="mt-2 text-xs text-muted-foreground">
               Please <a href="/auth" className="text-primary underline">log in</a> to comment.
             </div>
           )}
