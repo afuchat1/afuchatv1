@@ -9,13 +9,11 @@ import Chats from './Chats';
 import Feed from './Feed';
 import Search from './Search';
 import NewPostModal from '@/components/ui/NewPostModal';
+import Logo from '@/components/Logo';
 import { toast } from 'sonner';
 import { Skeleton } from '@/components/ui/skeleton';
 import NewChatDialog from '@/components/ui/NewChatDialog';
 import NotificationIcon from '@/components/nav/NotificationIcon';
-
-// Import the logo image for splash screen and header
-import logoImage from '@/assets/logo.png'; // Replace with the actual path to your uploaded logo image
 
 
 // --- FAB Components (Positioned at bottom-20, above the collapsible nav) ---
@@ -150,11 +148,7 @@ const Index = () => {
     // Simplified splash screen: white background with centered larger logo only
     return (
       <div className="min-h-screen bg-white flex items-center justify-center p-4">
-        <img 
-          src={logoImage} 
-          alt="AfuChat Logo" 
-          className="h-48 w-48 object-contain" 
-        />
+        <Logo size="xl" />
       </div>
     );
   }
@@ -169,11 +163,7 @@ const Index = () => {
       >
         <div className="container mx-auto px-4 h-14 flex items-center justify-between">
           <div className="flex items-center gap-2">
-            <img 
-              src={logoImage} 
-              alt="AfuChat Logo" 
-              className="h-8 w-8 object-contain" // Smaller size for header to match "md" equivalent
-            />
+            <Logo size="md" />
             <h1 className="text-lg font-bold text-primary">AfuChat</h1>
           </div>
           
