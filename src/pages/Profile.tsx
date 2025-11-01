@@ -6,11 +6,13 @@ import { useAuth } from '@/contexts/AuthContext';
 import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { toast } from 'sonner';
-import { User, ArrowLeft, MessageSquare, UserPlus, Pencil, Calendar, Lock } from 'lucide-react';
+import { User, ArrowLeft, MessageSquare, UserPlus, Pencil, Calendar, Lock, LogOut, Settings } from 'lucide-react';
 import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/ui/tabs';
 import { Separator } from '@/components/ui/separator';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Popover, PopoverTrigger, PopoverContent } from '@/components/ui/popover';
+// --- NEW IMPORT: Admin Dashboard from pages (assuming path structure) ---
+import AdminDashboard from '@/pages/AdminDashboard';
 
 // --- Extended Profile and Post Interfaces (Unchanged) ---
 interface Profile {
@@ -128,6 +130,8 @@ const Profile = () => {
 	const [loading, setLoading] = useState(true);
 
 	const [profileId, setProfileId] = useState<string | null>(null);
+	// --- NEW STATE: Track if current user is admin ---
+	const [isAdmin, setIsAdmin] = useState(false);
 
 	// Function to aggregate follow/follower counts
 	const fetchFollowCounts = useCallback(async (id: string) => {
@@ -147,6 +151,23 @@ const Profile = () => {
 			followers: followerCount || 0,
 			following: followingCount || 0
 		});
+	}, []);
+
+	// --- NEW FUNCTION: Fetch admin role for current user ---
+	const fetchAdminStatus = useCallback(async (userId: string) => {
+		if (!userId) {
+			setIsAdmin(false);
+			return;
+		}
+
+		const { data } = await supabase
+			.from('user_roles')
+			.select('role')
+			.eq('user_id', userId)
+			.limit(1)
+			.single();
+
+		setIsAdmin(data?.role === 'admin');
 	}, []);
 
 	// --- THE CRUCIAL FIX IS HERE ---
@@ -259,6 +280,13 @@ const Profile = () => {
 		// eslint-disable-next-line react-hooks/exhaustive-deps
 	}, [profileId, user, fetchUserPosts]); // Added fetchUserPosts to dependency array for clarity
 
+	// --- NEW EFFECT: Fetch admin status when user changes ---
+	useEffect(() => {
+		if (user) {
+			fetchAdminStatus(user.id);
+		}
+	}, [user, fetchAdminStatus]);
+
 	// --- Follow/Unfollow Logic (Updated to use profileId) ---
 	const handleFollow = async () => {
 		if (!user || !profileId) {
@@ -358,6 +386,23 @@ const Profile = () => {
 		navigate(`/chat/${newChat.id}`);
 	};
 
+	// --- NEW FUNCTION: Handle Logout ---
+	const handleLogout = async () => {
+		const { error } = await supabase.auth.signOut();
+		if (error) {
+			toast.error('Failed to log out');
+			console.error('Logout error:', error);
+		} else {
+			toast.success('Logged out successfully');
+			navigate('/');
+		}
+	};
+
+	// --- NEW FUNCTION: Navigate to Admin Dashboard ---
+	const handleAdminDashboard = () => {
+		navigate('/admin');
+	};
+
 	// --- Loading State Render (Unchanged) ---
 	if (loading) {
 		return (
@@ -410,21 +455,35 @@ const Profile = () => {
 	// --- Main Render ---
 	return (
 		<div className="h-full flex flex-col">
-			{/* HEADER BAR */}
+			{/* HEADER BAR - UPDATED WITH LOGOUT BUTTON */}
 			<div className="p-4 sticky top-0 bg-background/80 backdrop-blur-sm z-10 border-b border-border">
-				<div className="flex items-center">
-					<Button
-						variant="ghost"
-						size="icon"
-						onClick={() => navigate(-1)}
-						className="rounded-full mr-4"
-					>
-						<ArrowLeft className="h-5 w-5" />
-					</Button>
-					<div>
-						<h1 className="text-xl font-bold">{profile.display_name}</h1>
-						<p className="text-xs text-muted-foreground">{posts.length} Posts</p>
+				<div className="flex items-center justify-between">
+					<div className="flex items-center">
+						<Button
+							variant="ghost"
+							size="icon"
+							onClick={() => navigate(-1)}
+							className="rounded-full mr-4"
+						>
+							<ArrowLeft className="h-5 w-5" />
+						</Button>
+						<div>
+							<h1 className="text-xl font-bold">{profile.display_name}</h1>
+							<p className="text-xs text-muted-foreground">{posts.length} Posts</p>
+						</div>
 					</div>
+					{/* NEW: Logout Button (shown if user is logged in) */}
+					{user && (
+						<Button
+							variant="ghost"
+							size="icon"
+							onClick={handleLogout}
+							className="rounded-full"
+							title="Log out"
+						>
+							<LogOut className="h-5 w-5" />
+						</Button>
+					)}
 				</div>
 			</div>
 
@@ -435,19 +494,31 @@ const Profile = () => {
 					{/* Placeholder for banner image */}
 				</div>
 
-				{/* Profile Info and Buttons */}
+				{/* Profile Info and Buttons - UPDATED WITH ADMIN DASHBOARD BUTTON */}
 				<div className="p-4">
 					<div className="flex justify-between items-end -mt-20 sm:-mt-16">
 						<div className="h-24 w-24 sm:h-32 sm:w-32 rounded-full bg-primary flex items-center justify-center text-primary-foreground border-4 border-background shadow-lg">
 							<User className="h-12 w-12 sm:h-16 sm:w-16" />
 						</div>
 
-						{/* Buttons */}
+						{/* Buttons - UPDATED: Add Admin Dashboard if owner and admin */}
 						{user && user.id === profileId ? (
-							<Button variant="outline" className="rounded-full px-4 font-bold">
-								<Pencil className="h-4 w-4 mr-2" />
-								Edit Profile
-							</Button>
+							<div className="flex flex-col gap-2">
+								<Button variant="outline" className="rounded-full px-4 font-bold">
+									<Pencil className="h-4 w-4 mr-2" />
+									Edit Profile
+								</Button>
+								{isAdmin && (
+									<Button
+										onClick={handleAdminDashboard}
+										variant="secondary"
+										className="rounded-full px-4 font-bold"
+									>
+										<Settings className="h-4 w-4 mr-2" />
+										Admin Dashboard
+									</Button>
+								)}
+							</div>
 						) : (
 							<div className="flex gap-2">
 								{isFollowing && (
