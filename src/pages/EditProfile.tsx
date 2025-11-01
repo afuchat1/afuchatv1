@@ -1,8 +1,9 @@
 // src/pages/EditProfile.tsx
 
 import { useState, useEffect } from 'react';
-import { useParams, useNavigate } from 'react-router-dom';
-import { useAuth } from '@/contexts/AuthContext';
+import { useNavigate } from 'react-router-dom';
+// NOTE: Assuming your AuthContext provides 'user' and 'isLoading'
+import { useAuth } from '@/contexts/AuthContext'; 
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
 import { Button } from '@/components/ui/button';
@@ -25,7 +26,8 @@ interface EditProfileForm {
 }
 
 const EditProfile: React.FC = () => {
-  const { user } = useAuth();
+  // 💡 ASSUMPTION: useAuth now provides an isLoading flag for initial authentication check
+  const { user, isLoading: authLoading } = useAuth(); 
   const navigate = useNavigate();
 
   const [profile, setProfile] = useState<EditProfileForm>({
@@ -33,16 +35,23 @@ const EditProfile: React.FC = () => {
     handle: '',
     bio: '',
   });
-  const [loading, setLoading] = useState<boolean>(true);
+  const [profileLoading, setProfileLoading] = useState<boolean>(true); // Renamed internal loading state
   const [saving, setSaving] = useState<boolean>(false);
 
   useEffect(() => {
+    // 1. Do nothing if auth is still loading (authLoading = true)
+    if (authLoading) return;
+
+    // 2. Redirect if no user is found after auth loads (Unauthenticated)
+    if (!user) {
+        toast.error("You must be logged in to edit your profile.");
+        // Redirect to a safe place (e.g., login page)
+        navigate('/login'); 
+        return;
+    }
+
     const fetchProfile = async () => {
-      if (!user?.id) {
-          setLoading(false);
-          toast.error("User ID not found for fetching profile.");
-          return;
-      }
+      setProfileLoading(true);
       
       try {
         const { data, error } = await supabase
@@ -64,12 +73,12 @@ const EditProfile: React.FC = () => {
         console.error('Error fetching profile:', error);
         toast.error('Failed to load profile');
       } finally {
-        setLoading(false);
+        setProfileLoading(false);
       }
     };
 
     fetchProfile();
-  }, [user, navigate]);
+  }, [user, navigate, authLoading]); // Dependency array includes user and authLoading
 
   const handleInputChange = (
     e: React.ChangeEvent<HTMLInputElement | React.TextareaHTMLAttributes<HTMLTextAreaElement>>
@@ -84,7 +93,7 @@ const EditProfile: React.FC = () => {
   };
 
   const handleSave = async () => {
-    if (!user) return;
+    if (!user) return; // Should be handled by the useEffect redirect, but good defensive programming
 
     if (!profile.display_name.trim() || !profile.handle.trim()) {
         toast.error("Display Name and Handle are required.");
@@ -108,7 +117,8 @@ const EditProfile: React.FC = () => {
       if (error) throw error;
 
       toast.success('Profile updated successfully!');
-      navigate(`/${user.id}`);
+      // Assuming you want to navigate to the user's profile view
+      navigate(`/${user.id}`); 
     } catch (error: any) {
       console.error('Update error:', error);
       if (error.code === '23505') { 
@@ -125,13 +135,19 @@ const EditProfile: React.FC = () => {
     navigate(`/${user?.id}`);
   };
 
-  if (loading) {
+  // Show a spinner while AUTH is loading OR the PROFILE data is fetching
+  if (authLoading || profileLoading) {
     return (
       <div className="min-h-screen bg-background flex items-center justify-center p-4">
         <Loader2 className="h-8 w-8 animate-spin text-primary" />
       </div>
     );
   }
+
+  // NOTE: If we reached here without a 'user' object, the useEffect redirect should have fired.
+  // This return statement ensures the component still doesn't crash if the redirect is slow.
+  if (!user) return null; 
+
 
   return (
     <div className="min-h-screen bg-background flex justify-center p-4 md:p-8">
