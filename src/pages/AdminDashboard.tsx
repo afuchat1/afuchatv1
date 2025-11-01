@@ -23,7 +23,7 @@ import {
   Area,
   ComposedChart,
   Bar,
-  Cell, // <-- NEW: Added for custom bar colors
+  Cell,
 } from 'recharts';
 
 interface Stats {
@@ -72,6 +72,18 @@ const getColorForBar = (data: { date: string; count: number }[], index: number):
   
   // Use professional green/red from Tailwind: Emerald 400, Rose 500
   return currentCount >= previousCount ? '#4ade80' : '#f43f5e'; 
+};
+
+// Helper to group items by day and sort them ascending (Oldest first)
+const groupByDay = (items: any[]) => {
+  const groups: { [key: string]: number } = {};
+  items?.forEach(item => {
+    const date = new Date(item.sent_at || item.created_at).toLocaleDateString();
+    groups[date] = (groups[date] || 0) + 1;
+  });
+  return Object.entries(groups)
+    .sort(([a], [b]) => new Date(a).getTime() - new Date(b).getTime())  // <--- KEY CHANGE: Ascending sort (Oldest first)
+    .map(([date, count]) => ({ date, count }));
 };
 
 const AdminDashboard = () => {
@@ -183,18 +195,6 @@ const AdminDashboard = () => {
         .gte('created_at', last30Days.toISOString());
 
       if (newUsersError) throw newUsersError;
-
-      // Group messages by day and sort descending (newest first)
-      const groupByDay = (items: any[]) => {
-        const groups: { [key: string]: number } = {};
-        items?.forEach(item => {
-          const date = new Date(item.sent_at || item.created_at).toLocaleDateString();
-          groups[date] = (groups[date] || 0) + 1;
-        });
-        return Object.entries(groups)
-          .sort(([a], [b]) => new Date(b).getTime() - new Date(a).getTime())  // Descending
-          .map(([date, count]) => ({ date, count }));
-      };
 
       const processedMessages30 = groupByDay(messages30Days || []);
       const sma7 = calculateSMA(processedMessages30, 7);
@@ -429,14 +429,13 @@ const AdminDashboard = () => {
                 </CardTitle>
                 <CardDescription className="text-xs sm:text-sm">Daily new user registrations with trend analysis</CardDescription>
               </CardHeader>
-              {/* === CHART CONTENT START - STYLED === */}
               <CardContent className="p-0 sm:p-0">
                 <div className="p-2 sm:p-4 bg-gray-900 rounded-b-lg"> 
                   <ResponsiveContainer width="100%" height={250} className="sm:h-[300px]">
                     <AreaChart data={stats?.newUsersLast30Days || []} margin={{ top: 10, right: 10, left: -10, bottom: 0 }}>
                       <defs>
                         <linearGradient id="userGrowthGradient" x1="0" y1="0" x2="0" y2="1">
-                          <stop offset="5%" stopColor="#0E9F6E" stopOpacity={0.6}/> {/* Green for growth */}
+                          <stop offset="5%" stopColor="#0E9F6E" stopOpacity={0.6}/>
                           <stop offset="95%" stopColor="#0E9F6E" stopOpacity={0}/>
                         </linearGradient>
                       </defs>
@@ -447,7 +446,7 @@ const AdminDashboard = () => {
                         fontSize={10} 
                         tickLine={false} 
                         axisLine={false}
-                        interval="preserveStartEnd" // Better mobile control
+                        interval="preserveStartEnd"
                         tickFormatter={(tick) => new Date(tick).toLocaleDateString(undefined, { day: 'numeric', month: 'short' })}
                       />
                       <YAxis 
@@ -474,7 +473,6 @@ const AdminDashboard = () => {
                   </ResponsiveContainer>
                 </div>
               </CardContent>
-              {/* === CHART CONTENT END - STYLED === */}
             </Card>
 
             {/* Activity Timeline - Trading-Style Composed Chart */}
@@ -493,7 +491,6 @@ const AdminDashboard = () => {
                     </CardTitle>
                     <CardDescription className="text-xs sm:text-sm">Volume and trend with moving average</CardDescription>
                   </CardHeader>
-                  {/* === CHART CONTENT START - STYLED === */}
                   <CardContent className="p-0 sm:p-0">
                     <div className="p-2 sm:p-4 bg-gray-900 rounded-b-lg"> 
                       <ResponsiveContainer width="100%" height={300} className="sm:h-[400px]">
@@ -516,15 +513,12 @@ const AdminDashboard = () => {
                             labelStyle={{ color: '#f3f4f6' }}
                           />
                           <Legend verticalAlign="top" wrapperStyle={{ fontSize: '12px', paddingBottom: '10px' }} />
-                          {/* Bars (Volume) - Simple Red for all days in 7-day view */}
                           <Bar yAxisId="left" dataKey="count" fill="#f43f5e" name="Volume" barSize={15} /> 
-                          {/* Line (Daily) - Green for Daily Trend */}
                           <Line yAxisId="right" type="monotone" dataKey="count" stroke="#4ade80" strokeWidth={2} name="Daily" dot={false} />
                         </ComposedChart>
                       </ResponsiveContainer>
                     </div>
                   </CardContent>
-                  {/* === CHART CONTENT END - STYLED === */}
                 </Card>
               </TabsContent>
 
@@ -537,7 +531,6 @@ const AdminDashboard = () => {
                     </CardTitle>
                     <CardDescription className="text-xs sm:text-sm">Advanced volume bars (Green/Red) with SMA(7) overlay for trend analysis</CardDescription>
                   </CardHeader>
-                  {/* === CHART CONTENT START - STYLED & COLOR LOGIC APPLIED === */}
                   <CardContent className="p-0 sm:p-0">
                     <div className="p-2 sm:p-4 bg-gray-900 rounded-b-lg"> 
                       <ResponsiveContainer width="100%" height={300} className="sm:h-[400px]">
@@ -567,7 +560,7 @@ const AdminDashboard = () => {
                               <Cell 
                                 key={`cell-${index}`} 
                                 fill={getColorForBar(stats.messagesLast30Days, index)} 
-                                opacity={0.9} // Slight transparency
+                                opacity={0.9}
                               />
                             ))}
                           </Bar>
@@ -578,7 +571,6 @@ const AdminDashboard = () => {
                       </ResponsiveContainer>
                     </div>
                   </CardContent>
-                  {/* === CHART CONTENT END - STYLED & COLOR LOGIC APPLIED === */}
                 </Card>
               </TabsContent>
             </Tabs>
