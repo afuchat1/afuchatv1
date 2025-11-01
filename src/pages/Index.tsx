@@ -145,10 +145,48 @@ const Index = () => {
 
 
   if (effectiveLoading) {
-    // Simplified splash screen: white background with centered larger logo only
+    // Skeleton loading state
     return (
-      <div className="min-h-screen bg-white flex items-center justify-center p-4">
-        <Logo size="xl" />
+      <div className="min-h-screen bg-background p-4 max-w-4xl mx-auto">
+        <div className="h-14 flex items-center justify-between rounded-b-lg">
+          <Skeleton className="h-6 w-24" />
+          <div className="flex gap-2">
+            <Skeleton className="h-8 w-8 rounded-full" />
+            <Skeleton className="h-8 w-8 rounded-full" />
+          </div>
+        </div>
+        <div className="grid grid-cols-3 gap-4 mb-6 pt-4">
+          <Skeleton className="h-10 w-full rounded-full" /> 
+          <Skeleton className="h-10 w-full rounded-full" /> 
+          <Skeleton className="h-10 w-full rounded-full" /> 
+        </div>
+        <div className="space-y-6 pt-2">
+          <div className="p-4 rounded-xl shadow-xl space-y-3">
+             <div className="flex items-center space-x-3">
+                <Skeleton className="h-8 w-8 rounded-full bg-muted" />
+                <Skeleton className="h-4 w-1/4 bg-muted" />
+             </div>
+             <Skeleton className="h-4 w-full bg-muted" />
+             <Skeleton className="h-4 w-5/6 bg-muted" />
+             <div className="pt-2 flex justify-between">
+                <Skeleton className="h-4 w-16" />
+                <Skeleton className="h-4 w-12" />
+             </div>
+          </div>
+          <div className="p-4 rounded-xl shadow-xl space-y-3">
+             <div className="flex items-center space-x-3">
+                <Skeleton className="h-8 w-8 rounded-full" />
+                <Skeleton className="h-4 w-1/3" />
+             </div>
+             <Skeleton className="h-4 w-4/5 bg-muted" />
+             <Skeleton className="h-4 w-2/3 bg-muted" />
+             <div className="pt-2 flex justify-between">
+                <Skeleton className="h-4 w-16" />
+                <Skeleton className="h-4 w-12" />
+             </div>
+          </div>
+        </div>
+        <Skeleton className="fixed bottom-20 right-6 h-14 w-14 rounded-full" />
       </div>
     );
   }
