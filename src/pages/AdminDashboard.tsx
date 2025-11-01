@@ -4,12 +4,22 @@ import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/contexts/AuthContext';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Skeleton } from '@/components/ui/skeleton';
-import { Users, MessageSquare, TrendingUp, Activity, ArrowLeft, UserCheck, Shield, Trash2, Edit } from 'lucide-react';
+import { Users, MessageSquare, TrendingUp, Activity, ArrowLeft, UserCheck, Shield, Trash2, Edit, BarChart3, Users as UsersIcon } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Badge } from '@/components/ui/badge';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { toast } from 'sonner';
+import {
+  LineChart,
+  Line,
+  XAxis,
+  YAxis,
+  CartesianGrid,
+  Tooltip,
+  Legend,
+  ResponsiveContainer,
+} from 'recharts';
 
 interface Stats {
   totalUsers: number;
@@ -18,6 +28,7 @@ interface Stats {
   activeToday: number;
   messagesLast7Days: { date: string; count: number }[];
   messagesLast30Days: { date: string; count: number }[];
+  newUsersLast30Days: { date: string; count: number }[];
 }
 
 interface User {
@@ -46,6 +57,7 @@ const AdminDashboard = () => {
   const [users, setUsers] = useState<User[]>([]);
   const [posts, setPosts] = useState<Post[]>([]);
   const [activeTab, setActiveTab] = useState<'stats' | 'users' | 'posts'>('stats');
+  const [activityTab, setActivityTab] = useState<'7days' | '30days'>('7days');
 
   useEffect(() => {
     checkAdminStatus();
@@ -138,11 +150,19 @@ const AdminDashboard = () => {
 
       if (err30) throw err30;
 
+      // Fetch new users for last 30 days
+      const { data: newUsers30Days, error: newUsersError } = await supabase
+        .from('profiles')
+        .select('created_at')
+        .gte('created_at', last30Days.toISOString());
+
+      if (newUsersError) throw newUsersError;
+
       // Group messages by day and sort descending (newest first)
-      const groupByDay = (messages: any[]) => {
+      const groupByDay = (items: any[]) => {
         const groups: { [key: string]: number } = {};
-        messages?.forEach(msg => {
-          const date = new Date(msg.sent_at).toLocaleDateString();
+        items?.forEach(item => {
+          const date = new Date(item.sent_at || item.created_at).toLocaleDateString();
           groups[date] = (groups[date] || 0) + 1;
         });
         return Object.entries(groups)
@@ -156,7 +176,8 @@ const AdminDashboard = () => {
         totalChats: chatCount || 0,
         activeToday: activeTodayCount,
         messagesLast7Days: groupByDay(messages7Days || []),
-        messagesLast30Days: groupByDay(messages30Days || [])
+        messagesLast30Days: groupByDay(messages30Days || []),
+        newUsersLast30Days: groupByDay(newUsers30Days || []),
       });
     } catch (error) {
       console.error('Error fetching stats:', error);
@@ -370,8 +391,31 @@ const AdminDashboard = () => {
               </Card>
             </div>
 
+            {/* User Growth Chart */}
+            <Card className="mb-6">
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2">
+                  <UsersIcon className="h-4 w-4" />
+                  User Growth - Last 30 Days
+                </CardTitle>
+                <CardDescription>Daily new user registrations</CardDescription>
+              </CardHeader>
+              <CardContent>
+                <ResponsiveContainer width="100%" height={300}>
+                  <LineChart data={stats?.newUsersLast30Days || []}>
+                    <CartesianGrid strokeDasharray="3 3" />
+                    <XAxis dataKey="date" />
+                    <YAxis />
+                    <Tooltip />
+                    <Legend />
+                    <Line type="monotone" dataKey="count" stroke="#8884d8" strokeWidth={2} />
+                  </LineChart>
+                </ResponsiveContainer>
+              </CardContent>
+            </Card>
+
             {/* Activity Timeline */}
-            <Tabs defaultValue="7days" className="w-full">
+            <Tabs value={activityTab} onValueChange={setActivityTab} className="w-full">
               <TabsList className="grid w-full grid-cols-2 mb-4">
                 <TabsTrigger value="7days">Last 7 Days</TabsTrigger>
                 <TabsTrigger value="30days">Last 30 Days</TabsTrigger>
@@ -380,22 +424,23 @@ const AdminDashboard = () => {
               <TabsContent value="7days">
                 <Card>
                   <CardHeader>
-                    <CardTitle className="text-base">Message Activity - Last 7 Days</CardTitle>
-                    <CardDescription>Daily message count over the past week</CardDescription>
+                    <CardTitle className="flex items-center gap-2">
+                      <BarChart3 className="h-4 w-4" />
+                      Message Activity - Last 7 Days
+                    </CardTitle>
+                    <CardDescription>Daily message volume</CardDescription>
                   </CardHeader>
                   <CardContent>
-                    {stats?.messagesLast7Days.length === 0 ? (
-                      <p className="text-sm text-muted-foreground text-center py-8">No messages in the last 7 days</p>
-                    ) : (
-                      <div className="space-y-2">
-                        {stats?.messagesLast7Days.map(({ date, count }) => (
-                          <div key={date} className="flex items-center justify-between p-3 bg-muted/50 rounded-lg">
-                            <span className="text-sm font-medium text-foreground">{date}</span>
-                            <Badge variant="secondary">{count} messages</Badge>
-                          </div>
-                        ))}
-                      </div>
-                    )}
+                    <ResponsiveContainer width="100%" height={300}>
+                      <LineChart data={stats?.messagesLast7Days || []}>
+                        <CartesianGrid strokeDasharray="3 3" />
+                        <XAxis dataKey="date" />
+                        <YAxis />
+                        <Tooltip />
+                        <Legend />
+                        <Line type="monotone" dataKey="count" stroke="#10b981" strokeWidth={2} />
+                      </LineChart>
+                    </ResponsiveContainer>
                   </CardContent>
                 </Card>
               </TabsContent>
@@ -403,22 +448,23 @@ const AdminDashboard = () => {
               <TabsContent value="30days">
                 <Card>
                   <CardHeader>
-                    <CardTitle className="text-base">Message Activity - Last 30 Days</CardTitle>
-                    <CardDescription>Daily message count over the past month</CardDescription>
+                    <CardTitle className="flex items-center gap-2">
+                      <BarChart3 className="h-4 w-4" />
+                      Message Activity - Last 30 Days
+                    </CardTitle>
+                    <CardDescription>Daily message volume</CardDescription>
                   </CardHeader>
                   <CardContent>
-                    {stats?.messagesLast30Days.length === 0 ? (
-                      <p className="text-sm text-muted-foreground text-center py-8">No messages in the last 30 days</p>
-                    ) : (
-                      <div className="space-y-2 max-h-96 overflow-y-auto">
-                        {stats?.messagesLast30Days.map(({ date, count }) => (
-                          <div key={date} className="flex items-center justify-between p-3 bg-muted/50 rounded-lg">
-                            <span className="text-sm font-medium text-foreground">{date}</span>
-                            <Badge variant="secondary">{count} messages</Badge>
-                          </div>
-                        ))}
-                      </div>
-                    )}
+                    <ResponsiveContainer width="100%" height={300}>
+                      <LineChart data={stats?.messagesLast30Days || []}>
+                        <CartesianGrid strokeDasharray="3 3" />
+                        <XAxis dataKey="date" />
+                        <YAxis />
+                        <Tooltip />
+                        <Legend />
+                        <Line type="monotone" dataKey="count" stroke="#10b981" strokeWidth={2} />
+                      </LineChart>
+                    </ResponsiveContainer>
                   </CardContent>
                 </Card>
               </TabsContent>
