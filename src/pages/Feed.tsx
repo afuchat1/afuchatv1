@@ -182,8 +182,8 @@ const ReplyItem = ({ reply, navigate, handleViewProfile }: { reply: Reply; navig
                     </span>
                 </div>
 
-                {/* 🎯 Reply Content - ADJUSTED TO text-xs */}
-                <p className="text-foreground **text-xs** leading-snug whitespace-pre-wrap break-words mt-0.5">
+                {/* Reply Content */}
+                <p className="text-foreground text-sm leading-snug whitespace-pre-wrap break-words mt-0.5">
                     {parsePostContent(reply.content, navigate)}
                 </p>
             </div>
@@ -284,9 +284,9 @@ const PostCard = ({ post, addReply, user, navigate, onAcknowledge }:
           </Button>
         </div>
 
-        {/* 🎯 POST CONTENT WRAPPED IN LINK TO DETAIL PAGE - ADJUSTED TO text-sm */}
+        {/* 🎯 POST CONTENT WRAPPED IN LINK TO DETAIL PAGE */}
         <Link to={`/post/${post.id}`} className="block">
-          <p className="text-foreground **text-sm** mt-1 mb-2 leading-relaxed whitespace-pre-wrap">
+          <p className="text-foreground text-base mt-1 mb-2 leading-relaxed whitespace-pre-wrap">
             {parsePostContent(post.content, navigate)}
           </p>
         </Link>
