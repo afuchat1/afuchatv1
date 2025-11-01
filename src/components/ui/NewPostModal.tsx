@@ -147,12 +147,7 @@ const NewPostModal: React.FC<NewPostModalProps> = ({ isOpen, onClose }) => {
         <ErrorBoundary>
             {/* The Dialog component handles the backdrop click close (the implicit "cancel") */}
             <Dialog open={isOpen} onOpenChange={onClose}>
-                {/* DialogContent Styling: 
-                    KEY CHANGES: 
-                    1. Replaced max-w-sm with specific width (w-[90vw]) to control mobile width precisely.
-                    2. Enforced max-width for desktop/tablet (sm:max-w-md).
-                    3. Fixed center position remains.
-                */}
+                {/* DialogContent Styling: Enforced small centered size (max-w-sm and 90vw) */}
                 <DialogContent className={cn(
                     "w-[90vw] max-w-sm sm:max-w-md rounded-xl shadow-2xl p-0 overflow-hidden border-2 border-primary/50",
                     "data-[state=open]:fixed data-[state=open]:top-[50%] data-[state=open]:left-[50%] data-[state=open]:translate-x-[-50%] data-[state=open]:translate-y-[-50%] data-[state=open]:duration-300",
@@ -171,9 +166,10 @@ const NewPostModal: React.FC<NewPostModalProps> = ({ isOpen, onClose }) => {
                         </DialogTitle>
                     </MotionDiv>
                     
-                    {/* Post Input Area: Elevated Card Style with interactive toolbar */}
+                    {/* Post Input Area */}
                     <div className="p-4 space-y-4">
-                        {/* Toolbar: Quick actions for unique feel - Mobile wrap */}
+                        
+                        {/* --- REMOVED: Inactive Toolbar Features ---
                         <div className="flex items-center gap-2 flex-wrap">
                             <Button variant="ghost" size="sm" className="h-8 px-2 text-xs rounded-full" disabled>
                                 <ImageIcon className="h-4 w-4 mr-1" />
@@ -192,8 +188,8 @@ const NewPostModal: React.FC<NewPostModalProps> = ({ isOpen, onClose }) => {
                                 Emoji
                             </Button>
                         </div>
+                        */}
 
-                        {/* Textarea: Added overflow-x-hidden to prevent horizontal scroll/expansion */}
                         <Textarea
                             placeholder="Share your thoughts... What's on your mind today? (Text-only, max 280 characters)"
                             value={newPost}
@@ -201,7 +197,7 @@ const NewPostModal: React.FC<NewPostModalProps> = ({ isOpen, onClose }) => {
                             maxLength={280}
                             rows={4}
                             className={cn(
-                                "mb-3 resize-none focus-visible:ring-primary min-h-[100px] max-h-40 overflow-y-auto overflow-x-hidden", // Added overflow-x-hidden
+                                "mb-3 resize-none focus-visible:ring-primary min-h-[100px] max-h-40 overflow-y-auto overflow-x-hidden",
                                 "placeholder:text-muted-foreground/70"
                             )}
                             disabled={isPosting}
