@@ -244,10 +244,10 @@ const PostCard = ({ post, addReply, user, navigate, onAcknowledge }:
   };
 
   return (
-    <div className="flex border-b border-border py-2 px-4 transition-colors hover:bg-muted/5">
+    <div className="flex border-b border-border py-2 pl-0 pr-4 transition-colors hover:bg-muted/5">
       {/* Author Icon */}
       <div
-        className="mr-3 flex-shrink-0 h-10 w-10 rounded-full bg-secondary flex items-center justify-center cursor-pointer"
+        className="mr-3 flex-shrink-0 h-10 w-10 rounded-full bg-secondary flex items-center justify-center cursor-pointer ml-1"
         onClick={() => handleViewProfile(post.author_id)}
       >
         <User className="h-5 w-5 text-muted-foreground" />
