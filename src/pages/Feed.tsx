@@ -85,8 +85,7 @@ const formatTime = (isoString: string) => {
   if (seconds < 60) return `${seconds}s`;
   if (minutes < 60) return `${minutes}m`;
   if (hours < 24) return `${hours}h`;
-  if (days < 7) return `${days}d`;
-  if (days < 365) return date.toLocaleString('en-US', { month: 'short', day: 'numeric' });
+  if (days < 7) return date.toLocaleString('en-US', { month: 'short', day: 'numeric' });
   return date.toLocaleString('en-US', { year: 'numeric', month: 'short', day: 'numeric' });
 };
 
@@ -144,6 +143,54 @@ const parsePostContent = (content: string, navigate: (path: string) => void) => 
   return <>{parts}</>;
 };
 // --- END UTILITY ---
+
+// --- NEW ReplyItem Component ---
+const ReplyItem = ({ reply, navigate, handleViewProfile }: { reply: Reply; navigate: any; handleViewProfile: (id: string) => void }) => {
+    return (
+        <div className="flex pt-2 pb-1 relative">
+            {/* Visual Indentation Line */}
+            <div className="absolute left-5 top-0 bottom-0 w-px bg-border/80 ml-px mt-2.5 mb-1.5" />
+            
+            {/* Author Icon (smaller) */}
+            <div
+                className="mr-2 flex-shrink-0 h-7 w-7 rounded-full bg-secondary flex items-center justify-center cursor-pointer z-10"
+                onClick={() => handleViewProfile(reply.author_id)}
+            >
+                <User className="h-4 w-4 text-muted-foreground" />
+            </div>
+
+            <div className="flex-1 min-w-0">
+                {/* Reply Header (smaller text) */}
+                <div className="flex items-center gap-x-1 min-w-0">
+                    <span
+                        className="font-bold text-foreground text-xs cursor-pointer hover:underline whitespace-nowrap"
+                        onClick={() => handleViewProfile(reply.author_id)}
+                    >
+                        {reply.profiles.display_name}
+                    </span>
+                    <VerifiedBadge isVerified={reply.profiles.is_verified} isOrgVerified={reply.profiles.is_organization_verified} />
+
+                    <span
+                        className="text-muted-foreground text-xs hover:underline cursor-pointer truncate flex-shrink min-w-0"
+                        onClick={() => handleViewProfile(reply.author_id)}
+                    >
+                        @{reply.profiles.handle}
+                    </span>
+                    <span className="text-muted-foreground text-xs flex-shrink-0">·</span>
+                    <span className="text-muted-foreground text-xs whitespace-nowlrap flex-shrink-0">
+                      {formatTime(reply.created_at)}
+                    </span>
+                </div>
+
+                {/* Reply Content */}
+                <p className="text-foreground text-sm leading-snug whitespace-pre-wrap break-words mt-0.5">
+                    {parsePostContent(reply.content, navigate)}
+                </p>
+            </div>
+        </div>
+    );
+};
+// --- END ReplyItem Component ---
 
 
 // --- PostCard Component ---
@@ -261,8 +308,8 @@ const PostCard = ({ post, addReply, user, navigate, onAcknowledge }:
           </Button>
         </div>
 
-        {/* --- IG-STYLE COMMENT SECTION (Unchanged) --- */}
-        <div className="mt-3">
+        {/* --- ENHANCED COMMENT SECTION --- */}
+        <div className="mt-3 ml-[-12px] pr-[12px]"> {/* Adjusted margin for better visual alignment with post content */}
           {post.reply_count > 0 && !showComments && (
             <span
               className="text-sm text-muted-foreground cursor-pointer hover:underline"
@@ -273,21 +320,15 @@ const PostCard = ({ post, addReply, user, navigate, onAcknowledge }:
           )}
 
           {showComments && post.replies && post.replies.length > 0 && (
-            <div className="space-y-2 pt-2">
+            // Reply container with clear left padding
+            <div className="space-y-1 pt-2 border-l border-border/80 pl-4 ml-3"> 
               {post.replies.map((reply) => (
-                <div key={reply.id} className="text-sm flex items-center">
-                  <span
-                    className="font-bold text-muted-foreground cursor-pointer hover:underline flex-shrink-0"
-                    onClick={() => handleViewProfile(reply.author_id)}
-                  >
-                    {reply.profiles.handle}
-                  </span>
-                  <VerifiedBadge isVerified={reply.profiles.is_verified} isOrgVerified={reply.profiles.is_organization_verified} />
-                  
-                  <p className="text-foreground ml-1.5 whitespace-pre-wrap break-words">
-                    {parsePostContent(reply.content, navigate)}
-                  </p>
-                </div>
+                <ReplyItem 
+                    key={reply.id} 
+                    reply={reply} 
+                    navigate={navigate} 
+                    handleViewProfile={handleViewProfile}
+                />
               ))}
             </div>
           )}
@@ -542,7 +583,7 @@ const Feed = () => {
     };
   }, [user, addReply, fetchPosts]);
 
-  // --- Post Skeleton Component ---
+  // --- Post Skeleton Component (Unchanged) ---
   const PostSkeleton = () => (
     <div className="flex p-4 border-b border-border">
       <Skeleton className="h-10 w-10 rounded-full mr-3" />
@@ -563,7 +604,7 @@ const Feed = () => {
   );
 
 
-  // --- Render Logic ---
+  // --- Render Logic (Unchanged) ---
   const effectiveLoading = loading && !forceLoaded;
   useEffect(() => {
     const timer = setTimeout(() => {
