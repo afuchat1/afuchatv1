@@ -1,7 +1,7 @@
 import { useEffect, useState, useCallback } from 'react';
-import { useNavigate, Link } from 'react-router-dom'; // 🎯 ADDED LINK
+import { useNavigate, Link } from 'react-router-dom';
 import { supabase } from '@/integrations/supabase/client';
-import { useAuth } from '@/contexts/AuthContext';
+import { useAuth } from '@/contexts/Auth/AuthContext';
 import { toast } from 'sonner';
 import { MessageSquare, Heart, Share, User, Ellipsis } from 'lucide-react';
 import { Skeleton } from '@/components/ui/skeleton';
@@ -41,12 +41,11 @@ interface Reply {
   };
 }
 
-// --- Verified Badge Logic (Unchanged) ---
+// --- Verified Badge Logic (Cleaned) ---
 const TwitterVerifiedBadge = () => (
   <svg
     viewBox="0 0 22 22"
     xmlns="http://www.w3.org/2000/svg"
-    // 🎨 FIX: Increased badge size slightly to fit new text size
     className="inline w-[18px] h-[18px] ml-0.5 text-[#1d9bf0] fill-[#1d9bf0] flex-shrink-0"
   >
     <path d="m20.396 11c-.018-.646-.215-1.275-.57-1.816-.354-.54-.852-.972-1.438-1.246.223-.607.27-1.264.14-1.897-.131-.634-.437-1.218-.882-1.687-.47-.445-1.053-.75-1.687-.882-.633-.13-1.29-.083-1.897.14-.273-.587-.704-1.086-1.245-1.44S11.647 1.62 11 1.604c-.646.017-1.273.213-1.813.568s-.969.854-1.24 1.44c-.608-.223-1.267-.272-1.902-.14-.635.13-1.22.436-1.69.882-.445.47-.749 1.055-.878 1.688-.13.633-.08 1.29.144 1.896-.587.274-1.087.705-1.443 1.245-.356.54-.555 1.17-.574 1.817.02.647.218 1.276.574 1.817.356.54.856.972 1.443 1.245-.224.606-.274 1.263-.144 1.896.13.634.433 1.218.877 1.688.47.443 1.054.747 1.687.878.633.132 1.29.084 1.897-.136.274.586.705 1.084 1.246 1.439.54.354 1.17.551 1.816.569.647-.016 1.276-.213 1.817-.567s.972-.854 1.245-1.44c.604.239 1.266.296 1.903.164.636-.132 1.22-.447 1.68-.907.46-.46.776-1.044.908-1.681s.075-1.299-.165-1.903c.586-.274 1.084-.705 1.439-1.246.354-.54.551-1.17.569-1.816zM9.662 14.85l-3.429-3.428 1.293-1.302 2.072 2.072 4.4-4.794 1.347 1.246z" />
@@ -57,7 +56,6 @@ const GoldVerifiedBadge = () => (
   <svg
     viewBox="0 0 22 22"
     xmlns="http://www.w3.org/2000/svg"
-    // 🎨 FIX: Increased badge size slightly to fit new text size
     className="inline w-[18px] h-[18px] ml-0.5 text-[#FFD43B] fill-[#FFD43B] flex-shrink-0"
   >
     <path d="m20.396 11c-.018-.646-.215-1.275-.57-1.816-.354-.54-.852-.972-1.438-1.246.223-.607.27-1.264.14-1.897-.131-.634-.437-1.218-.882-1.687-.47-.445-1.053-.75-1.687-.882-.633-.13-1.29-.083-1.897.14-.273-.587-.704-1.086-1.245-1.44S11.647 1.62 11 1.604c-.646.017-1.273.213-1.813.568s-.969.854-1.24 1.44c-.608-.223-1.267-.272-1.902-.14-.635.13-1.22.436-1.69.882-.445.47-.749 1.055-.878 1.688-.13.633-.08 1.29.144 1.896-.587.274-1.087.705-1.443 1.245-.356.54-.555 1.17-.574 1.817.02.647.218 1.276.574 1.817.356.54.856.972 1.443 1.245-.224.606-.274 1.263-.144 1.896.13.634.433 1.218.877 1.688.47.443 1.054.747 1.687.878.633.132 1.29.084 1.897-.136.274.586.705 1.084 1.246 1.439.54.354 1.17.551 1.816.569.647-.016 1.276-.213 1.817-.567s.972-.854 1.245-1.44c.604.239 1.266.296 1.903.164.636-.132 1.22-.447 1.68-.907.46-.46.776-1.044.908-1.681s.075-1.299-.165-1.903c.586-.274 1.084-.705 1.439-1.246.354-.54.551-1.17.569-1.816zM9.662 14.85l-3.429-3.428 1.293-1.302 2.072 2.072 4.4-4.794 1.347 1.246z" />
@@ -74,7 +72,7 @@ const VerifiedBadge = ({ isVerified, isOrgVerified }: { isVerified: boolean; isO
   return null;
 };
 
-// Helper to format time (Unchanged)
+// Helper to format time (Cleaned)
 const formatTime = (isoString: string) => {
   const date = new Date(isoString);
   const now = new Date();
@@ -87,9 +85,7 @@ const formatTime = (isoString: string) => {
   if (seconds < 60) return `${seconds}s`;
   if (minutes < 60) return `${minutes}m`;
   if (hours < 24) return `${hours}h`;
-  // 🎨 FIX: Use consistent format, changed from 'short month' to 'days' if < 7
   if (days < 7) return `${days}d`; 
-  // 🎨 FIX: Switched to a more common format for older posts
   return date.toLocaleDateString('en-US', { month: '2-digit', day: '2-digit', year: '2-digit' });
 };
 
@@ -148,7 +144,7 @@ const parsePostContent = (content: string, navigate: (path: string) => void) => 
 };
 // --- END UTILITY ---
 
-// --- NEW ReplyItem Component ---
+// --- NEW ReplyItem Component (Cleaned) ---
 const ReplyItem = ({ reply, navigate, handleViewProfile }: { reply: Reply; navigate: any; handleViewProfile: (id: string) => void }) => {
     return (
         <div className="flex pt-2 pb-1 relative">
@@ -164,10 +160,10 @@ const ReplyItem = ({ reply, navigate, handleViewProfile }: { reply: Reply; navig
             </div>
 
             <div className="flex-1 min-w-0">
-                {/* Reply Header (Increased text size from text-xs to text-sm) */}
+                {/* Reply Header */}
                 <div className="flex items-center gap-x-1 min-w-0">
                     <span
-                        className="font-bold text-foreground text-sm cursor-pointer hover:underline whitespace-nowrap" // 🎨 FIX: Changed text-xs to text-sm
+                        className="font-bold text-foreground text-sm cursor-pointer hover:underline whitespace-nowrap"
                         onClick={() => handleViewProfile(reply.author_id)}
                     >
                         {reply.profiles.display_name}
@@ -175,18 +171,18 @@ const ReplyItem = ({ reply, navigate, handleViewProfile }: { reply: Reply; navig
                     <VerifiedBadge isVerified={reply.profiles.is_verified} isOrgVerified={reply.profiles.is_organization_verified} />
 
                     <span
-                        className="text-muted-foreground text-sm hover:underline cursor-pointer truncate flex-shrink min-w-0" // 🎨 FIX: Changed text-xs to text-sm
+                        className="text-muted-foreground text-sm hover:underline cursor-pointer truncate flex-shrink min-w-0"
                         onClick={() => handleViewProfile(reply.author_id)}
                     >
                         @{reply.profiles.handle}
                     </span>
-                    <span className="text-muted-foreground text-sm flex-shrink-0">·</span> // 🎨 FIX: Changed text-xs to text-sm
-                    <span className="text-muted-foreground text-sm whitespace-nowrap flex-shrink-0"> // 🎨 FIX: Changed text-xs to text-sm
+                    <span className="text-muted-foreground text-sm flex-shrink-0">·</span>
+                    <span className="text-muted-foreground text-sm whitespace-nowrap flex-shrink-0">
                       {formatTime(reply.created_at)}
                     </span>
                 </div>
 
-                {/* Reply Content (Kept at text-sm for a slightly smaller feel than main posts) */}
+                {/* Reply Content */}
                 <p className="text-foreground text-sm leading-snug whitespace-pre-wrap break-words mt-0.5">
                     {parsePostContent(reply.content, navigate)}
                 </p>
@@ -197,7 +193,7 @@ const ReplyItem = ({ reply, navigate, handleViewProfile }: { reply: Reply; navig
 // --- END ReplyItem Component ---
 
 
-// --- PostCard Component ---
+// --- PostCard Component (Cleaned) ---
 const PostCard = ({ post, addReply, user, navigate, onAcknowledge }:
   { post: Post; addReply: (postId: string, reply: Reply) => void; user: any; navigate: any; onAcknowledge: (postId: string, hasLiked: boolean) => void }) => {
 
@@ -261,25 +257,25 @@ const PostCard = ({ post, addReply, user, navigate, onAcknowledge }:
         {/* Post Header */}
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-x-1 min-w-0">
-            {/* Display Name - Kept at text-sm/base for prominence */}
+            {/* Display Name - text-base for prominence */}
             <span
-              className="font-bold text-foreground text-base cursor-pointer hover:underline whitespace-nowrap" // 🎨 FIX: Changed text-sm to text-base
+              className="font-bold text-foreground text-base cursor-pointer hover:underline whitespace-nowrap"
               onClick={() => handleViewProfile(post.author_id)}
             >
               {post.profiles.display_name}
             </span>
             <VerifiedBadge isVerified={post.profiles.is_verified} isOrgVerified={post.profiles.is_organization_verified} />
 
-            {/* Post Author Handle and Time - Increased from text-sm to text-base */}
+            {/* Post Author Handle and Time - text-base */}
             <span
-              className="text-muted-foreground text-base hover:underline cursor-pointer truncate flex-shrink min-w-0" // 🎨 FIX: Changed text-sm to text-base
+              className="text-muted-foreground text-base hover:underline cursor-pointer truncate flex-shrink min-w-0"
               onClick={() => handleViewProfile(post.author_id)}
             >
               @{post.profiles.handle}
             </span>
 
-            <span className="text-muted-foreground text-base flex-shrink-0">·</span> // 🎨 FIX: Changed text-sm to text-base
-            <span className="text-muted-foreground text-base whitespace-nowrap flex-shrink-0"> // 🎨 FIX: Changed text-sm to text-base
+            <span className="text-muted-foreground text-base flex-shrink-0">·</span>
+            <span className="text-muted-foreground text-base whitespace-nowrap flex-shrink-0">
               {formatTime(post.created_at)}
             </span>
           </div>
@@ -289,7 +285,7 @@ const PostCard = ({ post, addReply, user, navigate, onAcknowledge }:
           </Button>
         </div>
 
-        {/* 🎯 POST CONTENT WRAPPED IN LINK TO DETAIL PAGE (Kept at text-base) */}
+        {/* POST CONTENT WRAPPED IN LINK TO DETAIL PAGE (Kept at text-base) */}
         <Link to={`/post/${post.id}`} className="block">
           <p className="text-foreground text-base mt-1 mb-2 leading-relaxed whitespace-pre-wrap">
             {parsePostContent(post.content, navigate)}
@@ -298,15 +294,15 @@ const PostCard = ({ post, addReply, user, navigate, onAcknowledge }:
         {/* END POST CONTENT LINK */}
 
 
-        {/* Post Actions - Increased size from text-xs to text-sm */}
+        {/* Post Actions - text-sm for counts */}
         <div className="flex justify-between items-center text-sm text-muted-foreground mt-3 -ml-2 max-w-[420px]">
           <Button variant="ghost" size="sm" className="flex items-center gap-1 group" onClick={() => setShowComments(!showComments)}>
             <MessageSquare className="h-4 w-4 group-hover:text-primary transition-colors" />
-            <span className="group-hover:text-primary transition-colors text-sm">{post.reply_count > 0 ? post.reply_count : ''}</span> // 🎨 FIX: Changed text-xs to text-sm
+            <span className="group-hover:text-primary transition-colors text-sm">{post.reply_count > 0 ? post.reply_count : ''}</span>
           </Button>
           <Button variant="ghost" size="sm" className="flex items-center gap-1 group" onClick={() => onAcknowledge(post.id, post.has_liked)}>
             <Heart className={`h-4 w-4 group-hover:text-red-500 transition-colors ${post.has_liked ? 'text-red-500 fill-red-500' : ''}`} />
-            <span className={`group-hover:text-red-500 transition-colors text-sm ${post.has_liked ? 'text-red-500' : ''}`}>{post.like_count > 0 ? post.like_count : ''}</span> // 🎨 FIX: Changed text-xs to text-sm
+            <span className={`group-hover:text-red-500 transition-colors text-sm ${post.has_liked ? 'text-red-500' : ''}`}>{post.like_count > 0 ? post.like_count : ''}</span>
           </Button>
           <Button variant="ghost" size="sm" className="flex items-center gap-1 group">
             <Share className="h-4 w-4 group-hover:text-primary transition-colors" />
@@ -314,10 +310,10 @@ const PostCard = ({ post, addReply, user, navigate, onAcknowledge }:
         </div>
 
         {/* --- ENHANCED COMMENT SECTION --- */}
-        <div className="mt-3 ml-[-12px] pr-[12px]"> {/* Adjusted margin for better visual alignment with post content */}
+        <div className="mt-3 ml-[-12px] pr-[12px]">
           {post.reply_count > 0 && !showComments && (
             <span
-              className="text-sm text-muted-foreground cursor-pointer hover:underline" // 🎨 FIX: Changed text-sm to text-base if needed, but keeping text-sm for subtlety
+              className="text-sm text-muted-foreground cursor-pointer hover:underline"
               onClick={() => setShowComments(true)}
             >
               View all {post.reply_count} {post.reply_count === 1 ? 'comment' : 'comments'}
@@ -338,7 +334,7 @@ const PostCard = ({ post, addReply, user, navigate, onAcknowledge }:
             </div>
           )}
 
-          {/* Comment input - Increased input text size */}
+          {/* Comment input - text-base */}
           {showComments && user && (
             <div className="mt-3 flex items-center gap-2">
               <div className="h-8 w-8 rounded-full bg-secondary flex items-center justify-center flex-shrink-0">
@@ -351,21 +347,21 @@ const PostCard = ({ post, addReply, user, navigate, onAcknowledge }:
                   if (e.key === 'Enter') handleReplySubmit();
                 }}
                 placeholder="Add a comment..."
-                className="flex-1 bg-transparent border-b border-input text-base text-foreground focus:outline-none focus:ring-0 focus:border-primary p-1" // 🎨 FIX: Changed text-sm to text-base
+                className="flex-1 bg-transparent border-b border-input text-base text-foreground focus:outline-none focus:ring-0 focus:border-primary p-1"
               />
               <Button
                 variant="ghost"
                 size="sm"
                 disabled={!replyText.trim()}
                 onClick={handleReplySubmit}
-                className="text-primary font-bold disabled:text-muted-foreground disabled:opacity-70 p-0 text-base" // 🎨 FIX: Changed to text-base
+                className="text-primary font-bold disabled:text-muted-foreground disabled:opacity-70 p-0 text-base"
               >
                 Post
               </Button>
             </div>
           )}
           {showComments && !user && (
-            <div className="mt-3 text-base text-muted-foreground"> // 🎨 FIX: Changed text-sm to text-base
+            <div className="mt-3 text-base text-muted-foreground">
               Please <a href="/auth" className="text-primary underline">log in</a> to comment.
             </div>
           )}
