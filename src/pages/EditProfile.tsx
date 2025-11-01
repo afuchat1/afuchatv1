@@ -11,22 +11,17 @@ import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Separator } from '@/components/ui/separator'; 
-import { Loader2, User, Link, MapPin } from 'lucide-react'; 
+import { Loader2, User } from 'lucide-react'; 
 
-// Import Supabase types (assuming types/supabase.ts exists)
 import type { Database } from '@/types/supabase';
 
-// Assuming your Supabase 'profiles' table has been updated with 'location' and 'website'
 type ProfileRow = Database['public']['Tables']['profiles']['Row'];
 type ProfileUpdate = Database['public']['Tables']['profiles']['Update'];
 
-// UPDATED: Added location and website fields
 interface EditProfileForm {
   display_name: string;
   handle: string;
   bio: string;
-  location: string; // NEW
-  website: string;  // NEW
 }
 
 const EditProfile: React.FC = () => {
@@ -37,8 +32,6 @@ const EditProfile: React.FC = () => {
     display_name: '',
     handle: '',
     bio: '',
-    location: '', // Initialize new fields
-    website: '',  // Initialize new fields
   });
   const [loading, setLoading] = useState<boolean>(true);
   const [saving, setSaving] = useState<boolean>(false);
@@ -54,7 +47,7 @@ const EditProfile: React.FC = () => {
       try {
         const { data, error } = await supabase
           .from('profiles')
-          .select('*')
+          .select('display_name, handle, bio') 
           .eq('id', user.id)
           .single() as { data: ProfileRow | null; error: any };
 
@@ -65,8 +58,6 @@ const EditProfile: React.FC = () => {
             display_name: data.display_name,
             handle: data.handle,
             bio: data.bio || '',
-            location: data.location || '', // Populate new field
-            website: data.website || '',   // Populate new field
           });
         }
       } catch (error: any) {
@@ -81,7 +72,7 @@ const EditProfile: React.FC = () => {
   }, [user, navigate]);
 
   const handleInputChange = (
-    e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>
+    e: React.ChangeEvent<HTMLInputElement | React.TextareaHTMLAttributes<HTMLTextAreaElement>>
   ) => {
     const { name, value } = e.target;
     if (name === 'handle') {
@@ -102,13 +93,10 @@ const EditProfile: React.FC = () => {
     
     setSaving(true);
     try {
-      // UPDATED: Include new fields in the update object
       const updateData: ProfileUpdate = {
         display_name: profile.display_name.trim(),
         handle: profile.handle.trim(),
-        bio: profile.bio.trim() || null,
-        location: profile.location.trim() || null, // NEW: Save location or null
-        website: profile.website.trim() || null,   // NEW: Save website or null
+        bio: profile.bio.trim() || null, 
         updated_at: new Date().toISOString(),
       };
 
@@ -147,124 +135,74 @@ const EditProfile: React.FC = () => {
 
   return (
     <div className="min-h-screen bg-background flex justify-center p-4 md:p-8">
-      <Card className="w-full max-w-4xl border-none md:border md:shadow-none bg-card/80 backdrop-blur-sm"> 
+      <Card className="w-full max-w-2xl border-none md:border md:shadow-none bg-card/80 backdrop-blur-sm"> 
         <CardHeader className="pb-4 border-b border-border/50">
           <CardTitle className="text-3xl font-extrabold text-foreground flex items-center gap-2">
             <User className="h-6 w-6 text-primary" /> Edit Profile
           </CardTitle>
           <CardDescription className="text-base text-muted-foreground">
-            Update your personal and public-facing information.
+            Update your basic public-facing information.
           </CardDescription>
         </CardHeader>
         <CardContent className="pt-6">
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
+          <div className="space-y-6">
             
-            {/* --- PRIMARY INFO COLUMN (Col 1-2) --- */}
-            <div className="md:col-span-2 space-y-6">
-              
-              <h3 className="text-lg font-semibold border-b pb-2 text-primary">Basic Information</h3>
+            <h3 className="text-lg font-semibold border-b pb-2 text-primary">Basic Information</h3>
 
-              {/* Display Name */}
-              <div className="space-y-2">
-                <Label htmlFor="display_name" className="text-sm font-medium text-foreground">Display Name</Label>
-                <Input
-                  id="display_name"
-                  name="display_name"
-                  value={profile.display_name}
-                  onChange={handleInputChange}
-                  placeholder="Your display name"
-                  disabled={saving}
-                  className="text-base h-11 bg-input/50 border border-border/80 focus:border-primary/50" 
-                />
-              </div>
-
-              {/* Handle (Username) */}
-              <div className="space-y-2">
-                <Label htmlFor="handle" className="text-sm font-medium text-foreground">Handle (Username)</Label>
-                <div className="relative">
-                  <span className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground">@</span>
-                  <Input
-                    id="handle"
-                    name="handle"
-                    value={profile.handle}
-                    onChange={handleInputChange}
-                    placeholder="unique_handle"
-                    disabled={saving}
-                    className="pl-7 text-base h-11 bg-input/50 border border-border/80 focus:border-primary/50" 
-                  />
-                </div>
-                <p className="text-xs text-muted-foreground pt-1">
-                  Your public, unique identifier. Only lowercase letters, numbers, and underscores.
-                </p>
-              </div>
-
-              {/* Bio */}
-              <div className="space-y-2">
-                <Label htmlFor="bio" className="text-sm font-medium text-foreground">Bio</Label>
-                <Textarea
-                  id="bio"
-                  name="bio"
-                  value={profile.bio}
-                  onChange={handleInputChange}
-                  placeholder="Tell us about yourself (max 150 chars)"
-                  rows={4}
-                  maxLength={150}
-                  disabled={saving}
-                  className="text-base resize-none bg-input/50 border border-border/80 focus:border-primary/50" 
-                />
-                <p className="text-xs text-muted-foreground flex justify-between">
-                  <span>Keep it short and punchy!</span>
-                  <span>{profile.bio.length}/150</span>
-                </p>
-              </div>
+            <div className="space-y-2">
+              <Label htmlFor="display_name" className="text-sm font-medium text-foreground">Display Name</Label>
+              <Input
+                id="display_name"
+                name="display_name"
+                value={profile.display_name}
+                onChange={handleInputChange}
+                placeholder="Your display name"
+                disabled={saving}
+                className="text-base h-11 bg-input/50 border border-border/80 focus:border-primary/50" 
+              />
             </div>
 
-            {/* --- SECONDARY INFO COLUMN (Col 3) --- */}
-            <div className="md:col-span-1 space-y-6 md:border-l md:pl-8 border-border/50">
-              <h3 className="text-lg font-semibold border-b pb-2 text-primary">Additional Details</h3>
-              
-              {/* Location - NOW FUNCTIONAL */}
-              <div className="space-y-2">
-                <Label htmlFor="location" className="text-sm font-medium text-foreground flex items-center gap-1">
-                  <MapPin className="h-4 w-4" /> Location
-                </Label>
+            <div className="space-y-2">
+              <Label htmlFor="handle" className="text-sm font-medium text-foreground">Handle (Username)</Label>
+              <div className="relative">
+                <span className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground">@</span>
                 <Input
-                  id="location"
-                  name="location"
-                  value={profile.location}
+                  id="handle"
+                  name="handle"
+                  value={profile.handle}
                   onChange={handleInputChange}
-                  placeholder="e.g., Kampala, Uganda"
+                  placeholder="unique_handle"
                   disabled={saving}
-                  className="text-base h-11 bg-input/50 border border-border/80 focus:border-primary/50" 
+                  className="pl-7 text-base h-11 bg-input/50 border border-border/80 focus:border-primary/50" 
                 />
               </div>
-
-              {/* Website - NOW FUNCTIONAL */}
-              <div className="space-y-2">
-                <Label htmlFor="website" className="text-sm font-medium text-foreground flex items-center gap-1">
-                  <Link className="h-4 w-4" /> Website/Portfolio
-                </Label>
-                <Input
-                  id="website"
-                  name="website"
-                  type="url"
-                  value={profile.website}
-                  onChange={handleInputChange}
-                  placeholder="https://yourwebsite.com"
-                  disabled={saving}
-                  className="text-base h-11 bg-input/50 border border-border/80 focus:border-primary/50" 
-                />
-                <p className="text-xs text-muted-foreground pt-1">
-                  Must be a valid URL starting with `http://` or `https://`.
-                </p>
-              </div>
+              <p className="text-xs text-muted-foreground pt-1">
+                Your public, unique identifier. Only lowercase letters, numbers, and underscores.
+              </p>
             </div>
-            
+
+            <div className="space-y-2">
+              <Label htmlFor="bio" className="text-sm font-medium text-foreground">Bio</Label>
+              <Textarea
+                id="bio"
+                name="bio"
+                value={profile.bio}
+                onChange={handleInputChange}
+                placeholder="Tell us about yourself (max 150 chars)"
+                rows={4}
+                maxLength={150}
+                disabled={saving}
+                className="text-base resize-none bg-input/50 border border-border/80 focus:border-primary/50" 
+              />
+              <p className="text-xs text-muted-foreground flex justify-between">
+                <span>Keep it short and punchy!</span>
+                <span>{profile.bio.length}/150</span>
+              </p>
+            </div>
           </div>
           
           <Separator className="my-8 bg-border/50" />
           
-          {/* Actions */}
           <div className="flex justify-end space-x-3 pt-4">
             <Button
               type="button"
