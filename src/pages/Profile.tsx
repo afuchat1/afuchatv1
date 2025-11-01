@@ -11,7 +11,6 @@ import { Separator } from '@/components/ui/separator';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Popover, PopoverTrigger, PopoverContent } from '@/components/ui/popover';
 
-// --- Extended Profile and Post Interfaces (Unchanged) ---
 interface Profile {
 	id: string;
 	display_name: string;
@@ -31,13 +30,11 @@ interface Post {
 	reply_count: number;
 }
 
-// --- Helper: Check if a string is a valid UUID (Unchanged) ---
 const isUUID = (str: string): boolean => {
 	const uuidRegex = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 	return uuidRegex.test(str);
 };
 
-// --- Badges (Unchanged) ---
 const GoldVerifiedBadge = ({ size = 'w-5 h-5' }: { size?: string }) => (
 	<svg
 		viewBox="0 0 22 22"
@@ -72,7 +69,6 @@ const VerifiedBadgeIcon = ({ isVerified, isOrgVerified }: { isVerified?: boolean
 	return null;
 };
 
-// --- Content Parser Component for @Mentions (Updated to use the new route structure) ---
 const MENTION_REGEX = /@(\w+)/g;
 
 const ContentParser: React.FC<{ content: string, isBio?: boolean }> = ({ content, isBio = false }) => {
@@ -91,7 +87,6 @@ const ContentParser: React.FC<{ content: string, isBio?: boolean }> = ({ content
 		parts.push(
 			<Link
 				key={`mention-${match.index}-${handle}`}
-				// FIX: Link destination uses the new /:handle path
 				to={`/${handle}`} 
 				className="text-blue-500 hover:text-blue-400 font-medium transition-colors"
 				onClick={(e) => e.stopPropagation()}
@@ -114,12 +109,8 @@ const ContentParser: React.FC<{ content: string, isBio?: boolean }> = ({ content
 	return <p className={className}>{parts}</p>;
 };
 
-
-// --- Component Definition ---
 const Profile = () => {
-    // 🎯 CRITICAL FIX: Destructure 'userId' from the router and alias it to 'urlParam'.
-    // The router route path is defined as "/:userId".
-	const { userId: urlParam } = useParams<{ userId: string }>(); 
+    const { userId: urlParam } = useParams<{ userId: string }>(); 
 	const navigate = useNavigate();
 	const { user } = useAuth();
 	const [profile, setProfile] = useState<Profile | null>(null);
@@ -131,7 +122,6 @@ const Profile = () => {
 	const [profileId, setProfileId] = useState<string | null>(null);
 	const [isAdmin, setIsAdmin] = useState(false);
 
-	// Function to aggregate follow/follower counts (Unchanged)
 	const fetchFollowCounts = useCallback(async (id: string) => {
 		if (!id) return;
 
@@ -151,7 +141,6 @@ const Profile = () => {
 		});
 	}, []);
 
-	// --- Fetch admin role for current user (Unchanged) ---
 	const fetchAdminStatus = useCallback(async (userId: string) => {
 		if (!userId) {
 			setIsAdmin(false);
@@ -169,18 +158,12 @@ const Profile = () => {
 		setIsAdmin(!!data); 
 	}, []);
 
-	// --- Profile Fetch Logic (Unchanged, relies on correct urlParam) ---
 	const fetchProfile = useCallback(async () => {
 		setLoading(true);
 		setProfile(null);
 		setProfileId(null);
 
-		// If urlParam is null/undefined, this prevents an error, but the redirect in App.tsx should prevent it
 		if (!urlParam) { 
-			// Instead of navigating to '/', we should show 'Profile not found' or let the logic flow.
-			// Since the route matched, we assume urlParam exists and proceed.
-            // If the blank screen is due to this, navigating to '/' is too aggressive.
-            // Let's just set loading to false and let the final check handle it.
 			setLoading(false);
 			return;
 		}
@@ -195,11 +178,9 @@ const Profile = () => {
 		if (isParamUUID) {
 			query = query.eq('id', urlParam);
 		} else {
-            // Fix 1: Using .ilike() for case-insensitive handle lookup.
 			query = query.ilike('handle', urlParam);
 		}
 
-        // Fix 2: Using .maybeSingle() to prevent error if no profile is found.
 		const { data, error } = await query.maybeSingle();
 
 		if (error && error.code !== 'PGRST116') {
@@ -238,7 +219,6 @@ const Profile = () => {
 	const fetchUserPosts = useCallback(async (id: string) => {
 		if (!id) return;
 
-		// If the profile is private, and the current user is NOT the owner, don't fetch posts
 		if (profile?.is_private && user?.id !== id) {
 			setPosts([]);
 			return;
@@ -254,7 +234,6 @@ const Profile = () => {
 		if (!error && data) {
 			setPosts(data.map(p => ({
 				...p,
-				// NOTE: Acknowledgment and reply counts should ideally come from a PostgreSQL view or RPC
 				acknowledgment_count: Math.floor(Math.random() * 100),
 				reply_count: Math.floor(Math.random() * 10),
 			} as Post)));
@@ -276,10 +255,8 @@ const Profile = () => {
 				checkFollowStatus(profileId);
 			}
 		}
-		// eslint-disable-next-line react-hooks/exhaustive-deps
-	}, [profileId, user, fetchUserPosts]);
+	}, [profileId, user, fetchUserPosts, fetchFollowCounts, checkFollowStatus]);
 
-	// --- Fetch admin status when user changes (Unchanged) ---
 	useEffect(() => {
 		if (user) {
 			fetchAdminStatus(user.id);
@@ -289,7 +266,6 @@ const Profile = () => {
 	}, [user, fetchAdminStatus]);
 
 
-	// --- Follow/Unfollow Logic (Unchanged) ---
 	const handleFollow = async () => {
 		if (!user || !profileId) {
 			navigate('/auth');
@@ -332,7 +308,6 @@ const Profile = () => {
 		}
 	};
 
-	// --- Start Chat Logic (Unchanged) ---
 	const handleStartChat = async () => {
 		if (!user || !profileId) {
 			navigate('/auth');
@@ -346,14 +321,12 @@ const Profile = () => {
 
 		if (existingChats) {
 			for (const chat of existingChats) {
-				// Only check private chats (is_group: false)
 				if (chat.chats?.is_group === false) {
 					const { data: members } = await supabase
 						.from('chat_members')
 						.select('user_id')
 						.eq('chat_id', chat.chat_id);
 
-					// Check if the chat has exactly two members, one of whom is the profile user
 					if (members && members.length === 2 && members.some(m => m.user_id === profileId)) {
 						navigate(`/chat/${chat.chat_id}`);
 						return;
@@ -388,7 +361,6 @@ const Profile = () => {
 		navigate(`/chat/${newChat.id}`);
 	};
 
-	// --- Handle Logout (Unchanged) ---
 	const handleLogout = async () => {
 		const { error } = await supabase.auth.signOut();
 		if (error) {
@@ -400,12 +372,10 @@ const Profile = () => {
 		}
 	};
 
-	// --- Navigate to Admin Dashboard (Unchanged) ---
 	const handleAdminDashboard = () => {
 		navigate('/admin'); 
 	};
 
-	// --- Loading State Render (Unchanged) ---
 	if (loading) {
 		return (
 			<div className="h-full flex flex-col">
@@ -437,7 +407,6 @@ const Profile = () => {
 		);
 	}
 
-	// --- Profile Not Found Render (Unchanged) ---
 	if (!profile) {
 		return (
 			<div className="flex items-center justify-center h-full">
@@ -446,7 +415,6 @@ const Profile = () => {
 		);
 	}
 
-	// --- Utility (Unchanged) ---
 	const formatCount = (count: number) => {
 		if (count >= 1000) {
 			return (count / 1000).toFixed(1) + 'K';
@@ -454,10 +422,8 @@ const Profile = () => {
 		return count;
 	};
 
-	// --- Main Render (Unchanged) ---
 	return (
 		<div className="h-full flex flex-col">
-			{/* HEADER BAR */}
 			<div className="p-4 sticky top-0 bg-background/80 backdrop-blur-sm z-10 border-b border-border">
 				<div className="flex items-center justify-between">
 					<div className="flex items-center">
@@ -474,7 +440,6 @@ const Profile = () => {
 							<p className="text-xs text-muted-foreground">{posts.length} Posts</p>
 						</div>
 					</div>
-					{/* NEW: Logout Button (shown if user is logged in) */}
 					{user && (
 						<Button
 							variant="ghost"
@@ -489,24 +454,23 @@ const Profile = () => {
 				</div>
 			</div>
 
-			{/* PROFILE CONTENT AREA */}
 			<div className="flex-1 overflow-y-auto">
-				{/* Banner/Header Image Placeholder */}
 				<div className="h-36 bg-gray-300 dark:bg-gray-700 w-full">
-					{/* Placeholder for banner image */}
 				</div>
 
-				{/* Profile Info and Buttons - UPDATED WITH ADMIN DASHBOARD BUTTON */}
 				<div className="p-4">
 					<div className="flex justify-between items-end -mt-20 sm:-mt-16">
 						<div className="h-24 w-24 sm:h-32 sm:w-32 rounded-full bg-primary flex items-center justify-center text-primary-foreground border-4 border-background shadow-lg">
 							<User className="h-12 w-12 sm:h-16 sm:w-16" />
 						</div>
 
-						{/* Buttons - UPDATED: Add Admin Dashboard if owner and admin */}
 						{user && user.id === profileId ? (
 							<div className="flex flex-col gap-2">
-								<Button variant="outline" className="rounded-full px-4 font-bold">
+								<Button 
+									variant="outline" 
+									className="rounded-full px-4 font-bold"
+									onClick={() => navigate(`/${urlParam}/edit`)}
+								>
 									<Pencil className="h-4 w-4 mr-2" />
 									Edit Profile
 								</Button>
@@ -546,10 +510,8 @@ const Profile = () => {
 						)}
 					</div>
 
-					{/* Name and Handle Section */}
 					<div className="mt-3">
 
-						{/* Verification Badge/Popover Logic (Unchanged) */}
 						{(profile.is_verified || profile.is_organization_verified) ? (
 							<Popover>
 								<PopoverTrigger asChild>
@@ -593,14 +555,11 @@ const Profile = () => {
 
 						<p className="text-muted-foreground text-sm">@{profile.handle}</p>
 					</div>
-					{/* --- END Name/Handle Section --- */}
 
-					{/* Bio - NOW USING THE PARSER COMPONENT with isBio=true */}
 					{profile.bio && (
 						<ContentParser content={profile.bio} isBio={true} />
 					)}
 
-					{/* Metadata */}
 					<div className="flex items-center space-x-4 mt-3 text-muted-foreground text-sm">
 						<div className="flex items-center gap-1">
 							<Calendar className="h-4 w-4" />
@@ -608,7 +567,6 @@ const Profile = () => {
 						</div>
 					</div>
 
-					{/* Follow Counts */}
 					<div className="flex gap-4 mt-3">
 						<div className="flex items-center">
 							<span className="font-bold text-sm">{formatCount(followCount.following)}</span>
@@ -621,7 +579,6 @@ const Profile = () => {
 					</div>
 				</div>
 
-				{/* POSTS SECTION (Tabs) */}
 				<Separator className="mt-4" />
 				<Tabs defaultValue="posts" className="w-full">
 					<TabsList className="grid grid-cols-3 w-full h-12 rounded-none bg-background">
@@ -651,7 +608,6 @@ const Profile = () => {
 							<div className="space-y-0 divide-y divide-border">
 								{posts.map((post) => (
 									<Card key={post.id} className="p-4 rounded-none border-x-0 border-t-0 hover:bg-muted/10 cursor-pointer transition-colors">
-										{/* 👇 Using the parser for post content 👇 */}
 										<ContentParser content={post.content} />
 										<div className="flex justify-between items-center text-xs text-muted-foreground mt-2">
 											<span>{new Date(post.created_at).toLocaleString('en-US', { hour: '2-digit', minute: '2-digit', day: 'numeric', month: 'short' })}</span>
