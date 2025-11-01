@@ -183,7 +183,7 @@ const ReplyItem = ({ reply, navigate, handleViewProfile }: { reply: Reply; navig
                 </div>
 
                 {/* Reply Content */}
-                <p className="text-foreground text-sm leading-snug whitespace-pre-wrap break-words mt-0.5">
+                <p className="text-foreground text-xs leading-snug whitespace-pre-wrap break-words mt-0.5">
                     {parsePostContent(reply.content, navigate)}
                 </p>
             </div>
@@ -258,7 +258,7 @@ const PostCard = ({ post, addReply, user, navigate, onAcknowledge }:
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-x-1 min-w-0">
             <span
-              className="font-bold text-foreground text-sm cursor-pointer hover:underline whitespace-nowrap"
+              className="font-bold text-foreground text-xs cursor-pointer hover:underline whitespace-nowrap"
               onClick={() => handleViewProfile(post.author_id)}
             >
               {post.profiles.display_name}
@@ -286,7 +286,7 @@ const PostCard = ({ post, addReply, user, navigate, onAcknowledge }:
 
         {/* 🎯 POST CONTENT WRAPPED IN LINK TO DETAIL PAGE */}
         <Link to={`/post/${post.id}`} className="block">
-          <p className="text-foreground text-sm mt-1 mb-2 leading-relaxed whitespace-pre-wrap">
+          <p className="text-foreground text-xs mt-1 mb-2 leading-relaxed whitespace-pre-wrap">
             {parsePostContent(post.content, navigate)}
           </p>
         </Link>
@@ -294,7 +294,7 @@ const PostCard = ({ post, addReply, user, navigate, onAcknowledge }:
 
 
         {/* Post Actions */}
-        <div className="flex justify-between items-center text-sm text-muted-foreground mt-3 -ml-2 max-w-[420px]">
+        <div className="flex justify-between items-center text-xs text-muted-foreground mt-3 -ml-2 max-w-[420px]">
           <Button variant="ghost" size="sm" className="flex items-center gap-1 group" onClick={() => setShowComments(!showComments)}>
             <MessageSquare className="h-4 w-4 group-hover:text-primary transition-colors" />
             <span className="group-hover:text-primary transition-colors text-xs">{post.reply_count > 0 ? post.reply_count : ''}</span>
@@ -346,14 +346,14 @@ const PostCard = ({ post, addReply, user, navigate, onAcknowledge }:
                   if (e.key === 'Enter') handleReplySubmit();
                 }}
                 placeholder="Add a comment..."
-                className="flex-1 bg-transparent border-b border-input text-sm text-foreground focus:outline-none focus:ring-0 focus:border-primary p-1"
+                className="flex-1 bg-transparent border-b border-input text-xs text-foreground focus:outline-none focus:ring-0 focus:border-primary p-1"
               />
               <Button
                 variant="ghost"
                 size="sm"
                 disabled={!replyText.trim()}
                 onClick={handleReplySubmit}
-                className="text-primary font-bold disabled:text-muted-foreground disabled:opacity-70 p-0"
+                className="text-primary font-bold disabled:text-muted-foreground disabled:opacity-70 p-0 text-xs"
               >
                 Post
               </Button>
@@ -627,7 +627,7 @@ const Feed = () => {
     <div className="h-full flex flex-col">
       <div className="flex-1 overflow-y-auto">
         {posts.length === 0 && !effectiveLoading ? (
-          <div className="text-center text-muted-foreground py-8 text-sm">
+          <div className="text-center text-muted-foreground py-8 text-xs">
             No posts yet. Follow users or share your first post!
           </div>
         ) : (
