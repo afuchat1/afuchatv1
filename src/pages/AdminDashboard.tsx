@@ -76,48 +76,58 @@ const AdminDashboard = () => {
         .from('chats')
         .select('*', { count: 'exact', head: true });
 
-      // Fetch active users today
+      // Fetch active users today (including new joins)
       const today = new Date();
       today.setHours(0, 0, 0, 0);
+      const todayISO = today.toISOString();
       
-      const { data: activeUsers } = await supabase
+      const { count: activeCount, error: activeError } = await supabase
         .from('profiles')
-        .select('id')
-        .gte('last_seen', today.toISOString());
+        .select('id', { count: 'exact', head: true })
+        .or(`last_seen.gte.${todayISO},created_at.gte.${todayISO}`);
+
+      if (activeError) throw activeError;
+      const activeTodayCount = activeCount || 0;
 
       // Fetch messages for last 7 days
       const last7Days = new Date();
       last7Days.setDate(last7Days.getDate() - 7);
       
-      const { data: messages7Days } = await supabase
+      const { data: messages7Days, error: err7 } = await supabase
         .from('messages')
         .select('sent_at')
         .gte('sent_at', last7Days.toISOString());
+
+      if (err7) throw err7;
 
       // Fetch messages for last 30 days
       const last30Days = new Date();
       last30Days.setDate(last30Days.getDate() - 30);
       
-      const { data: messages30Days } = await supabase
+      const { data: messages30Days, error: err30 } = await supabase
         .from('messages')
         .select('sent_at')
         .gte('sent_at', last30Days.toISOString());
 
-      // Group messages by day
+      if (err30) throw err30;
+
+      // Group messages by day and sort descending (newest first)
       const groupByDay = (messages: any[]) => {
         const groups: { [key: string]: number } = {};
         messages?.forEach(msg => {
           const date = new Date(msg.sent_at).toLocaleDateString();
           groups[date] = (groups[date] || 0) + 1;
         });
-        return Object.entries(groups).map(([date, count]) => ({ date, count }));
+        return Object.entries(groups)
+          .sort(([a], [b]) => new Date(b).getTime() - new Date(a).getTime())  // Descending
+          .map(([date, count]) => ({ date, count }));
       };
 
       setStats({
         totalUsers: userCount || 0,
         totalMessages: messageCount || 0,
         totalChats: chatCount || 0,
-        activeToday: activeUsers?.length || 0,
+        activeToday: activeTodayCount,
         messagesLast7Days: groupByDay(messages7Days || []),
         messagesLast30Days: groupByDay(messages30Days || [])
       });
