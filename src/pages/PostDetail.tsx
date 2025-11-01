@@ -86,7 +86,6 @@ interface Post {
   created_at: string;
   likes_count: number;
   replies_count: number;
-  views_count: number;
   
   author: {
     id: string; 
@@ -126,7 +125,6 @@ const PostDetail = () => {
             id, content, created_at,
             likes_count:post_acknowledgments(count),
             replies_count:post_replies(count),
-            views_count,
             author:profiles!author_id (
               id, display_name, handle, is_verified, is_organization_verified
             )
@@ -278,11 +276,6 @@ const PostDetail = () => {
               </p>
             </Link>
 
-            {/* VIEWS */}
-            <p className="text-xs text-muted-foreground mb-2">
-              {post.views_count} Views
-            </p>
-
             {/* ACTION BUTTONS */}
             <div className="flex justify-between items-center text-xs text-muted-foreground mt-1 -ml-2 max-w-[420px]">
               <Button variant="ghost" size="sm" className="flex items-center gap-1 group h-8">
@@ -295,7 +288,7 @@ const PostDetail = () => {
               </Button>
               <Button variant="ghost" size="sm" className="flex items-center gap-1 group h-8">
                 <Heart className="h-4 w-4 group-hover:text-red-500 transition-colors" />
-                <span className="group-hover:text-red-500 transition-colors">914</span>
+                <span className="group-hover:text-red-500 transition-colors">{post.likes_count > 0 ? post.likes_count : ''}</span>
               </Button>
               <Button variant="ghost" size="sm" className="flex items-center gap-1 group h-8">
                 <Bookmark className="h-4 w-4 group-hover:text-primary transition-colors" />
