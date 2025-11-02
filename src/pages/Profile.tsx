@@ -380,7 +380,8 @@ const Profile = () => {
 		return (
 			<div className="h-full flex flex-col">
 				<div className="p-4 border-b border-border">
-					<Button variant="ghost" size="sm" onClick={() => navigate(-1)} className="mb-4"><ArrowLeft className="h-4 w-4 mr-2" />Back</Button>
+					{/* 🚨 MODIFICATION 1: Changed navigate(-1) to navigate('/') */}
+					<Button variant="ghost" size="sm" onClick={() => navigate('/')} className="mb-4"><ArrowLeft className="h-4 w-4 mr-2" />Back</Button>
 					<Skeleton className="h-4 w-1/4 mb-4" />
 				</div>
 				<div className="p-4">
@@ -430,7 +431,8 @@ const Profile = () => {
 						<Button
 							variant="ghost"
 							size="icon"
-							onClick={() => navigate(-1)}
+							// 🚨 MODIFICATION 2: Changed navigate(-1) to navigate('/')
+							onClick={() => navigate('/')}
 							className="rounded-full mr-4"
 						>
 							<ArrowLeft className="h-5 w-5" />
