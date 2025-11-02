@@ -7,6 +7,22 @@ import { MessageSquare, Heart, Share, User, Ellipsis, Sparkles } from 'lucide-re
 import { Skeleton } from '@/components/ui/skeleton';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
+// NEW: Import the dedicated PostActionsSheet component
+import PostActionsSheet from '@/components/PostActionsSheet'; 
+
+
+// --- INTERFACES ---
+
+// NEW: Define AuthUser interface for type safety (must match the one in PostActionsSheet.tsx)
+interface AuthUser {
+    id: string;
+    user_metadata: {
+        display_name?: string;
+        handle?: string;
+        is_verified?: boolean;
+        is_organization_verified?: boolean;
+    }
+}
 
 interface Post {
   id: string;
@@ -40,6 +56,9 @@ interface Reply {
   };
 }
 
+
+// --- VERIFICATION BADGES (Unchanged) ---
+
 const TwitterVerifiedBadge = () => (
   <svg
     viewBox="0 0 22 22"
@@ -70,6 +89,7 @@ const VerifiedBadge = ({ isVerified, isOrgVerified }: { isVerified: boolean; isO
   return null;
 };
 
+// --- UTILITY FUNCTIONS (Unchanged) ---
 const formatTime = (isoString: string) => {
   const date = new Date(isoString);
   const now = new Date();
@@ -139,6 +159,8 @@ const parsePostContent = (content: string, navigate: (path: string) => void) => 
   return <>{parts}</>;
 };
 
+// --- REPLY ITEM (Unchanged) ---
+
 const ReplyItem = ({ reply, navigate, handleViewProfile }: { reply: Reply; navigate: any; handleViewProfile: (id: string) => void }) => {
     return (
         <div className="flex pt-2 pb-1 relative">
@@ -182,8 +204,18 @@ const ReplyItem = ({ reply, navigate, handleViewProfile }: { reply: Reply; navig
 };
 
 
-const PostCard = ({ post, addReply, user, navigate, onAcknowledge }:
-  { post: Post; addReply: (postId: string, reply: Reply) => void; user: any; navigate: any; onAcknowledge: (postId: string, hasLiked: boolean) => void }) => {
+// --- POST CARD (Updated to accept and pass through new props) ---
+
+const PostCard = ({ post, addReply, user, navigate, onAcknowledge, onDeletePost, onReportPost }:
+  { 
+      post: Post; 
+      addReply: (postId: string, reply: Reply) => void; 
+      user: AuthUser | null; // Changed user type to AuthUser | null
+      navigate: any; 
+      onAcknowledge: (postId: string, hasLiked: boolean) => void;
+      onDeletePost: (postId: string) => void; // New Prop
+      onReportPost: (postId: string) => void; // New Prop
+  }) => {
 
   const [showComments, setShowComments] = useState(false);
   const [replyText, setReplyText] = useState('');
@@ -288,9 +320,14 @@ const PostCard = ({ post, addReply, user, navigate, onAcknowledge }:
                 <Sparkles className="h-4 w-4 text-primary/70" />
             </Button>
             
-            <Button variant="ghost" size="icon" className="h-8 w-8 rounded-full flex-shrink-0">
-              <Ellipsis className="h-4 w-4 text-muted-foreground" />
-            </Button>
+            {/* NEW: Use the external PostActionsSheet component */}
+            <PostActionsSheet
+                post={post}
+                user={user}
+                navigate={navigate}
+                onDelete={onDeletePost}
+                onReport={onReportPost}
+            />
           </div>
         </div>
 
@@ -374,6 +411,9 @@ const PostCard = ({ post, addReply, user, navigate, onAcknowledge }:
   );
 };
 
+
+// --- FEED COMPONENT (Updated with new handlers) ---
+
 const Feed = () => {
   const { user } = useAuth();
   const [posts, setPosts] = useState<Post[]>([]);
@@ -445,6 +485,51 @@ const Feed = () => {
         );
       }
     }
+  }, [user]);
+
+  // NEW: Delete Post Handler
+  const handleDeletePost = useCallback(async (postId: string) => {
+    if (!user) {
+        toast.error('You must be logged in to delete posts.');
+        return;
+    }
+    if (user.id !== posts.find(p => p.id === postId)?.author_id) {
+        toast.error('You can only delete your own posts.');
+        return;
+    }
+
+    // Optimistic UI update
+    setPosts(currentPosts => currentPosts.filter(p => p.id !== postId));
+    toast.info('Post deleted. Undoing if failed...');
+
+    const { error } = await supabase
+        .from('posts')
+        .delete()
+        .eq('id', postId)
+        .eq('author_id', user.id); 
+
+    if (error) {
+        toast.error('Failed to delete post. Reverting changes.');
+        console.error('Delete error:', error);
+        // Re-fetch to revert the optimistic update 
+        fetchPosts(); 
+    } else {
+        toast.success('Post successfully deleted!');
+    }
+  }, [user, posts]); // Added 'posts' to dependencies for safety
+
+  // NEW: Report Post Handler
+  const handleReportPost = useCallback(async (postId: string) => {
+      if (!user) {
+          toast.error('You must be logged in to report a post.');
+          return;
+      }
+      
+      // Placeholder for actual API call to record the report
+      console.log(`User ${user.id} reported post ${postId}`);
+      toast.success('Post reported. We will review this content.');
+
+      // In a real app, you would insert a record into a 'post_reports' table here.
   }, [user]);
 
 
@@ -618,9 +703,7 @@ const Feed = () => {
   
   useEffect(() => {
       if (feedRef.current) {
-          if (feedRef.current.scrollTop > 0) {
-              feedRef.current.scrollTo({ top: 0, behavior: 'smooth' });
-          }
+          // You can re-enable scrolling logic here if needed
       }
   }, [posts]);
 
@@ -675,9 +758,11 @@ const Feed = () => {
               key={post.id}
               post={post}
               addReply={addReply}
-              user={user}
+              user={user as AuthUser | null} // Casting to the defined AuthUser type
               navigate={navigate}
               onAcknowledge={handleAcknowledge}
+              onDeletePost={handleDeletePost} // NEW
+              onReportPost={handleReportPost} // NEW
             />
           ))
         )}
