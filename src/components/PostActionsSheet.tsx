@@ -1,6 +1,6 @@
 import React, { useRef, useState } from 'react';
 import { 
-  Ellipsis, Trash2, Flag, Maximize2, Share, Link, LogIn 
+  Ellipsis, Trash2, Flag, Maximize2, Share, LogIn, EyeOff, UserPlus, List, Volume2, UserX, AlertTriangle, MessageCircle 
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { 
@@ -199,79 +199,123 @@ const PostActionsSheet: React.FC<PostActionsSheetProps> = ({ post, user, navigat
     // --- RENDER LOGIC ---
     const renderActions = () => {
         if (!user) {
-            // Richer UI for unauthenticated users
+            // Simplified for unauthenticated users to match style
             return (
-                <div className="flex flex-col space-y-2 pt-2 pb-4 px-2">
-                    <div className="text-center text-muted-foreground text-sm py-2">
+                <div className="px-4 pb-4">
+                    <div className="text-center text-muted-foreground text-sm py-4">
                         Log in to interact with this post.
                     </div>
                     <SheetClose asChild>
                         <Button 
-                            className="w-full text-center py-3 h-auto bg-primary hover:bg-primary/90 text-white font-semibold border-t border-border/50 mt-1 pt-2 text-sm"
-                            onClick={() => navigate('/auth')} // Assuming '/auth' is your login route
+                            variant="ghost"
+                            className="justify-start w-full text-left py-3 h-auto text-foreground hover:bg-muted border-b border-border/20 text-sm"
+                            onClick={() => navigate('/auth')}
                         >
-                            <LogIn className="h-3 w-3 mr-2" />
-                            Log In to Engage
+                            <LogIn className="h-4 w-4 mr-4 flex-shrink-0" />
+                            <span className="font-normal">Log In to Engage</span>
                         </Button>
                     </SheetClose>
                 </div>
             );
         }
 
-        // Actions for authenticated users
+        // Actions for authenticated users - styled to match Twitter UI
         return (
-            <div className="flex flex-col p-2 space-y-0 transition-transform duration-200 ease-out" style={{ transform: `translateY(${translateY}px)` }}>
-                
-                {/* === GROUP 1: Navigation & Utility === */}
-                <div className="space-y-0">
+            <div className="transition-transform duration-200 ease-out" style={{ transform: `translateY(${translateY}px)` }}>
+                <div className="px-4">
+                    {/* Not interested - mapped to View Details for now */}
                     <SheetClose asChild>
                         <Button 
                             variant="ghost" 
-                            className="justify-start w-full text-left py-2 h-auto text-foreground hover:bg-muted border-b border-border/30 text-sm"
+                            className="justify-start w-full text-left py-3.5 h-auto text-foreground hover:bg-muted border-b border-border/20 text-sm"
                             onClick={handleViewDetails}
                         >
-                            <Maximize2 className="h-3 w-3 mr-2 text-primary/80 flex-shrink-0" />
-                            <span className="font-medium">View Post Details</span>
+                            <EyeOff className="h-4 w-4 mr-4 flex-shrink-0 text-muted-foreground" />
+                            <span className="font-normal">Not interested in this post</span>
                         </Button>
                     </SheetClose>
 
+                    {/* Follow - placeholder, adjust as needed */}
                     <SheetClose asChild>
                         <Button 
                             variant="ghost" 
-                            className="justify-start w-full text-left py-2 h-auto text-foreground hover:bg-muted border-b border-border/30 text-sm"
-                            onClick={handleShare}
+                            className="justify-start w-full text-left py-3.5 h-auto text-foreground hover:bg-muted border-b border-border/20 text-sm"
+                            onClick={() => navigate(`/profile/${post.profiles.handle}`)}
                         >
-                            <Share className="h-3 w-3 mr-2 flex-shrink-0" />
-                            <span className="font-medium">Share Post</span>
+                            <UserPlus className="h-4 w-4 mr-4 flex-shrink-0 text-muted-foreground" />
+                            <span className="font-normal">Follow @{post.profiles.handle}</span>
                         </Button>
                     </SheetClose>
-                </div>
 
-                {/* === GROUP 2: Critical Actions (Report/Delete) === */}
-                <div className="space-y-0 pt-2">
-                    
+                    {/* Add/remove from lists */}
+                    <SheetClose asChild>
+                        <Button 
+                            variant="ghost" 
+                            className="justify-start w-full text-left py-3.5 h-auto text-foreground hover:bg-muted border-b border-border/20 text-sm"
+                        >
+                            <List className="h-4 w-4 mr-4 flex-shrink-0 text-muted-foreground" />
+                            <span className="font-normal">Add/remove from lists</span>
+                        </Button>
+                    </SheetClose>
+
+                    {/* Mute */}
+                    <SheetClose asChild>
+                        <Button 
+                            variant="ghost" 
+                            className="justify-start w-full text-left py-3.5 h-auto text-foreground hover:bg-muted border-b border-border/20 text-sm"
+                            onClick={() => navigate(`/profile/${post.profiles.handle}`)}
+                        >
+                            <Volume2 className="h-4 w-4 mr-4 flex-shrink-0 text-muted-foreground" />
+                            <span className="font-normal">Mute @{post.profiles.handle}</span>
+                        </Button>
+                    </SheetClose>
+
+                    {/* Block */}
+                    <SheetClose asChild>
+                        <Button 
+                            variant="ghost" 
+                            className="justify-start w-full text-left py-3.5 h-auto text-foreground hover:bg-muted border-b border-border/20 text-sm"
+                            onClick={() => navigate(`/profile/${post.profiles.handle}`)}
+                        >
+                            <UserX className="h-4 w-4 mr-4 flex-shrink-0 text-muted-foreground" />
+                            <span className="font-normal">Block @{post.profiles.handle}</span>
+                        </Button>
+                    </SheetClose>
+
                     {/* Report Post */}
                     <SheetClose asChild>
                         <Button 
                             variant="ghost" 
-                            className="justify-start w-full text-left py-2 h-auto text-red-500 hover:bg-red-50 border-b border-border/30 text-sm" 
+                            className="justify-start w-full text-left py-3.5 h-auto text-foreground hover:bg-muted border-b border-border/20 text-sm" 
                             onClick={() => onReport(post.id)}
                         >
-                            <Flag className="h-3 w-3 mr-2 flex-shrink-0" />
-                            <span className="font-medium">Report Post</span>
+                            <AlertTriangle className="h-4 w-4 mr-4 flex-shrink-0 text-destructive" />
+                            <span className="font-normal text-destructive">Report post</span>
                         </Button>
                     </SheetClose>
 
-                    {/* Delete (Author Only) */}
+                    {/* Request Community Note */}
+                    <SheetClose asChild>
+                        <Button 
+                            variant="ghost" 
+                            className="justify-start w-full text-left py-3.5 h-auto text-foreground hover:bg-muted text-sm"
+                            onClick={() => navigate(`/post/${post.id}/note`)} // Placeholder navigation
+                        >
+                            <MessageCircle className="h-4 w-4 mr-4 flex-shrink-0 text-muted-foreground" />
+                            <span className="font-normal">Request community note</span>
+                        </Button>
+                    </SheetClose>
+
+                    {/* Delete (Author Only) - added at end with red styling */}
                     {isAuthor && (
                         <SheetClose asChild>
                             <Button 
                                 variant="ghost" 
-                                className="justify-start w-full text-left py-2 h-auto text-red-600 hover:bg-red-100 font-bold border-b border-border/30 text-sm"
+                                className="justify-start w-full text-left py-3.5 h-auto text-destructive hover:bg-destructive/5 font-semibold text-sm"
                                 onClick={() => onDelete(post.id)}
                             >
-                                <Trash2 className="h-3 w-3 mr-2 flex-shrink-0" />
-                                <span className="font-bold">Delete Post</span>
+                                <Trash2 className="h-4 w-4 mr-4 flex-shrink-0 text-destructive" />
+                                <span className="font-semibold text-destructive">Delete Post</span>
                             </Button>
                         </SheetClose>
                     )}
@@ -290,7 +334,7 @@ const PostActionsSheet: React.FC<PostActionsSheetProps> = ({ post, user, navigat
             
             <SheetContent 
                 side="bottom" 
-                className="h-auto max-h-[80vh] rounded-t-xl p-0 overflow-hidden shadow-none border-t border-border transition-transform duration-200 ease-out"
+                className="h-auto max-h-[80vh] rounded-t-xl p-0 overflow-hidden shadow-none border-t border-border/50 transition-transform duration-200 ease-out"
                 style={{ transform: `translateY(${translateY}px)` }}
             >
                 {/* Hidden close button for programmatic dismiss */}
@@ -298,17 +342,7 @@ const PostActionsSheet: React.FC<PostActionsSheetProps> = ({ post, user, navigat
                 
                 {renderDragHandle()}
                 
-                <SheetHeader className="relative p-3 border-b border-border">
-                    <SheetTitle className="text-center text-base font-semibold text-foreground">
-                        Options
-                    </SheetTitle>
-                    {/* Removed custom X close button */}
-                </SheetHeader>
-                
                 {renderActions()}
-
-                {/* Subtle bottom separator for reduced visual density */}
-                <div className="h-1 bg-background border-t border-border/50" />
             </SheetContent>
         </Sheet>
     );
