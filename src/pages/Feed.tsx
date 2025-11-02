@@ -204,14 +204,14 @@ const PostCard = ({ post, addReply, user, navigate, onAcknowledge }:
     navigate(`/profile/${userId}`);
   };
 
-  // 🚨 NEW FUNCTION: Handles navigating to AI Chat and passing post data
+  // 🚨 IMPLEMENTATION: Handles navigating to AI Chat and passing post data
   const handleAiTransfer = () => {
     // Construct the relevant post information to pass to the AI chat
     const postDetails = {
       postId: post.id,
       postContent: post.content,
       postAuthorHandle: post.profiles.handle,
-      // You can add more context like author display name, etc.
+      // Include more context if needed
     };
 
     // Use the navigate function to go to '/ai-chat' and pass data via state
@@ -299,13 +299,13 @@ const PostCard = ({ post, addReply, user, navigate, onAcknowledge }:
           </div>
 
           <div className="flex items-center gap-1">
-            {/* 🚨 UPDATED AI ICON BUTTON with onClick handler */}
+            {/* 🚨 AI ICON BUTTON with onClick handler to transfer to AI chat */}
             <Button 
                 variant="ghost" 
                 size="icon" 
                 className="h-8 w-8 rounded-full flex-shrink-0" 
                 title="Analyze post with AfuAI"
-                onClick={handleAiTransfer} // Attach the new handler
+                onClick={handleAiTransfer} // Attached the handler
             >
                 <Sparkles className="h-4 w-4 text-primary/70" />
             </Button>
