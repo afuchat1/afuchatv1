@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import { useAuth } from '@/contexts/AuthContext';
+// 🚨 NOTE: useAuth now returns 'loading' which we need to access.
+import { useAuth } from '@/contexts/AuthContext'; 
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
 import { Button } from '@/components/ui/button';
@@ -28,7 +29,8 @@ interface EditProfileForm {
 }
 
 const EditProfile: React.FC = () => {
-  const { user } = useAuth();
+  // 🚨 FIX 1: Access the 'loading' state from useAuth. This is the global auth status.
+  const { user, loading: isLoadingAuth } = useAuth();
   const navigate = useNavigate();
   const { userId } = useParams<{ userId: string }>();
 
@@ -40,17 +42,27 @@ const EditProfile: React.FC = () => {
     show_online_status: true,
     show_read_receipts: true,
   });
-  const [loading, setLoading] = useState<boolean>(true);
+  // This state tracks profile data fetching, separate from global auth loading.
+  const [loadingProfile, setLoadingProfile] = useState<boolean>(true); 
   const [saving, setSaving] = useState<boolean>(false);
 
   useEffect(() => {
+    // 🚨 FIX 2: Check the global Auth loading state first. Exit if still checking session.
+    if (isLoadingAuth) {
+        return; 
+    }
+
+    // Now that auth check is complete:
     if (!user?.id) {
-        setLoading(false);
-        toast.error("User ID not found for fetching profile.");
+        // Only show error/redirect if the session check is complete AND no user was found.
+        setLoadingProfile(false); 
+        toast.error("You must be logged in to edit your profile.");
+        // Assuming you have a /login route
+        navigate('/login'); 
         return;
     }
 
-    // Verify route matches current user (userId could be id or handle)
+    // Verify route matches current user
     if (userId && userId !== user.id) {
       toast.error('Access denied: Can only edit your own profile');
       navigate(`/${user.id}`);
@@ -77,7 +89,6 @@ const EditProfile: React.FC = () => {
             show_read_receipts: data.show_read_receipts || true,
           });
         } else {
-          // If no profile exists, initialize with defaults (upsert on save)
           setProfile({
             display_name: user.user_metadata?.full_name || '',
             handle: user.user_metadata?.user_name || '',
@@ -91,12 +102,16 @@ const EditProfile: React.FC = () => {
         console.error('Error fetching profile:', error);
         toast.error('Failed to load profile');
       } finally {
-        setLoading(false);
+        // Set the profile loading state to false
+        setLoadingProfile(false);
       }
     };
 
     fetchProfile();
-  }, [user, navigate, userId]);
+  // 🚨 FIX 3: Add the global auth loading state to the dependency array
+  }, [user, navigate, userId, isLoadingAuth]); 
+
+  // ... (Input handlers and Save handler remain as previously corrected)
 
   const handleInputChange = (
     e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>
@@ -125,9 +140,7 @@ const EditProfile: React.FC = () => {
     setSaving(true);
     try {
       const updateData: ProfileUpdate = {
-        // 🚨 IMPORTANT FIX: Explicitly include the user ID for upsert logic
-        id: user.id, 
-        
+        id: user.id, // CRITICAL: Explicitly include the user ID
         display_name: profile.display_name.trim(),
         handle: profile.handle.trim(),
         bio: profile.bio.trim() || null, 
@@ -139,10 +152,8 @@ const EditProfile: React.FC = () => {
 
       const { error } = await supabase
         .from('profiles')
-        // Using upsert on the primary key (id) and relying on the RLS policy.
-        .upsert(updateData) 
-        // We can keep the .eq() for added safety, though upsert generally handles the match based on PK.
-        .eq('id', user.id); 
+        .upsert(updateData)
+        .eq('id', user.id);
 
       if (error) throw error;
 
@@ -150,15 +161,11 @@ const EditProfile: React.FC = () => {
       navigate(`/${user.id}`);
     } catch (error: any) {
       console.error('Update error:', error);
-      
-      // Improved error handling for common Supabase issues
       if (error.code === '23505') { 
           toast.error('The handle is already taken. Please choose another.');
       } else if (error.code === '42501' || error.message.includes('permission denied')) {
-          // This often indicates a missing RLS policy
           toast.error('Permission denied. Please ensure RLS policies are correct in Supabase.');
-      } 
-      else {
+      } else {
           toast.error(`Failed to update profile. Error: ${error.message}`);
       }
     } finally {
@@ -170,7 +177,8 @@ const EditProfile: React.FC = () => {
     navigate(`/${user?.id}`);
   };
 
-  if (loading) {
+  // 🚨 FIX 4: Check BOTH the global auth loading and the local profile fetching state.
+  if (isLoadingAuth || loadingProfile) {
     return (
       <div className="min-h-screen bg-background flex items-center justify-center p-4">
         <Loader2 className="h-8 w-8 animate-spin text-primary" />
@@ -190,7 +198,8 @@ const EditProfile: React.FC = () => {
           </CardDescription>
         </CardHeader>
         <CardContent className="pt-6">
-          <div className="space-y-6">
+            {/* ... rest of the form ... */}
+            <div className="space-y-6">
             
             <h3 className="text-lg font-semibold border-b pb-2 text-primary">Basic Information</h3>
 
