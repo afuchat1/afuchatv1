@@ -3,7 +3,7 @@ import { useNavigate, Link } from 'react-router-dom';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/contexts/AuthContext';
 import { toast } from 'sonner';
-import { MessageSquare, Heart, Share, User, Ellipsis, Sparkles } from 'lucide-react'; // 🚨 ADDED Sparkles
+import { MessageSquare, Heart, Share, User, Ellipsis, Sparkles } from 'lucide-react';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -204,6 +204,25 @@ const PostCard = ({ post, addReply, user, navigate, onAcknowledge }:
     navigate(`/profile/${userId}`);
   };
 
+  // 🚨 NEW FUNCTION: Handles navigating to AI Chat and passing post data
+  const handleAiTransfer = () => {
+    // Construct the relevant post information to pass to the AI chat
+    const postDetails = {
+      postId: post.id,
+      postContent: post.content,
+      postAuthorHandle: post.profiles.handle,
+      // You can add more context like author display name, etc.
+    };
+
+    // Use the navigate function to go to '/ai-chat' and pass data via state
+    navigate('/ai-chat', { 
+        state: { 
+            context: 'post_analysis',
+            postDetails: postDetails 
+        } 
+    });
+  };
+
   const handleReplySubmit = async () => {
     if (!replyText.trim() || !user) {
       toast.error('You must be logged in to comment');
@@ -280,8 +299,14 @@ const PostCard = ({ post, addReply, user, navigate, onAcknowledge }:
           </div>
 
           <div className="flex items-center gap-1">
-            {/* 🚨 ADDED AI ICON BUTTON */}
-            <Button variant="ghost" size="icon" className="h-8 w-8 rounded-full flex-shrink-0" title="AI options available">
+            {/* 🚨 UPDATED AI ICON BUTTON with onClick handler */}
+            <Button 
+                variant="ghost" 
+                size="icon" 
+                className="h-8 w-8 rounded-full flex-shrink-0" 
+                title="Analyze post with AfuAI"
+                onClick={handleAiTransfer} // Attach the new handler
+            >
                 <Sparkles className="h-4 w-4 text-primary/70" />
             </Button>
             
