@@ -210,6 +210,11 @@ const Index = () => {
             {user ? (
               // Logged In: Show icons
               <>
+                {/* START: ADDED SUBSCRIBE BUTTON */}
+                <Button size="sm" variant="outline" className="text-xs font-semibold h-8 px-3">
+                  Subscribe
+                </Button>
+                {/* END: ADDED SUBSCRIBE BUTTON */}
                 <NotificationIcon />
                 {isAdmin && (
                   <Link to="/admin">
