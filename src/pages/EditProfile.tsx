@@ -16,6 +16,7 @@ import { Loader2, User, Lock, Eye, MessageCircle, MapPin, Globe } from 'lucide-r
 import type { Database } from '@/types/supabase';
 
 type ProfileRow = Database['public']['Tables']['profiles']['Row'];
+type ProfileInsert = Database['public']['Tables']['profiles']['Insert'];
 type ProfileUpdate = Database['public']['Tables']['profiles']['Update'];
 
 interface EditProfileForm {
@@ -42,6 +43,7 @@ const EditProfile: React.FC = () => {
   });
   const [loading, setLoading] = useState<boolean>(true);
   const [saving, setSaving] = useState<boolean>(false);
+  const [hasProfileRow, setHasProfileRow] = useState<boolean>(false);
 
   useEffect(() => {
     if (!user?.id) {
@@ -50,9 +52,8 @@ const EditProfile: React.FC = () => {
         return;
     }
 
-    // Verify route matches current user (userId could be id or handle)
+    // Verify route matches current user
     if (userId && userId !== user.id) {
-      // For handle-based routes, we'd need to fetch by handle, but for simplicity, redirect if mismatch
       toast.error('Access denied: Can only edit your own profile');
       navigate(`/${user.id}`);
       return;
@@ -62,13 +63,14 @@ const EditProfile: React.FC = () => {
       try {
         const { data, error } = await supabase
           .from('profiles')
-          .select('*')  // Fetch all real fields from schema
+          .select('*')
           .eq('id', user.id)
           .single() as { data: ProfileRow | null; error: any };
 
-        if (error) throw error;
+        if (error && error.code !== 'PGRST116') throw error; // PGRST116 is "no rows"
 
         if (data) {
+          setHasProfileRow(true);
           setProfile({
             display_name: data.display_name,
             handle: data.handle,
@@ -78,15 +80,17 @@ const EditProfile: React.FC = () => {
             show_read_receipts: data.show_read_receipts || true,
           });
         } else {
-          // If no profile exists, initialize with defaults (upsert on save)
+          // No existing row: Initialize defaults
+          setHasProfileRow(false);
           setProfile({
-            display_name: user.user_metadata?.full_name || '',
-            handle: user.user_metadata?.user_name || '',
+            display_name: user.user_metadata?.full_name || user.email?.split('@')[0] || '',
+            handle: user.user_metadata?.user_name || user.email?.split('@')[0]?.toLowerCase() || '',
             bio: '',
             is_private: false,
             show_online_status: true,
             show_read_receipts: true,
           });
+          toast.info('No existing profile found. Creating a new one on save.');
         }
       } catch (error: any) {
         console.error('Error fetching profile:', error);
@@ -125,20 +129,33 @@ const EditProfile: React.FC = () => {
     
     setSaving(true);
     try {
-      const updateData: ProfileUpdate = {
+      const baseData = {
+        id: user.id, // Explicitly set for insert
         display_name: profile.display_name.trim(),
         handle: profile.handle.trim(),
         bio: profile.bio.trim() || null, 
         is_private: profile.is_private,
         show_online_status: profile.show_online_status,
         show_read_receipts: profile.show_read_receipts,
+        created_at: hasProfileRow ? undefined : new Date().toISOString(), // Only set on insert
         updated_at: new Date().toISOString(),
       };
 
-      const { error } = await supabase
-        .from('profiles')
-        .upsert(updateData)  // Use upsert to create if not exists
-        .eq('id', user.id);
+      let operation;
+      if (hasProfileRow) {
+        // Update existing
+        operation = supabase
+          .from('profiles')
+          .update(baseData)
+          .eq('id', user.id);
+      } else {
+        // Insert new
+        operation = supabase
+          .from('profiles')
+          .insert(baseData);
+      }
+
+      const { error } = await operation;
 
       if (error) throw error;
 
@@ -148,6 +165,8 @@ const EditProfile: React.FC = () => {
       console.error('Update error:', error);
       if (error.code === '23505') { 
           toast.error('The handle is already taken. Please choose another.');
+      } else if (error.code === 'PGRST116') {
+          toast.error('Profile not found. Please try again.');
       } else {
           toast.error('Failed to update profile');
       }
@@ -176,7 +195,7 @@ const EditProfile: React.FC = () => {
             <User className="h-6 w-6 text-primary" /> Edit Profile
           </CardTitle>
           <CardDescription className="text-base text-muted-foreground">
-            Update your basic public-facing information.
+            {hasProfileRow ? 'Update your basic public-facing information.' : 'Create your profile for the first time.'}
           </CardDescription>
         </CardHeader>
         <CardContent className="pt-6">
@@ -217,129 +236,4 @@ const EditProfile: React.FC = () => {
             </div>
 
             <div className="space-y-2">
-              <Label htmlFor="bio" className="text-sm font-medium text-foreground">Bio</Label>
-              <Textarea
-                id="bio"
-                name="bio"
-                value={profile.bio}
-                onChange={handleInputChange}
-                placeholder="Tell us about yourself (max 150 chars)"
-                rows={4}
-                maxLength={150}
-                disabled={saving}
-                className="text-base resize-none bg-input/50 border border-border/80 focus:border-primary/50" 
-              />
-              <p className="text-xs text-muted-foreground flex justify-between">
-                <span>Keep it short and punchy!</span>
-                <span>{profile.bio.length}/150</span>
-              </p>
-            </div>
-
-            <Separator className="my-8 bg-border/50" />
-
-            <h3 className="text-lg font-semibold border-b pb-2 text-primary">Privacy Settings</h3>
-
-            {/* Private Account Toggle */}
-            <div className="space-y-2">
-              <Label className="text-sm font-medium text-foreground flex items-center gap-2">
-                <Lock className="h-4 w-4 text-muted-foreground" />
-                Private Account
-              </Label>
-              <div className="flex items-center justify-between p-3 bg-input/50 rounded-md">
-                <p className="text-xs text-muted-foreground">Only approved followers can see your posts and profile</p>
-                <Switch
-                  checked={profile.is_private}
-                  onCheckedChange={() => handleToggleChange('is_private')}
-                  disabled={saving}
-                />
-              </div>
-            </div>
-
-            {/* Show Online Status Toggle */}
-            <div className="space-y-2">
-              <Label className="text-sm font-medium text-foreground flex items-center gap-2">
-                <Eye className="h-4 w-4 text-muted-foreground" />
-                Show Online Status
-              </Label>
-              <div className="flex items-center justify-between p-3 bg-input/50 rounded-md">
-                <p className="text-xs text-muted-foreground">Display when you're active on AfuChat</p>
-                <Switch
-                  checked={profile.show_online_status}
-                  onCheckedChange={() => handleToggleChange('show_online_status')}
-                  disabled={saving}
-                />
-              </div>
-            </div>
-
-            {/* Show Read Receipts Toggle */}
-            <div className="space-y-2">
-              <Label className="text-sm font-medium text-foreground flex items-center gap-2">
-                <MessageCircle className="h-4 w-4 text-muted-foreground" />
-                Show Read Receipts
-              </Label>
-              <div className="flex items-center justify-between p-3 bg-input/50 rounded-md">
-                <p className="text-xs text-muted-foreground">Let others see when you've read their messages</p>
-                <Switch
-                  checked={profile.show_read_receipts}
-                  onCheckedChange={() => handleToggleChange('show_read_receipts')}
-                  disabled={saving}
-                />
-              </div>
-            </div>
-
-            <Separator className="my-8 bg-border/50" />
-
-            <h3 className="text-lg font-semibold border-b pb-2 text-primary">Additional Information</h3>
-
-            {/* Location - Coming Soon */}
-            <div className="space-y-2">
-              <Label className="text-sm font-medium text-foreground flex items-center gap-2">
-                <MapPin className="h-4 w-4 text-muted-foreground" />
-                Location
-              </Label>
-              <div className="h-11 bg-muted/50 flex items-center justify-center rounded-md text-sm text-muted-foreground">
-                Coming soon
-              </div>
-            </div>
-
-            {/* Website - Coming Soon */}
-            <div className="space-y-2">
-              <Label className="text-sm font-medium text-foreground flex items-center gap-2">
-                <Globe className="h-4 w-4 text-muted-foreground" />
-                Website
-              </Label>
-              <div className="h-11 bg-muted/50 flex items-center justify-center rounded-md text-sm text-muted-foreground">
-                Coming soon
-              </div>
-            </div>
-          </div>
-          
-          <Separator className="my-8 bg-border/50" />
-          
-          <div className="flex justify-end space-x-3 pt-4">
-            <Button
-              type="button"
-              variant="outline"
-              onClick={handleCancel}
-              disabled={saving}
-              className="px-8 h-12 text-base border-border/80 hover:bg-muted/50 focus-visible:ring-1 focus-visible:ring-primary/20 transition-colors"
-            >
-              Cancel
-            </Button>
-            <Button
-              type="button"
-              onClick={handleSave}
-              disabled={saving}
-              className="px-8 h-12 text-base bg-primary hover:bg-primary/90 focus-visible:ring-1 focus-visible:ring-primary/20 transition-colors"
-            >
-              {saving && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-              {saving ? 'Saving...' : 'Save Changes'}
-            </Button>
-          </div>
-        </CardContent>
-      </Card>
-    </div>
-  );
-};
-
-export default EditProfile;
+              <Label htmlFor="bio" className="text-sm font-medium
