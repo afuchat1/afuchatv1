@@ -25,39 +25,60 @@ const AIChat = () => {
   // Hardcode the AI as verified for display purposes
   const isAIVerified = true; 
 
-  // Compute chat_id for this user's AI chat
-  const chatId = user ? `afuai-${user.id}` : null;
+  const [chatId, setChatId] = useState<string | null>(null);
 
   useEffect(() => {
-    if (!chatId) return;
+    if (!user) return;
 
-    const loadChatHistory = async () => {
+    const loadOrCreateAIChat = async () => {
       try {
-        // First, ensure the chat exists (upsert into chats table if needed)
-        const { error: chatError } = await supabase
-          .from('chats')
-          .upsert({ id: chatId, user_id: user.id, name: 'AfuAI Chat', created_at: new Date().toISOString() }, { ignoreDuplicates: true });
+        // Fetch user's profile to get ai_chat_id
+        const { data: profile, error: profileError } = await supabase
+          .from('profiles')
+          .select('ai_chat_id')
+          .eq('id', user.id)
+          .single();
 
-        if (chatError) {
-          console.error('Error creating chat:', chatError);
-          toast.error('Failed to load chat history');
-          return;
+        if (profileError) throw profileError;
+
+        let currentChatId = profile?.ai_chat_id;
+
+        if (!currentChatId) {
+          // Create new AI chat
+          const { data: newChat, error: chatError } = await supabase
+            .from('chats')
+            .insert({
+              name: 'AfuAI Chat',
+              is_group: false,
+              created_by: user.id,
+              user_id: user.id, // For personal chat
+            })
+            .select('id')
+            .single();
+
+          if (chatError) throw chatError;
+          currentChatId = newChat.id;
+
+          // Update profile with ai_chat_id
+          const { error: updateError } = await supabase
+            .from('profiles')
+            .update({ ai_chat_id: currentChatId })
+            .eq('id', user.id);
+
+          if (updateError) throw updateError;
         }
+
+        setChatId(currentChatId);
 
         // Fetch messages for this chat
         const { data: dbMessages, error: msgError } = await supabase
           .from('messages')
-          .select('*')
-          .eq('chat_id', chatId)
+          .select('id, role, content, created_at')
+          .eq('chat_id', currentChatId)
           .order('created_at', { ascending: true });
 
-        if (msgError) {
-          console.error('Error fetching messages:', msgError);
-          toast.error('Failed to load messages');
-          return;
-        }
+        if (msgError) throw msgError;
 
-        // Map to interface and set initial welcome if no messages
         const mappedMessages: Message[] = (dbMessages || []).map(msg => ({
           role: msg.role as 'user' | 'assistant',
           content: msg.content,
@@ -71,47 +92,49 @@ const AIChat = () => {
             timestamp: new Date(),
           };
           setMessages([welcomeMessage]);
-          // Insert welcome message to DB
+          // Save welcome to DB
           await supabase.from('messages').insert({
-            chat_id: chatId,
+            chat_id: currentChatId,
             role: 'assistant',
             content: welcomeMessage.content,
             created_at: welcomeMessage.timestamp.toISOString(),
             user_id: user.id,
+            sender_id: user.id, // Assuming sender_id for assistant is user or null; adjust if needed
           });
         } else {
           setMessages(mappedMessages);
         }
       } catch (error) {
-        console.error('Load history error:', error);
-        toast.error('Failed to load chat history');
+        console.error('Load AI chat error:', error);
+        toast.error('Failed to load AI chat history');
       }
     };
 
-    loadChatHistory();
-  }, [user, chatId]);
+    loadOrCreateAIChat();
+  }, [user]);
 
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
   }, [messages]);
 
-  const saveMessageToDb = async (msg: Omit<Message, 'timestamp'> & { timestamp: string }) => {
+  const saveMessageToDb = async (msg: Message) => {
     if (!chatId) return;
     const { error } = await supabase.from('messages').insert({
       chat_id: chatId,
       role: msg.role,
       content: msg.content,
-      created_at: msg.timestamp,
+      created_at: msg.timestamp.toISOString(),
       user_id: user?.id,
+      sender_id: msg.role === 'user' ? user?.id : null, // Adjust for assistant
     });
     if (error) {
-      console.error('Error saving message:', error);
+      console.error('Save message error:', error);
       toast.error('Failed to save message');
     }
   };
 
   const handleSend = async () => {
-    if (!input.trim() || loading || !chatId) return;
+    if (!input.trim() || loading || !chatId || !user) return;
 
     const userMessage: Message = {
       role: 'user',
@@ -119,22 +142,17 @@ const AIChat = () => {
       timestamp: new Date(),
     };
 
-    // Add to local state
     setMessages(prev => [...prev, userMessage]);
     setInput('');
     setLoading(true);
 
-    // Save user message to DB
-    await saveMessageToDb({
-      ...userMessage,
-      timestamp: userMessage.timestamp.toISOString(),
-    });
+    await saveMessageToDb(userMessage);
 
-    // Prepare history for AI (last 5 messages, including the new user one)
+    // History for AI: last 5 local messages + new user message
     const historyForAI = messages
+      .slice(-4) // Last 4 before new
       .map(m => ({ role: m.role, content: m.content }))
-      .concat({ role: 'user' as const, content: userMessage.content })
-      .slice(-5);
+      .concat({ role: 'user' as const, content: userMessage.content });
 
     try {
       const response = await fetch(
@@ -172,14 +190,8 @@ const AIChat = () => {
         timestamp: new Date(),
       };
 
-      // Add to local state
       setMessages(prev => [...prev, assistantMessage]);
-
-      // Save assistant message to DB
-      await saveMessageToDb({
-        ...assistantMessage,
-        timestamp: assistantMessage.timestamp.toISOString(),
-      });
+      await saveMessageToDb(assistantMessage);
     } catch (error) {
       console.error('AI Chat error:', error);
       toast.error('Failed to get response from AfuAI');
@@ -197,6 +209,15 @@ const AIChat = () => {
     return (
       <div className="flex flex-col h-screen bg-background justify-center items-center">
         <p className="text-muted-foreground">Please log in to chat with AfuAI.</p>
+      </div>
+    );
+  }
+
+  if (!chatId) {
+    return (
+      <div className="flex flex-col h-screen bg-background justify-center items-center">
+        <Loader2 className="h-8 w-8 animate-spin" />
+        <p className="text-muted-foreground mt-2">Loading chat...</p>
       </div>
     );
   }
