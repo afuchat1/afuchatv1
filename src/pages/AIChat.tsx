@@ -6,7 +6,7 @@ import { Input } from '@/components/ui/input';
 import { Card } from '@/components/ui/card';
 import { Bot, Send, Loader2, ArrowLeft } from 'lucide-react'; 
 import { toast } from 'sonner';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useLocation } from 'react-router-dom'; // 🚨 ADDED useLocation
 
 interface Message {
   role: 'user' | 'assistant';
@@ -14,9 +14,21 @@ interface Message {
   timestamp: Date;
 }
 
+// 🚨 Define the structure for the expected state data
+interface LocationState {
+    context?: 'post_analysis';
+    postDetails?: {
+        postId: string;
+        postContent: string;
+        postAuthorHandle: string;
+    };
+}
+
 const AIChat = () => {
   const { user } = useAuth();
   const navigate = useNavigate();
+  const location = useLocation(); // 🚨 Hook to access state
+  
   const [messages, setMessages] = useState<Message[]>([
     {
       role: 'assistant',
@@ -30,6 +42,89 @@ const AIChat = () => {
 
   // Hardcode the AI as verified for display purposes
   const isAIVerified = true; 
+
+  // --- EFFECT TO READ INCOMING POST DATA ---
+  useEffect(() => {
+    // 🚨 Safely cast and access the state object
+    const state = location.state as LocationState;
+
+    if (state?.context === 'post_analysis' && state.postDetails) {
+        const { postContent, postAuthorHandle } = state.postDetails;
+        
+        // 1. Construct the message
+        const initialPrompt = `Please analyze this post from @${postAuthorHandle}:\n\n"${postContent}"`;
+        
+        // 2. Set the message as the initial user input/message
+        const initialUserMessage: Message = {
+            role: 'user',
+            content: initialPrompt,
+            timestamp: new Date(),
+        };
+
+        // 3. Clear the state in the URL after reading it to prevent re-triggering
+        // This is important for cleanup and a cleaner user experience
+        navigate(location.pathname, { replace: true, state: {} });
+
+        // 4. Send the message immediately (optional: you could just display it, but sending it starts the chat)
+        setMessages(prev => [...prev, initialUserMessage]);
+        
+        // 5. Automatically trigger the AI response
+        // We call a function (or copy the logic) to send this initial message
+        handleInitialSend(initialPrompt, messages); 
+    }
+  }, []); // Run only on mount
+
+  // Helper function to send the initial message immediately after detecting post data
+  const handleInitialSend = async (initialPrompt: string, currentMessages: Message[]) => {
+    setLoading(true);
+
+    try {
+        const response = await fetch(
+            `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/chat-with-afuai`,
+            {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': `Bearer ${import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY}`,
+                },
+                body: JSON.stringify({
+                    message: initialPrompt,
+                    // Use initial messages (including the system message) plus the new prompt
+                    history: [...currentMessages, { role: 'user', content: initialPrompt, timestamp: new Date() }].slice(-6), 
+                }),
+            }
+        );
+
+        if (!response.ok) {
+            throw new Error('Failed to get initial AI response');
+        }
+
+        const data = await response.json();
+        
+        const assistantMessage: Message = {
+            role: 'assistant',
+            content: data.reply,
+            timestamp: new Date(),
+        };
+
+        // Add both the initial user prompt and the assistant response
+        setMessages(prev => {
+            // Check if the initial prompt is already the last message to avoid duplicates
+            if (prev[prev.length - 1]?.content !== initialPrompt) {
+                return [...prev, { role: 'user', content: initialPrompt, timestamp: new Date() }, assistantMessage];
+            }
+            // Otherwise, just append the assistant message
+            return [...prev, assistantMessage];
+        });
+    } catch (error) {
+        console.error('AI Chat error:', error);
+        toast.error('Failed to get response from AfuAI for initial prompt');
+    } finally {
+        setLoading(false);
+    }
+  };
+  // --- END EFFECT AND HANDLER ---
+
 
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
