@@ -6,7 +6,7 @@ import { Input } from '@/components/ui/input';
 import { Card } from '@/components/ui/card';
 import { Bot, Send, Loader2, ArrowLeft } from 'lucide-react'; 
 import { toast } from 'sonner';
-import { useNavigate, useLocation } from 'react-router-dom'; // 🚨 ADDED useLocation
+import { useNavigate, useLocation } from 'react-router-dom';
 
 interface Message {
   role: 'user' | 'assistant';
@@ -14,20 +14,21 @@ interface Message {
   timestamp: Date;
 }
 
-// 🚨 Define the structure for the expected state data
-interface LocationState {
-    context?: 'post_analysis';
-    postDetails?: {
-        postId: string;
-        postContent: string;
-        postAuthorHandle: string;
-    };
+interface PostDetails {
+    postId: string;
+    postContent: string;
+    postAuthorHandle: string;
 }
 
-const AIChat = () => {
+interface LocationState {
+    context?: 'post_analysis';
+    postDetails?: PostDetails;
+}
+
+const AIChat: React.FC = () => {
   const { user } = useAuth();
   const navigate = useNavigate();
-  const location = useLocation(); // 🚨 Hook to access state
+  const location = useLocation();
   
   const [messages, setMessages] = useState<Message[]>([
     {
@@ -40,41 +41,8 @@ const AIChat = () => {
   const [loading, setLoading] = useState(false);
   const messagesEndRef = useRef<HTMLDivElement>(null);
 
-  // Hardcode the AI as verified for display purposes
   const isAIVerified = true; 
 
-  // --- EFFECT TO READ INCOMING POST DATA ---
-  useEffect(() => {
-    // 🚨 Safely cast and access the state object
-    const state = location.state as LocationState;
-
-    if (state?.context === 'post_analysis' && state.postDetails) {
-        const { postContent, postAuthorHandle } = state.postDetails;
-        
-        // 1. Construct the message
-        const initialPrompt = `Please analyze this post from @${postAuthorHandle}:\n\n"${postContent}"`;
-        
-        // 2. Set the message as the initial user input/message
-        const initialUserMessage: Message = {
-            role: 'user',
-            content: initialPrompt,
-            timestamp: new Date(),
-        };
-
-        // 3. Clear the state in the URL after reading it to prevent re-triggering
-        // This is important for cleanup and a cleaner user experience
-        navigate(location.pathname, { replace: true, state: {} });
-
-        // 4. Send the message immediately (optional: you could just display it, but sending it starts the chat)
-        setMessages(prev => [...prev, initialUserMessage]);
-        
-        // 5. Automatically trigger the AI response
-        // We call a function (or copy the logic) to send this initial message
-        handleInitialSend(initialPrompt, messages); 
-    }
-  }, []); // Run only on mount
-
-  // Helper function to send the initial message immediately after detecting post data
   const handleInitialSend = async (initialPrompt: string, currentMessages: Message[]) => {
     setLoading(true);
 
@@ -89,7 +57,6 @@ const AIChat = () => {
                 },
                 body: JSON.stringify({
                     message: initialPrompt,
-                    // Use initial messages (including the system message) plus the new prompt
                     history: [...currentMessages, { role: 'user', content: initialPrompt, timestamp: new Date() }].slice(-6), 
                 }),
             }
@@ -107,13 +74,10 @@ const AIChat = () => {
             timestamp: new Date(),
         };
 
-        // Add both the initial user prompt and the assistant response
         setMessages(prev => {
-            // Check if the initial prompt is already the last message to avoid duplicates
             if (prev[prev.length - 1]?.content !== initialPrompt) {
                 return [...prev, { role: 'user', content: initialPrompt, timestamp: new Date() }, assistantMessage];
             }
-            // Otherwise, just append the assistant message
             return [...prev, assistantMessage];
         });
     } catch (error) {
@@ -123,12 +87,7 @@ const AIChat = () => {
         setLoading(false);
     }
   };
-  // --- END EFFECT AND HANDLER ---
 
-
-  useEffect(() => {
-    messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
-  }, [messages]);
 
   const handleSend = async () => {
     if (!input.trim() || loading) return;
@@ -154,7 +113,7 @@ const AIChat = () => {
           },
           body: JSON.stringify({
             message: userMessage.content,
-            history: messages.slice(-5), // Last 5 messages for context
+            history: messages.slice(-5),
           }),
         }
       );
@@ -188,21 +147,36 @@ const AIChat = () => {
     }
   };
   
-  // Function to handle the navigation to the AI's profile
   const handleAIAvatarClick = () => {
     navigate('/profile/afuai'); 
   };
 
+  useEffect(() => {
+    const state = location.state as LocationState;
+
+    if (state?.context === 'post_analysis' && state.postDetails) {
+        const { postContent, postAuthorHandle } = state.postDetails;
+        
+        const initialPrompt = `Please analyze this post from @${postAuthorHandle}:\n\n"${postContent}"`;
+        
+        navigate(location.pathname, { replace: true, state: {} });
+
+        handleInitialSend(initialPrompt, messages); 
+    }
+  }, []);
+
+  useEffect(() => {
+    messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
+  }, [messages]);
+
+
   return (
     <div className="flex flex-col h-screen bg-background">
-      {/* Header */}
       <div className="border-b border-border bg-card p-4 flex items-center gap-3">
-        {/* Back Button */}
         <Button variant="ghost" size="icon" onClick={() => navigate(-1)} className="rounded-full">
           <ArrowLeft className="h-5 w-5" />
         </Button>
         
-        {/* Clickable AI Profile Section */}
         <div 
           className="flex items-center gap-2 cursor-pointer hover:opacity-80 transition-opacity" 
           onClick={handleAIAvatarClick} 
@@ -213,7 +187,6 @@ const AIChat = () => {
           <div>
             <div className="flex items-center gap-1">
               <h1 className="font-bold text-foreground">AfuAI</h1>
-              {/* === X ORGANIZATION GOLD VERIFIED BADGE === */}
               {isAIVerified && (
                 <img 
                   src="https://upload.wikimedia.org/wikipedia/commons/archive/8/81/20230122072306!Twitter_Verified_Badge_Gold.svg" 
@@ -222,14 +195,12 @@ const AIChat = () => {
                   title="Verified AI Assistant"
                 />
               )}
-              {/* ======================================== */}
             </div>
             <p className="text-xs text-muted-foreground">Your AI Assistant</p>
           </div>
         </div>
       </div>
 
-      {/* Messages */}
       <div className="flex-1 overflow-y-auto p-4 space-y-4">
         {messages.map((msg, idx) => (
           <div
@@ -260,7 +231,6 @@ const AIChat = () => {
         <div ref={messagesEndRef} />
       </div>
 
-      {/* Input */}
       <div className="border-t border-border bg-card p-4">
         <div className="flex gap-2">
           <Input
