@@ -4,7 +4,8 @@ import { supabase } from '@/integrations/supabase/client';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Card } from '@/components/ui/card';
-import { Bot, Send, Loader2, ArrowLeft } from 'lucide-react';
+// Note: Added CheckCircle to your imports
+import { Bot, Send, Loader2, ArrowLeft, CheckCircle } from 'lucide-react'; 
 import { toast } from 'sonner';
 import { useNavigate } from 'react-router-dom';
 
@@ -27,6 +28,9 @@ const AIChat = () => {
   const [input, setInput] = useState('');
   const [loading, setLoading] = useState(false);
   const messagesEndRef = useRef<HTMLDivElement>(null);
+
+  // Hardcode the AI as verified for the purposes of this display
+  const isAIVerified = true; 
 
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
@@ -89,20 +93,42 @@ const AIChat = () => {
       setLoading(false);
     }
   };
+  
+  // Function to handle the navigation to the AI's profile
+  const handleAIAvatarClick = () => {
+    // Assuming your user profile route is '/profile/:username'
+    navigate('/profile/afuai'); 
+  };
 
   return (
     <div className="flex flex-col h-screen bg-background">
       {/* Header */}
       <div className="border-b border-border bg-card p-4 flex items-center gap-3">
+        {/* Back Button */}
         <Button variant="ghost" size="icon" onClick={() => navigate(-1)} className="rounded-full">
           <ArrowLeft className="h-5 w-5" />
         </Button>
-        <div className="flex items-center gap-2">
+        
+        {/* Clickable AI Profile Section */}
+        <div 
+          className="flex items-center gap-2 cursor-pointer hover:opacity-80 transition-opacity" 
+          onClick={handleAIAvatarClick} 
+        >
           <div className="h-10 w-10 rounded-full bg-primary/10 flex items-center justify-center">
             <Bot className="h-6 w-6 text-primary" />
           </div>
           <div>
-            <h1 className="font-bold text-foreground">AfuAI</h1>
+            <div className="flex items-center gap-1">
+              <h1 className="font-bold text-foreground">AfuAI</h1>
+              {/* === GOLDEN VERIFICATION BADGE === */}
+              {isAIVerified && (
+                <CheckCircle 
+                  className="h-5 w-5 text-yellow-500 fill-yellow-500" // Styled for GOLD
+                  title="Verified AI Assistant"
+                />
+              )}
+              {/* ================================= */}
+            </div>
             <p className="text-xs text-muted-foreground">Your AI Assistant</p>
           </div>
         </div>
