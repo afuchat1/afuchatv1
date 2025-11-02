@@ -371,6 +371,12 @@ const Profile = () => {
 			navigate('/');
 		}
 	};
+    
+    // --- ADDED New handleSettings function ---
+    const handleSettings = () => {
+		navigate('/settings'); 
+	};
+    // ----------------------------------------
 
 	const handleAdminDashboard = () => {
 		navigate('/admin'); 
@@ -443,15 +449,32 @@ const Profile = () => {
 						</div>
 					</div>
 					{user && (
-						<Button
-							variant="ghost"
-							size="icon"
-							onClick={handleLogout}
-							className="rounded-full"
-							title="Log out"
-						>
-							<LogOut className="h-5 w-5" />
-						</Button>
+						<div className="flex items-center gap-1">
+                            {/* START: ADDED SETTINGS BUTTON */}
+                            {user.id === profileId && (
+                                <Button
+                                    variant="ghost"
+                                    size="icon"
+                                    onClick={handleSettings}
+                                    className="rounded-full"
+                                    title="Settings"
+                                >
+                                    <Settings className="h-5 w-5" />
+                                </Button>
+                            )}
+                            {/* END: ADDED SETTINGS BUTTON */}
+
+							{/* Existing Log Out Button */}
+							<Button
+								variant="ghost"
+								size="icon"
+								onClick={handleLogout}
+								className="rounded-full"
+								title="Log out"
+							>
+								<LogOut className="h-5 w-5" />
+							</Button>
+						</div>
 					)}
 				</div>
 			</div>
