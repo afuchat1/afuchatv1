@@ -1,9 +1,9 @@
-import { useEffect, useState, useCallback, useRef } from 'react'; // 🚨 ADDED useRef
+import { useEffect, useState, useCallback, useRef } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/contexts/AuthContext';
 import { toast } from 'sonner';
-import { MessageSquare, Heart, Share, User, Ellipsis } from 'lucide-react';
+import { MessageSquare, Heart, Share, User, Ellipsis, Sparkles } from 'lucide-react'; // 🚨 ADDED Sparkles
 import { Skeleton } from '@/components/ui/skeleton';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -193,7 +193,7 @@ const ReplyItem = ({ reply, navigate, handleViewProfile }: { reply: Reply; navig
 // --- END ReplyItem Component ---
 
 
-// --- PostCard Component (Unchanged) ---
+// --- PostCard Component ---
 const PostCard = ({ post, addReply, user, navigate, onAcknowledge }:
   { post: Post; addReply: (postId: string, reply: Reply) => void; user: any; navigate: any; onAcknowledge: (postId: string, hasLiked: boolean) => void }) => {
 
@@ -279,9 +279,16 @@ const PostCard = ({ post, addReply, user, navigate, onAcknowledge }:
             </span>
           </div>
 
-          <Button variant="ghost" size="icon" className="h-8 w-8 rounded-full flex-shrink-0 ml-2">
-            <Ellipsis className="h-4 w-4 text-muted-foreground" />
-          </Button>
+          <div className="flex items-center gap-1">
+            {/* 🚨 ADDED AI ICON BUTTON */}
+            <Button variant="ghost" size="icon" className="h-8 w-8 rounded-full flex-shrink-0" title="AI options available">
+                <Sparkles className="h-4 w-4 text-primary/70" />
+            </Button>
+            
+            <Button variant="ghost" size="icon" className="h-8 w-8 rounded-full flex-shrink-0">
+              <Ellipsis className="h-4 w-4 text-muted-foreground" />
+            </Button>
+          </div>
         </div>
 
         {/* 🎯 POST CONTENT WRAPPED IN LINK TO DETAIL PAGE */}
