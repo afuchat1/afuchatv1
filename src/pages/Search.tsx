@@ -295,11 +295,15 @@ const Search = () => {
                 <h2 className="text-sm font-bold text-foreground mb-3 border-b pb-1">People ({userResults.length})</h2>
                 <div className="space-y-3">
                   {userResults.map((result) => (
-                    <Card key={result.id} className="p-4 hover:shadow-xl transition-shadow">
+                    <Card 
+                        key={result.id} 
+                        className="p-4 hover:shadow-xl transition-shadow cursor-pointer"
+                        // 🚨 FIX 1: Make Card clickable for navigation
+                        onClick={() => handleViewProfile(result.id)}
+                    >
                       <div className="flex items-center justify-between">
                         <div
-                          className="flex items-center space-x-3 cursor-pointer flex-1"
-                          onClick={() => handleViewProfile(result.id)}
+                          className="flex items-center space-x-3 flex-1"
                         >
                           <div className="h-10 w-10 rounded-full bg-primary flex items-center justify-center text-primary-foreground shadow-md flex-shrink-0">
                             <User className="h-5 w-5" />
@@ -320,7 +324,11 @@ const Search = () => {
                         <Button
                           variant="ghost"
                           size="sm"
-                          onClick={() => handleStartChat(result.id)}
+                          // 🚨 FIX 2: Stop propagation when clicking the Message button
+                          onClick={(e) => {
+                            e.stopPropagation(); // Prevents the parent Card's onClick from firing
+                            handleStartChat(result.id);
+                          }}
                           disabled={result.is_private}
                           className="ml-4 flex-shrink-0 text-xs"
                         >
@@ -342,6 +350,7 @@ const Search = () => {
                     <Card
                       key={result.id}
                       className="p-4 hover:shadow-xl transition-shadow cursor-pointer"
+                      // 🚨 FIX 3: Make the Card itself clickable for post navigation
                       onClick={() => handleViewPost(result.id)}
                     >
                       <div className="flex items-start space-x-3 mb-2">
