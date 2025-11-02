@@ -52,7 +52,6 @@ const EditProfile: React.FC = () => {
 
     // Verify route matches current user (userId could be id or handle)
     if (userId && userId !== user.id) {
-      // For handle-based routes, we'd need to fetch by handle, but for simplicity, redirect if mismatch
       toast.error('Access denied: Can only edit your own profile');
       navigate(`/${user.id}`);
       return;
@@ -62,7 +61,7 @@ const EditProfile: React.FC = () => {
       try {
         const { data, error } = await supabase
           .from('profiles')
-          .select('*')  // Fetch all real fields from schema
+          .select('*')
           .eq('id', user.id)
           .single() as { data: ProfileRow | null; error: any };
 
@@ -126,6 +125,9 @@ const EditProfile: React.FC = () => {
     setSaving(true);
     try {
       const updateData: ProfileUpdate = {
+        // 🚨 IMPORTANT FIX: Explicitly include the user ID for upsert logic
+        id: user.id, 
+        
         display_name: profile.display_name.trim(),
         handle: profile.handle.trim(),
         bio: profile.bio.trim() || null, 
@@ -137,8 +139,10 @@ const EditProfile: React.FC = () => {
 
       const { error } = await supabase
         .from('profiles')
-        .upsert(updateData)  // Use upsert to create if not exists
-        .eq('id', user.id);
+        // Using upsert on the primary key (id) and relying on the RLS policy.
+        .upsert(updateData) 
+        // We can keep the .eq() for added safety, though upsert generally handles the match based on PK.
+        .eq('id', user.id); 
 
       if (error) throw error;
 
@@ -146,10 +150,16 @@ const EditProfile: React.FC = () => {
       navigate(`/${user.id}`);
     } catch (error: any) {
       console.error('Update error:', error);
+      
+      // Improved error handling for common Supabase issues
       if (error.code === '23505') { 
           toast.error('The handle is already taken. Please choose another.');
-      } else {
-          toast.error('Failed to update profile');
+      } else if (error.code === '42501' || error.message.includes('permission denied')) {
+          // This often indicates a missing RLS policy
+          toast.error('Permission denied. Please ensure RLS policies are correct in Supabase.');
+      } 
+      else {
+          toast.error(`Failed to update profile. Error: ${error.message}`);
       }
     } finally {
       setSaving(false);
