@@ -1,18 +1,19 @@
+// src/pages/EditProfile.tsx
+
 import { useState, useEffect } from 'react';
-import { useParams, useNavigate } from 'react-router-dom';
-import { useAuth } from '@/contexts/AuthContext';
+import { useNavigate } from 'react-router-dom';
+// NOTE: Assuming your AuthContext provides 'user' and 'isLoading'
+import { useAuth } from '@/contexts/AuthContext'; 
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
-import { Switch } from '@/components/ui/switch';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Separator } from '@/components/ui/separator'; 
-import { Loader2, User, Lock, Eye, MessageCircle, MapPin, Globe } from 'lucide-react'; 
+import { Loader2, User } from 'lucide-react'; 
 
-// Import Supabase types (assuming types/supabase.ts exists)
 import type { Database } from '@/types/supabase';
 
 type ProfileRow = Database['public']['Tables']['profiles']['Row'];
@@ -22,47 +23,40 @@ interface EditProfileForm {
   display_name: string;
   handle: string;
   bio: string;
-  is_private: boolean;
-  show_online_status: boolean;
-  show_read_receipts: boolean;
 }
 
 const EditProfile: React.FC = () => {
-  const { user } = useAuth();
+  // 💡 ASSUMPTION: useAuth now provides an isLoading flag for initial authentication check
+  const { user, isLoading: authLoading } = useAuth(); 
   const navigate = useNavigate();
-  const { userId } = useParams<{ userId: string }>();
 
   const [profile, setProfile] = useState<EditProfileForm>({
     display_name: '',
     handle: '',
     bio: '',
-    is_private: false,
-    show_online_status: true,
-    show_read_receipts: true,
   });
-  const [loading, setLoading] = useState<boolean>(true);
+  const [profileLoading, setProfileLoading] = useState<boolean>(true); // Renamed internal loading state
   const [saving, setSaving] = useState<boolean>(false);
 
   useEffect(() => {
-    if (!user?.id) {
-        setLoading(false);
-        toast.error("User ID not found for fetching profile.");
+    // 1. Do nothing if auth is still loading (authLoading = true)
+    if (authLoading) return;
+
+    // 2. Redirect if no user is found after auth loads (Unauthenticated)
+    if (!user) {
+        toast.error("You must be logged in to edit your profile.");
+        // Redirect to a safe place (e.g., login page)
+        navigate('/login'); 
         return;
     }
 
-    // Verify route matches current user (userId could be id or handle)
-    if (userId && userId !== user.id) {
-      // For handle-based routes, we'd need to fetch by handle, but for simplicity, redirect if mismatch
-      toast.error('Access denied: Can only edit your own profile');
-      navigate(`/${user.id}`);
-      return;
-    }
-    
     const fetchProfile = async () => {
+      setProfileLoading(true);
+      
       try {
         const { data, error } = await supabase
           .from('profiles')
-          .select('*')  // Fetch all real fields from schema
+          .select('display_name, handle, bio') 
           .eq('id', user.id)
           .single() as { data: ProfileRow | null; error: any };
 
@@ -73,34 +67,21 @@ const EditProfile: React.FC = () => {
             display_name: data.display_name,
             handle: data.handle,
             bio: data.bio || '',
-            is_private: data.is_private || false,
-            show_online_status: data.show_online_status || true,
-            show_read_receipts: data.show_read_receipts || true,
-          });
-        } else {
-          // If no profile exists, initialize with defaults (upsert on save)
-          setProfile({
-            display_name: user.user_metadata?.full_name || '',
-            handle: user.user_metadata?.user_name || '',
-            bio: '',
-            is_private: false,
-            show_online_status: true,
-            show_read_receipts: true,
           });
         }
       } catch (error: any) {
         console.error('Error fetching profile:', error);
         toast.error('Failed to load profile');
       } finally {
-        setLoading(false);
+        setProfileLoading(false);
       }
     };
 
     fetchProfile();
-  }, [user, navigate, userId]);
+  }, [user, navigate, authLoading]); // Dependency array includes user and authLoading
 
   const handleInputChange = (
-    e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>
+    e: React.ChangeEvent<HTMLInputElement | React.TextareaHTMLAttributes<HTMLTextAreaElement>>
   ) => {
     const { name, value } = e.target;
     if (name === 'handle') {
@@ -111,12 +92,8 @@ const EditProfile: React.FC = () => {
     setProfile((prev) => ({ ...prev, [name as keyof EditProfileForm]: value }));
   };
 
-  const handleToggleChange = (key: keyof Pick<EditProfileForm, 'is_private' | 'show_online_status' | 'show_read_receipts'>) => {
-    setProfile((prev) => ({ ...prev, [key]: !prev[key] }));
-  };
-
   const handleSave = async () => {
-    if (!user) return;
+    if (!user) return; // Should be handled by the useEffect redirect, but good defensive programming
 
     if (!profile.display_name.trim() || !profile.handle.trim()) {
         toast.error("Display Name and Handle are required.");
@@ -129,21 +106,19 @@ const EditProfile: React.FC = () => {
         display_name: profile.display_name.trim(),
         handle: profile.handle.trim(),
         bio: profile.bio.trim() || null, 
-        is_private: profile.is_private,
-        show_online_status: profile.show_online_status,
-        show_read_receipts: profile.show_read_receipts,
         updated_at: new Date().toISOString(),
       };
 
       const { error } = await supabase
         .from('profiles')
-        .upsert(updateData)  // Use upsert to create if not exists
+        .update(updateData)
         .eq('id', user.id);
 
       if (error) throw error;
 
       toast.success('Profile updated successfully!');
-      navigate(`/${user.id}`);
+      // Assuming you want to navigate to the user's profile view
+      navigate(`/${user.id}`); 
     } catch (error: any) {
       console.error('Update error:', error);
       if (error.code === '23505') { 
@@ -160,13 +135,19 @@ const EditProfile: React.FC = () => {
     navigate(`/${user?.id}`);
   };
 
-  if (loading) {
+  // Show a spinner while AUTH is loading OR the PROFILE data is fetching
+  if (authLoading || profileLoading) {
     return (
       <div className="min-h-screen bg-background flex items-center justify-center p-4">
         <Loader2 className="h-8 w-8 animate-spin text-primary" />
       </div>
     );
   }
+
+  // NOTE: If we reached here without a 'user' object, the useEffect redirect should have fired.
+  // This return statement ensures the component still doesn't crash if the redirect is slow.
+  if (!user) return null; 
+
 
   return (
     <div className="min-h-screen bg-background flex justify-center p-4 md:p-8">
@@ -233,84 +214,6 @@ const EditProfile: React.FC = () => {
                 <span>Keep it short and punchy!</span>
                 <span>{profile.bio.length}/150</span>
               </p>
-            </div>
-
-            <Separator className="my-8 bg-border/50" />
-
-            <h3 className="text-lg font-semibold border-b pb-2 text-primary">Privacy Settings</h3>
-
-            {/* Private Account Toggle */}
-            <div className="space-y-2">
-              <Label className="text-sm font-medium text-foreground flex items-center gap-2">
-                <Lock className="h-4 w-4 text-muted-foreground" />
-                Private Account
-              </Label>
-              <div className="flex items-center justify-between p-3 bg-input/50 rounded-md">
-                <p className="text-xs text-muted-foreground">Only approved followers can see your posts and profile</p>
-                <Switch
-                  checked={profile.is_private}
-                  onCheckedChange={() => handleToggleChange('is_private')}
-                  disabled={saving}
-                />
-              </div>
-            </div>
-
-            {/* Show Online Status Toggle */}
-            <div className="space-y-2">
-              <Label className="text-sm font-medium text-foreground flex items-center gap-2">
-                <Eye className="h-4 w-4 text-muted-foreground" />
-                Show Online Status
-              </Label>
-              <div className="flex items-center justify-between p-3 bg-input/50 rounded-md">
-                <p className="text-xs text-muted-foreground">Display when you're active on AfuChat</p>
-                <Switch
-                  checked={profile.show_online_status}
-                  onCheckedChange={() => handleToggleChange('show_online_status')}
-                  disabled={saving}
-                />
-              </div>
-            </div>
-
-            {/* Show Read Receipts Toggle */}
-            <div className="space-y-2">
-              <Label className="text-sm font-medium text-foreground flex items-center gap-2">
-                <MessageCircle className="h-4 w-4 text-muted-foreground" />
-                Show Read Receipts
-              </Label>
-              <div className="flex items-center justify-between p-3 bg-input/50 rounded-md">
-                <p className="text-xs text-muted-foreground">Let others see when you've read their messages</p>
-                <Switch
-                  checked={profile.show_read_receipts}
-                  onCheckedChange={() => handleToggleChange('show_read_receipts')}
-                  disabled={saving}
-                />
-              </div>
-            </div>
-
-            <Separator className="my-8 bg-border/50" />
-
-            <h3 className="text-lg font-semibold border-b pb-2 text-primary">Additional Information</h3>
-
-            {/* Location - Coming Soon */}
-            <div className="space-y-2">
-              <Label className="text-sm font-medium text-foreground flex items-center gap-2">
-                <MapPin className="h-4 w-4 text-muted-foreground" />
-                Location
-              </Label>
-              <div className="h-11 bg-muted/50 flex items-center justify-center rounded-md text-sm text-muted-foreground">
-                Coming soon
-              </div>
-            </div>
-
-            {/* Website - Coming Soon */}
-            <div className="space-y-2">
-              <Label className="text-sm font-medium text-foreground flex items-center gap-2">
-                <Globe className="h-4 w-4 text-muted-foreground" />
-                Website
-              </Label>
-              <div className="h-11 bg-muted/50 flex items-center justify-center rounded-md text-sm text-muted-foreground">
-                Coming soon
-              </div>
             </div>
           </div>
           
