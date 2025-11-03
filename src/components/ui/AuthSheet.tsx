@@ -7,7 +7,8 @@ import { Label } from '@/components/ui/label';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Dialog, DialogContent, DialogClose } from '@/components/ui/dialog';
 import { toast } from 'sonner';
-import { X, Eye, EyeOff, User, AtSign, Mail, Lock, MessageCircle, ShoppingCart, Cpu } from 'lucide-react';
+// Updated icon import: Changed 'X' to 'Minimize2' to match the screenshot's unique 'crossed lines'
+import { Minimize2, Eye, EyeOff, User, AtSign, Mail, Lock, MessageCircle, ShoppingCart, Cpu } from 'lucide-react'; 
 import Logo from '@/components/Logo';
 
 interface AuthSheetContentProps {
@@ -44,11 +45,19 @@ const AuthSheetContent: React.FC<AuthSheetContentProps> = ({ onClose }) => {
           },
         });
         if (error) throw error;
+        // User must confirm email before signing in
         toast.success('Account created! Check your email for verification.');
         onClose();
       } else {
         const { error } = await supabase.auth.signInWithPassword({ email, password });
-        if (error) throw error;
+        // Handling the "Email not confirmed" case explicitly for better user feedback
+        if (error) {
+            if (error.message.includes('Email not confirmed')) {
+                toast.error('Email not confirmed. Please check your inbox for a verification link.');
+            } else {
+                throw error;
+            }
+        }
         toast.success('Signed in successfully!');
         onClose();
       }
@@ -58,14 +67,20 @@ const AuthSheetContent: React.FC<AuthSheetContentProps> = ({ onClose }) => {
       setLoading(false);
     }
   };
+  
+  // Placeholder function for handling Forgot Password
+  const handleForgotPassword = () => {
+    toast.info("Forgot Password functionality pending implementation.");
+    // navigate('/reset-password'); // Uncomment and implement actual navigation/flow
+  };
 
   return (
     <Card className="w-full border border-border/30 shadow-2xl rounded-2xl flex flex-col h-full backdrop-blur-md bg-white/90 dark:bg-gray-900/80">
       <CardHeader className="pt-4 pb-2 relative flex flex-col items-center">
-        {/* Single Cancel Icon */}
+        {/* Updated Cancel Icon: Using Minimize2 to visually match the crossed-line icon */}
         <DialogClose asChild>
           <button className="absolute right-3 top-3 p-0 rounded-full bg-transparent hover:bg-transparent">
-            <X className="h-5 w-5 text-muted-foreground" />
+            <Minimize2 className="h-5 w-5 text-muted-foreground" />
           </button>
         </DialogClose>
 
@@ -184,6 +199,19 @@ const AuthSheetContent: React.FC<AuthSheetContentProps> = ({ onClose }) => {
               </Button>
             </div>
           </div>
+          
+          {/* Added 'Forgot Password' Link */}
+          {!isSignUp && (
+            <div className="text-right pb-1">
+                <button
+                    type="button"
+                    onClick={handleForgotPassword}
+                    className="text-[10px] text-primary/80 hover:text-primary transition-colors font-medium underline"
+                >
+                    Forgot Password?
+                </button>
+            </div>
+          )}
 
           <Button
             type="submit"
