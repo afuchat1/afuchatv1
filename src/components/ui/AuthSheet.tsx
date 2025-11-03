@@ -62,15 +62,13 @@ const AuthSheetContent: React.FC<AuthSheetContentProps> = ({ onClose }) => {
   return (
     <Card className="w-full border border-border/30 shadow-2xl rounded-2xl flex flex-col h-full backdrop-blur-md bg-white/90 dark:bg-gray-900/80">
       <CardHeader className="pt-4 pb-2 relative flex flex-col items-center">
+        {/* Single Cancel Icon */}
         <DialogClose asChild>
-          <Button
-            variant="ghost"
-            size="sm"
-            className="absolute right-3 top-3 h-6 w-6 p-0 rounded-full hover:bg-accent/20"
-          >
-            <X className="h-4 w-4" />
-          </Button>
+          <button className="absolute right-3 top-3 p-0 rounded-full bg-transparent hover:bg-transparent">
+            <X className="h-5 w-5 text-muted-foreground" />
+          </button>
         </DialogClose>
+
         <Logo size="sm" className="mb-2" />
         <CardTitle className="text-lg font-bold text-center bg-gradient-to-r from-primary to-secondary bg-clip-text text-transparent">
           {isSignUp ? 'Create Account' : 'Welcome Back'}
@@ -79,7 +77,7 @@ const AuthSheetContent: React.FC<AuthSheetContentProps> = ({ onClose }) => {
           Post. Chat. Shop. AI. All in One
         </CardDescription>
 
-        {/* Optional mini features section */}
+        {/* Mini feature section */}
         <div className="flex justify-center gap-4 mt-3">
           <div className="flex flex-col items-center text-center text-xs text-muted-foreground">
             <MessageCircle className="h-5 w-5 text-primary mb-1" />
@@ -139,7 +137,6 @@ const AuthSheetContent: React.FC<AuthSheetContentProps> = ({ onClose }) => {
             </>
           )}
 
-          {/* Email */}
           <div className="space-y-0.5">
             <Label htmlFor="email" className="text-xs font-medium flex items-center gap-1">
               <Mail className="h-3 w-3 text-muted-foreground" />
@@ -159,7 +156,6 @@ const AuthSheetContent: React.FC<AuthSheetContentProps> = ({ onClose }) => {
             </div>
           </div>
 
-          {/* Password */}
           <div className="space-y-0.5">
             <Label htmlFor="password" className="text-xs font-medium flex items-center gap-1">
               <Lock className="h-3 w-3 text-muted-foreground" />
@@ -181,7 +177,7 @@ const AuthSheetContent: React.FC<AuthSheetContentProps> = ({ onClose }) => {
                 type="button"
                 variant="ghost"
                 size="sm"
-                className="absolute right-1.5 top-1/2 -translate-y-1/2 h-5 w-5 p-0 hover:bg-accent/20 rounded-full"
+                className="absolute right-1.5 top-1/2 -translate-y-1/2 h-5 w-5 p-0 hover:bg-transparent"
                 onClick={() => setShowPassword(!showPassword)}
               >
                 {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
@@ -189,7 +185,6 @@ const AuthSheetContent: React.FC<AuthSheetContentProps> = ({ onClose }) => {
             </div>
           </div>
 
-          {/* Submit */}
           <Button
             type="submit"
             className="w-full h-9 text-xs font-semibold shadow-sm hover:shadow-md transition-all duration-100 bg-gradient-to-r from-primary to-secondary hover:from-primary/90"
@@ -204,7 +199,6 @@ const AuthSheetContent: React.FC<AuthSheetContentProps> = ({ onClose }) => {
           </Button>
         </form>
 
-        {/* Switch SignIn/SignUp */}
         <div className="mt-3 text-center flex-shrink-0">
           <button
             type="button"
