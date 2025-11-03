@@ -1,73 +1,115 @@
-# Welcome to your Lovable project
 
-## Project info
+# 🚀 AfuChat
 
-**URL**: https://lovable.dev/projects/8ed6ccd6-64ae-43dc-9984-9d66403d01d9
+**AfuChat** is an all-in-one social platform that combines **posting, chatting, AI assistance, and shopping** — all inside a single fast, private, and data-friendly app.
 
-## How can I edit this code?
+With AfuChat, you can:
+- 📝 **Post & share** like on X (Twitter)
+- 💬 **Chat instantly** like Telegram
+- 🧠 **Use AfuAI**, your built-in smart assistant
+- 🛍️ **Shop or sell** directly through AfuMall
+- ⚡ **Enjoy speed & privacy** — optimized for low bandwidth
 
-There are several ways of editing your application.
+---
 
-**Use Lovable**
+## 🌟 Key Features
 
-Simply visit the [Lovable Project](https://lovable.dev/projects/8ed6ccd6-64ae-43dc-9984-9d66403d01d9) and start prompting.
+### 🗣️ Social Feed
+Share updates, ideas, photos, and stories with the world. Follow others, react, and connect on a modern, clean timeline.
 
-Changes made via Lovable will be committed automatically to this repo.
+### 💬 Instant Chat
+Message your friends privately in real time. Simple, fast, secure — and built to use less data.
 
-**Use your preferred IDE**
+### 🧠 AfuAI
+Get help, generate ideas, or have fun chatting with your smart built-in AI assistant — always ready to help you create, learn, or discover.
 
-If you want to work locally using your own IDE, you can clone this repo and push changes. Pushed changes will also be reflected in Lovable.
+### 🛍️ AfuMall
+Explore the integrated marketplace where users can buy, sell, and discover products — all without leaving AfuChat.
 
-The only requirement is having Node.js & npm installed - [install with nvm](https://github.com/nvm-sh/nvm#installing-and-updating)
+### 🔒 Privacy & Speed
+AfuChat is lightweight, ad-free, and privacy-first. Perfect for both low and high network speeds.
 
-Follow these steps:
+---
 
-```sh
-# Step 1: Clone the repository using the project's Git URL.
-git clone <YOUR_GIT_URL>
+## 💡 Why AfuChat?
 
-# Step 2: Navigate to the project directory.
-cd <YOUR_PROJECT_NAME>
+> “One app for everything — post, chat, shop, and think.”
 
-# Step 3: Install the necessary dependencies.
-npm i
+AfuChat brings together the best of social media, messaging, AI, and online shopping into one unified experience — simple, modern, and built for everyone.
 
-# Step 4: Start the development server with auto-reloading and an instant preview.
+---
+
+## 🛠️ Tech Overview
+- **Frontend:** React + TypeScript + Vite  
+- **Backend:** Supabase (Authentication, Database, Storage)  
+- **PWA Ready:** Works offline and installable on any device  
+- **Design:** TailwindCSS + Shadcn UI Components  
+
+---
+
+## 📱 Installation
+
+### Clone the repository
+```bash
+git clone https://github.com/yourusername/afuchat.git
+cd afuchat
+
+Install dependencies
+
+npm install
+
+Start the development server
+
 npm run dev
-```
 
-**Edit a file directly in GitHub**
 
-- Navigate to the desired file(s).
-- Click the "Edit" button (pencil icon) at the top right of the file view.
-- Make your changes and commit the changes.
+---
 
-**Use GitHub Codespaces**
+🌍 PWA Support
 
-- Navigate to the main page of your repository.
-- Click on the "Code" button (green button) near the top right.
-- Select the "Codespaces" tab.
-- Click on "New codespace" to launch a new Codespace environment.
-- Edit files directly within the Codespace and commit and push your changes once you're done.
+AfuChat is built as a Progressive Web App — install it directly on your phone or desktop, and enjoy full functionality without the App Store.
 
-## What technologies are used for this project?
 
-This project is built with:
+---
 
-- Vite
-- TypeScript
-- React
-- shadcn-ui
-- Tailwind CSS
+🧭 Roadmap
 
-## How can I deploy this project?
+✅ AfuAI Integration
 
-Simply open [Lovable](https://lovable.dev/projects/8ed6ccd6-64ae-43dc-9984-9d66403d01d9) and click on Share -> Publish.
+✅ AfuMall Marketplace
 
-## Can I connect a custom domain to my Lovable project?
+⏳ Voice & Video Chat
 
-Yes, you can!
+⏳ Stories & Reactions
 
-To connect a domain, navigate to Project > Settings > Domains and click Connect Domain.
+⏳ Verified Pages & Creators
 
-Read more here: [Setting up a custom domain](https://docs.lovable.dev/features/custom-domain#custom-domain)
+
+
+---
+
+💬 Community
+
+Join the AfuChat movement — a homegrown platform for creativity, privacy, and connection.
+
+Follow us:
+
+🌐 Website
+
+📢 AfuNews Channel
+
+🛍️ AfuMall
+
+
+
+---
+
+⚖️ License
+
+Copyright © 2025 AfuChat
+All rights reserved.
+
+
+---
+
+AfuChat — Post. Chat. Shop. AI. All in One.
