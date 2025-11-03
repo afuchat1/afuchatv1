@@ -14,6 +14,7 @@ import Notifications from "./pages/Notifications";
 import PostDetail from "./pages/PostDetail";
 import AdminDashboard from "./pages/AdminDashboard";
 import AIChat from "./pages/AIChat";
+import Install from "./pages/Install";
 
 const queryClient = new QueryClient();
 
@@ -37,6 +38,7 @@ const App = () => (
             <Route path="/post/:postId" element={<PostDetail />} />
             <Route path="/admin" element={<AdminDashboard />} />
             <Route path="/ai-chat" element={<AIChat />} />
+            <Route path="/install" element={<Install />} />
 
             <Route path="/profile/:userId" element={<ProfileRedirect />} />
 

@@ -8,7 +8,9 @@ import { Skeleton } from '@/components/ui/skeleton';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 // NEW: Import the dedicated PostActionsSheet component
-import PostActionsSheet from '@/components/PostActionsSheet'; 
+import PostActionsSheet from '@/components/PostActionsSheet';
+import DeletePostSheet from '@/components/DeletePostSheet';
+import ReportPostSheet from '@/components/ReportPostSheet';
 
 
 // --- INTERFACES ---
@@ -420,7 +422,12 @@ const Feed = () => {
   const [loading, setLoading] = useState(true);
   const [forceLoaded, setForceLoaded] = useState(false);
   const navigate = useNavigate();
-  const feedRef = useRef<HTMLDivElement>(null); 
+  const feedRef = useRef<HTMLDivElement>(null);
+  
+  // NEW: State for delete and report sheets
+  const [deletePostId, setDeletePostId] = useState<string | null>(null);
+  const [reportPostId, setReportPostId] = useState<string | null>(null);
+  const [isDeleting, setIsDeleting] = useState(false);
 
   const addReply = useCallback((postId: string, newReply: Reply) => {
     setPosts((cur) =>
@@ -487,47 +494,56 @@ const Feed = () => {
     }
   }, [user]);
 
-  // NEW: Delete Post Handler
-  const handleDeletePost = useCallback(async (postId: string) => {
-    if (!user) {
-        toast.error('You must be logged in to delete posts.');
-        return;
-    }
-    if (user.id !== posts.find(p => p.id === postId)?.author_id) {
+  // NEW: Delete Post Handler - Opens confirmation sheet
+  const handleDeletePost = useCallback((postId: string) => {
+    setDeletePostId(postId);
+  }, []);
+
+  // Actual delete after confirmation
+  const confirmDeletePost = useCallback(async () => {
+    if (!deletePostId || !user) return;
+    
+    setIsDeleting(true);
+    const postToDelete = posts.find(p => p.id === deletePostId);
+    if (user.id !== postToDelete?.author_id) {
         toast.error('You can only delete your own posts.');
+        setIsDeleting(false);
+        setDeletePostId(null);
         return;
     }
 
-    // Optimistic UI update
-    setPosts(currentPosts => currentPosts.filter(p => p.id !== postId));
-    toast.info('Post deleted. Undoing if failed...');
+    setPosts(currentPosts => currentPosts.filter(p => p.id !== deletePostId));
 
     const { error } = await supabase
         .from('posts')
         .delete()
-        .eq('id', postId)
-        .eq('author_id', user.id); 
+        .eq('id', deletePostId)
+        .eq('author_id', user.id);
 
     if (error) {
-        toast.error('Failed to delete post. Reverting changes.');
+        toast.error('Failed to delete post.');
         console.error('Delete error:', error);
-        // Re-fetch to revert the optimistic update 
-        fetchPosts(); 
+        fetchPosts();
     } else {
         toast.success('Post successfully deleted!');
     }
-  }, [user, posts]); // Added 'posts' to dependencies for safety
+    
+    setIsDeleting(false);
+    setDeletePostId(null);
+  }, [deletePostId, user, posts]);
 
-  // NEW: Report Post Handler
-  const handleReportPost = useCallback(async (postId: string) => {
-      if (!user) {
-          toast.error('You must be logged in to report a post.');
-          return;
-      }
+  // NEW: Report Post Handler - Opens report sheet
+  const handleReportPost = useCallback((postId: string) => {
+      setReportPostId(postId);
+  }, []);
+
+  // Actual report after reason selection
+  const confirmReportPost = useCallback((reason: string) => {
+      if (!reportPostId || !user) return;
       
-      // Placeholder for actual API call to record the report
-      console.log(`User ${user.id} reported post ${postId}`);
+      console.log(`User ${user.id} reported post ${reportPostId} for: ${reason}`);
       toast.success('Post reported. We will review this content.');
+      setReportPostId(null);
 
       // In a real app, you would insert a record into a 'post_reports' table here.
   }, [user]);
@@ -767,6 +783,21 @@ const Feed = () => {
           ))
         )}
       </div>
+      
+      {/* Delete Confirmation Sheet */}
+      <DeletePostSheet
+        isOpen={!!deletePostId}
+        onClose={() => setDeletePostId(null)}
+        onConfirm={confirmDeletePost}
+        isDeleting={isDeleting}
+      />
+      
+      {/* Report Post Sheet */}
+      <ReportPostSheet
+        isOpen={!!reportPostId}
+        onClose={() => setReportPostId(null)}
+        onReport={confirmReportPost}
+      />
     </div>
   );
 };

@@ -28,9 +28,12 @@ export default defineConfig(({ mode }) => ({
         name: 'AfuChat',
         short_name: 'AfuChat',
         description: 'Fast, text-only messaging platform',
-        theme_color: '#33CCFF',
+        theme_color: '#1B9AAA',
         background_color: '#000000',
         display: 'standalone',
+        orientation: 'portrait',
+        start_url: '/',
+        scope: '/',
         icons: [
           {
             src: '/logo.jpg',

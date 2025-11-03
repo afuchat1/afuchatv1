@@ -10,6 +10,7 @@ import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/ui/tabs';
 import { Separator } from '@/components/ui/separator';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Popover, PopoverTrigger, PopoverContent } from '@/components/ui/popover';
+import ProfileActionsSheet from '@/components/ProfileActionsSheet';
 
 interface Profile {
 	id: string;
@@ -121,6 +122,7 @@ const Profile = () => {
 
 	const [profileId, setProfileId] = useState<string | null>(null);
 	const [isAdmin, setIsAdmin] = useState(false);
+	const [isActionsSheetOpen, setIsActionsSheetOpen] = useState(false);
 
 	const fetchFollowCounts = useCallback(async (id: string) => {
 		if (!id) return;
@@ -372,11 +374,9 @@ const Profile = () => {
 		}
 	};
     
-    // --- ADDED New handleSettings function ---
-    const handleSettings = () => {
-		navigate('/settings'); 
+    const handleEditProfile = () => {
+		navigate(`/${urlParam}/edit`);
 	};
-    // ----------------------------------------
 
 	const handleAdminDashboard = () => {
 		navigate('/admin'); 
@@ -448,31 +448,16 @@ const Profile = () => {
 							<p className="text-xs text-muted-foreground">{posts.length} Posts</p>
 						</div>
 					</div>
-					{user && (
+					{user && user.id === profileId && (
 						<div className="flex items-center gap-1">
-                            {/* START: ADDED SETTINGS BUTTON */}
-                            {user.id === profileId && (
-                                <Button
-                                    variant="ghost"
-                                    size="icon"
-                                    onClick={handleSettings}
-                                    className="rounded-full"
-                                    title="Settings"
-                                >
-                                    <Settings className="h-5 w-5" />
-                                </Button>
-                            )}
-                            {/* END: ADDED SETTINGS BUTTON */}
-
-							{/* Existing Log Out Button */}
 							<Button
 								variant="ghost"
 								size="icon"
-								onClick={handleLogout}
+								onClick={() => setIsActionsSheetOpen(true)}
 								className="rounded-full"
-								title="Log out"
+								title="More options"
 							>
-								<LogOut className="h-5 w-5" />
+								<Settings className="h-5 w-5" />
 							</Button>
 						</div>
 					)}
@@ -651,6 +636,14 @@ const Profile = () => {
 					</TabsContent>
 				</Tabs>
 			</div>
+			
+			{/* Profile Actions Sheet */}
+			<ProfileActionsSheet
+				isOpen={isActionsSheetOpen}
+				onClose={() => setIsActionsSheetOpen(false)}
+				onLogout={handleLogout}
+				onEditProfile={handleEditProfile}
+			/>
 		</div>
 	);
 };
