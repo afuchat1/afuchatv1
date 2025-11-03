@@ -128,6 +128,7 @@ const Index = () => {
     if (user) {
       setIsPostModalOpen(true);
     } else {
+      // If user is not logged in, clicking the FAB takes them to auth
       navigate('/auth'); 
     }
   };
@@ -136,6 +137,7 @@ const Index = () => {
     if (user) {
       setIsChatModalOpen(true);
     } else {
+      // If user is not logged in, clicking the FAB takes them to auth
       navigate('/auth');
     }
   };
@@ -286,32 +288,49 @@ const Index = () => {
               <SearchIcon className="h-4 w-4" />
               <span className="text-xs font-medium">Search</span>
             </button>
+            
+            {/* --- MODIFIED CHATS BUTTON (Ghosted when logged out) --- */}
             <button
-              onClick={() => setActiveTab('chats')}
+              // Navigate to auth if not logged in, otherwise set tab
+              onClick={() => user ? setActiveTab('chats') : navigate('/auth')}
               className={`flex flex-col items-center justify-center gap-1 transition-colors ${
-                activeTab === 'chats' ? 'text-primary' : 'text-muted-foreground'
+                user 
+                  ? (activeTab === 'chats' ? 'text-primary' : 'text-muted-foreground')
+                  : 'text-muted-foreground opacity-50' // Ghosted style
               }`}
+              title={user ? "Open Chats" : "Log in to view chats"}
             >
               <MessageSquare className="h-4 w-4" />
               <span className="text-xs font-medium">Chats</span>
             </button>
+            {/* --- END MODIFIED CHATS BUTTON --- */}
+
+            {/* --- MODIFIED AFUAI BUTTON (Ghosted when logged out) --- */}
             <button
-              onClick={() => navigate('/ai-chat')}
-              className="flex flex-col items-center justify-center gap-1 text-muted-foreground hover:text-primary transition-colors"
+              // Navigate to auth if not logged in, otherwise navigate to AI Chat page
+              onClick={() => user ? navigate('/ai-chat') : navigate('/auth')}
+              className={`flex flex-col items-center justify-center gap-1 transition-colors ${
+                user 
+                  ? 'text-muted-foreground hover:text-primary' 
+                  : 'text-muted-foreground opacity-50' // Ghosted style
+              }`}
+              title={user ? "Talk to AfuAI" : "Log in to use AfuAI"}
             >
               <svg className="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
                 <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm0 18c-4.41 0-8-3.59-8-8s3.59-8 8-8 8 3.59 8 8-3.59 8-8 8zm-1-13h2v6h-2zm0 8h2v2h-2z"/>
               </svg>
               <span className="text-xs font-medium">AfuAI</span>
             </button>
+            {/* --- END MODIFIED AFUAI BUTTON --- */}
           </div>
         </div>
       </nav>
       
       {/* FAB for new content (Visibility now depends on isNavVisible) */}
       {/* Only show FABs if the user is authenticated */}
-      {user && activeTab === 'feed' && <NewPostFAB onClick={handleNewPost} visible={true} isNavVisible={isNavVisible} />}
-      {user && activeTab === 'chats' && <NewChatFAB onClick={handleNewChat} visible={true} isNavVisible={isNavVisible} />}
+      {/* The FABs will now also navigate to /auth if clicked when the user is logged out (handled in handleNewPost/handleNewChat) */}
+      {activeTab === 'feed' && <NewPostFAB onClick={handleNewPost} visible={true} isNavVisible={isNavVisible} />}
+      {activeTab === 'chats' && <NewChatFAB onClick={handleNewChat} visible={true} isNavVisible={isNavVisible} />}
       
       {/* Modals */}
       <NewPostModal 
