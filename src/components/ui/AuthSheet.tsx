@@ -7,7 +7,7 @@ import { Label } from '@/components/ui/label';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Dialog, DialogContent, DialogClose } from '@/components/ui/dialog';
 import { toast } from 'sonner';
-// Reverted icon import back to X, but it is unused inside the CardHeader now
+// X is only imported for use in the password toggle now
 import { X, Eye, EyeOff, User, AtSign, Mail, Lock, MessageCircle, ShoppingCart, Cpu } from 'lucide-react'; 
 import Logo from '@/components/Logo';
 
@@ -72,17 +72,9 @@ const AuthSheetContent: React.FC<AuthSheetContentProps> = ({ onClose }) => {
   };
 
   return (
-    // REMOVED backdrop-blur-md bg-white/90 and dark:bg-gray-900/80 (made background solid)
     <Card className="w-full border border-border/30 shadow-2xl rounded-2xl flex flex-col h-full bg-white dark:bg-gray-900">
       <CardHeader className="pt-4 pb-2 relative flex flex-col items-center">
-        {/* Removed the 'Minimize2' Cancel Icon entirely */}
-        {/*
-        <DialogClose asChild>
-          <button className="absolute right-3 top-3 p-0 rounded-full bg-transparent hover:bg-transparent">
-            <Minimize2 className="h-5 w-5 text-muted-foreground" />
-          </button>
-        </DialogClose>
-        */}
+        {/* The icon has been removed from here */}
 
         <Logo size="sm" className="mb-2" />
         <CardTitle className="text-lg font-bold text-center bg-gradient-to-r from-primary to-secondary bg-clip-text text-transparent">
@@ -195,6 +187,7 @@ const AuthSheetContent: React.FC<AuthSheetContentProps> = ({ onClose }) => {
                 className="absolute right-1.5 top-1/2 -translate-y-1/2 h-5 w-5 p-0 hover:bg-transparent"
                 onClick={() => setShowPassword(!showPassword)}
               >
+                {/* X is now only imported and available here for the password toggle */}
                 {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
               </Button>
             </div>
@@ -248,8 +241,8 @@ const AuthSheet: React.FC<AuthSheetProps> = ({ isOpen, onOpenChange }) => {
   return (
     <Dialog open={isOpen} onOpenChange={onOpenChange}>
       <DialogContent
-        // REMOVED backdrop-blur-md bg-card/95 and replaced with bg-card
-        className="w-full max-w-[320px] sm:max-w-xs lg:max-w-sm mx-auto p-3 max-h-[95vh] overflow-hidden rounded-2xl shadow-2xl bg-card border-border/20 border"
+        // ADDED 'data-[state=open]:[&>button]:hidden' to hide the built-in Radix close button (the X icon)
+        className="w-full max-w-[320px] sm:max-w-xs lg:max-w-sm mx-auto p-3 max-h-[95vh] overflow-hidden rounded-2xl shadow-2xl bg-card border-border/20 border data-[state=open]:[&>button]:hidden"
       >
         <div className="h-full flex flex-col
           data-[state=open]:animate-in
