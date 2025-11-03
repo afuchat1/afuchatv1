@@ -77,83 +77,80 @@ const AuthSheetContent: React.FC<AuthSheetContentProps> = ({ onClose }) => {
     }
   };
 
-  // Consistent modal height for both modes (accommodates sign-up extra fields)
-  const modalHeight = isSignUp ? 'max-h-[85vh]' : 'max-h-[75vh]'; // Slightly taller for sign-up
-
   return (
     // Card for professional, elevated appearance with subtle shadow and border
-    <Card className="w-full border border-border/50 shadow-xl h-full max-h-[600px]"> {/* Fixed max height for consistency */}
-      <CardHeader className="space-y-4 pt-6 pb-4 relative flex-shrink-0">
+    <Card className="w-full border border-border/50 shadow-xl h-full max-h-[400px]"> {/* Further reduced max height */}
+      <CardHeader className="space-y-1 pt-2 pb-1 relative flex-shrink-0"> {/* Ultra tight spacing */}
         {/* Close button for better UX */}
         <DialogClose asChild>
           <Button
             variant="ghost"
             size="sm"
-            className="absolute right-4 top-4 h-8 w-8 p-0 rounded-full hover:bg-accent"
+            className="absolute right-2 top-2 h-4.5 w-4.5 p-0 rounded-full hover:bg-accent" {/* Even smaller close button */}
           >
-            <X className="h-4 w-4" />
+            <X className="h-2 w-2" />
           </Button>
         </DialogClose>
         <div className="flex justify-center">
-          <Logo size="lg" className="text-4xl" /> {/* Larger logo for richer visual */}
+          <Logo size="xs" className="text-xl" /> {/* Smaller logo */}
         </div>
-        <div className="space-y-1">
-          <CardTitle className="text-2xl font-bold text-center bg-gradient-to-r from-primary to-secondary bg-clip-text text-transparent">
+        <div className="space-y-0"> {/* No space */}
+          <CardTitle className="text-base font-bold text-center bg-gradient-to-r from-primary to-secondary bg-clip-text text-transparent"> {/* Smaller title */}
             {isSignUp ? 'Create Account' : 'Welcome Back'}
           </CardTitle>
-          <CardDescription className="text-center text-muted-foreground leading-relaxed">
+          <CardDescription className="text-xs text-center text-muted-foreground leading-none"> {/* Ultra small desc, no line height */}
             {isSignUp
-              ? 'Join AfuChat - the text-only messaging app built for Uganda'
-              : 'Sign in to continue your conversations'}
+              ? 'AfuChat - Uganda messaging'
+              : 'Sign in'}
           </CardDescription>
         </div>
       </CardHeader>
-      <CardContent className="pb-8 pt-0 flex-1 overflow-y-auto"> {/* Scrollable content for consistency */}
-        <form onSubmit={handleAuth} className="space-y-5">
+      <CardContent className="pb-3 pt-0 flex-1 overflow-y-auto"> {/* Minimal pb */}
+        <form onSubmit={handleAuth} className="space-y-2"> {/* Ultra tight form spacing */}
           {isSignUp && (
             <>
-              <div className="space-y-2">
-                <Label htmlFor="displayName" className="text-sm font-medium flex items-center gap-2">
-                  <User className="h-4 w-4 text-muted-foreground" />
+              <div className="space-y-0.5"> {/* Minimal field spacing */}
+                <Label htmlFor="displayName" className="text-xs font-medium flex items-center gap-0.5"> {/* Tighter gap */}
+                  <User className="h-2 w-2 text-muted-foreground" />
                   Display Name
                 </Label>
                 <div className="relative">
                   <Input
                     id="displayName"
                     type="text"
-                    placeholder="Enter your full name"
+                    placeholder="Full name"
                     value={displayName}
                     onChange={(e) => setDisplayName(e.target.value)}
                     required
-                    className="h-12 pl-10 pr-4 bg-background/80 backdrop-blur-sm border-border/50 focus-visible:ring-2 focus-visible:ring-primary/50 focus-visible:border-primary transition-all duration-200 hover:border-border/70"
+                    className="h-8 pl-6 pr-2 bg-background/80 backdrop-blur-sm border-border/50 focus-visible:ring-0.5 focus-visible:ring-primary/10 focus-visible:border-primary transition-all duration-75 hover:border-border/60 text-xs" {/* Ultra tight input, no ring, smaller font */}
                   />
-                  <User className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                  <User className="absolute left-1.5 top-1/2 transform -translate-y-1/2 h-2 w-2 text-muted-foreground" />
                 </div>
               </div>
-              <div className="space-y-2">
-                <Label htmlFor="handle" className="text-sm font-medium flex items-center gap-2">
-                  <AtSign className="h-4 w-4 text-muted-foreground" />
+              <div className="space-y-0.5">
+                <Label htmlFor="handle" className="text-xs font-medium flex items-center gap-0.5">
+                  <AtSign className="h-2 w-2 text-muted-foreground" />
                   Handle
                 </Label>
                 <div className="relative">
                   <Input
                     id="handle"
                     type="text"
-                    placeholder="@youruniquehandle"
+                    placeholder="@handle"
                     value={handle}
                     onChange={(e) => setHandle(e.target.value)}
                     required
-                    className="h-12 pl-10 pr-4 bg-background/80 backdrop-blur-sm border-border/50 focus-visible:ring-2 focus-visible:ring-primary/50 focus-visible:border-primary transition-all duration-200 hover:border-border/70"
+                    className="h-8 pl-6 pr-2 bg-background/80 backdrop-blur-sm border-border/50 focus-visible:ring-0.5 focus-visible:ring-primary/10 focus-visible:border-primary transition-all duration-75 hover:border-border/60 text-xs"
                   />
-                  <AtSign className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                  <AtSign className="absolute left-1.5 top-1/2 transform -translate-y-1/2 h-2 w-2 text-muted-foreground" />
                 </div>
               </div>
             </>
           )}
-          <div className="space-y-2">
-            <Label htmlFor="email" className="text-sm font-medium flex items-center gap-2">
-              <Mail className="h-4 w-4 text-muted-foreground" />
-              Email Address
+          <div className="space-y-0.5">
+            <Label htmlFor="email" className="text-xs font-medium flex items-center gap-0.5">
+              <Mail className="h-2 w-2 text-muted-foreground" />
+              Email
             </Label>
             <div className="relative">
               <Input
@@ -163,43 +160,43 @@ const AuthSheetContent: React.FC<AuthSheetContentProps> = ({ onClose }) => {
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
                 required
-                className="h-12 pl-10 pr-4 bg-background/80 backdrop-blur-sm border-border/50 focus-visible:ring-2 focus-visible:ring-primary/50 focus-visible:border-primary transition-all duration-200 hover:border-border/70"
+                className="h-8 pl-6 pr-2 bg-background/80 backdrop-blur-sm border-border/50 focus-visible:ring-0.5 focus-visible:ring-primary/10 focus-visible:border-primary transition-all duration-75 hover:border-border/60 text-xs"
               />
-              <Mail className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+              <Mail className="absolute left-1.5 top-1/2 transform -translate-y-1/2 h-2 w-2 text-muted-foreground" />
             </div>
           </div>
-          <div className="space-y-2">
-            <Label htmlFor="password" className="text-sm font-medium flex items-center gap-2">
-              <Lock className="h-4 w-4 text-muted-foreground" />
+          <div className="space-y-0.5">
+            <Label htmlFor="password" className="text-xs font-medium flex items-center gap-0.5">
+              <Lock className="h-2 w-2 text-muted-foreground" />
               Password
             </Label>
             <div className="relative">
               <Input
                 id="password"
                 type={showPassword ? "text" : "password"}
-                placeholder="At least 6 characters"
+                placeholder="Min 6 chars"
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
                 required
                 minLength={6}
-                className="h-12 pl-10 pr-10 bg-background/80 backdrop-blur-sm border-border/50 focus-visible:ring-2 focus-visible:ring-primary/50 focus-visible:border-primary transition-all duration-200 hover:border-border/70"
+                className="h-8 pl-6 pr-6 bg-background/80 backdrop-blur-sm border-border/50 focus-visible:ring-0.5 focus-visible:ring-primary/10 focus-visible:border-primary transition-all duration-75 hover:border-border/60 text-xs"
               />
-              <Lock className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+              <Lock className="absolute left-1.5 top-1/2 transform -translate-y-1/2 h-2 w-2 text-muted-foreground" />
               <Button
                 type="button"
                 variant="ghost"
                 size="sm"
-                className="absolute right-2 top-2 h-8 w-8 p-0 hover:bg-accent rounded transition-colors duration-200"
+                className="absolute right-0.5 top-1 h-4.5 w-4.5 p-0 hover:bg-accent rounded transition-colors duration-75"
                 onClick={() => setShowPassword(!showPassword)}
               >
-                {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+                {showPassword ? <EyeOff className="h-2 w-2" /> : <Eye className="h-2 w-2" />}
               </Button>
             </div>
           </div>
-          <Button type="submit" className="w-full h-12 text-base font-semibold shadow-lg hover:shadow-xl transition-all duration-200 bg-gradient-to-r from-primary to-primary/80 hover:from-primary/90" disabled={loading}>
+          <Button type="submit" className="w-full h-8 text-xs font-semibold shadow-sm hover:shadow-md transition-all duration-75 bg-gradient-to-r from-primary to-primary/80 hover:from-primary/90" disabled={loading}> {/* Ultra tight button, smaller shadow */}
             {loading ? (
               <>
-                <span className="mr-2 animate-spin rounded-full h-4 w-4 border-b-2 border-white"></span>
+                <span className="mr-0.5 animate-spin rounded-full h-2 w-2 border-b-2 border-white"></span>
                 Processing...
               </>
             ) : isSignUp ? (
@@ -209,22 +206,22 @@ const AuthSheetContent: React.FC<AuthSheetContentProps> = ({ onClose }) => {
             )}
           </Button>
         </form>
-        <div className="mt-6 pt-6 border-t border-border/20 text-center">
-          <p className="text-xs text-muted-foreground mb-2">Or continue with</p>
+        <div className="mt-2 pt-2 border-t border-border/20 text-center"> {/* Minimal mt/pt */}
+          <p className="text-xs text-muted-foreground mb-0.5">Or continue with</p> {/* Minimal mb */}
           {/* Placeholder for future social auth buttons */}
-          <div className="flex justify-center space-x-2">
+          <div className="flex justify-center space-x-0.5"> {/* Ultra tight space-x */}
             {/* Add social buttons here if needed, e.g., Google, etc. */}
           </div>
         </div>
-        <div className="mt-6 text-center">
+        <div className="mt-2 text-center"> {/* Minimal mt */}
           <button
             type="button"
             onClick={() => setIsSignUp(!isSignUp)}
-            className="text-sm text-muted-foreground hover:text-primary transition-colors duration-200"
+            className="text-xs text-muted-foreground hover:text-primary transition-colors duration-75"
           >
             {isSignUp
-              ? 'Already have an account? '
-              : "Don't have an account? "}
+              ? 'Have account? '
+              : "No account? "}
             <span className="font-medium underline hover:no-underline">
               {isSignUp ? 'Sign in' : 'Sign up'}
             </span>
@@ -241,7 +238,7 @@ const AuthSheet: React.FC<AuthSheetProps> = ({ isOpen, onOpenChange }) => {
   return (
     <Dialog open={isOpen} onOpenChange={onOpenChange}>
       <DialogContent 
-        className="w-full max-w-sm sm:max-w-md lg:max-w-lg mx-auto p-4 sm:p-6 md:p-8 max-h-[90vh] overflow-hidden rounded-3xl shadow-2xl backdrop-blur-md bg-card/95 border-border/20 border" // Added responsive padding to avoid edges
+        className="w-full max-w-[300px] sm:max-w-xs lg:max-w-sm mx-auto p-2 sm:p-2.5 md:p-3 max-h-[75vh] overflow-hidden rounded-xl shadow-2xl backdrop-blur-md bg-card/95 border-border/20 border" // Ultra compact width, minimal padding
       >
         {/* Smooth slide-in animation for professional feel, responsive centering */}
         <div className="h-full flex flex-col data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0 data-[state=closed]:zoom-out-95 data-[state=open]:zoom-in-95 data-[state=closed]:slide-out-to-left-1/2 data-[state=closed]:slide-out-to-top-[48%] data-[state=open]:slide-in-from-left-1/2 data-[state=open]:slide-in-from-top-[48%]">
