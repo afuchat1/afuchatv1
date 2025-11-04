@@ -24,11 +24,11 @@ const NewPostFAB = ({ onClick, visible, isNavVisible }: { onClick: () => void, v
     size="lg" 
     onClick={onClick}
     aria-label="Create new post"
-    className={`fixed bottom-20 right-6 rounded-full shadow-2xl h-14 w-14 transition-all duration-300 ease-in-out z-50 ${
+    className={`fixed bottom-20 lg:bottom-6 right-4 sm:right-6 rounded-full shadow-2xl h-12 w-12 sm:h-14 sm:w-14 transition-all duration-300 ease-in-out z-50 ${
       (visible && isNavVisible) ? 'translate-y-0 opacity-100' : 'translate-y-20 opacity-0'
     }`}
   >
-    <Send className="h-6 w-6" />
+    <Send className="h-5 w-5 sm:h-6 sm:w-6" />
   </Button>
 );
 
@@ -37,11 +37,11 @@ const NewChatFAB = ({ onClick, visible, isNavVisible }: { onClick: () => void, v
     size="lg" 
     onClick={onClick}
     aria-label="Start new chat"
-    className={`fixed bottom-20 right-6 rounded-full shadow-2xl h-14 w-14 transition-all duration-300 ease-in-out z-50 ${
+    className={`fixed bottom-20 lg:bottom-6 right-4 sm:right-6 rounded-full shadow-2xl h-12 w-12 sm:h-14 sm:w-14 transition-all duration-300 ease-in-out z-50 ${
       (visible && isNavVisible) ? 'translate-y-0 opacity-100' : 'translate-y-20 opacity-0'
     }`}
   >
-    <MessageSquarePlus className="h-6 w-6" />
+    <MessageSquarePlus className="h-5 w-5 sm:h-6 sm:w-6" />
   </Button>
 );
 // --- END FAB Components ---
@@ -211,15 +211,15 @@ const Index = () => {
       {/* Header (Hides on Scroll Down) */}
       <header 
         ref={headerRef}
-        className={`bg-background sticky top-0 z-20 transition-transform duration-300 ease-in-out ${headerTranslateClass}`}
+        className={`bg-background sticky top-0 z-20 transition-transform duration-300 ease-in-out border-b border-border/30 ${headerTranslateClass}`}
       >
-        <div className="container mx-auto px-4 h-14 flex items-center justify-between">
-          <div className="flex items-center gap-2">
+        <div className="container mx-auto px-3 sm:px-4 md:px-6 h-14 md:h-16 flex items-center justify-between max-w-7xl">
+          <div className="flex items-center gap-2 md:gap-3">
             <Logo size="md" />
-            <h1 className="text-lg font-bold text-primary">AfuChat</h1>
+            <h1 className="text-base sm:text-lg md:text-xl font-bold text-primary">AfuChat</h1>
           </div>
           
-          <div className="flex items-center gap-1">
+          <div className="flex items-center gap-0.5 sm:gap-1 md:gap-2">
             {/* Conditional Login Button or User Icons */}
             {user ? (
               // Logged In: Show icons
@@ -227,28 +227,27 @@ const Index = () => {
                 <Button 
                   size="sm" 
                   variant="default" 
-                  className="text-xs font-semibold h-8 px-3 rounded-full bg-pink-500 hover:bg-pink-600 text-white"
+                  className="hidden md:flex text-xs font-semibold h-8 px-3 rounded-full bg-pink-500 hover:bg-pink-600 text-white"
                 >
                   Subscribe
                 </Button>
                 <NotificationIcon />
                 {isAdmin && (
                   <Link to="/admin">
-                    <Button size="icon" variant="ghost" className="rounded-full">
-                      <Shield className="h-5 w-5 text-primary" />
+                    <Button size="icon" variant="ghost" className="rounded-full h-8 w-8 md:h-10 md:w-10">
+                      <Shield className="h-4 w-4 md:h-5 md:w-5 text-primary" />
                     </Button>
                   </Link>
                 )}
                 <Link to={`/profile/${user.id}`}>
-                  <Button size="icon" variant="ghost" className="rounded-full">
-                    <User className="h-5 w-5" />
+                  <Button size="icon" variant="ghost" className="rounded-full h-8 w-8 md:h-10 md:w-10">
+                    <User className="h-4 w-4 md:h-5 md:w-5" />
                   </Button>
                 </Link>
               </>
             ) : (
               // Logged Out: Show Log In Button
-              // 👇 MODIFIED: Open the sheet instead of navigating
-              <Button size="sm" variant="default" className="text-sm font-semibold" onClick={handleLoginRequired}>
+              <Button size="sm" variant="default" className="text-xs sm:text-sm font-semibold h-8 px-3 sm:px-4" onClick={handleLoginRequired}>
                 Log In
               </Button>
             )}
@@ -257,7 +256,7 @@ const Index = () => {
       </header>
 
       {/* Main Content */}
-      <main className="flex-1 container mx-auto px-4 py-4 max-w-4xl">
+      <main className="flex-1 container mx-auto px-3 sm:px-4 md:px-6 py-3 sm:py-4 md:py-6 max-w-7xl">
         <Tabs value={activeTab} onValueChange={setActiveTab} className="h-full flex flex-col">
           <div className="flex-1 relative">
             <TabsContent value="feed" className="h-full mt-0">
@@ -273,58 +272,58 @@ const Index = () => {
         </Tabs>
       </main>
 
-      {/* Bottom Navigation (Hides on Scroll Down) */}
+      {/* Bottom Navigation (Hides on Scroll Down) - Hidden on Desktop */}
       <nav 
-        className={`fixed bottom-0 left-0 right-0 bg-background z-30 transition-transform duration-300 ease-in-out ${navTranslateClass}`}
+        className={`fixed bottom-0 left-0 right-0 bg-background z-30 transition-transform duration-300 ease-in-out border-t border-border/30 lg:hidden ${navTranslateClass}`}
       >
-        <div className="container mx-auto px-4 max-w-4xl">
-          <div className="grid grid-cols-4 h-14">
+        <div className="container mx-auto px-3 sm:px-4 max-w-7xl">
+          <div className="grid grid-cols-4 h-14 sm:h-16">
             <button
               onClick={() => setActiveTab('feed')}
-              className={`flex flex-col items-center justify-center gap-1 transition-colors ${
+              className={`flex flex-col items-center justify-center gap-0.5 sm:gap-1 transition-colors ${
                 activeTab === 'feed' ? 'text-primary' : 'text-muted-foreground'
               }`}
             >
-              <Radio className="h-4 w-4" />
-              <span className="text-xs font-medium">Feed</span>
+              <Radio className="h-4 w-4 sm:h-5 sm:w-5" />
+              <span className="text-[10px] sm:text-xs font-medium">Feed</span>
             </button>
             <button
               onClick={() => setActiveTab('search')}
-              className={`flex flex-col items-center justify-center gap-1 transition-colors ${
+              className={`flex flex-col items-center justify-center gap-0.5 sm:gap-1 transition-colors ${
                 activeTab === 'search' ? 'text-primary' : 'text-muted-foreground'
               }`}
             >
-              <SearchIcon className="h-4 w-4" />
-              <span className="text-xs font-medium">Search</span>
+              <SearchIcon className="h-4 w-4 sm:h-5 sm:w-5" />
+              <span className="text-[10px] sm:text-xs font-medium">Search</span>
             </button>
             
             {/* MODIFIED CHATS BUTTON */}
             <button
-              onClick={() => user ? setActiveTab('chats') : handleLoginRequired()} // 👈 MODIFIED
-              className={`flex flex-col items-center justify-center gap-1 transition-colors ${
+              onClick={() => user ? setActiveTab('chats') : handleLoginRequired()}
+              className={`flex flex-col items-center justify-center gap-0.5 sm:gap-1 transition-colors ${
                 user 
                   ? (activeTab === 'chats' ? 'text-primary' : 'text-muted-foreground')
-                  : 'text-muted-foreground opacity-50' // Ghosted style
+                  : 'text-muted-foreground opacity-50'
               }`}
               title={user ? "Open Chats" : "Log in to view chats"}
             >
-              <MessageSquare className="h-4 w-4" />
-              <span className="text-xs font-medium">Chats</span>
+              <MessageSquare className="h-4 w-4 sm:h-5 sm:w-5" />
+              <span className="text-[10px] sm:text-xs font-medium">Chats</span>
             </button>
             {/* MODIFIED AFUAI BUTTON */}
             <button
-              onClick={handleAIClick} // 👈 Uses the new handler
-              className={`flex flex-col items-center justify-center gap-1 transition-colors ${
+              onClick={handleAIClick}
+              className={`flex flex-col items-center justify-center gap-0.5 sm:gap-1 transition-colors ${
                 user 
                   ? 'text-muted-foreground hover:text-primary' 
-                  : 'text-muted-foreground opacity-50' // Ghosted style
+                  : 'text-muted-foreground opacity-50'
               }`}
               title={user ? "Talk to AfuAI" : "Log in to use AfuAI"}
             >
-              <svg className="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+              <svg className="h-4 w-4 sm:h-5 sm:w-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
                 <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm0 18c-4.41 0-8-3.59-8-8s3.59-8 8-8 8 3.59 8 8-3.59 8-8 8zm-1-13h2v6h-2zm0 8h2v2h-2z"/>
               </svg>
-              <span className="text-xs font-medium">AfuAI</span>
+              <span className="text-[10px] sm:text-xs font-medium">AfuAI</span>
             </button>
           </div>
         </div>

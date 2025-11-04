@@ -107,19 +107,19 @@ const Chats = () => {
   
   // --- Rich Design: Chat Item Skeleton (Borders Removed) ---
   const ChatItemSkeleton = () => (
-    <div className="flex items-center space-x-4 p-4 rounded-xl bg-card shadow-md animate-pulse">
-      <Skeleton className="h-10 w-10 rounded-full" /> 
+    <div className="flex items-center space-x-3 sm:space-x-4 p-3 sm:p-4 rounded-xl bg-card shadow-md animate-pulse">
+      <Skeleton className="h-9 w-9 sm:h-10 sm:w-10 md:h-12 md:w-12 rounded-full" /> 
       <div className="space-y-2 flex-1">
-        <Skeleton className="h-4 w-3/4" />
+        <Skeleton className="h-3 sm:h-4 w-3/4" />
         <Skeleton className="h-3 w-5/6" />
       </div>
-      <Skeleton className="h-4 w-10" />
+      <Skeleton className="h-3 sm:h-4 w-8 sm:w-10" />
     </div>
   );
 
   if (effectiveLoading) {
     return (
-      <div className="h-full flex flex-col space-y-4 p-4">
+      <div className="h-full flex flex-col space-y-3 sm:space-y-4 p-3 sm:p-4 md:p-5">
          {[...Array(5)].map((_, i) => <ChatItemSkeleton key={i} />)}
       </div>
     );
@@ -135,24 +135,24 @@ const Chats = () => {
     return (
       <Card
         key={chat.id}
-        className="p-4 rounded-xl shadow-lg hover:shadow-xl hover:bg-muted/30 cursor-pointer transition-all duration-200"
+        className="p-3 sm:p-4 rounded-xl shadow-lg hover:shadow-xl hover:bg-muted/30 cursor-pointer transition-all duration-200"
         onClick={() => navigate(`/chat/${chat.id}`)}
       >
-        <div className="flex items-center space-x-4">
+        <div className="flex items-center space-x-3 sm:space-x-4">
           {/* Visual Indicator (Text-only profile concept) */}
-          <div className={`h-10 w-10 rounded-full flex items-center justify-center text-primary-foreground shadow-sm ${chat.is_group ? 'bg-indigo-500' : 'bg-primary'}`}>
-            <Icon className="h-5 w-5" />
+          <div className={`h-9 w-9 sm:h-10 sm:w-10 md:h-12 md:w-12 rounded-full flex items-center justify-center text-primary-foreground shadow-sm ${chat.is_group ? 'bg-indigo-500' : 'bg-primary'}`}>
+            <Icon className="h-4 w-4 sm:h-5 sm:w-5 md:h-6 md:w-6" />
           </div>
 
           <div className="flex-1 min-w-0">
-            <h3 className="font-semibold truncate text-foreground">{chatName}</h3>
+            <h3 className="font-semibold text-sm sm:text-base truncate text-foreground">{chatName}</h3>
             {/* Last Message Preview */}
-            <p className="text-sm text-muted-foreground truncate">{lastMessagePreview}</p>
+            <p className="text-xs sm:text-sm text-muted-foreground truncate">{lastMessagePreview}</p>
           </div>
 
           <div className="flex flex-col items-end space-y-1">
             {/* Timestamp */}
-            <span className="text-xs text-muted-foreground whitespace-nowrap flex items-center gap-1">
+            <span className="text-[10px] sm:text-xs text-muted-foreground whitespace-nowrap flex items-center gap-1">
               <Clock className="h-3 w-3" />
               {timeDisplay}
             </span>
@@ -167,19 +167,19 @@ const Chats = () => {
   return (
     <div className="h-full flex flex-col">
       {/* Header - Defined by shadow, not border */}
-      <div className="p-4 bg-card shadow-sm flex items-center justify-between sticky top-0 z-10">
-        <h1 className="text-xl font-extrabold text-foreground">Conversations</h1>
+      <div className="p-3 sm:p-4 md:p-5 bg-card shadow-sm flex items-center justify-between sticky top-0 z-10">
+        <h1 className="text-lg sm:text-xl md:text-2xl font-extrabold text-foreground">Conversations</h1>
         <Button 
           size="icon" 
           variant="default" 
-          className="rounded-full shadow-md"
+          className="rounded-full shadow-md h-9 w-9 sm:h-10 sm:w-10"
           onClick={() => setIsNewChatDialogOpen(true)}
         >
-          <MessageSquarePlus className="h-5 w-5" />
+          <MessageSquarePlus className="h-4 w-4 sm:h-5 sm:w-5" />
         </Button>
       </div>
       
-      <div className="flex-1 overflow-y-auto p-4 space-y-3">
+      <div className="flex-1 overflow-y-auto p-3 sm:p-4 md:p-5 space-y-2 sm:space-y-3">
         {chats.length === 0 ? (
           <div className="flex flex-col items-center justify-center h-full text-center p-4">
             <p className="text-muted-foreground mb-2">No conversations found.</p>

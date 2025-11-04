@@ -169,16 +169,16 @@ const ReplyItem = ({ reply, navigate, handleViewProfile }: { reply: Reply; navig
             <div className="absolute left-5 top-0 bottom-0 w-px bg-border/80 ml-px mt-2.5 mb-1.5" />
             
             <div
-                className="mr-2 flex-shrink-0 h-7 w-7 rounded-full bg-secondary flex items-center justify-center cursor-pointer z-10"
+                className="mr-1.5 sm:mr-2 flex-shrink-0 h-6 w-6 sm:h-7 sm:w-7 rounded-full bg-secondary flex items-center justify-center cursor-pointer z-10"
                 onClick={() => handleViewProfile(reply.author_id)}
             >
-                <User className="h-4 w-4 text-muted-foreground" />
+                <User className="h-3 w-3 sm:h-4 sm:w-4 text-muted-foreground" />
             </div>
 
             <div className="flex-1 min-w-0">
                 <div className="flex items-center gap-x-1 min-w-0">
                     <span
-                        className="font-bold text-foreground text-xs cursor-pointer hover:underline whitespace-nowrap"
+                        className="font-bold text-foreground text-[10px] sm:text-xs cursor-pointer hover:underline whitespace-nowrap"
                         onClick={() => handleViewProfile(reply.author_id)}
                     >
                         {reply.profiles.display_name}
@@ -186,13 +186,13 @@ const ReplyItem = ({ reply, navigate, handleViewProfile }: { reply: Reply; navig
                     <VerifiedBadge isVerified={reply.profiles.is_verified} isOrgVerified={reply.profiles.is_organization_verified} />
 
                     <span
-                        className="text-muted-foreground text-xs hover:underline cursor-pointer truncate flex-shrink min-w-0"
+                        className="text-muted-foreground text-[10px] sm:text-xs hover:underline cursor-pointer truncate flex-shrink min-w-0"
                         onClick={() => handleViewProfile(reply.author_id)}
                     >
                         @{reply.profiles.handle}
                     </span>
-                    <span className="text-muted-foreground text-xs flex-shrink-0">·</span>
-                    <span className="text-muted-foreground text-xs whitespace-nowrap flex-shrink-0">
+                    <span className="text-muted-foreground text-[10px] sm:text-xs flex-shrink-0">·</span>
+                    <span className="text-muted-foreground text-[10px] sm:text-xs whitespace-nowrap flex-shrink-0">
                       {formatTime(reply.created_at)}
                     </span>
                 </div>
@@ -312,17 +312,17 @@ const PostCard = ({ post, addReply, user, navigate, onAcknowledge, onDeletePost,
   return (
     <div className="flex border-b border-border py-2 pl-0 pr-4 transition-colors hover:bg-muted/5">
       <div
-        className="mr-3 flex-shrink-0 h-10 w-10 rounded-full bg-secondary flex items-center justify-center cursor-pointer ml-1"
+        className="mr-2 sm:mr-3 flex-shrink-0 h-8 w-8 sm:h-10 sm:w-10 rounded-full bg-secondary flex items-center justify-center cursor-pointer ml-0.5 sm:ml-1"
         onClick={() => handleViewProfile(post.author_id)}
       >
-        <User className="h-5 w-5 text-muted-foreground" />
+        <User className="h-4 w-4 sm:h-5 sm:w-5 text-muted-foreground" />
       </div>
 
       <div className="flex-1 min-w-0">
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-x-1 min-w-0">
             <span
-              className="font-bold text-foreground text-xs cursor-pointer hover:underline whitespace-nowrap"
+              className="font-bold text-foreground text-xs sm:text-sm cursor-pointer hover:underline whitespace-nowrap"
               onClick={() => handleViewProfile(post.author_id)}
             >
               {post.profiles.display_name}
@@ -330,14 +330,14 @@ const PostCard = ({ post, addReply, user, navigate, onAcknowledge, onDeletePost,
             <VerifiedBadge isVerified={post.profiles.is_verified} isOrgVerified={post.profiles.is_organization_verified} />
 
             <span
-              className="text-muted-foreground text-xs hover:underline cursor-pointer truncate flex-shrink min-w-0"
+              className="text-muted-foreground text-[10px] sm:text-xs hover:underline cursor-pointer truncate flex-shrink min-w-0"
               onClick={() => handleViewProfile(post.author_id)}
             >
               @{post.profiles.handle}
             </span>
 
-            <span className="text-muted-foreground text-xs flex-shrink-0">·</span>
-            <span className="text-muted-foreground text-xs whitespace-nowrap flex-shrink-0">
+            <span className="text-muted-foreground text-[10px] sm:text-xs flex-shrink-0">·</span>
+            <span className="text-muted-foreground text-[10px] sm:text-xs whitespace-nowrap flex-shrink-0">
               {formatTime(post.created_at)}
             </span>
           </div>
@@ -365,30 +365,30 @@ const PostCard = ({ post, addReply, user, navigate, onAcknowledge, onDeletePost,
         </div>
 
         <Link to={`/post/${post.id}`} className="block">
-          <p className="text-foreground text-xs mt-0.5 mb-1.5 leading-relaxed whitespace-pre-wrap">
+          <p className="text-foreground text-xs sm:text-sm mt-0.5 mb-1.5 leading-relaxed whitespace-pre-wrap break-words">
             {parsePostContent(post.content, navigate)}
           </p>
         </Link>
 
 
-        <div className="flex justify-between items-center text-xs text-muted-foreground mt-1 -ml-2 max-w-[420px]">
-          <Button variant="ghost" size="sm" className="flex items-center gap-1 group" onClick={() => setShowComments(!showComments)}>
-            <MessageSquare className="h-4 w-4 group-hover:text-primary transition-colors" />
-            <span className="group-hover:text-primary transition-colors text-xs">{post.reply_count > 0 ? post.reply_count : ''}</span>
+        <div className="flex justify-between items-center text-xs text-muted-foreground mt-1 -ml-1.5 sm:-ml-2 max-w-full sm:max-w-[420px]">
+          <Button variant="ghost" size="sm" className="flex items-center gap-0.5 sm:gap-1 group h-7 sm:h-8 px-2 sm:px-3" onClick={() => setShowComments(!showComments)}>
+            <MessageSquare className="h-3.5 w-3.5 sm:h-4 sm:w-4 group-hover:text-primary transition-colors" />
+            <span className="group-hover:text-primary transition-colors text-[10px] sm:text-xs">{post.reply_count > 0 ? post.reply_count : ''}</span>
           </Button>
-          <Button variant="ghost" size="sm" className="flex items-center gap-1 group" onClick={() => onAcknowledge(post.id, post.has_liked)}>
-            <Heart className={`h-4 w-4 group-hover:text-red-500 transition-colors ${post.has_liked ? 'text-red-500 fill-red-500' : ''}`} />
-            <span className={`group-hover:text-red-500 transition-colors text-xs ${post.has_liked ? 'text-red-500' : ''}`}>{post.like_count > 0 ? post.like_count : ''}</span>
+          <Button variant="ghost" size="sm" className="flex items-center gap-0.5 sm:gap-1 group h-7 sm:h-8 px-2 sm:px-3" onClick={() => onAcknowledge(post.id, post.has_liked)}>
+            <Heart className={`h-3.5 w-3.5 sm:h-4 sm:w-4 group-hover:text-red-500 transition-colors ${post.has_liked ? 'text-red-500 fill-red-500' : ''}`} />
+            <span className={`group-hover:text-red-500 transition-colors text-[10px] sm:text-xs ${post.has_liked ? 'text-red-500' : ''}`}>{post.like_count > 0 ? post.like_count : ''}</span>
           </Button>
-          <Button variant="ghost" size="sm" className="flex items-center gap-1 group" onClick={handleShare}>
-            <Share className="h-4 w-4 group-hover:text-primary transition-colors" />
+          <Button variant="ghost" size="sm" className="flex items-center gap-0.5 sm:gap-1 group h-7 sm:h-8 px-2 sm:px-3" onClick={handleShare}>
+            <Share className="h-3.5 w-3.5 sm:h-4 sm:w-4 group-hover:text-primary transition-colors" />
           </Button>
         </div>
 
-        <div className="mt-1 ml-[-12px] pr-[12px]">
+        <div className="mt-1 ml-[-8px] sm:ml-[-12px] pr-[8px] sm:pr-[12px]">
           {post.reply_count > 0 && !showComments && (
             <span
-              className="text-xs text-muted-foreground cursor-pointer hover:underline"
+              className="text-[10px] sm:text-xs text-muted-foreground cursor-pointer hover:underline"
               onClick={() => setShowComments(true)}
             >
               View all {post.reply_count} {post.reply_count === 1 ? 'comment' : 'comments'}
@@ -396,7 +396,7 @@ const PostCard = ({ post, addReply, user, navigate, onAcknowledge, onDeletePost,
           )}
 
           {showComments && post.replies && post.replies.length > 0 && (
-            <div className="space-y-1 pt-2 border-l border-border/80 pl-4 ml-3"> 
+            <div className="space-y-1 pt-2 border-l border-border/80 pl-3 sm:pl-4 ml-2 sm:ml-3"> 
               {post.replies.map((reply) => (
                 <ReplyItem 
                     key={reply.id} 
@@ -409,9 +409,9 @@ const PostCard = ({ post, addReply, user, navigate, onAcknowledge, onDeletePost,
           )}
 
           {showComments && user && (
-            <div className="mt-2 flex items-center gap-2">
-              <div className="h-8 w-8 rounded-full bg-secondary flex items-center justify-center flex-shrink-0">
-                <User className="h-4 w-4 text-muted-foreground" />
+            <div className="mt-2 flex items-center gap-1.5 sm:gap-2">
+              <div className="h-7 w-7 sm:h-8 sm:w-8 rounded-full bg-secondary flex items-center justify-center flex-shrink-0">
+                <User className="h-3.5 w-3.5 sm:h-4 sm:w-4 text-muted-foreground" />
               </div>
               <Input
                 value={replyText}
@@ -420,21 +420,21 @@ const PostCard = ({ post, addReply, user, navigate, onAcknowledge, onDeletePost,
                   if (e.key === 'Enter') handleReplySubmit();
                 }}
                 placeholder="Add a comment..."
-                className="flex-1 bg-transparent border-b border-input text-xs text-foreground focus:outline-none focus:ring-0 focus:border-primary p-1"
+                className="flex-1 bg-transparent border-b border-input text-[10px] sm:text-xs text-foreground focus:outline-none focus:ring-0 focus:border-primary p-1"
               />
               <Button
                 variant="ghost"
                 size="sm"
                 disabled={!replyText.trim()}
                 onClick={handleReplySubmit}
-                className="text-primary font-bold disabled:text-muted-foreground disabled:opacity-70 p-0 text-xs"
+                className="text-primary font-bold disabled:text-muted-foreground disabled:opacity-70 p-0 text-[10px] sm:text-xs h-7 sm:h-8"
               >
                 Post
               </Button>
             </div>
           )}
           {showComments && !user && (
-            <div className="mt-2 text-xs text-muted-foreground">
+            <div className="mt-2 text-[10px] sm:text-xs text-muted-foreground">
               Please <a href="/auth" className="text-primary underline">log in</a> to comment.
             </div>
           )}
@@ -770,19 +770,19 @@ const Feed = () => {
   }, [posts]);
 
   const PostSkeleton = () => (
-    <div className="flex p-4 border-b border-border">
-      <Skeleton className="h-10 w-10 rounded-full mr-3" />
+    <div className="flex p-3 sm:p-4 border-b border-border">
+      <Skeleton className="h-8 w-8 sm:h-10 sm:w-10 rounded-full mr-2 sm:mr-3 flex-shrink-0" />
       <div className="flex-1 space-y-2">
         <div className="flex items-center">
-          <Skeleton className="h-4 w-1/4 mr-2" />
-          <Skeleton className="h-3 w-1/6" />
+          <Skeleton className="h-3 sm:h-4 w-1/4 mr-2" />
+          <Skeleton className="h-2.5 sm:h-3 w-1/6" />
         </div>
-        <Skeleton className="h-4 w-full" />
-        <Skeleton className="h-4 w-5/6" />
-        <div className="flex justify-between mt-3">
-          <Skeleton className="h-4 w-12" />
-          <Skeleton className="h-4 w-12" />
-          <Skeleton className="h-4 w-12" />
+        <Skeleton className="h-3 sm:h-4 w-full" />
+        <Skeleton className="h-3 sm:h-4 w-5/6" />
+        <div className="flex justify-between mt-3 gap-2">
+          <Skeleton className="h-3 sm:h-4 w-10 sm:w-12" />
+          <Skeleton className="h-3 sm:h-4 w-10 sm:w-12" />
+          <Skeleton className="h-3 sm:h-4 w-10 sm:w-12" />
         </div>
       </div>
     </div>
@@ -808,10 +808,10 @@ const Feed = () => {
   }
 
   return (
-    <div className="h-full flex flex-col">
+    <div className="h-full flex flex-col max-w-4xl mx-auto">
       <div ref={feedRef} className="flex-1 overflow-y-auto">
         {posts.length === 0 && !effectiveLoading ? (
-          <div className="text-center text-muted-foreground py-8 text-xs">
+          <div className="text-center text-muted-foreground py-6 sm:py-8 text-xs sm:text-sm px-4">
             No posts yet. Follow users or share your first post!
           </div>
         ) : (
@@ -820,11 +820,11 @@ const Feed = () => {
               key={post.id}
               post={post}
               addReply={addReply}
-              user={user as AuthUser | null} // Casting to the defined AuthUser type
+              user={user as AuthUser | null}
               navigate={navigate}
               onAcknowledge={handleAcknowledge}
-              onDeletePost={handleDeletePost} // NEW
-              onReportPost={handleReportPost} // NEW
+              onDeletePost={handleDeletePost}
+              onReportPost={handleReportPost}
             />
           ))
         )}

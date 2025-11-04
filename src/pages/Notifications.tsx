@@ -84,12 +84,12 @@ const NotificationRow = ({ notification }: { notification: Notification }) => {
   
   return (
     <div className={cn(
-      "flex items-start gap-4 p-4 border-b border-border relative",
+      "flex items-start gap-3 sm:gap-4 p-3 sm:p-4 border-b border-border relative",
       !notification.is_read && "bg-primary/5"
     )}>
-      <div className="mt-1">{renderIcon()}</div>
-      <div className="flex-1">
-        <div className="text-sm text-foreground">{renderMessage()}</div>
+      <div className="mt-1 flex-shrink-0">{renderIcon()}</div>
+      <div className="flex-1 min-w-0">
+        <div className="text-xs sm:text-sm text-foreground">{renderMessage()}</div>
         
         {type === 'new_follower' && (
           <Link to={`/profile/${actor.handle}`} className="absolute inset-0" aria-label={`View ${actor.display_name}'s profile`} />
@@ -100,13 +100,13 @@ const NotificationRow = ({ notification }: { notification: Notification }) => {
             to={`/post/${notification.post_id}`} 
             className="block relative z-10"
           >
-            <p className="text-sm text-muted-foreground mt-1 p-2 border border-border rounded-md hover:bg-muted/50 transition-colors">
+            <p className="text-xs sm:text-sm text-muted-foreground mt-1 p-2 border border-border rounded-md hover:bg-muted/50 transition-colors">
               {post.content.substring(0, 100)}...
             </p>
           </Link>
         )}
         
-        <p className="text-xs text-muted-foreground mt-1">
+        <p className="text-[10px] sm:text-xs text-muted-foreground mt-1">
           {new Date(created_at).toLocaleString('en-UG')}
         </p>
       </div>
@@ -170,17 +170,17 @@ const Notifications = () => {
   
   if (loading) {
     return (
-      <div className="h-full flex flex-col">
-        <div className="p-4 border-b border-border sticky top-0 bg-background/95 backdrop-blur-sm z-10">
-          <h1 className="text-base font-bold text-foreground">Notifications</h1>
+      <div className="h-full flex flex-col max-w-4xl mx-auto">
+        <div className="p-3 sm:p-4 md:p-5 border-b border-border sticky top-0 bg-background/95 backdrop-blur-sm z-10">
+          <h1 className="text-base sm:text-lg md:text-xl font-bold text-foreground">Notifications</h1>
         </div>
-        <div className="p-4 space-y-4">
+        <div className="p-3 sm:p-4 space-y-3 sm:space-y-4">
           {[...Array(10)].map((_, i) => (
-            <div key={i} className="flex items-center space-x-4">
-              <Skeleton className="h-10 w-10 rounded-full" />
-              <div className="space-y-2">
-                <Skeleton className="h-4 w-[250px]" />
-                <Skeleton className="h-4 w-[200px]" />
+            <div key={i} className="flex items-center space-x-3 sm:space-x-4">
+              <Skeleton className="h-8 w-8 sm:h-10 sm:w-10 rounded-full flex-shrink-0" />
+              <div className="space-y-2 flex-1">
+                <Skeleton className="h-3 sm:h-4 w-3/4 max-w-[250px]" />
+                <Skeleton className="h-3 sm:h-4 w-2/3 max-w-[200px]" />
               </div>
             </div>
           ))}
@@ -190,13 +190,13 @@ const Notifications = () => {
   }
 
   return (
-    <div className="h-full flex flex-col">
-      <div className="p-4 border-b border-border sticky top-0 bg-background/95 backdrop-blur-sm z-10">
-        <h1 className="text-base font-bold text-foreground">Notifications</h1>
+    <div className="h-full flex flex-col max-w-4xl mx-auto">
+      <div className="p-3 sm:p-4 md:p-5 border-b border-border sticky top-0 bg-background/95 backdrop-blur-sm z-10">
+        <h1 className="text-base sm:text-lg md:text-xl font-bold text-foreground">Notifications</h1>
       </div>
       <div className="flex-1 overflow-y-auto">
         {notifications.length === 0 ? (
-          <p className="text-center text-muted-foreground p-8 text-sm">No notifications yet.</p>
+          <p className="text-center text-muted-foreground p-6 sm:p-8 text-xs sm:text-sm">No notifications yet.</p>
         ) : (
           notifications.map(n => <NotificationRow key={n.id} notification={n} />)
         )}
