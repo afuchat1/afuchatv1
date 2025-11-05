@@ -15,6 +15,9 @@ import PostDetail from "./pages/PostDetail";
 import AdminDashboard from "./pages/AdminDashboard";
 import AIChat from "./pages/AIChat";
 import Install from "./pages/Install";
+import Settings from "./pages/Settings";
+import TermsOfUse from "./pages/TermsOfUse";
+import PrivacyPolicy from "./pages/PrivacyPolicy";
 
 const queryClient = new QueryClient();
 
@@ -39,6 +42,9 @@ const App = () => (
             <Route path="/admin" element={<AdminDashboard />} />
             <Route path="/ai-chat" element={<AIChat />} />
             <Route path="/install" element={<Install />} />
+            <Route path="/settings" element={<Settings />} />
+            <Route path="/terms" element={<TermsOfUse />} />
+            <Route path="/privacy" element={<PrivacyPolicy />} />
 
             <Route path="/profile/:userId" element={<ProfileRedirect />} />
 

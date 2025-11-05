@@ -32,8 +32,19 @@ const ProfileActionsSheet = ({ isOpen, onClose, onLogout, onEditProfile }: Profi
               className="w-full justify-start py-4 h-auto text-base hover:bg-muted/80 rounded-lg"
               onClick={onEditProfile}
             >
-              <Settings className="h-5 w-5 mr-3 text-muted-foreground" />
+              <User className="h-5 w-5 mr-3 text-muted-foreground" />
               <span>Edit Profile</span>
+            </Button>
+          </SheetClose>
+
+          <SheetClose asChild>
+            <Button
+              variant="ghost"
+              className="w-full justify-start py-4 h-auto text-base hover:bg-muted/80 rounded-lg"
+              onClick={() => window.location.href = '/settings'}
+            >
+              <Settings className="h-5 w-5 mr-3 text-muted-foreground" />
+              <span>Settings</span>
             </Button>
           </SheetClose>
 
