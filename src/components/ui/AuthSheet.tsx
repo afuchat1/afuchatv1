@@ -10,6 +10,7 @@ import { toast } from 'sonner';
 // X is only imported for use in the password toggle now
 import { X, Eye, EyeOff, User, AtSign, Mail, Lock, MessageCircle, ShoppingCart, Cpu } from 'lucide-react'; 
 import Logo from '@/components/Logo';
+import { emailSchema, passwordSchema, handleSchema, displayNameSchema } from '@/lib/validation';
 
 interface AuthSheetContentProps {
   onClose: () => void;
@@ -35,6 +36,20 @@ const AuthSheetContent: React.FC<AuthSheetContentProps> = ({ onClose }) => {
     setLoading(true);
 
     try {
+      // Validate inputs
+      try {
+        emailSchema.parse(email);
+        passwordSchema.parse(password);
+        if (isSignUp) {
+          handleSchema.parse(handle);
+          displayNameSchema.parse(displayName);
+        }
+      } catch (error: any) {
+        toast.error(error.errors?.[0]?.message || 'Validation failed');
+        setLoading(false);
+        return;
+      }
+
       if (isSignUp) {
         const { error } = await supabase.auth.signUp({
           email,

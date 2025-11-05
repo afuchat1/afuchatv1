@@ -8,6 +8,7 @@ import { Badge } from '@/components/ui/badge';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 import { ArrowLeft, Send, User, Loader2, Phone, Video, MoreVertical, Check, MessageSquare, HelpCircle, Info, Mic, MicOff, Play, Pause, Volume2 } from 'lucide-react';
 import { toast } from 'sonner';
+import { messageSchema } from '@/lib/validation';
 
 interface Message {
   id: string;
@@ -220,6 +221,14 @@ const ChatRoom = () => {
 
   const handleSend = async () => {
     if (!newMessage.trim() || !user || !chatId) return;
+    
+    // Validate message
+    try {
+      messageSchema.parse(newMessage);
+    } catch (error: any) {
+      toast.error(error.errors?.[0]?.message || 'Invalid message');
+      return;
+    }
 
     const { error } = await supabase
       .from('messages')

@@ -6,6 +6,7 @@ import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';
 import { toast } from 'sonner';
 import { Send, X, Sparkles, Image as ImageIcon, AtSign, Hash, Smile, TrendingUp, Wand2 } from 'lucide-react';
+import { postSchema, aiTopicSchema, aiToneSchema, aiLengthSchema } from '@/lib/validation';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Card, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
@@ -104,10 +105,14 @@ const NewPostModal: React.FC<NewPostModalProps> = ({ isOpen, onClose }) => {
 
     const { remaining, variant, length } = useCharacterCount(newPost);
 
-    const handlePost = async () => {
-        // Validation based on AfuChat project brief
-        if (!newPost.trim() || !user || newPost.length > 280) {
-            if (newPost.length > 280) toast.error('Post must be 280 characters or less');
+  const handlePost = async () => {
+        // Validation
+        if (!user) return;
+        
+        try {
+            postSchema.parse(newPost);
+        } catch (error: any) {
+            toast.error(error.errors?.[0]?.message || 'Invalid post');
             return;
         }
 
@@ -148,8 +153,13 @@ const NewPostModal: React.FC<NewPostModalProps> = ({ isOpen, onClose }) => {
     };
 
     const handleGenerateAI = async () => {
-        if (!aiTopic.trim()) {
-            toast.error('Please enter a topic');
+        // Validate AI inputs
+        try {
+            aiTopicSchema.parse(aiTopic);
+            aiToneSchema.parse(aiTone);
+            aiLengthSchema.parse(aiLength);
+        } catch (error: any) {
+            toast.error(error.errors?.[0]?.message || 'Invalid input');
             return;
         }
 

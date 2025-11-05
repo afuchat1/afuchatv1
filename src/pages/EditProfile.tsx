@@ -11,7 +11,8 @@ import { Textarea } from '@/components/ui/textarea';
 import { Switch } from '@/components/ui/switch';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Separator } from '@/components/ui/separator'; 
-import { Loader2, User, Lock, Eye, MessageCircle, MapPin, Globe } from 'lucide-react'; 
+import { Loader2, User, Lock, Eye, MessageCircle, MapPin, Globe } from 'lucide-react';
+import { handleSchema, displayNameSchema, bioSchema } from '@/lib/validation';
 
 // Import Supabase types
 import type { Database } from '@/integrations/supabase/types';
@@ -135,6 +136,16 @@ const EditProfile: React.FC = () => {
     if (!profile.display_name.trim() || !profile.handle.trim()) {
         toast.error("Display Name and Handle are required.");
         return;
+    }
+    
+    // Validate inputs
+    try {
+      handleSchema.parse(profile.handle);
+      displayNameSchema.parse(profile.display_name);
+      if (profile.bio) bioSchema.parse(profile.bio);
+    } catch (error: any) {
+      toast.error(error.errors?.[0]?.message || 'Validation failed');
+      return;
     }
     
     setSaving(true);

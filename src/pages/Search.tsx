@@ -9,6 +9,7 @@ import { useNavigate, useLocation } from 'react-router-dom';
 import { Skeleton } from '@/components/ui/skeleton';
 import { toast } from 'sonner';
 import { useTranslation } from 'react-i18next';
+import { searchSchema } from '@/lib/validation';
 
 interface SearchResult {
   type: 'user' | 'post';
@@ -181,6 +182,15 @@ const Search = () => {
     const trimmedQuery = debouncedQuery.trim();
     if (!trimmedQuery) return;
     
+    // Validate search query
+    try {
+      searchSchema.parse(trimmedQuery);
+    } catch (error: any) {
+      toast.error(error.errors?.[0]?.message || 'Invalid search query');
+      setLoading(false);
+      return;
+    }
+
     setLoading(true);
 
     // 🚨 NEW: Update URL whenever a search is explicitly performed
