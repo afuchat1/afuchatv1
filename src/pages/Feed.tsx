@@ -8,6 +8,7 @@ import { Skeleton } from '@/components/ui/skeleton';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { useTranslation } from 'react-i18next';
+import { useXP } from '@/hooks/useXP';
 // NEW: Import the dedicated PostActionsSheet component
 import PostActionsSheet from '@/components/PostActionsSheet';
 import DeletePostSheet from '@/components/DeletePostSheet';
@@ -221,6 +222,7 @@ const PostCard = ({ post, addReply, user, navigate, onAcknowledge, onDeletePost,
   }) => {
 
   const { t } = useTranslation();
+  const { awardXP } = useXP();
   const [showComments, setShowComments] = useState(false);
   const [replyText, setReplyText] = useState('');
   
@@ -308,6 +310,9 @@ const PostCard = ({ post, addReply, user, navigate, onAcknowledge, onDeletePost,
     if (error) {
       toast.error('Failed to post reply');
       console.error(error);
+    } else {
+      // Award XP for creating a reply
+      awardXP('create_reply', { post_id: post.id });
     }
   };
 
@@ -451,6 +456,7 @@ const PostCard = ({ post, addReply, user, navigate, onAcknowledge, onDeletePost,
 
 const Feed = () => {
   const { t } = useTranslation();
+  const { awardXP } = useXP();
   const { user } = useAuth();
   const [posts, setPosts] = useState<Post[]>([]);
   const [loading, setLoading] = useState(true);
@@ -524,9 +530,30 @@ const Feed = () => {
                 : p
             )
         );
+      } else {
+        // Award XP for giving a reaction
+        awardXP('give_reaction', { post_id: postId });
+        
+        // Award XP to post author for receiving a reaction
+        const post = posts.find(p => p.id === postId);
+        if (post && post.author_id !== currentUserId) {
+          fetch('https://rhnsjqqtdzlkvqazfcbg.supabase.co/functions/v1/award-xp', {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+              'Authorization': `Bearer ${(await supabase.auth.getSession()).data.session?.access_token}`,
+            },
+            body: JSON.stringify({
+              userId: post.author_id,
+              actionType: 'receive_reaction',
+              xpAmount: 2,
+              metadata: { post_id: postId, from_user_id: currentUserId }
+            }),
+          });
+        }
       }
     }
-  }, [user, navigate]);
+  }, [user, navigate, posts, awardXP]);
 
   // NEW: Delete Post Handler - Opens confirmation sheet
   const handleDeletePost = useCallback((postId: string) => {

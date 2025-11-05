@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/contexts/AuthContext';
+import { useXP } from '@/hooks/useXP';
 import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';
 import { toast } from 'sonner';
@@ -91,6 +92,7 @@ class ErrorBoundary extends React.Component<{ children: React.ReactNode }, { has
 // NOTE: Component declaration should use React.FC<NewPostModalProps>
 const NewPostModal: React.FC<NewPostModalProps> = ({ isOpen, onClose }) => {
     const { user } = useAuth();
+    const { awardXP } = useXP();
     const [newPost, setNewPost] = useState('');
     const [isPosting, setIsPosting] = useState(false);
     const [showPreview, setShowPreview] = useState(false);
@@ -123,6 +125,9 @@ const NewPostModal: React.FC<NewPostModalProps> = ({ isOpen, onClose }) => {
                 console.error("Supabase Post Error:", error);
                 toast.error('Failed to post. Please try again.');
             } else {
+                // Award XP for creating a post
+                awardXP('create_post', { content: postContent.substring(0, 50) }, true);
+                
                 setNewPost(''); 
                 setShowPreview(false);
                 setShowAIAssist(false);

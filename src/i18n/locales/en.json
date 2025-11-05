@@ -121,6 +121,19 @@
     "talkToAfuAI": "Talk to AfuAI",
     "loginToUseAfuAI": "Log in to use AfuAI"
   },
+  "gamification": {
+    "xp": "XP",
+    "grade": "Grade",
+    "leaderboard": "Leaderboard",
+    "xpEarned": "+{{amount}} XP earned!",
+    "totalXP": "Total XP: {{total}}",
+    "xpToNextGrade": "{{amount}} XP to {{grade}}",
+    "topEarners": "Top XP Earners",
+    "allTime": "All Time",
+    "thisWeek": "This Week",
+    "noActivity": "No activity this week yet. Be the first!",
+    "viewAll": "View Leaderboard"
+  },
   "languages": {
     "en": "English",
     "es": "Español",

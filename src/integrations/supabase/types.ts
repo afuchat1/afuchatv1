@@ -62,6 +62,7 @@ export type Database = {
           member_limit: number | null
           name: string | null
           updated_at: string | null
+          user_id: string | null
         }
         Insert: {
           created_at?: string | null
@@ -71,6 +72,7 @@ export type Database = {
           member_limit?: number | null
           name?: string | null
           updated_at?: string | null
+          user_id?: string | null
         }
         Update: {
           created_at?: string | null
@@ -80,6 +82,7 @@ export type Database = {
           member_limit?: number | null
           name?: string | null
           updated_at?: string | null
+          user_id?: string | null
         }
         Relationships: [
           {
@@ -127,6 +130,45 @@ export type Database = {
           },
         ]
       }
+      message_reactions: {
+        Row: {
+          created_at: string | null
+          id: string
+          message_id: string
+          reaction: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string | null
+          id?: string
+          message_id: string
+          reaction: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string | null
+          id?: string
+          message_id?: string
+          reaction?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "message_reactions_message_id_fkey"
+            columns: ["message_id"]
+            isOneToOne: false
+            referencedRelation: "messages"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "message_reactions_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       message_status: {
         Row: {
           delivered_at: string | null
@@ -168,6 +210,7 @@ export type Database = {
       }
       messages: {
         Row: {
+          audio_url: string | null
           chat_id: string | null
           delivered_at: string | null
           encrypted_content: string
@@ -175,8 +218,10 @@ export type Database = {
           read_at: string | null
           sender_id: string | null
           sent_at: string | null
+          user_id: string | null
         }
         Insert: {
+          audio_url?: string | null
           chat_id?: string | null
           delivered_at?: string | null
           encrypted_content: string
@@ -184,8 +229,10 @@ export type Database = {
           read_at?: string | null
           sender_id?: string | null
           sent_at?: string | null
+          user_id?: string | null
         }
         Update: {
+          audio_url?: string | null
           chat_id?: string | null
           delivered_at?: string | null
           encrypted_content?: string
@@ -193,6 +240,7 @@ export type Database = {
           read_at?: string | null
           sender_id?: string | null
           sent_at?: string | null
+          user_id?: string | null
         }
         Relationships: [
           {
@@ -205,6 +253,58 @@ export type Database = {
           {
             foreignKeyName: "messages_sender_id_fkey"
             columns: ["sender_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      notifications: {
+        Row: {
+          actor_id: string | null
+          created_at: string | null
+          id: string
+          is_read: boolean
+          post_id: string | null
+          type: Database["public"]["Enums"]["notification_type"]
+          user_id: string
+        }
+        Insert: {
+          actor_id?: string | null
+          created_at?: string | null
+          id?: string
+          is_read?: boolean
+          post_id?: string | null
+          type: Database["public"]["Enums"]["notification_type"]
+          user_id: string
+        }
+        Update: {
+          actor_id?: string | null
+          created_at?: string | null
+          id?: string
+          is_read?: boolean
+          post_id?: string | null
+          type?: Database["public"]["Enums"]["notification_type"]
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "notifications_actor_id_fkey"
+            columns: ["actor_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "notifications_post_id_fkey"
+            columns: ["post_id"]
+            isOneToOne: false
+            referencedRelation: "posts"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "notifications_user_id_fkey"
+            columns: ["user_id"]
             isOneToOne: false
             referencedRelation: "profiles"
             referencedColumns: ["id"]
@@ -320,48 +420,103 @@ export type Database = {
       }
       profiles: {
         Row: {
+          ai_chat_id: string | null
           bio: string | null
           created_at: string | null
+          current_grade: string | null
           display_name: string
           handle: string
           id: string
+          is_admin: boolean | null
           is_organization_verified: boolean | null
           is_private: boolean | null
           is_verified: boolean | null
+          last_login_date: string | null
           last_seen: string | null
+          login_streak: number | null
           show_online_status: boolean | null
           show_read_receipts: boolean | null
           updated_at: string | null
+          xp: number
         }
         Insert: {
+          ai_chat_id?: string | null
           bio?: string | null
           created_at?: string | null
+          current_grade?: string | null
           display_name: string
           handle: string
           id: string
+          is_admin?: boolean | null
           is_organization_verified?: boolean | null
           is_private?: boolean | null
           is_verified?: boolean | null
+          last_login_date?: string | null
           last_seen?: string | null
+          login_streak?: number | null
           show_online_status?: boolean | null
           show_read_receipts?: boolean | null
           updated_at?: string | null
+          xp?: number
         }
         Update: {
+          ai_chat_id?: string | null
           bio?: string | null
           created_at?: string | null
+          current_grade?: string | null
           display_name?: string
           handle?: string
           id?: string
+          is_admin?: boolean | null
           is_organization_verified?: boolean | null
           is_private?: boolean | null
           is_verified?: boolean | null
+          last_login_date?: string | null
           last_seen?: string | null
+          login_streak?: number | null
           show_online_status?: boolean | null
           show_read_receipts?: boolean | null
           updated_at?: string | null
+          xp?: number
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "profiles_ai_chat_id_fkey"
+            columns: ["ai_chat_id"]
+            isOneToOne: false
+            referencedRelation: "chats"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      push_subscriptions: {
+        Row: {
+          created_at: string | null
+          id: string
+          subscription: Json
+          user_id: string
+        }
+        Insert: {
+          created_at?: string | null
+          id?: string
+          subscription: Json
+          user_id: string
+        }
+        Update: {
+          created_at?: string | null
+          id?: string
+          subscription?: Json
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "push_subscriptions_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       typing_indicators: {
         Row: {
@@ -399,20 +554,71 @@ export type Database = {
           },
         ]
       }
-      user_roles: {
+      user_achievements: {
         Row: {
+          achievement_type: string
+          earned_at: string | null
           id: string
-          role: Database["public"]["Enums"]["app_role"]
           user_id: string
         }
         Insert: {
+          achievement_type: string
+          earned_at?: string | null
           id?: string
-          role: Database["public"]["Enums"]["app_role"]
           user_id: string
         }
         Update: {
+          achievement_type?: string
+          earned_at?: string | null
           id?: string
-          role?: Database["public"]["Enums"]["app_role"]
+          user_id?: string
+        }
+        Relationships: []
+      }
+      user_activity_log: {
+        Row: {
+          action_type: string
+          created_at: string | null
+          id: string
+          metadata: Json | null
+          user_id: string
+          xp_earned: number
+        }
+        Insert: {
+          action_type: string
+          created_at?: string | null
+          id?: string
+          metadata?: Json | null
+          user_id: string
+          xp_earned: number
+        }
+        Update: {
+          action_type?: string
+          created_at?: string | null
+          id?: string
+          metadata?: Json | null
+          user_id?: string
+          xp_earned?: number
+        }
+        Relationships: []
+      }
+      user_roles: {
+        Row: {
+          created_at: string | null
+          id: string
+          role: Database["public"]["Enums"]["user_role_enum"]
+          user_id: string
+        }
+        Insert: {
+          created_at?: string | null
+          id?: string
+          role: Database["public"]["Enums"]["user_role_enum"]
+          user_id: string
+        }
+        Update: {
+          created_at?: string | null
+          id?: string
+          role?: Database["public"]["Enums"]["user_role_enum"]
           user_id?: string
         }
         Relationships: []
@@ -422,13 +628,40 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
-      has_role: {
+      award_xp: {
         Args: {
-          _role: Database["public"]["Enums"]["app_role"]
-          _user_id: string
+          p_action_type: string
+          p_metadata?: Json
+          p_user_id: string
+          p_xp_amount: number
         }
-        Returns: boolean
+        Returns: undefined
       }
+      create_new_chat: { Args: { other_user_id: string }; Returns: string }
+      get_or_create_chat: { Args: { other_user_id: string }; Returns: string }
+      get_requesting_user: { Args: never; Returns: string }
+      get_trending_topics: {
+        Args: { hours_ago?: number; num_topics?: number }
+        Returns: {
+          post_count: number
+          topic: string
+        }[]
+      }
+      has_role:
+        | {
+            Args: {
+              _role: Database["public"]["Enums"]["app_role"]
+              _user_id: string
+            }
+            Returns: boolean
+          }
+        | {
+            Args: {
+              _role: Database["public"]["Enums"]["user_role_enum"]
+              _user_id: string
+            }
+            Returns: boolean
+          }
       is_chat_admin: {
         Args: { _chat_id: string; _user_id: string }
         Returns: boolean
@@ -437,9 +670,24 @@ export type Database = {
         Args: { _chat_id: string; _user_id: string }
         Returns: boolean
       }
+      is_user_in_chat: {
+        Args: { p_chat_id: string; p_user_id: string }
+        Returns: boolean
+      }
+      mark_notifications_as_read: { Args: never; Returns: undefined }
+      send_message: {
+        Args: { p_chat_id: string; p_plain_content: string }
+        Returns: undefined
+      }
     }
     Enums: {
       app_role: "admin" | "moderator" | "user"
+      notification_type:
+        | "new_follower"
+        | "new_like"
+        | "new_reply"
+        | "new_mention"
+      user_role_enum: "user" | "admin"
     }
     CompositeTypes: {
       [_ in never]: never
@@ -568,6 +816,13 @@ export const Constants = {
   public: {
     Enums: {
       app_role: ["admin", "moderator", "user"],
+      notification_type: [
+        "new_follower",
+        "new_like",
+        "new_reply",
+        "new_mention",
+      ],
+      user_role_enum: ["user", "admin"],
     },
   },
 } as const

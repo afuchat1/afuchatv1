@@ -11,6 +11,8 @@ import { Separator } from '@/components/ui/separator';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Popover, PopoverTrigger, PopoverContent } from '@/components/ui/popover';
 import { useTranslation } from 'react-i18next';
+import { GradeBadge, type Grade } from '@/components/gamification/GradeBadge';
+import { XPProgressBar } from '@/components/gamification/XPProgressBar';
 import ProfileActionsSheet from '@/components/ProfileActionsSheet';
 
 interface Profile {
@@ -22,6 +24,8 @@ interface Profile {
 	is_organization_verified?: boolean;
 	is_private?: boolean;
 	created_at?: string;
+	xp: number;
+	current_grade: Grade;
 }
 
 interface Post {
@@ -571,6 +575,15 @@ const Profile = () => {
 					{profile.bio && (
 						<ContentParser content={profile.bio} isBio={true} />
 					)}
+
+					{/* XP Progress Bar */}
+					<div className="mt-4">
+						<XPProgressBar 
+							currentXP={profile.xp} 
+							currentGrade={profile.current_grade as Grade}
+							showDetails={true}
+						/>
+					</div>
 
 					<div className="flex items-center space-x-4 mt-3 text-muted-foreground text-sm">
 						<div className="flex items-center gap-1">

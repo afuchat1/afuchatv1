@@ -3,7 +3,7 @@ import { useNavigate, Link } from 'react-router-dom';
 import { useAuth } from '@/contexts/AuthContext';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Button } from '@/components/ui/button';
-import { MessageSquare, Radio, Send, MessageSquarePlus, Search as SearchIcon, User, Shield } from 'lucide-react';
+import { MessageSquare, Radio, Send, MessageSquarePlus, Search as SearchIcon, User, Shield, Trophy } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { useTranslation } from 'react-i18next';
 import Chats from './Chats';
@@ -233,6 +233,11 @@ const Index = () => {
                 >
                   {t('navigation.subscribe')}
                 </Button>
+                <Link to="/leaderboard">
+                  <Button size="icon" variant="ghost" className="rounded-full h-8 w-8 md:h-10 md:w-10" title={t('gamification.leaderboard')}>
+                    <Trophy className="h-4 w-4 md:h-5 md:w-5 text-yellow-500" />
+                  </Button>
+                </Link>
                 <NotificationIcon />
                 {isAdmin && (
                   <Link to="/admin">
