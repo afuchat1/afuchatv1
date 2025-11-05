@@ -1,4 +1,4 @@
-import { useEffect } from 'react';
+import React, { useEffect } from 'react';
 import { useAuth } from '@/contexts/AuthContext';
 import { useXP } from './useXP';
 
@@ -19,5 +19,5 @@ export const useDailyLogin = () => {
 
       return () => clearTimeout(timer);
     }
-  }, [user]);
+  }, [user, checkDailyLogin]);
 };
