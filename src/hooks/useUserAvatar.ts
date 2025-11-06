@@ -18,7 +18,7 @@ export const useUserAvatar = (userId: string | undefined) => {
           .from('user_avatars')
           .select('avatar_config')
           .eq('user_id', userId)
-          .single();
+          .maybeSingle();
 
         if (error) {
           console.error('Error fetching avatar:', error);
@@ -26,6 +26,9 @@ export const useUserAvatar = (userId: string | undefined) => {
         } else if (data && data.avatar_config) {
           const config = data.avatar_config as Partial<OwlAvatarConfig>;
           setAvatarConfig({ ...DEFAULT_AVATAR_CONFIG, ...config });
+        } else {
+          // No avatar found, use default
+          setAvatarConfig(DEFAULT_AVATAR_CONFIG);
         }
       } catch (error) {
         console.error('Error fetching avatar:', error);

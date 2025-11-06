@@ -31,6 +31,10 @@ const AuthSheetContent: React.FC<AuthSheetContentProps> = ({ onClose }) => {
   const [displayName, setDisplayName] = useState('');
   const [handle, setHandle] = useState('');
 
+  // Capture referral code from URL
+  const urlParams = new URLSearchParams(window.location.search);
+  const referralCode = urlParams.get('ref');
+
   const handleAuth = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     setLoading(true);
@@ -51,11 +55,21 @@ const AuthSheetContent: React.FC<AuthSheetContentProps> = ({ onClose }) => {
       }
 
       if (isSignUp) {
+        const signupData: any = {
+          display_name: displayName,
+          handle,
+        };
+
+        // Include referral code if present
+        if (referralCode) {
+          signupData.referral_code = referralCode;
+        }
+
         const { error } = await supabase.auth.signUp({
           email,
           password,
           options: {
-            data: { display_name: displayName, handle },
+            data: signupData,
             emailRedirectTo: `${window.location.origin}/`,
           },
         });
@@ -98,6 +112,12 @@ const AuthSheetContent: React.FC<AuthSheetContentProps> = ({ onClose }) => {
         <CardDescription className="text-xs text-center text-muted-foreground leading-snug">
           Post. Chat. Shop. AI. All in One
         </CardDescription>
+        
+        {referralCode && isSignUp && (
+          <div className="mt-2 text-xs text-center text-primary font-medium">
+            🎉 Signing up with a referral code!
+          </div>
+        )}
 
         {/* Mini feature section */}
         <div className="flex justify-center gap-4 mt-3">
