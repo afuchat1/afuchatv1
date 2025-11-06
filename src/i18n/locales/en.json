@@ -235,6 +235,18 @@
     "badges": "Badges",
     "referrals": "Referrals"
   },
+  "giftLeaderboard": {
+    "title": "Gift Leaderboard",
+    "subtitle": "Top gift senders and receivers",
+    "topSenders": "Top Senders",
+    "topReceivers": "Top Receivers",
+    "thisWeek": "This Week",
+    "thisMonth": "This Month",
+    "allTime": "All Time",
+    "giftsSent": "gifts sent",
+    "giftsReceived": "gifts received",
+    "noActivity": "No gift activity yet"
+  },
   "languages": {
     "en": "English",
     "es": "Español",

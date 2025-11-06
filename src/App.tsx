@@ -23,6 +23,7 @@ import TermsOfUse from "./pages/TermsOfUse";
 import PrivacyPolicy from "./pages/PrivacyPolicy";
 import Leaderboard from "./pages/Leaderboard";
 import AvatarEditor from "./pages/AvatarEditor";
+import GiftLeaderboard from "./pages/GiftLeaderboard";
 
 const queryClient = new QueryClient();
 
@@ -51,6 +52,7 @@ const AppRoutes = () => {
       <Route path="/terms" element={<TermsOfUse />} />
       <Route path="/privacy" element={<PrivacyPolicy />} />
       <Route path="/leaderboard" element={<Leaderboard />} />
+      <Route path="/gift-leaderboard" element={<GiftLeaderboard />} />
       <Route path="/avatar/edit" element={<AvatarEditor />} />
 
       <Route path="/profile/:userId" element={<ProfileRedirect />} />
