@@ -30,17 +30,31 @@ const Settings = () => {
     { code: 'es', name: t('languages.es'), flag: '🇪🇸' },
     { code: 'fr', name: t('languages.fr'), flag: '🇫🇷' },
     { code: 'ar', name: t('languages.ar'), flag: '🇸🇦' },
+    { code: 'sw', name: t('languages.sw'), flag: '🇹🇿' },
   ];
 
-  const handleLanguageChange = (languageCode: string) => {
+  const handleLanguageChange = async (languageCode: string) => {
     i18n.changeLanguage(languageCode);
-    toast.success(t('common.success'));
     
     // Apply RTL for Arabic
     if (languageCode === 'ar') {
       document.documentElement.dir = 'rtl';
     } else {
       document.documentElement.dir = 'ltr';
+    }
+
+    // Save language to database
+    if (user) {
+      try {
+        await supabase
+          .from('profiles')
+          .update({ language: languageCode })
+          .eq('id', user.id);
+        toast.success(t('common.success'));
+      } catch (error) {
+        console.error('Error saving language preference:', error);
+        toast.error(t('common.error'));
+      }
     }
   };
 

@@ -6,6 +6,7 @@ import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route, Navigate, useParams } from "react-router-dom";
 import { AuthProvider } from "./contexts/AuthContext";
 import { useDailyLogin } from "./hooks/useDailyLogin";
+import { useLanguageSync } from "./hooks/useLanguageSync";
 import Index from "./pages/Index";
 import Auth from "./pages/Auth";
 import ChatRoom from "./pages/ChatRoom";
@@ -32,6 +33,8 @@ const ProfileRedirect = () => {
 const AppRoutes = () => {
   // Check daily login streak automatically
   useDailyLogin();
+  // Sync language preference from database
+  useLanguageSync();
 
   return (
     <Routes>

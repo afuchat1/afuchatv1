@@ -1,0 +1,140 @@
+{
+  "app": {
+    "name": "AfuChat",
+    "tagline": "Unganisha, Shiriki, Ingiliana"
+  },
+  "common": {
+    "loading": "Inapakia...",
+    "error": "Kosa",
+    "success": "Mafanikio",
+    "cancel": "Ghairi",
+    "save": "Hifadhi",
+    "delete": "Futa",
+    "edit": "Hariri",
+    "back": "Rudi",
+    "close": "Funga",
+    "confirm": "Thibitisha",
+    "search": "Tafuta",
+    "home": "Nyumbani",
+    "profile": "Wasifu",
+    "settings": "Mipangilio",
+    "notifications": "Arifa",
+    "messages": "Ujumbe",
+    "logout": "Toka",
+    "login": "Ingia",
+    "signup": "Jisajili"
+  },
+  "auth": {
+    "welcome": "Karibu AfuChat",
+    "signIn": "Ingia kwenye akaunti yako",
+    "signUp": "Fungua akaunti mpya",
+    "email": "Barua pepe",
+    "password": "Neno la siri",
+    "forgotPassword": "Umesahau neno la siri?",
+    "noAccount": "Huna akaunti?",
+    "hasAccount": "Tayari una akaunti?",
+    "loggedOut": "Umetoka kikamilifu",
+    "loginSuccess": "Umeingia kikamilifu",
+    "loginError": "Hitilafu ya kuingia"
+  },
+  "settings": {
+    "title": "Mipangilio",
+    "subtitle": "Dhibiti akaunti na mapendekezo yako",
+    "account": "Akaunti",
+    "editProfile": "Hariri Wasifu",
+    "privacy": "Faragha",
+    "privateAccount": "Akaunti ya Faragha",
+    "privateAccountDesc": "Wafuasi walioidhinishwa pekee wanaweza kuona machapisho yako",
+    "notifications": "Arifa",
+    "pushNotifications": "Arifa za Kusukuma",
+    "pushNotificationsDesc": "Pokea arifa za ujumbe mpya na masasisho",
+    "language": "Lugha",
+    "selectLanguage": "Chagua Lugha",
+    "languageDesc": "Chagua lugha yako unayopendelea",
+    "legal": "Kisheria",
+    "termsOfUse": "Masharti ya Matumizi",
+    "privacyPolicy": "Sera ya Faragha",
+    "about": "Kuhusu",
+    "version": "AfuChat Toleo 1.0.0",
+    "copyright": "© 2025 AfuChat. Haki zote zimehifadhiwa."
+  },
+  "feed": {
+    "title": "Mtiririko",
+    "newPost": "Unafikiria nini?",
+    "post": "Chapisha",
+    "acknowledge": "Tambua",
+    "reply": "Jibu",
+    "share": "Shiriki",
+    "noPostsYet": "Hakuna machapisho bado",
+    "startConversation": "Kuwa wa kwanza kuanzisha mazungumzo!",
+    "addComment": "Ongeza maoni...",
+    "signInToReply": "Ingia ili kujibu",
+    "viewComments": "Tazama maoni {{count}}",
+    "viewComments_other": "Tazama maoni {{count}}",
+    "linkCopied": "Kiungo kimenakiliwa kwenye ubao wa kunakili!",
+    "failedToCopy": "Imeshindwa kunakili kiungo",
+    "analyzePost": "Tathmini chapisho na AfuAI"
+  },
+  "profile": {
+    "posts": "Machapisho",
+    "followers": "Wafuasi",
+    "following": "Inafuata",
+    "follow": "Fuata",
+    "unfollow": "Acha kufuata",
+    "message": "Ujumbe",
+    "editProfile": "Hariri Wasifu",
+    "joinedDate": "Alijiunga {{date}}",
+    "adminDashboard": "Dashibodi ya Msimamizi",
+    "notFound": "Wasifu haujapatikana",
+    "failedToFollow": "Imeshindwa kufuata",
+    "failedToUnfollow": "Imeshindwa kuacha kufuata",
+    "failedToChat": "Imeshindwa kuunda gumzo"
+  },
+  "terms": {
+    "title": "Masharti ya Matumizi",
+    "lastUpdated": "Ilisasishwa mwisho: Januari 2025"
+  },
+  "privacy": {
+    "title": "Sera ya Faragha",
+    "lastUpdated": "Ilisasishwa mwisho: Januari 2025"
+  },
+  "search": {
+    "title": "Gundua",
+    "placeholder": "Tafuta watumiaji, machapisho, mada...",
+    "trendingNow": "Inayovuma Sasa",
+    "noTrends": "Hakuna mitindo mipya iliyogunduliwa katika masaa 24 yaliyopita.",
+    "tapTopic": "Gusa mada ili kutafuta",
+    "posts": "Machapisho",
+    "people": "Watu",
+    "noResults": "Hakuna matokeo yaliyopatikana kwa \"{{query}}\".",
+    "postsCount": "Chapisho {{count}}",
+    "postsCount_other": "Machapisho {{count}}"
+  },
+  "navigation": {
+    "feed": "Mtiririko",
+    "search": "Tafuta",
+    "chats": "Mazungumzo",
+    "afuai": "AfuAI",
+    "subscribe": "Jisajili",
+    "openChats": "Fungua Mazungumzo",
+    "loginToViewChats": "Ingia ili kuona mazungumzo",
+    "talkToAfuAI": "Zungumza na AfuAI",
+    "loginToUseAfuAI": "Ingia ili kutumia AfuAI"
+  },
+  "languages": {
+    "en": "English",
+    "es": "Español",
+    "fr": "Français",
+    "ar": "العربية",
+    "sw": "Kiswahili"
+  },
+  "gamification": {
+    "xp": "XP",
+    "level": "Kiwango",
+    "leaderboard": "Ubao wa Viongozi",
+    "achievements": "Mafanikio",
+    "dailyLogin": "Kuingia kwa Kila Siku",
+    "streak": "Mfululizo",
+    "referFriend": "Rejelea Rafiki"
+  }
+}

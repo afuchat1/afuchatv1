@@ -392,6 +392,7 @@ export type Database = {
           content: string
           created_at: string | null
           id: string
+          language_code: string | null
           updated_at: string | null
         }
         Insert: {
@@ -399,6 +400,7 @@ export type Database = {
           content: string
           created_at?: string | null
           id?: string
+          language_code?: string | null
           updated_at?: string | null
         }
         Update: {
@@ -406,6 +408,7 @@ export type Database = {
           content?: string
           created_at?: string | null
           id?: string
+          language_code?: string | null
           updated_at?: string | null
         }
         Relationships: [
@@ -415,6 +418,13 @@ export type Database = {
             isOneToOne: false
             referencedRelation: "profiles"
             referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "posts_language_code_fkey"
+            columns: ["language_code"]
+            isOneToOne: false
+            referencedRelation: "supported_languages"
+            referencedColumns: ["code"]
           },
         ]
       }
@@ -431,6 +441,7 @@ export type Database = {
           is_organization_verified: boolean | null
           is_private: boolean | null
           is_verified: boolean | null
+          language: string | null
           last_login_date: string | null
           last_seen: string | null
           login_streak: number | null
@@ -452,6 +463,7 @@ export type Database = {
           is_organization_verified?: boolean | null
           is_private?: boolean | null
           is_verified?: boolean | null
+          language?: string | null
           last_login_date?: string | null
           last_seen?: string | null
           login_streak?: number | null
@@ -473,6 +485,7 @@ export type Database = {
           is_organization_verified?: boolean | null
           is_private?: boolean | null
           is_verified?: boolean | null
+          language?: string | null
           last_login_date?: string | null
           last_seen?: string | null
           login_streak?: number | null
@@ -489,6 +502,13 @@ export type Database = {
             isOneToOne: false
             referencedRelation: "chats"
             referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "profiles_language_fkey"
+            columns: ["language"]
+            isOneToOne: false
+            referencedRelation: "supported_languages"
+            referencedColumns: ["code"]
           },
         ]
       }
@@ -545,6 +565,27 @@ export type Database = {
           referred_id?: string
           referrer_id?: string
           rewarded?: boolean | null
+        }
+        Relationships: []
+      }
+      supported_languages: {
+        Row: {
+          code: string
+          created_at: string | null
+          name: string
+          native_name: string
+        }
+        Insert: {
+          code: string
+          created_at?: string | null
+          name: string
+          native_name: string
+        }
+        Update: {
+          code?: string
+          created_at?: string | null
+          name?: string
+          native_name?: string
         }
         Relationships: []
       }
@@ -634,6 +675,38 @@ export type Database = {
           xp_earned?: number
         }
         Relationships: []
+      }
+      user_avatars: {
+        Row: {
+          avatar_config: Json
+          created_at: string | null
+          id: string
+          updated_at: string | null
+          user_id: string
+        }
+        Insert: {
+          avatar_config?: Json
+          created_at?: string | null
+          id?: string
+          updated_at?: string | null
+          user_id: string
+        }
+        Update: {
+          avatar_config?: Json
+          created_at?: string | null
+          id?: string
+          updated_at?: string | null
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "user_avatars_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: true
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       user_roles: {
         Row: {
