@@ -309,6 +309,25 @@ const Profile = () => {
 		}
 	}, [user, fetchAdminStatus]);
 
+	// Listen for XP updates from gift sending
+	useEffect(() => {
+		const handleXPUpdate = (event: CustomEvent) => {
+			// If viewing own profile, update the XP and grade
+			if (user && profileId === user.id) {
+				setProfile(prev => prev ? {
+					...prev,
+					xp: event.detail.xp || prev.xp,
+					current_grade: event.detail.grade || prev.current_grade
+				} : null);
+			}
+		};
+
+		window.addEventListener('xp-updated', handleXPUpdate as EventListener);
+		return () => {
+			window.removeEventListener('xp-updated', handleXPUpdate as EventListener);
+		};
+	}, [user, profileId]);
+
 
 	const handleFollow = async () => {
 		if (!user || !profileId) {

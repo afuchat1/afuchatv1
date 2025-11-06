@@ -38,6 +38,29 @@ export const ReceivedGifts = ({ userId }: ReceivedGiftsProps) => {
 
   useEffect(() => {
     fetchGifts();
+
+    // Set up real-time subscription for new gifts
+    const channel = supabase
+      .channel('gift-transactions-changes')
+      .on(
+        'postgres_changes',
+        {
+          event: 'INSERT',
+          schema: 'public',
+          table: 'gift_transactions',
+          filter: `receiver_id=eq.${userId}`,
+        },
+        (payload) => {
+          console.log('New gift received:', payload);
+          // Fetch updated gifts when a new one is received
+          fetchGifts();
+        }
+      )
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(channel);
+    };
   }, [userId]);
 
   const fetchGifts = async () => {

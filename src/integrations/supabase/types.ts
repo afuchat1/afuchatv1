@@ -202,6 +202,8 @@ export type Database = {
       }
       gifts: {
         Row: {
+          available_from: string | null
+          available_until: string | null
           base_xp_cost: number
           created_at: string | null
           description: string | null
@@ -209,8 +211,11 @@ export type Database = {
           id: string
           name: string
           rarity: string
+          season: string | null
         }
         Insert: {
+          available_from?: string | null
+          available_until?: string | null
           base_xp_cost: number
           created_at?: string | null
           description?: string | null
@@ -218,8 +223,11 @@ export type Database = {
           id?: string
           name: string
           rarity?: string
+          season?: string | null
         }
         Update: {
+          available_from?: string | null
+          available_until?: string | null
           base_xp_cost?: number
           created_at?: string | null
           description?: string | null
@@ -227,6 +235,7 @@ export type Database = {
           id?: string
           name?: string
           rarity?: string
+          season?: string | null
         }
         Relationships: []
       }
@@ -864,6 +873,7 @@ export type Database = {
         }
         Returns: undefined
       }
+      calculate_grade: { Args: { p_xp: number }; Returns: string }
       check_and_unlock_accessories: {
         Args: { p_user_id: string }
         Returns: Json

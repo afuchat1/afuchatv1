@@ -22,6 +22,9 @@ interface GiftItem {
   base_xp_cost: number;
   rarity: string;
   description: string;
+  season?: string;
+  available_from?: string;
+  available_until?: string;
 }
 
 interface GiftStatistics {
@@ -39,6 +42,18 @@ const rarityColors: Record<string, string> = {
   common: 'bg-gray-500',
   rare: 'bg-blue-500',
   legendary: 'bg-purple-500',
+};
+
+const seasonColors: Record<string, string> = {
+  Valentine: 'bg-pink-500',
+  Halloween: 'bg-orange-500',
+  Christmas: 'bg-red-500',
+};
+
+const seasonEmojis: Record<string, string> = {
+  Valentine: '💝',
+  Halloween: '🎃',
+  Christmas: '🎄',
 };
 
 export const SendGiftDialog = ({ receiverId, receiverName, trigger }: SendGiftDialogProps) => {
@@ -59,9 +74,12 @@ export const SendGiftDialog = ({ receiverId, receiverName, trigger }: SendGiftDi
   }, [open]);
 
   const fetchGifts = async () => {
+    const today = new Date().toISOString().split('T')[0];
+    
     const { data: giftsData } = await supabase
       .from('gifts')
       .select('*')
+      .or(`available_from.is.null,and(available_from.lte.${today},available_until.gte.${today})`)
       .order('base_xp_cost', { ascending: true });
 
     const { data: statsData } = await supabase
@@ -116,14 +134,28 @@ export const SendGiftDialog = ({ receiverId, receiverName, trigger }: SendGiftDi
 
       if (error) throw error;
 
-      const result = data as { success: boolean; message: string; xp_cost?: number };
+      const result = data as { 
+        success: boolean; 
+        message: string; 
+        xp_cost?: number;
+        new_xp?: number;
+        new_grade?: string;
+      };
 
       if (result.success) {
-        toast.success(`${result.message} (${result.xp_cost} XP)`);
+        toast.success(
+          `${result.message} (${result.xp_cost} XP)`,
+          { description: result.new_grade ? `New grade: ${result.new_grade}` : undefined }
+        );
         setOpen(false);
         setSelectedGift(null);
         setMessage('');
         fetchUserXP();
+        
+        // Trigger a profile refresh for the sender to show updated XP and grade
+        window.dispatchEvent(new CustomEvent('xp-updated', { 
+          detail: { xp: result.new_xp, grade: result.new_grade } 
+        }));
       } else {
         toast.error(result.message);
       }
@@ -172,6 +204,13 @@ export const SendGiftDialog = ({ receiverId, receiverName, trigger }: SendGiftDi
                     : 'border-border opacity-50 cursor-not-allowed'
                 }`}
               >
+                {gift.season && (
+                  <div className="absolute top-1 right-1">
+                    <Badge className={`${seasonColors[gift.season]} text-white text-[10px] px-1 py-0`}>
+                      {seasonEmojis[gift.season]} {gift.season}
+                    </Badge>
+                  </div>
+                )}
                 <div className="text-center">
                   <div className="text-4xl mb-2">{gift.emoji}</div>
                   <h4 className="font-semibold text-sm">{gift.name}</h4>
