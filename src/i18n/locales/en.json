@@ -123,7 +123,10 @@
     "originalCost": "Original: {{cost}} XP",
     "savedXP": "💰 Save {{amount}} XP",
     "sendCombo": "Send {{count}} Gift Combo",
-    "comboSent": "🎊 Combo sent! You saved {{saved}} XP"
+    "comboSent": "🎊 Combo sent! You saved {{saved}} XP",
+    "send": "Send Gift",
+    "tapToCombo": "Tap a gift multiple times to build a combo!",
+    "notEnoughXP": "Not enough XP to send this gift"
   },
   "admin": {
     "dashboard": "Admin Dashboard",

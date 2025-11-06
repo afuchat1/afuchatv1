@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef } from 'react';
+import { useState, useEffect } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/contexts/AuthContext';
 import {
@@ -62,7 +62,6 @@ export const SendGiftDialog = ({ receiverId, receiverName, trigger }: SendGiftDi
   const [showConfetti, setShowConfetti] = useState(false);
   const [showComboConfetti, setShowComboConfetti] = useState(false);
   const [sentGiftEmojis, setSentGiftEmojis] = useState<string[]>([]);
-  const timerRef = useRef<NodeJS.Timeout | null>(null);
   const [comboAnimation, setComboAnimation] = useState<string | null>(null);
 
   useEffect(() => {
@@ -72,21 +71,8 @@ export const SendGiftDialog = ({ receiverId, receiverName, trigger }: SendGiftDi
     } else {
       // Reset state when dialog closes
       setSelectedGift(null);
-      if (timerRef.current) {
-        clearTimeout(timerRef.current);
-        timerRef.current = null;
-      }
     }
   }, [open]);
-
-  useEffect(() => {
-    // Cleanup timer on unmount
-    return () => {
-      if (timerRef.current) {
-        clearTimeout(timerRef.current);
-      }
-    };
-  }, []);
 
   const fetchGifts = async () => {
     const today = new Date().toISOString().split('T')[0];
@@ -138,11 +124,6 @@ export const SendGiftDialog = ({ receiverId, receiverName, trigger }: SendGiftDi
 
   const handleGiftTap = (gift: GiftItem) => {
     const currentPrice = calculatePrice(gift.id, gift.base_xp_cost);
-    
-    // Clear existing timer
-    if (timerRef.current) {
-      clearTimeout(timerRef.current);
-    }
 
     // If selecting a different gift, reset
     if (selectedGift && selectedGift.id !== gift.id) {
@@ -153,7 +134,7 @@ export const SendGiftDialog = ({ receiverId, receiverName, trigger }: SendGiftDi
         baseCost: currentPrice,
       });
     } else if (selectedGift) {
-      // Increment count for same gift
+      // Increment count for same gift (double-tap combo)
       const newCount = selectedGift.count + 1;
       const totalCost = calculateComboTotalCost(gift.id, gift.base_xp_cost, newCount);
       
@@ -184,11 +165,6 @@ export const SendGiftDialog = ({ receiverId, receiverName, trigger }: SendGiftDi
         baseCost: currentPrice,
       });
     }
-
-    // Start 5-second timer
-    timerRef.current = setTimeout(() => {
-      handleAutoSend();
-    }, 5000);
   };
 
   const calculateComboDiscount = (giftCount: number) => {
@@ -205,14 +181,8 @@ export const SendGiftDialog = ({ receiverId, receiverName, trigger }: SendGiftDi
     return Math.ceil(totalBeforeDiscount * (1 - discount));
   };
 
-  const handleAutoSend = async () => {
+  const handleSendGift = async () => {
     if (!selectedGift || !user) return;
-
-    // Clear timer
-    if (timerRef.current) {
-      clearTimeout(timerRef.current);
-      timerRef.current = null;
-    }
 
     setLoading(true);
     try {
@@ -334,46 +304,61 @@ export const SendGiftDialog = ({ receiverId, receiverName, trigger }: SendGiftDi
             </Button>
           )}
         </DialogTrigger>
-      <DialogContent className="max-w-2xl max-h-[85vh] overflow-y-auto">
-        <DialogHeader>
-          <div className="flex items-center gap-4">
-            <Avatar className="h-16 w-16 ring-2 ring-primary/20">
+      <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto p-4">
+        <DialogHeader className="pb-3">
+          <div className="flex items-center gap-3">
+            <Avatar className="h-12 w-12 ring-2 ring-primary/20">
               <AvatarImage src={avatarConfig ? undefined : `https://api.dicebear.com/7.x/avataaars/svg?seed=${receiverId}`} />
               <AvatarFallback>{receiverName[0]?.toUpperCase()}</AvatarFallback>
             </Avatar>
             <div>
-              <DialogTitle className="text-xl">{t('gifts.sendGiftTo', { name: receiverName })}</DialogTitle>
-              <DialogDescription className="mt-1">
+              <DialogTitle className="text-lg">{t('gifts.sendGiftTo', { name: receiverName })}</DialogTitle>
+              <DialogDescription className="text-xs">
                 {t('gifts.yourXP', { xp: userXP })}
               </DialogDescription>
             </div>
           </div>
         </DialogHeader>
 
-        <div className="text-sm text-muted-foreground mb-4 text-center bg-muted/30 rounded-lg p-3">
-          {selectedGift ? (
-            <div className="space-y-1">
-              <div className="text-base font-semibold text-foreground">
-                {selectedGift.count}x {selectedGift.emoji} Combo!
+        {selectedGift && (
+          <div className="mb-4 text-center bg-gradient-to-br from-primary/10 via-accent/10 to-primary/10 rounded-xl p-4 border border-primary/20">
+            <div className="space-y-2">
+              <div className="text-lg font-bold text-foreground">
+                {selectedGift.count}x {selectedGift.emoji} 
+                {selectedGift.count > 1 && <span className="text-primary ml-1">COMBO!</span>}
               </div>
               {discount > 0 && (
-                <div className="text-primary font-medium">
-                  {t('gifts.comboDiscount', { percent: (discount * 100).toFixed(0) })} • {totalCost} XP
+                <div className="text-sm text-primary font-semibold">
+                  {t('gifts.comboDiscount', { percent: (discount * 100).toFixed(0) })} 
                 </div>
               )}
-              {!discount && (
-                <div className="text-foreground">{totalCost} XP</div>
-              )}
-              <div className="text-xs text-muted-foreground">
-                Sending in {loading ? '...' : '5s'}...
-              </div>
+              <div className="text-base font-bold text-foreground">{totalCost} XP</div>
+              <Button 
+                onClick={handleSendGift} 
+                disabled={loading}
+                className="mt-2 w-full bg-gradient-to-r from-primary to-accent hover:from-primary/90 hover:to-accent/90 shadow-lg"
+              >
+                {loading ? (
+                  <>
+                    <Loader2 className="h-4 w-4 animate-spin mr-2" />
+                    {t('gifts.sending')}
+                  </>
+                ) : (
+                  <>
+                    <Gift className="h-4 w-4 mr-2" />
+                    {t('gifts.send')}
+                  </>
+                )}
+              </Button>
             </div>
-          ) : (
-            "Tap a gift multiple times to build a combo!"
-          )}
+          </div>
+        )}
+
+        <div className="text-xs text-center text-muted-foreground mb-4 bg-muted/30 rounded-lg p-2">
+          {t('gifts.tapToCombo')}
         </div>
 
-        <div className="grid grid-cols-4 sm:grid-cols-5 gap-4 my-6">
+        <div className="grid grid-cols-4 sm:grid-cols-5 md:grid-cols-6 lg:grid-cols-8 gap-3">
           {gifts.map((gift) => {
             const currentPrice = calculatePrice(gift.id, gift.base_xp_cost);
             const isSelected = selectedGift?.id === gift.id;
@@ -383,21 +368,29 @@ export const SendGiftDialog = ({ receiverId, receiverName, trigger }: SendGiftDi
               <div
                 key={gift.id}
                 onClick={() => !loading && handleGiftTap(gift)}
-                className={`relative p-4 rounded-2xl cursor-pointer transition-all duration-300 flex items-center justify-center ${
+                className={`group relative flex flex-col items-center gap-2 p-3 rounded-xl cursor-pointer transition-all duration-300 border ${
                   isSelected
-                    ? 'ring-4 ring-primary shadow-2xl shadow-primary/30 scale-110 bg-primary/10'
-                    : 'hover:shadow-xl hover:scale-110 hover:ring-2 hover:ring-primary/20'
+                    ? 'ring-2 ring-primary shadow-xl shadow-primary/30 scale-105 bg-primary/10 border-primary'
+                    : 'hover:shadow-lg hover:scale-105 hover:ring-1 hover:ring-primary/30 border-border/50'
                 } ${isAnimating ? 'animate-[scale-in_0.3s_ease-out]' : ''}`}
               >
                 {isSelected && selectedGift && (
-                  <div className="absolute -top-2 -right-2 z-10 bg-primary text-primary-foreground rounded-full h-8 w-8 flex items-center justify-center font-bold text-sm shadow-lg animate-[scale-in_0.2s_ease-out]">
+                  <div className="absolute -top-2 -right-2 z-10 bg-primary text-primary-foreground rounded-full h-6 w-6 flex items-center justify-center font-bold text-xs shadow-lg animate-[scale-in_0.2s_ease-out]">
                     {selectedGift.count}
                   </div>
                 )}
                 <SimpleGiftIcon 
                   emoji={gift.emoji}
-                  size={isSelected ? 64 : 56}
+                  size={isSelected ? 48 : 42}
                 />
+                <div className="text-center w-full space-y-1">
+                  <div className="text-xs font-semibold text-foreground truncate w-full group-hover:text-primary transition-colors">
+                    {gift.name}
+                  </div>
+                  <div className="text-xs font-medium text-primary bg-primary/10 px-2 py-0.5 rounded-full">
+                    {currentPrice} XP
+                  </div>
+                </div>
               </div>
             );
           })}
