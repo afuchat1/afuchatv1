@@ -1,6 +1,6 @@
 import React from 'react';
 import { OwlAvatarConfig, DEFAULT_AVATAR_CONFIG } from '@/types/avatar';
-import { OwlBody } from './OwlBody';
+import { EnhancedOwlBody } from './EnhancedOwlBody';
 import { OwlEyes } from './OwlEyes';
 import { OwlBeak } from './OwlBeak';
 import { OwlAccessories } from './OwlAccessories';
@@ -49,7 +49,7 @@ export const OwlAvatar: React.FC<OwlAvatarProps> = ({
           <stop offset="100%" stopColor="#764ba2" />
         </linearGradient>
         
-        {/* Shadow filter */}
+        {/* Enhanced shadow filter */}
         <filter id={`shadow-${size}`} x="-50%" y="-50%" width="200%" height="200%">
           <feGaussianBlur in="SourceAlpha" stdDeviation="3"/>
           <feOffset dx="0" dy="2" result="offsetblur"/>
@@ -61,14 +61,28 @@ export const OwlAvatar: React.FC<OwlAvatarProps> = ({
             <feMergeNode in="SourceGraphic"/>
           </feMerge>
         </filter>
+
+        {/* Sparkle effect for premium avatars */}
+        <filter id={`sparkle-${size}`}>
+          <feGaussianBlur in="SourceGraphic" stdDeviation="2" result="blur"/>
+          <feColorMatrix in="blur" type="matrix" values="1 0 0 0 0  0 1 0 0 0  0 0 1 0 0  0 0 0 18 -7" result="glow"/>
+          <feBlend in="SourceGraphic" in2="glow"/>
+        </filter>
       </defs>
 
-      {/* Background */}
-      <rect width="120" height="120" fill={getBackground()} rx="60" />
+      {/* Background with subtle animation on gradient backgrounds */}
+      <rect 
+        width="120" 
+        height="120" 
+        fill={getBackground()} 
+        rx="60"
+        className={fullConfig.background === 'gradient' ? 'animate-pulse' : ''}
+        style={{ animationDuration: '3s' }}
+      />
 
-      {/* Owl body with shadow */}
+      {/* Owl body with enhanced shadow and filter */}
       <g filter={`url(#shadow-${size})`}>
-        <OwlBody 
+        <EnhancedOwlBody 
           color={fullConfig.color} 
           featherColor={featherColor}
         />
@@ -82,8 +96,10 @@ export const OwlAvatar: React.FC<OwlAvatarProps> = ({
         {/* Beak */}
         <OwlBeak emotion={fullConfig.emotion} />
         
-        {/* Accessories */}
-        <OwlAccessories accessories={fullConfig.accessories} />
+        {/* Accessories with sparkle effect */}
+        <g filter={`url(#sparkle-${size})`}>
+          <OwlAccessories accessories={fullConfig.accessories} />
+        </g>
       </g>
     </svg>
   );
@@ -100,3 +116,4 @@ function adjustColor(color: string, amount: number): string {
   
   return `#${((r << 16) | (g << 8) | b).toString(16).padStart(6, '0')}`;
 }
+

@@ -4,6 +4,8 @@ import { Card } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Gift, Loader2 } from 'lucide-react';
 import { Skeleton } from '@/components/ui/skeleton';
+import { useTranslation } from 'react-i18next';
+import { PremiumGiftIcon } from './PremiumGiftIcon';
 
 interface GiftTransaction {
   id: string;
@@ -32,6 +34,7 @@ const rarityColors: Record<string, string> = {
 };
 
 export const ReceivedGifts = ({ userId }: ReceivedGiftsProps) => {
+  const { t } = useTranslation();
   const [gifts, setGifts] = useState<GiftTransaction[]>([]);
   const [loading, setLoading] = useState(true);
   const [totalValue, setTotalValue] = useState(0);
@@ -141,7 +144,7 @@ export const ReceivedGifts = ({ userId }: ReceivedGiftsProps) => {
       <Card className="p-6 text-center">
         <Gift className="h-12 w-12 mx-auto text-muted-foreground mb-3" />
         <p className="text-sm text-muted-foreground">
-          No gifts received yet
+          {t('gifts.noGiftsReceived')}
         </p>
       </Card>
     );
@@ -149,12 +152,12 @@ export const ReceivedGifts = ({ userId }: ReceivedGiftsProps) => {
 
   return (
     <div className="space-y-4">
-      <Card className="p-4 bg-gradient-to-br from-pink-500/10 to-purple-500/10">
+      <Card className="p-4 bg-gradient-to-br from-pink-500/10 to-purple-500/10 border-pink-200/50">
         <div className="flex items-center justify-between">
           <div>
-            <h3 className="text-lg font-bold">{gifts.length} Gifts</h3>
+            <h3 className="text-lg font-bold">{t('gifts.giftsReceived', { count: gifts.length })}</h3>
             <p className="text-sm text-muted-foreground">
-              Total value: {totalValue} XP
+              {t('gifts.totalValue', { value: totalValue })}
             </p>
           </div>
           <Gift className="h-10 w-10 text-pink-500" />
@@ -163,28 +166,32 @@ export const ReceivedGifts = ({ userId }: ReceivedGiftsProps) => {
 
       <div className="space-y-3">
         {gifts.map((gift) => (
-          <Card key={gift.id} className="p-4 hover:shadow-md transition-shadow">
+          <Card key={gift.id} className="p-4 hover:shadow-lg transition-all duration-300 border-l-4 border-l-primary/30">
             <div className="flex items-start gap-3">
-              <div className="text-3xl">{gift.gift.emoji}</div>
+              <PremiumGiftIcon 
+                emoji={gift.gift.emoji}
+                rarity={gift.gift.rarity}
+                size={56}
+              />
               <div className="flex-1 min-w-0">
                 <div className="flex items-center gap-2 flex-wrap">
                   <h4 className="font-semibold text-sm">{gift.gift.name}</h4>
                   <Badge className={rarityColors[gift.gift.rarity]} variant="secondary">
-                    {gift.gift.rarity}
+                    {t(`gifts.${gift.gift.rarity}`)}
                   </Badge>
                   <Badge variant="outline" className="text-xs">
-                    {gift.xp_cost} XP
+                    {gift.xp_cost} {t('gamification.xp')}
                   </Badge>
                 </div>
                 <p className="text-xs text-muted-foreground mt-1">
-                  From{' '}
+                  {t('common.from')}{' '}
                   <span className="font-medium text-foreground">
                     {gift.sender.display_name}
                   </span>{' '}
                   (@{gift.sender.handle})
                 </p>
                 {gift.message && (
-                  <p className="text-xs mt-2 p-2 bg-muted/50 rounded italic">
+                  <p className="text-xs mt-2 p-2 bg-muted/50 rounded italic border-l-2 border-primary/30">
                     "{gift.message}"
                   </p>
                 )}

@@ -14,6 +14,8 @@ import { Textarea } from '@/components/ui/textarea';
 import { Badge } from '@/components/ui/badge';
 import { Gift, Loader2 } from 'lucide-react';
 import { toast } from 'sonner';
+import { useTranslation } from 'react-i18next';
+import { PremiumGiftIcon } from './PremiumGiftIcon';
 
 interface GiftItem {
   id: string;
@@ -58,6 +60,7 @@ const seasonEmojis: Record<string, string> = {
 
 export const SendGiftDialog = ({ receiverId, receiverName, trigger }: SendGiftDialogProps) => {
   const { user } = useAuth();
+  const { t } = useTranslation();
   const [open, setOpen] = useState(false);
   const [gifts, setGifts] = useState<GiftItem[]>([]);
   const [giftStats, setGiftStats] = useState<Record<string, GiftStatistics>>({});
@@ -144,8 +147,8 @@ export const SendGiftDialog = ({ receiverId, receiverName, trigger }: SendGiftDi
 
       if (result.success) {
         toast.success(
-          `${result.message} (${result.xp_cost} XP)`,
-          { description: result.new_grade ? `New grade: ${result.new_grade}` : undefined }
+          t('gifts.giftSent'),
+          { description: result.new_grade ? `${t('gamification.grade')}: ${result.new_grade}` : undefined }
         );
         setOpen(false);
         setSelectedGift(null);
@@ -161,7 +164,7 @@ export const SendGiftDialog = ({ receiverId, receiverName, trigger }: SendGiftDi
       }
     } catch (error) {
       console.error('Error sending gift:', error);
-      toast.error('Failed to send gift');
+      toast.error(t('gifts.giftFailed'));
     } finally {
       setLoading(false);
     }
@@ -173,15 +176,15 @@ export const SendGiftDialog = ({ receiverId, receiverName, trigger }: SendGiftDi
         {trigger || (
           <Button variant="outline" size="sm" className="gap-2">
             <Gift className="h-4 w-4" />
-            Send Gift
+            {t('gifts.sendGift')}
           </Button>
         )}
       </DialogTrigger>
       <DialogContent className="max-w-md max-h-[80vh] overflow-y-auto">
         <DialogHeader>
-          <DialogTitle>Send a Gift to {receiverName}</DialogTitle>
+          <DialogTitle>{t('gifts.sendGiftTo', { name: receiverName })}</DialogTitle>
           <DialogDescription>
-            Choose a gift to send. Your XP: {userXP}
+            {t('gifts.yourXP', { xp: userXP })}
           </DialogDescription>
         </DialogHeader>
 
@@ -196,33 +199,40 @@ export const SendGiftDialog = ({ receiverId, receiverName, trigger }: SendGiftDi
               <div
                 key={gift.id}
                 onClick={() => canAfford && setSelectedGift(gift.id)}
-                className={`relative p-4 rounded-lg border-2 cursor-pointer transition-all ${
+                className={`relative p-4 rounded-lg border-2 cursor-pointer transition-all hover:shadow-lg ${
                   isSelected
-                    ? 'border-primary bg-primary/10'
+                    ? 'border-primary bg-primary/10 shadow-xl'
                     : canAfford
                     ? 'border-border hover:border-primary/50'
                     : 'border-border opacity-50 cursor-not-allowed'
                 }`}
               >
                 {gift.season && (
-                  <div className="absolute top-1 right-1">
+                  <div className="absolute top-1 right-1 z-10">
                     <Badge className={`${seasonColors[gift.season]} text-white text-[10px] px-1 py-0`}>
                       {seasonEmojis[gift.season]} {gift.season}
                     </Badge>
                   </div>
                 )}
                 <div className="text-center">
-                  <div className="text-4xl mb-2">{gift.emoji}</div>
+                  <div className="flex justify-center mb-2">
+                    <PremiumGiftIcon 
+                      emoji={gift.emoji}
+                      rarity={gift.rarity}
+                      season={gift.season}
+                      size={80}
+                    />
+                  </div>
                   <h4 className="font-semibold text-sm">{gift.name}</h4>
                   <p className="text-xs text-muted-foreground mt-1 min-h-[32px]">
                     {gift.description}
                   </p>
                   <div className="mt-2 space-y-1">
                     <Badge className={rarityColors[gift.rarity]} variant="secondary">
-                      {gift.rarity}
+                      {t(`gifts.${gift.rarity}`)}
                     </Badge>
                     <div className="text-sm font-bold">
-                      {currentPrice} XP
+                      {currentPrice} {t('gamification.xp')}
                       {stats && stats.price_multiplier > 1 && (
                         <span className="text-xs text-muted-foreground ml-1">
                           (×{stats.price_multiplier.toFixed(2)})
@@ -231,7 +241,7 @@ export const SendGiftDialog = ({ receiverId, receiverName, trigger }: SendGiftDi
                     </div>
                     {stats && (
                       <p className="text-xs text-muted-foreground">
-                        Sent {stats.total_sent} times
+                        {t('gifts.sentTimes', { count: stats.total_sent })}
                       </p>
                     )}
                   </div>
@@ -244,7 +254,7 @@ export const SendGiftDialog = ({ receiverId, receiverName, trigger }: SendGiftDi
         {selectedGift && (
           <div className="space-y-3">
             <Textarea
-              placeholder="Add a message (optional)"
+              placeholder={t('gifts.addMessage')}
               value={message}
               onChange={(e) => setMessage(e.target.value)}
               className="resize-none"
@@ -258,12 +268,12 @@ export const SendGiftDialog = ({ receiverId, receiverName, trigger }: SendGiftDi
               {loading ? (
                 <>
                   <Loader2 className="h-4 w-4 mr-2 animate-spin" />
-                  Sending...
+                  {t('gifts.sending')}
                 </>
               ) : (
                 <>
                   <Gift className="h-4 w-4 mr-2" />
-                  Send Gift
+                  {t('gifts.sendGift')}
                 </>
               )}
             </Button>

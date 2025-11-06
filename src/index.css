@@ -4,6 +4,12 @@
 @tailwind components;
 @tailwind utilities;
 
+@layer utilities {
+  .animate-spin-slow {
+    animation: spin 3s linear infinite;
+  }
+}
+
 /* AfuChat Design System - Optimized for low-bandwidth, high readability
 All colors MUST be HSL.
 */
