@@ -18,6 +18,7 @@ import { GiftConfetti } from './GiftConfetti';
 import { ComboConfetti } from './ComboConfetti';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { useUserAvatar } from '@/hooks/useUserAvatar';
+import { GiftDetailsModal } from './GiftDetailsModal';
 
 interface GiftItem {
   id: string;
@@ -62,7 +63,8 @@ export const SendGiftDialog = ({ receiverId, receiverName, trigger }: SendGiftDi
   const [showConfetti, setShowConfetti] = useState(false);
   const [showComboConfetti, setShowComboConfetti] = useState(false);
   const [sentGiftEmojis, setSentGiftEmojis] = useState<string[]>([]);
-  const [comboAnimation, setComboAnimation] = useState<string | null>(null);
+  const [selectedGiftForDetails, setSelectedGiftForDetails] = useState<GiftItem | null>(null);
+  const [detailsModalOpen, setDetailsModalOpen] = useState(false);
 
   useEffect(() => {
     if (open) {
@@ -122,21 +124,33 @@ export const SendGiftDialog = ({ receiverId, receiverName, trigger }: SendGiftDi
     return Math.ceil(baseCost * stats.price_multiplier);
   };
 
-  const handleGiftTap = (gift: GiftItem) => {
-    const currentPrice = calculatePrice(gift.id, gift.base_xp_cost);
+  const handleGiftClick = (gift: GiftItem) => {
+    setSelectedGiftForDetails(gift);
+    setDetailsModalOpen(true);
+  };
 
-    // If selecting a different gift, reset
-    if (selectedGift && selectedGift.id !== gift.id) {
+  const handleComboTapInModal = () => {
+    if (!selectedGiftForDetails) return;
+    
+    const currentPrice = calculatePrice(selectedGiftForDetails.id, selectedGiftForDetails.base_xp_cost);
+    
+    if (!selectedGift || selectedGift.id !== selectedGiftForDetails.id) {
+      // Start new combo
+      if (currentPrice > userXP) {
+        toast.error(t('gifts.notEnoughXP'));
+        return;
+      }
+      
       setSelectedGift({
-        id: gift.id,
-        emoji: gift.emoji,
+        id: selectedGiftForDetails.id,
+        emoji: selectedGiftForDetails.emoji,
         count: 1,
         baseCost: currentPrice,
       });
-    } else if (selectedGift) {
-      // Increment count for same gift (double-tap combo)
+    } else {
+      // Increment combo
       const newCount = selectedGift.count + 1;
-      const totalCost = calculateComboTotalCost(gift.id, gift.base_xp_cost, newCount);
+      const totalCost = calculateComboTotalCost(selectedGiftForDetails.id, selectedGiftForDetails.base_xp_cost, newCount);
       
       if (totalCost > userXP) {
         toast.error(t('gifts.notEnoughXP'));
@@ -146,23 +160,6 @@ export const SendGiftDialog = ({ receiverId, receiverName, trigger }: SendGiftDi
       setSelectedGift({
         ...selectedGift,
         count: newCount,
-      });
-      
-      // Show combo animation
-      setComboAnimation(gift.id);
-      setTimeout(() => setComboAnimation(null), 300);
-    } else {
-      // First selection
-      if (currentPrice > userXP) {
-        toast.error(t('gifts.notEnoughXP'));
-        return;
-      }
-      
-      setSelectedGift({
-        id: gift.id,
-        emoji: gift.emoji,
-        count: 1,
-        baseCost: currentPrice,
       });
     }
   };
@@ -179,6 +176,13 @@ export const SendGiftDialog = ({ receiverId, receiverName, trigger }: SendGiftDi
     const totalBeforeDiscount = pricePerGift * count;
     const discount = calculateComboDiscount(count);
     return Math.ceil(totalBeforeDiscount * (1 - discount));
+  };
+
+  const handleSendGiftFromModal = async () => {
+    if (!selectedGift || !user) return;
+    
+    setDetailsModalOpen(false);
+    await handleSendGift();
   };
 
   const handleSendGift = async () => {
@@ -320,74 +324,29 @@ export const SendGiftDialog = ({ receiverId, receiverName, trigger }: SendGiftDi
           </div>
         </DialogHeader>
 
-        {selectedGift && (
-          <div className="mb-4 text-center bg-gradient-to-br from-primary/10 via-accent/10 to-primary/10 rounded-xl p-4 border border-primary/20">
-            <div className="space-y-2">
-              <div className="text-lg font-bold text-foreground">
-                {selectedGift.count}x {selectedGift.emoji} 
-                {selectedGift.count > 1 && <span className="text-primary ml-1">COMBO!</span>}
-              </div>
-              {discount > 0 && (
-                <div className="text-sm text-primary font-semibold">
-                  {t('gifts.comboDiscount', { percent: (discount * 100).toFixed(0) })} 
-                </div>
-              )}
-              <div className="text-base font-bold text-foreground">{totalCost} XP</div>
-              <Button 
-                onClick={handleSendGift} 
-                disabled={loading}
-                className="mt-2 w-full bg-gradient-to-r from-primary to-accent hover:from-primary/90 hover:to-accent/90 shadow-lg"
-              >
-                {loading ? (
-                  <>
-                    <Loader2 className="h-4 w-4 animate-spin mr-2" />
-                    {t('gifts.sending')}
-                  </>
-                ) : (
-                  <>
-                    <Gift className="h-4 w-4 mr-2" />
-                    {t('gifts.send')}
-                  </>
-                )}
-              </Button>
-            </div>
-          </div>
-        )}
-
         <div className="text-xs text-center text-muted-foreground mb-4 bg-muted/30 rounded-lg p-2">
           {t('gifts.tapToCombo')}
         </div>
 
-        <div className="grid grid-cols-4 sm:grid-cols-5 md:grid-cols-6 lg:grid-cols-8 gap-3">
+        <div className="grid grid-cols-4 sm:grid-cols-5 md:grid-cols-6 gap-2">
           {gifts.map((gift) => {
             const currentPrice = calculatePrice(gift.id, gift.base_xp_cost);
-            const isSelected = selectedGift?.id === gift.id;
-            const isAnimating = comboAnimation === gift.id;
 
             return (
               <div
                 key={gift.id}
-                onClick={() => !loading && handleGiftTap(gift)}
-                className={`group relative flex flex-col items-center gap-2 p-3 rounded-xl cursor-pointer transition-all duration-300 border ${
-                  isSelected
-                    ? 'ring-2 ring-primary shadow-xl shadow-primary/30 scale-105 bg-primary/10 border-primary'
-                    : 'hover:shadow-lg hover:scale-105 hover:ring-1 hover:ring-primary/30 border-border/50'
-                } ${isAnimating ? 'animate-[scale-in_0.3s_ease-out]' : ''}`}
+                onClick={() => !loading && handleGiftClick(gift)}
+                className="group relative flex flex-col items-center gap-1.5 p-2 rounded-lg cursor-pointer transition-all duration-200 border hover:shadow-md hover:scale-105 hover:ring-1 hover:ring-primary/30 border-border/50 bg-card"
               >
-                {isSelected && selectedGift && (
-                  <div className="absolute -top-2 -right-2 z-10 bg-primary text-primary-foreground rounded-full h-6 w-6 flex items-center justify-center font-bold text-xs shadow-lg animate-[scale-in_0.2s_ease-out]">
-                    {selectedGift.count}
-                  </div>
-                )}
                 <SimpleGiftIcon 
                   emoji={gift.emoji}
-                  size={isSelected ? 48 : 42}
+                  size={32}
                 />
-                <div className="text-center w-full space-y-1">
-                  <div className="text-xs font-semibold text-foreground truncate w-full group-hover:text-primary transition-colors">
+                <div className="text-center w-full">
+                  <div className="text-[10px] font-semibold text-foreground truncate w-full leading-tight">
                     {gift.name}
                   </div>
-                  <div className="text-xs font-medium text-primary bg-primary/10 px-2 py-0.5 rounded-full">
+                  <div className="text-[10px] font-bold text-primary mt-0.5">
                     {currentPrice} XP
                   </div>
                 </div>
@@ -395,6 +354,23 @@ export const SendGiftDialog = ({ receiverId, receiverName, trigger }: SendGiftDi
             );
           })}
         </div>
+
+        {selectedGiftForDetails && (
+          <GiftDetailsModal
+            gift={selectedGiftForDetails}
+            currentPrice={calculatePrice(selectedGiftForDetails.id, selectedGiftForDetails.base_xp_cost)}
+            totalSent={giftStats[selectedGiftForDetails.id]?.total_sent || 0}
+            priceMultiplier={giftStats[selectedGiftForDetails.id]?.price_multiplier || 1}
+            open={detailsModalOpen}
+            onOpenChange={setDetailsModalOpen}
+            onSend={handleSendGiftFromModal}
+            onComboTap={handleComboTapInModal}
+            loading={loading}
+            comboCount={selectedGift?.id === selectedGiftForDetails.id ? selectedGift.count : 0}
+            totalCost={selectedGift?.id === selectedGiftForDetails.id ? totalCost : 0}
+            discount={selectedGift?.id === selectedGiftForDetails.id ? discount : 0}
+          />
+        )}
       </DialogContent>
       </Dialog>
     </>

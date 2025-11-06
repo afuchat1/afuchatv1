@@ -125,8 +125,12 @@
     "sendCombo": "Send {{count}} Gift Combo",
     "comboSent": "🎊 Combo sent! You saved {{saved}} XP",
     "send": "Send Gift",
-    "tapToCombo": "Tap a gift multiple times to build a combo!",
-    "notEnoughXP": "Not enough XP to send this gift"
+    "tapToCombo": "💡 Tap '+1' to build a combo and get discounts!",
+    "notEnoughXP": "Not enough XP to send this gift",
+    "currentPrice": "Current Price",
+    "popularity": "Popularity",
+    "priceHistory": "Price History",
+    "addToCombo": "Add to Combo"
   },
   "admin": {
     "dashboard": "Admin Dashboard",
