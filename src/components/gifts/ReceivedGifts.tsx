@@ -6,21 +6,31 @@ import { Gift, Loader2 } from 'lucide-react';
 import { Skeleton } from '@/components/ui/skeleton';
 import { useTranslation } from 'react-i18next';
 import { SimpleGiftIcon } from './SimpleGiftIcon';
+import { ReceivedGiftDetailsModal } from './ReceivedGiftDetailsModal';
 
 interface GiftTransaction {
   id: string;
   xp_cost: number;
   message: string | null;
   created_at: string;
+  gift_id: string;
   sender: {
     display_name: string;
     handle: string;
   };
   gift: {
+    id: string;
     name: string;
     emoji: string;
     rarity: string;
+    description?: string;
+    base_xp_cost?: number;
   };
+}
+
+interface GiftStatistics {
+  price_multiplier: number;
+  total_sent: number;
 }
 
 interface ReceivedGiftsProps {
@@ -38,6 +48,9 @@ export const ReceivedGifts = ({ userId }: ReceivedGiftsProps) => {
   const [gifts, setGifts] = useState<GiftTransaction[]>([]);
   const [loading, setLoading] = useState(true);
   const [totalValue, setTotalValue] = useState(0);
+  const [selectedGift, setSelectedGift] = useState<GiftTransaction | null>(null);
+  const [detailsModalOpen, setDetailsModalOpen] = useState(false);
+  const [giftStats, setGiftStats] = useState<Record<string, GiftStatistics>>({});
 
   useEffect(() => {
     fetchGifts();
@@ -99,10 +112,27 @@ export const ReceivedGifts = ({ userId }: ReceivedGiftsProps) => {
       // Fetch gift details
       const { data: giftDetails, error: giftError } = await supabase
         .from('gifts')
-        .select('id, name, emoji, rarity')
+        .select('id, name, emoji, rarity, description, base_xp_cost')
         .in('id', giftIds);
 
       if (giftError) throw giftError;
+
+      // Fetch gift statistics
+      const { data: statsData } = await supabase
+        .from('gift_statistics')
+        .select('gift_id, price_multiplier, total_sent')
+        .in('gift_id', giftIds);
+
+      if (statsData) {
+        const statsMap: Record<string, GiftStatistics> = {};
+        statsData.forEach((stat: any) => {
+          statsMap[stat.gift_id] = {
+            price_multiplier: parseFloat(stat.price_multiplier),
+            total_sent: stat.total_sent,
+          };
+        });
+        setGiftStats(statsMap);
+      }
 
       // Create lookup maps
       const senderMap = new Map(senders?.map(s => [s.id, s]) || []);
@@ -114,8 +144,9 @@ export const ReceivedGifts = ({ userId }: ReceivedGiftsProps) => {
         xp_cost: item.xp_cost,
         message: item.message,
         created_at: item.created_at,
+        gift_id: item.gift_id,
         sender: senderMap.get(item.sender_id) || { display_name: 'Unknown', handle: 'unknown' },
-        gift: giftMap.get(item.gift_id) || { name: 'Unknown Gift', emoji: '🎁', rarity: 'common' },
+        gift: giftMap.get(item.gift_id) || { id: item.gift_id, name: 'Unknown Gift', emoji: '🎁', rarity: 'common' },
       }));
 
       setGifts(formattedGifts);
@@ -127,6 +158,17 @@ export const ReceivedGifts = ({ userId }: ReceivedGiftsProps) => {
     } finally {
       setLoading(false);
     }
+  };
+
+  const calculatePrice = (giftId: string, baseCost: number) => {
+    const stats = giftStats[giftId];
+    if (!stats) return baseCost;
+    return Math.ceil(baseCost * stats.price_multiplier);
+  };
+
+  const handleGiftClick = (gift: GiftTransaction) => {
+    setSelectedGift(gift);
+    setDetailsModalOpen(true);
   };
 
   if (loading) {
@@ -173,7 +215,8 @@ export const ReceivedGifts = ({ userId }: ReceivedGiftsProps) => {
         {gifts.map((gift) => (
           <div 
             key={gift.id} 
-            className="group flex flex-col items-center gap-3 p-4 rounded-2xl transition-all duration-300 hover:shadow-xl hover:-translate-y-1"
+            onClick={() => handleGiftClick(gift)}
+            className="group flex flex-col items-center gap-3 p-4 rounded-2xl transition-all duration-300 hover:shadow-xl hover:-translate-y-1 cursor-pointer hover:ring-2 hover:ring-primary/30"
           >
             <SimpleGiftIcon 
               emoji={gift.gift.emoji}
@@ -190,6 +233,17 @@ export const ReceivedGifts = ({ userId }: ReceivedGiftsProps) => {
           </div>
         ))}
       </div>
+
+      {selectedGift && (
+        <ReceivedGiftDetailsModal
+          gift={selectedGift}
+          currentPrice={calculatePrice(selectedGift.gift_id, selectedGift.gift.base_xp_cost || selectedGift.xp_cost)}
+          totalSent={giftStats[selectedGift.gift_id]?.total_sent || 0}
+          priceMultiplier={giftStats[selectedGift.gift_id]?.price_multiplier || 1}
+          open={detailsModalOpen}
+          onOpenChange={setDetailsModalOpen}
+        />
+      )}
     </div>
   );
 };

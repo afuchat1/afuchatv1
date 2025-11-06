@@ -1,60 +1,58 @@
-import { useState } from 'react';
 import {
   Dialog,
   DialogContent,
   DialogHeader,
   DialogTitle,
 } from '@/components/ui/dialog';
-import { Button } from '@/components/ui/button';
-import { Gift, Loader2, TrendingUp, Award, Users } from 'lucide-react';
+import { Award, TrendingUp, Users, User } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 import { SimpleGiftIcon } from './SimpleGiftIcon';
 import { Badge } from '@/components/ui/badge';
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
+import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
+import { format } from 'date-fns';
 
-interface GiftDetailsModalProps {
+interface ReceivedGiftDetailsModalProps {
   gift: {
     id: string;
-    name: string;
-    emoji: string;
-    base_xp_cost: number;
-    rarity: string;
-    description: string;
+    xp_cost: number;
+    message: string | null;
+    created_at: string;
+    sender: {
+      display_name: string;
+      handle: string;
+    };
+    gift: {
+      name: string;
+      emoji: string;
+      rarity: string;
+      description?: string;
+      base_xp_cost?: number;
+    };
   };
   currentPrice: number;
   totalSent: number;
   priceMultiplier: number;
   open: boolean;
   onOpenChange: (open: boolean) => void;
-  onSend: () => void;
-  onComboTap: () => void;
-  loading: boolean;
-  comboCount: number;
-  totalCost: number;
-  discount: number;
 }
 
-export const GiftDetailsModal = ({
+export const ReceivedGiftDetailsModal = ({
   gift,
   currentPrice,
   totalSent,
   priceMultiplier,
   open,
   onOpenChange,
-  onSend,
-  onComboTap,
-  loading,
-  comboCount,
-  totalCost,
-  discount,
-}: GiftDetailsModalProps) => {
+}: ReceivedGiftDetailsModalProps) => {
   const { t } = useTranslation();
 
   // Mock price history data based on multiplier
+  const baseCost = gift.gift.base_xp_cost || gift.xp_cost;
   const priceHistory = [
-    { time: '7d ago', price: gift.base_xp_cost },
-    { time: '5d ago', price: Math.ceil(gift.base_xp_cost * 1.1) },
-    { time: '3d ago', price: Math.ceil(gift.base_xp_cost * (priceMultiplier - 0.05)) },
+    { time: '7d ago', price: baseCost },
+    { time: '5d ago', price: Math.ceil(baseCost * 1.1) },
+    { time: '3d ago', price: Math.ceil(baseCost * (priceMultiplier - 0.05)) },
     { time: 'Now', price: currentPrice },
   ];
 
@@ -72,26 +70,54 @@ export const GiftDetailsModal = ({
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="max-w-md">
         <DialogHeader>
-          <DialogTitle className="text-center">{gift.name}</DialogTitle>
+          <DialogTitle className="text-center">{gift.gift.name}</DialogTitle>
         </DialogHeader>
 
         <div className="space-y-4">
           {/* Gift Display */}
           <div className="flex flex-col items-center gap-3 p-4 bg-gradient-to-br from-primary/5 to-accent/5 rounded-lg">
-            <SimpleGiftIcon emoji={gift.emoji} size={80} />
+            <SimpleGiftIcon emoji={gift.gift.emoji} size={80} />
             <Badge 
               className="text-xs font-semibold"
-              style={{ backgroundColor: getRarityColor(gift.rarity) }}
+              style={{ backgroundColor: getRarityColor(gift.gift.rarity) }}
             >
               <Award className="h-3 w-3 mr-1" />
-              {gift.rarity.toUpperCase()}
+              {gift.gift.rarity.toUpperCase()}
             </Badge>
           </div>
 
+          {/* Sender Info */}
+          <div className="bg-muted/30 rounded-lg p-3">
+            <div className="flex items-center gap-1 mb-2">
+              <User className="h-3 w-3 text-muted-foreground" />
+              <span className="text-xs font-medium text-muted-foreground">
+                {t('common.from')}
+              </span>
+            </div>
+            <div className="flex items-center gap-3">
+              <Avatar className="h-10 w-10 ring-2 ring-primary/20">
+                <AvatarImage src={`https://api.dicebear.com/7.x/avataaars/svg?seed=${gift.sender.handle}`} />
+                <AvatarFallback>{gift.sender.display_name[0]?.toUpperCase()}</AvatarFallback>
+              </Avatar>
+              <div>
+                <div className="text-sm font-semibold text-foreground">{gift.sender.display_name}</div>
+                <div className="text-xs text-muted-foreground">@{gift.sender.handle}</div>
+              </div>
+            </div>
+            {gift.message && (
+              <div className="mt-3 pt-3 border-t border-border/50">
+                <p className="text-sm text-foreground italic">"{gift.message}"</p>
+              </div>
+            )}
+            <div className="mt-2 text-xs text-muted-foreground">
+              {format(new Date(gift.created_at), 'PPpp')}
+            </div>
+          </div>
+
           {/* Description */}
-          {gift.description && (
+          {gift.gift.description && (
             <p className="text-sm text-muted-foreground text-center px-2">
-              {gift.description}
+              {gift.gift.description}
             </p>
           )}
 
@@ -116,6 +142,12 @@ export const GiftDetailsModal = ({
               </div>
               <div className="text-lg font-bold text-foreground">{totalSent}</div>
             </div>
+          </div>
+
+          {/* Value Badge */}
+          <div className="bg-gradient-to-br from-primary/10 via-accent/10 to-primary/10 rounded-lg p-3 border border-primary/20 text-center">
+            <div className="text-xs text-muted-foreground mb-1">Value Received</div>
+            <div className="text-xl font-bold text-foreground">{gift.xp_cost} XP</div>
           </div>
 
           {/* Price History Chart */}
@@ -151,57 +183,6 @@ export const GiftDetailsModal = ({
               </LineChart>
             </ResponsiveContainer>
           </div>
-
-          {/* Combo Info */}
-          {comboCount > 0 && (
-            <div className="bg-gradient-to-br from-primary/10 via-accent/10 to-primary/10 rounded-lg p-3 border border-primary/20">
-              <div className="text-center space-y-1">
-                <div className="text-sm font-bold text-foreground">
-                  {comboCount}x {gift.emoji}
-                  {comboCount > 1 && <span className="text-primary ml-1">COMBO!</span>}
-                </div>
-                {discount > 0 && (
-                  <div className="text-xs text-primary font-semibold">
-                    {t('gifts.comboDiscount', { percent: (discount * 100).toFixed(0) })}
-                  </div>
-                )}
-                <div className="text-base font-bold text-foreground">{totalCost} XP</div>
-              </div>
-            </div>
-          )}
-
-          {/* Action Buttons */}
-          <div className="flex gap-2">
-            <Button 
-              onClick={onComboTap}
-              variant="outline"
-              className="flex-1"
-              disabled={loading}
-            >
-              {comboCount > 0 ? `+1 (${comboCount + 1}x)` : t('gifts.addToCombo')}
-            </Button>
-            <Button 
-              onClick={onSend}
-              disabled={loading || comboCount === 0}
-              className="flex-1 bg-gradient-to-r from-primary to-accent hover:from-primary/90 hover:to-accent/90"
-            >
-              {loading ? (
-                <>
-                  <Loader2 className="h-4 w-4 animate-spin mr-2" />
-                  {t('gifts.sending')}
-                </>
-              ) : (
-                <>
-                  <Gift className="h-4 w-4 mr-2" />
-                  {t('gifts.send')}
-                </>
-              )}
-            </Button>
-          </div>
-
-          <p className="text-xs text-center text-muted-foreground">
-            {t('gifts.tapToCombo')}
-          </p>
         </div>
       </DialogContent>
     </Dialog>
