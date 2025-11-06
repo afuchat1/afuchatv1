@@ -198,19 +198,21 @@ const UserAvatarMedium = ({ userId }: { userId: string }) => {
 // --- REPLY ITEM (Updated with auto-translation) ---
 
 const ReplyItem = ({ reply, navigate, handleViewProfile }: { reply: Reply; navigate: any; handleViewProfile: (id: string) => void }) => {
-    const { i18n } = useTranslation();
+    const { i18n, t } = useTranslation();
     const { translateText } = useAITranslation();
     const [translatedContent, setTranslatedContent] = useState<string | null>(null);
+    const [isTranslating, setIsTranslating] = useState(false);
 
-    useEffect(() => {
-        const autoTranslate = async () => {
-            if (i18n.language !== 'en' && reply.content) {
-                const translated = await translateText(reply.content, i18n.language);
-                setTranslatedContent(translated);
-            }
-        };
-        autoTranslate();
-    }, [reply.content, i18n.language]);
+    const handleTranslate = async () => {
+        if (translatedContent) {
+            setTranslatedContent(null);
+            return;
+        }
+        setIsTranslating(true);
+        const translated = await translateText(reply.content, i18n.language);
+        setTranslatedContent(translated);
+        setIsTranslating(false);
+    };
 
     const displayContent = translatedContent || reply.content;
 
@@ -250,6 +252,17 @@ const ReplyItem = ({ reply, navigate, handleViewProfile }: { reply: Reply; navig
                 <p className="text-foreground text-xs leading-snug whitespace-pre-wrap break-words mt-0.5">
                     {parsePostContent(displayContent, navigate)}
                 </p>
+                {i18n.language !== 'en' && (
+                    <Button
+                        variant="ghost"
+                        size="sm"
+                        onClick={handleTranslate}
+                        disabled={isTranslating}
+                        className="text-[10px] text-muted-foreground hover:text-primary mt-0.5 p-0 h-auto"
+                    >
+                        {isTranslating ? t('common.translating') : translatedContent ? t('common.showOriginal') : t('common.translate')}
+                    </Button>
+                )}
             </div>
         </div>
     );
@@ -292,21 +305,6 @@ const PostCard = ({ post, addReply, user, navigate, onAcknowledge, onDeletePost,
     setTranslatedContent(translated);
     setIsTranslating(false);
   };
-
-  useEffect(() => {
-    // Auto-translate if user's language is different from English
-    const autoTranslate = async () => {
-      if (i18n.language !== 'en' && post.content) {
-        setIsTranslating(true);
-        const translated = await translateText(post.content, i18n.language);
-        setTranslatedContent(translated);
-        setIsTranslating(false);
-      } else {
-        setTranslatedContent(null);
-      }
-    };
-    autoTranslate();
-  }, [post.content, i18n.language, translateText]);
 
   const handleAiTransfer = () => {
     if (!user) {
@@ -470,11 +468,7 @@ const PostCard = ({ post, addReply, user, navigate, onAcknowledge, onDeletePost,
               disabled={isTranslating}
               className="text-xs text-muted-foreground hover:text-primary mt-1 p-0 h-auto"
             >
-              {isTranslating
-                ? 'Translating...'
-                : translatedContent
-                ? 'Show original'
-                : 'Translate'}
+              {isTranslating ? t('common.translating') : translatedContent ? t('common.showOriginal') : t('common.translate')}
             </Button>
           )}
         </Link>

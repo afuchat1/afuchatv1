@@ -84,21 +84,21 @@ const VerifiedBadgeIcon = ({ isVerified, isOrgVerified }: { isVerified?: boolean
 const MENTION_REGEX = /@(\w+)/g;
 
 const ContentParser: React.FC<{ content: string, isBio?: boolean }> = ({ content, isBio = false }) => {
-	const { i18n } = useTranslation();
+	const { i18n, t } = useTranslation();
 	const { translateText } = useAITranslation();
 	const [translatedContent, setTranslatedContent] = useState<string | null>(null);
+	const [isTranslating, setIsTranslating] = useState(false);
 
-	useEffect(() => {
-		const autoTranslate = async () => {
-			if (i18n.language !== 'en' && content) {
-				const translated = await translateText(content, i18n.language);
-				setTranslatedContent(translated);
-			} else {
-				setTranslatedContent(null);
-			}
-		};
-		autoTranslate();
-	}, [content, i18n.language]);
+	const handleTranslate = async () => {
+		if (translatedContent) {
+			setTranslatedContent(null);
+			return;
+		}
+		setIsTranslating(true);
+		const translated = await translateText(content, i18n.language);
+		setTranslatedContent(translated);
+		setIsTranslating(false);
+	};
 
 	const displayContent = translatedContent || content;
 	const parts: React.ReactNode[] = [];
@@ -136,7 +136,22 @@ const ContentParser: React.FC<{ content: string, isBio?: boolean }> = ({ content
 		? "mt-3 text-sm whitespace-pre-wrap leading-relaxed"
 		: "text-foreground whitespace-pre-wrap leading-relaxed";
 
-	return <p className={className}>{parts}</p>;
+	return (
+		<div>
+			<p className={className}>{parts}</p>
+			{i18n.language !== 'en' && !isBio && (
+				<Button
+					variant="ghost"
+					size="sm"
+					onClick={handleTranslate}
+					disabled={isTranslating}
+					className="text-xs text-muted-foreground hover:text-primary mt-1 p-0 h-auto"
+				>
+					{isTranslating ? t('common.translating') : translatedContent ? t('common.showOriginal') : t('common.translate')}
+				</Button>
+			)}
+		</div>
+	);
 };
 
 // Profile Avatar Display Component

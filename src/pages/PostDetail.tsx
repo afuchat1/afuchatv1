@@ -85,10 +85,11 @@ const PostDetail = () => {
   const [replies, setReplies] = useState<Reply[]>([]); // NEW state for replies
   const [loading, setLoading] = useState(true);
   const navigate = useNavigate();
-  const { i18n } = useTranslation();
+  const { i18n, t } = useTranslation();
   const { translateText } = useAITranslation();
-  const [translatedPostContent, setTranslatedPostContent] = useState<string | null>(null);
-  const [translatedReplies, setTranslatedReplies] = useState<{ [key: string]: string }>({});
+  const [translatedPost, setTranslatedPost] = useState<string | null>(null);
+  const [translatedReplies, setTranslatedReplies] = useState<Record<string, string>>({});
+  const [isTranslatingPost, setIsTranslatingPost] = useState(false);
 
   useEffect(() => {
     if (!postId) return;
@@ -96,79 +97,105 @@ const PostDetail = () => {
     const fetchPostAndReplies = async () => {
       setLoading(true);
       
-      // 1. Fetch Post Details and Counts
       const postPromise = supabase
         .from('posts')
         .select(`
           id, content, created_at,
-          likes_count:post_acknowledgments(count),
-          replies_count:post_replies(count),
-          author:profiles!author_id (
-            id, display_name, handle, is_verified, is_organization_verified
-          )
-        `) 
+          profiles!inner (id, display_name, handle, is_verified, is_organization_verified)
+        `)
         .eq('id', postId)
         .single();
-        
-      // 2. Fetch Replies (Comments)
+
+      const likesPromise = supabase
+        .from('post_acknowledgments')
+        .select('id', { count: 'exact', head: true })
+        .eq('post_id', postId);
+
       const repliesPromise = supabase
         .from('post_replies')
         .select(`
           id, content, created_at,
-          author:profiles!author_id (
-            display_name, handle, is_verified, is_organization_verified
-          )
+          profiles!inner (display_name, handle, is_verified, is_organization_verified)
         `)
         .eq('post_id', postId)
         .order('created_at', { ascending: true });
 
-      const [postResult, repliesResult] = await Promise.all([postPromise, repliesPromise]);
-      
-      // Handle Post Data
+      const [postResult, likesResult, repliesResult] = await Promise.all([postPromise, likesPromise, repliesPromise]);
+
       if (postResult.error) {
-        console.error('Error fetching post data:', postResult.error);
-      } else if (postResult.data) {
-        const processedData = {
-          ...postResult.data,
-          likes_count: (postResult.data.likes_count as any[])[0]?.count || 0,
-          replies_count: (postResult.data.replies_count as any[])[0]?.count || 0,
-        };
-        setPost(processedData as Post);
+        console.error('Error fetching post:', postResult.error);
+        setLoading(false);
+        return;
       }
 
-      // Handle Replies Data
-      if (repliesResult.error) {
-        console.error('Error fetching replies:', repliesResult.error);
-      } else if (repliesResult.data) {
-        setReplies(repliesResult.data as any);
+      const postData = postResult.data;
+      const likesCount = likesResult.count || 0;
+      const repliesCount = repliesResult.data?.length || 0;
+
+      setPost({
+        id: postData.id,
+        content: postData.content,
+        created_at: postData.created_at,
+        likes_count: likesCount,
+        replies_count: repliesCount,
+        author: {
+          id: postData.profiles.id,
+          display_name: postData.profiles.display_name,
+          handle: postData.profiles.handle,
+          is_verified: postData.profiles.is_verified,
+          is_organization_verified: postData.profiles.is_organization_verified,
+        },
+      });
+
+      if (repliesResult.data) {
+        const mappedReplies: Reply[] = repliesResult.data.map((r: any) => ({
+          id: r.id,
+          content: r.content,
+          created_at: r.created_at,
+          author: {
+            display_name: r.profiles.display_name,
+            handle: r.profiles.handle,
+            is_verified: r.profiles.is_verified,
+            is_organization_verified: r.profiles.is_organization_verified,
+          },
+        }));
+        setReplies(mappedReplies);
       }
-      
+
       setLoading(false);
     };
 
     fetchPostAndReplies();
   }, [postId]);
 
-  // Auto-translate post and replies when language changes or data loads
-  useEffect(() => {
-    const autoTranslate = async () => {
-      if (i18n.language !== 'en' && post) {
-        // Translate post
-        const translatedPost = await translateText(post.content, i18n.language);
-        setTranslatedPostContent(translatedPost);
+  const handleTranslatePost = async () => {
+    if (!post) return;
+    
+    if (translatedPost) {
+      setTranslatedPost(null);
+      return;
+    }
 
-        // Translate all replies
-        const translatedRepliesMap: { [key: string]: string } = {};
-        for (const reply of replies) {
-          const translatedReply = await translateText(reply.content, i18n.language);
-          translatedRepliesMap[reply.id] = translatedReply;
-        }
-        setTranslatedReplies(translatedRepliesMap);
-      }
-    };
-    autoTranslate();
-  }, [post, replies, i18n.language]);
+    setIsTranslatingPost(true);
+    const translated = await translateText(post.content, i18n.language);
+    setTranslatedPost(translated);
+    setIsTranslatingPost(false);
+  };
 
+  const handleTranslateReply = async (replyId: string, content: string) => {
+    if (translatedReplies[replyId]) {
+      const newTranslated = { ...translatedReplies };
+      delete newTranslated[replyId];
+      setTranslatedReplies(newTranslated);
+      return;
+    }
+
+    const translated = await translateText(content, i18n.language);
+    setTranslatedReplies(prev => ({ ...prev, [replyId]: translated }));
+  };
+
+  // Remove auto-translate effect - now translate is manual via button
+  
   const formatDate = (dateString: string) => {
     const date = new Date(dateString);
     return date.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' }) + 
@@ -235,8 +262,21 @@ const PostDetail = () => {
 
             {/* POST TEXT */}
             <p className="text-2xl leading-relaxed whitespace-pre-wrap mb-4">
-              {renderContentWithMentions(translatedPostContent || post.content)}
+              {renderContentWithMentions(translatedPost || post.content)}
             </p>
+            
+            {/* Translate Button */}
+            {i18n.language !== 'en' && (
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={handleTranslatePost}
+                disabled={isTranslatingPost}
+                className="text-xs text-muted-foreground hover:text-primary mb-3 p-0 h-auto"
+              >
+                {isTranslatingPost ? t('common.translating') : translatedPost ? t('common.showOriginal') : t('common.translate')}
+              </Button>
+            )}
 
             {/* TIME & DATE */}
             <p className="text-sm text-muted-foreground border-b border-border pb-3 mb-3">
@@ -290,6 +330,16 @@ const PostDetail = () => {
                             <p className="text-foreground mt-1 whitespace-pre-wrap">
                                 {renderContentWithMentions(translatedReplies[reply.id] || reply.content)}
                             </p>
+                            {i18n.language !== 'en' && (
+                              <Button
+                                variant="ghost"
+                                size="sm"
+                                onClick={() => handleTranslateReply(reply.id, reply.content)}
+                                className="text-xs text-muted-foreground hover:text-primary mt-1 p-0 h-auto"
+                              >
+                                {translatedReplies[reply.id] ? t('common.showOriginal') : t('common.translate')}
+                              </Button>
+                            )}
                         </div>
                     </div>
                 </div>

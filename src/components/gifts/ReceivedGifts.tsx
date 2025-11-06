@@ -5,7 +5,7 @@ import { Badge } from '@/components/ui/badge';
 import { Gift, Loader2 } from 'lucide-react';
 import { Skeleton } from '@/components/ui/skeleton';
 import { useTranslation } from 'react-i18next';
-import { PremiumGiftIcon } from './PremiumGiftIcon';
+import { SimpleGiftIcon } from './SimpleGiftIcon';
 
 interface GiftTransaction {
   id: string;
@@ -164,43 +164,22 @@ export const ReceivedGifts = ({ userId }: ReceivedGiftsProps) => {
         </div>
       </Card>
 
-      <div className="space-y-3">
+      <div className="grid grid-cols-3 sm:grid-cols-4 md:grid-cols-5 gap-4">
         {gifts.map((gift) => (
-          <Card key={gift.id} className="p-4 hover:shadow-lg transition-all duration-300 border-l-4 border-l-primary/30">
-            <div className="flex items-start gap-3">
-              <PremiumGiftIcon 
-                emoji={gift.gift.emoji}
-                rarity={gift.gift.rarity}
-                size={56}
-              />
-              <div className="flex-1 min-w-0">
-                <div className="flex items-center gap-2 flex-wrap">
-                  <h4 className="font-semibold text-sm">{gift.gift.name}</h4>
-                  <Badge className={rarityColors[gift.gift.rarity]} variant="secondary">
-                    {t(`gifts.${gift.gift.rarity}`)}
-                  </Badge>
-                  <Badge variant="outline" className="text-xs">
-                    {gift.xp_cost} {t('gamification.xp')}
-                  </Badge>
-                </div>
-                <p className="text-xs text-muted-foreground mt-1">
-                  {t('common.from')}{' '}
-                  <span className="font-medium text-foreground">
-                    {gift.sender.display_name}
-                  </span>{' '}
-                  (@{gift.sender.handle})
-                </p>
-                {gift.message && (
-                  <p className="text-xs mt-2 p-2 bg-muted/50 rounded italic border-l-2 border-primary/30">
-                    "{gift.message}"
-                  </p>
-                )}
-                <p className="text-xs text-muted-foreground mt-1">
-                  {new Date(gift.created_at).toLocaleDateString()}
-                </p>
+          <div key={gift.id} className="flex flex-col items-center gap-2 p-3 rounded-lg hover:bg-muted/50 transition-colors">
+            <SimpleGiftIcon 
+              emoji={gift.gift.emoji}
+              size={48}
+            />
+            <div className="text-center w-full">
+              <div className="text-xs font-medium text-foreground truncate w-full">
+                {gift.gift.name}
+              </div>
+              <div className="text-xs text-muted-foreground">
+                {gift.xp_cost} XP
               </div>
             </div>
-          </Card>
+          </div>
         ))}
       </div>
     </div>

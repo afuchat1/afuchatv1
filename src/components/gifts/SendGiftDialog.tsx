@@ -15,7 +15,7 @@ import { Badge } from '@/components/ui/badge';
 import { Gift, Loader2 } from 'lucide-react';
 import { toast } from 'sonner';
 import { useTranslation } from 'react-i18next';
-import { PremiumGiftIcon } from './PremiumGiftIcon';
+import { SimpleGiftIcon } from './SimpleGiftIcon';
 
 interface GiftItem {
   id: string;
@@ -216,11 +216,9 @@ export const SendGiftDialog = ({ receiverId, receiverName, trigger }: SendGiftDi
                 )}
                 <div className="text-center">
                   <div className="flex justify-center mb-2">
-                    <PremiumGiftIcon 
+                    <SimpleGiftIcon 
                       emoji={gift.emoji}
-                      rarity={gift.rarity}
-                      season={gift.season}
-                      size={80}
+                      size={64}
                     />
                   </div>
                   <h4 className="font-semibold text-sm">{gift.name}</h4>

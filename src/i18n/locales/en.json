@@ -29,7 +29,10 @@
     "from": "From",
     "to": "To",
     "yes": "Yes",
-    "no": "No"
+    "no": "No",
+    "translating": "Translating...",
+    "translate": "Translate",
+    "showOriginal": "Show original"
   },
   "auth": {
     "welcome": "Welcome to AfuChat",
