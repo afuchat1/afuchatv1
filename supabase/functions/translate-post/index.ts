@@ -55,21 +55,43 @@ serve(async (req) => {
     });
 
     if (!response.ok) {
+      const errorText = await response.text();
+      console.error('Translation API error:', {
+        status: response.status,
+        statusText: response.statusText,
+        body: errorText,
+        text: text.substring(0, 100),
+        targetLanguage
+      });
+
       if (response.status === 429) {
-        return new Response(JSON.stringify({ error: 'Rate limit exceeded' }), {
+        return new Response(JSON.stringify({ 
+          error: 'Rate limit exceeded. Please try again in a moment.' 
+        }), {
           status: 429,
           headers: { ...corsHeaders, 'Content-Type': 'application/json' },
         });
       }
+      
       if (response.status === 402) {
-        return new Response(JSON.stringify({ error: 'Payment required' }), {
+        return new Response(JSON.stringify({ 
+          error: 'Translation credits exhausted. Please add credits to continue.' 
+        }), {
           status: 402,
           headers: { ...corsHeaders, 'Content-Type': 'application/json' },
         });
       }
-      const errorText = await response.text();
-      console.error('Translation API error:', response.status, errorText);
-      throw new Error(`Translation API error: ${response.status}`);
+
+      if (response.status === 503) {
+        return new Response(JSON.stringify({ 
+          error: 'Translation service temporarily unavailable' 
+        }), {
+          status: 503,
+          headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+        });
+      }
+
+      throw new Error(`Translation API error: ${response.status} - ${errorText}`);
     }
 
     const data = await response.json();
