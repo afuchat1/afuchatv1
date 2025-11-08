@@ -1,11 +1,13 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '@/contexts/AuthContext';
+import { useSubscription } from '@/contexts/SubscriptionContext';
 import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Separator } from '@/components/ui/separator';
 import { Switch } from '@/components/ui/switch';
-import { ArrowLeft, User, Bell, Lock, Shield, FileText, LogOut, Languages } from 'lucide-react';
+import { Badge } from '@/components/ui/badge';
+import { ArrowLeft, User, Bell, Lock, Shield, FileText, LogOut, Languages, Crown, Sparkles } from 'lucide-react';
 import { toast } from 'sonner';
 import { supabase } from '@/integrations/supabase/client';
 import Logo from '@/components/Logo';
@@ -21,6 +23,7 @@ import {
 const Settings = () => {
   const navigate = useNavigate();
   const { user } = useAuth();
+  const { tier, isPremium, isVIP } = useSubscription();
   const { t, i18n } = useTranslation();
   const [notificationsEnabled, setNotificationsEnabled] = useState(true);
   const [privateAccount, setPrivateAccount] = useState(false);
@@ -98,6 +101,29 @@ const Settings = () => {
             <h1 className="text-2xl sm:text-3xl font-bold">{t('settings.title')}</h1>
             <p className="text-muted-foreground mt-1">{t('settings.subtitle')}</p>
           </div>
+
+          {/* Subscription */}
+          <Card className="p-4 sm:p-6">
+            <div className="space-y-4">
+              <div className="flex items-center gap-3">
+                {isVIP ? <Crown className="h-5 w-5 text-yellow-500" /> : isPremium ? <Sparkles className="h-5 w-5 text-purple-500" /> : <Shield className="h-5 w-5 text-muted-foreground" />}
+                <h2 className="text-lg font-semibold">Subscription</h2>
+                {isPremium && (
+                  <Badge variant={isVIP ? 'default' : 'secondary'} className={isVIP ? 'bg-gradient-to-r from-yellow-500 to-orange-500' : 'bg-gradient-to-r from-purple-500 to-pink-500'}>
+                    {isVIP ? 'VIP' : 'Premium'}
+                  </Badge>
+                )}
+              </div>
+              <Separator />
+              <button
+                onClick={() => navigate('/subscription')}
+                className="w-full flex items-center justify-between py-3 px-2 rounded-lg hover:bg-muted transition-colors text-left"
+              >
+                <span>{isPremium ? 'Manage Subscription' : 'Upgrade to Premium'}</span>
+                <span className="text-muted-foreground">›</span>
+              </button>
+            </div>
+          </Card>
 
           {/* Account Settings */}
           <Card className="p-4 sm:p-6">

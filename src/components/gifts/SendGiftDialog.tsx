@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/contexts/AuthContext';
+import { useSubscription } from '@/contexts/SubscriptionContext';
 import {
   Dialog,
   DialogContent,
@@ -10,7 +11,8 @@ import {
   DialogTrigger,
 } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
-import { Gift, Loader2 } from 'lucide-react';
+import { Badge } from '@/components/ui/badge';
+import { Gift, Loader2, Lock, Crown, Sparkles } from 'lucide-react';
 import { toast } from 'sonner';
 import { useTranslation } from 'react-i18next';
 import { SimpleGiftIcon } from './SimpleGiftIcon';
@@ -18,6 +20,7 @@ import { GiftConfetti } from './GiftConfetti';
 import { ComboConfetti } from './ComboConfetti';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { useUserAvatar } from '@/hooks/useUserAvatar';
+import { useNavigate } from 'react-router-dom';
 
 interface GiftItem {
   id: string;
@@ -51,8 +54,10 @@ interface SelectedGift {
 
 export const SendGiftDialog = ({ receiverId, receiverName, trigger }: SendGiftDialogProps) => {
   const { user } = useAuth();
+  const { tier, isPremium } = useSubscription();
   const { t } = useTranslation();
   const { avatarConfig } = useUserAvatar(receiverId);
+  const navigate = useNavigate();
   const [open, setOpen] = useState(false);
   const [gifts, setGifts] = useState<GiftItem[]>([]);
   const [giftStats, setGiftStats] = useState<Record<string, GiftStatistics>>({});
@@ -122,6 +127,18 @@ export const SendGiftDialog = ({ receiverId, receiverName, trigger }: SendGiftDi
   };
 
   const handleGiftTap = (gift: GiftItem) => {
+    // Check if rare gift requires premium
+    const isRareGift = gift.rarity === 'rare' || gift.rarity === 'epic' || gift.rarity === 'legendary';
+    if (isRareGift && !isPremium) {
+      toast.error('Rare gifts require Premium subscription!', {
+        action: {
+          label: 'Upgrade',
+          onClick: () => navigate('/subscription'),
+        },
+      });
+      return;
+    }
+
     const currentPrice = calculatePrice(gift.id, gift.base_xp_cost);
 
     if (!selectedGift || selectedGift.id !== gift.id) {
@@ -349,17 +366,32 @@ export const SendGiftDialog = ({ receiverId, receiverName, trigger }: SendGiftDi
           {gifts.map((gift) => {
             const currentPrice = calculatePrice(gift.id, gift.base_xp_cost);
             const isSelected = selectedGift?.id === gift.id;
+            const isRareGift = gift.rarity === 'rare' || gift.rarity === 'epic' || gift.rarity === 'legendary';
+            const isLocked = isRareGift && !isPremium;
 
             return (
               <div
                 key={gift.id}
                 onClick={() => !loading && handleGiftTap(gift)}
                 className={`group relative flex flex-col items-center gap-1.5 p-2 rounded-lg cursor-pointer transition-all duration-200 border ${
-                  isSelected
+                  isLocked 
+                    ? 'opacity-60 hover:opacity-80 bg-muted border-border/30'
+                    : isSelected
                     ? 'ring-2 ring-primary shadow-lg bg-primary/10 border-primary scale-105'
                     : 'hover:shadow-md hover:scale-105 hover:ring-1 hover:ring-primary/30 border-border/50 bg-card'
                 }`}
               >
+                {isLocked && (
+                  <div className="absolute inset-0 flex items-center justify-center z-20 bg-background/50 backdrop-blur-sm rounded-lg">
+                    <div className="flex flex-col items-center gap-1">
+                      <Lock className="w-5 h-5 text-muted-foreground" />
+                      <Badge variant="secondary" className="text-[8px] px-1 py-0">
+                        <Sparkles className="w-2 h-2 mr-0.5" />
+                        Premium
+                      </Badge>
+                    </div>
+                  </div>
+                )}
                 {isSelected && selectedGift && (
                   <div className="absolute -top-2 -right-2 z-10 bg-primary text-primary-foreground rounded-full h-5 w-5 flex items-center justify-center font-bold text-xs shadow-lg animate-[scale-in_0.2s_ease-out]">
                     {selectedGift.count}
