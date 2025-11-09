@@ -7,7 +7,7 @@ import { Card, CardHeader, CardTitle, CardDescription, CardFooter } from '@/comp
 import { Badge } from '@/components/ui/badge';
 import { Input } from '@/components/ui/input';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from '@/components/ui/dialog';
-import { ArrowLeft, Loader2, ShoppingBag, Check, Sparkles, Zap, Clock, Hammer, TrendingUp, Users } from 'lucide-react';
+import { Loader2, ShoppingBag, Check, Sparkles, Zap, Clock, Hammer, TrendingUp, Users } from 'lucide-react';
 import { toast } from 'sonner';
 
 interface ShopItem {
@@ -431,7 +431,7 @@ export default function Shop() {
     return (
       <Card 
         key={item.id}
-        className={`relative overflow-hidden w-56 flex-shrink-0 hover:shadow-xl transition-all duration-300 hover:-translate-y-1 ${
+        className={`relative overflow-hidden w-48 flex-shrink-0 hover:shadow-xl transition-all duration-300 hover:-translate-y-1 rounded-xl ${
           owned ? 'border-primary/50 bg-primary/5' : ''
         } ${isFeatured ? 'border-yellow-500/50 shadow-lg' : ''} ${
           isAuction ? 'border-purple-500/50 bg-gradient-to-br from-purple-500/5 to-pink-500/5' : ''
@@ -460,12 +460,12 @@ export default function Shop() {
         </div>
 
         {/* Emoji/Image */}
-        <div className="h-32 flex items-center justify-center bg-gradient-to-br from-muted/30 to-muted/10 relative">
-          <div className="text-6xl">{item.emoji}</div>
+        <div className="h-24 flex items-center justify-center bg-gradient-to-br from-muted/30 to-muted/10 relative">
+          <div className="text-5xl">{item.emoji}</div>
           {isAuction && item.auction_end_time && (
-            <div className="absolute bottom-2 left-2 right-2 bg-black/70 backdrop-blur-sm rounded-md px-2 py-1">
+            <div className="absolute bottom-1 left-1 right-1 bg-black/70 backdrop-blur-sm rounded-md px-1.5 py-0.5">
               <div className="flex items-center justify-center gap-1 text-xs text-white">
-                <Clock className="w-3 h-3" />
+                <Clock className="w-2.5 h-2.5" />
                 {getTimeRemaining(item.auction_end_time)}
               </div>
             </div>
@@ -473,18 +473,18 @@ export default function Shop() {
         </div>
 
         {/* Content */}
-        <div className="p-3 space-y-2">
+        <div className="p-2 space-y-1.5">
           <div>
-            <h3 className="font-bold text-sm line-clamp-1">{item.name}</h3>
+            <h3 className="font-bold text-xs line-clamp-1">{item.name}</h3>
             <p className="text-xs text-muted-foreground line-clamp-2">{item.description}</p>
           </div>
 
           {/* Auction Info */}
           {isAuction ? (
-            <div className="space-y-2">
+            <div className="space-y-1.5">
               <div className="flex items-center justify-between">
                 <span className="text-xs text-muted-foreground">Current Bid</span>
-                <span className="font-bold text-purple-500">
+                <span className="font-bold text-purple-500 text-xs">
                   {item.current_bid || item.starting_bid} XP
                 </span>
               </div>
@@ -497,19 +497,19 @@ export default function Shop() {
               <Button
                 onClick={() => openBidDialog(item)}
                 disabled={owned}
-                className="w-full h-8 text-xs"
+                className="w-full h-7 text-xs"
                 variant={owned ? 'outline' : 'default'}
               >
                 {owned ? 'Owned' : 'Place Bid'}
               </Button>
             </div>
           ) : (
-            <div className="space-y-2">
+            <div className="space-y-1.5">
               {/* Price */}
               <div className="flex items-center justify-between">
                 {isFeatured ? (
                   <div className="flex flex-col">
-                    <span className="font-bold text-primary text-sm">
+                    <span className="font-bold text-primary text-xs">
                       {discountedPrice} XP
                     </span>
                     <span className="text-xs text-muted-foreground line-through">
@@ -517,7 +517,7 @@ export default function Shop() {
                     </span>
                   </div>
                 ) : (
-                  <span className="font-bold text-primary text-sm">
+                  <span className="font-bold text-primary text-xs">
                     {item.xp_cost} XP
                   </span>
                 )}
@@ -536,7 +536,7 @@ export default function Shop() {
                 onClick={() => handlePurchase(item.id, item.name)}
                 disabled={owned || !canAfford || purchasing === item.id}
                 variant={owned ? 'outline' : 'default'}
-                className="w-full h-8 text-xs"
+                className="w-full h-7 text-xs"
               >
                 {purchasing === item.id ? (
                   <Loader2 className="w-3 h-3 animate-spin" />
@@ -565,7 +565,7 @@ export default function Shop() {
           <h2 className="text-2xl font-bold">{title}</h2>
           <Badge variant="outline" className="ml-auto">{items.length} items</Badge>
         </div>
-        <div className={`${gradient ? `bg-gradient-to-r ${gradient} p-4 rounded-lg` : ''}`}>
+        <div className={`${gradient ? `bg-gradient-to-r ${gradient} p-4 rounded-xl` : ''}`}>
           <div className="overflow-x-auto pb-4 -mx-4 px-4">
             <div className="flex gap-4">
               {items.map(item => renderCompactCard(item))}
@@ -587,7 +587,7 @@ export default function Shop() {
     return (
       <Card 
         key={listing.id}
-        className="relative overflow-hidden w-56 flex-shrink-0 hover:shadow-xl transition-all duration-300 hover:-translate-y-1 border-blue-500/50 bg-gradient-to-br from-blue-500/5 to-cyan-500/5"
+        className="relative overflow-hidden w-48 flex-shrink-0 hover:shadow-xl transition-all duration-300 hover:-translate-y-1 rounded-xl border-blue-500/50 bg-gradient-to-br from-blue-500/5 to-cyan-500/5"
       >
         <Badge className="absolute top-2 left-2 z-10 gap-1 bg-blue-500 hover:bg-blue-600 text-white text-xs">
           <Users className="w-3 h-3" />
@@ -601,13 +601,13 @@ export default function Shop() {
           </Badge>
         )}
 
-        <div className="h-32 flex items-center justify-center bg-gradient-to-br from-muted/30 to-muted/10">
-          <div className="text-6xl">{itemData.emoji}</div>
+        <div className="h-24 flex items-center justify-center bg-gradient-to-br from-muted/30 to-muted/10">
+          <div className="text-5xl">{itemData.emoji}</div>
         </div>
 
-        <div className="p-3 space-y-2">
+        <div className="p-2 space-y-1.5">
           <div>
-            <h3 className="font-bold text-sm line-clamp-1">{itemData.name}</h3>
+            <h3 className="font-bold text-xs line-clamp-1">{itemData.name}</h3>
             <p className="text-xs text-muted-foreground line-clamp-2">{itemData.description}</p>
           </div>
 
@@ -616,9 +616,9 @@ export default function Shop() {
             Sold by @{sellerData?.handle || 'Unknown'}
           </div>
 
-          <div className="space-y-2">
+          <div className="space-y-1.5">
             <div className="flex items-center justify-between">
-              <span className="font-bold text-blue-500 text-sm">
+              <span className="font-bold text-blue-500 text-xs">
                 {listing.asking_price} XP
               </span>
             </div>
@@ -627,7 +627,7 @@ export default function Shop() {
               onClick={() => handlePurchaseMarketplaceItem(listing.id, itemData.name)}
               disabled={owned || !canAfford || purchasing === listing.id}
               variant={owned ? 'outline' : 'default'}
-              className="w-full h-8 text-xs"
+              className="w-full h-7 text-xs"
             >
               {purchasing === listing.id ? (
                 <Loader2 className="w-3 h-3 animate-spin" />
@@ -668,22 +668,22 @@ export default function Shop() {
           {ownedItems.map((ownedItem) => (
             <Card 
               key={ownedItem.id}
-              className="relative overflow-hidden w-56 flex-shrink-0"
+              className="relative overflow-hidden w-48 flex-shrink-0 rounded-xl"
             >
-              <div className="h-32 flex items-center justify-center bg-gradient-to-br from-muted/30 to-muted/10">
-                <div className="text-6xl">{ownedItem.item.emoji}</div>
+              <div className="h-24 flex items-center justify-center bg-gradient-to-br from-muted/30 to-muted/10">
+                <div className="text-5xl">{ownedItem.item.emoji}</div>
               </div>
 
-              <div className="p-3 space-y-2">
+              <div className="p-2 space-y-1.5">
                 <div>
-                  <h3 className="font-bold text-sm line-clamp-1">{ownedItem.item.name}</h3>
+                  <h3 className="font-bold text-xs line-clamp-1">{ownedItem.item.name}</h3>
                   <p className="text-xs text-muted-foreground line-clamp-2">{ownedItem.item.description}</p>
                 </div>
 
                 <Button
                   onClick={() => openListDialog(ownedItem, ownedItem.item)}
                   variant="outline"
-                  className="w-full h-8 text-xs"
+                  className="w-full h-7 text-xs"
                 >
                   List on Marketplace
                 </Button>
@@ -698,7 +698,7 @@ export default function Shop() {
   if (!user) {
     return (
       <div className="min-h-screen bg-background flex items-center justify-center">
-        <Card className="max-w-md w-full mx-4">
+        <Card className="max-w-md w-full mx-4 rounded-xl">
           <CardHeader>
             <CardTitle>Sign In Required</CardTitle>
             <CardDescription>Please sign in to access the shop</CardDescription>
@@ -716,29 +716,11 @@ export default function Shop() {
   return (
     <div className="min-h-screen bg-background">
       <div className="container mx-auto px-4 py-8 max-w-6xl">
-        <div className="flex items-center justify-between mb-6">
-          <Button
-            variant="ghost"
-            onClick={() => navigate(-1)}
-            className="gap-2"
-          >
-            <ArrowLeft className="w-4 h-4" />
-            Back
-          </Button>
+        <div className="mb-6 flex justify-end">
           <Badge variant="outline" className="gap-2 py-2 px-4">
             <Sparkles className="w-4 h-4 text-primary" />
             <span className="font-bold">{userXP} XP</span>
           </Badge>
-        </div>
-
-        <div className="mb-8">
-          <h1 className="text-3xl font-bold mb-2 flex items-center gap-2">
-            <ShoppingBag className="w-8 h-8" />
-            Cosmetic Shop & Marketplace
-          </h1>
-          <p className="text-muted-foreground">
-            Purchase exclusive items or trade on the marketplace
-          </p>
         </div>
 
         {/* Tabs */}
@@ -772,7 +754,7 @@ export default function Shop() {
               'Live Auctions',
               <Hammer className="w-6 h-6 text-purple-500" />,
               auctionItems,
-              'from-purple-500/10 via-pink-500/10 to-purple-500/10 border border-purple-500/20'
+              'from-purple-500/10 via-pink-500/10 to-purple-500/10 border border-purple-500/20 rounded-xl'
             )}
 
             {/* Featured Items */}
@@ -780,7 +762,7 @@ export default function Shop() {
               'Limited Edition',
               <Zap className="w-6 h-6 text-yellow-500" />,
               featuredItems,
-              'from-yellow-500/10 via-orange-500/10 to-red-500/10 border border-yellow-500/20'
+              'from-yellow-500/10 via-orange-500/10 to-red-500/10 border border-yellow-500/20 rounded-xl'
             )}
 
             {/* All Items */}
@@ -844,7 +826,7 @@ export default function Shop() {
                   <p>No marketplace listings available</p>
                 </div>
               ) : (
-                <div className="bg-gradient-to-r from-blue-500/10 via-cyan-500/10 to-blue-500/10 p-4 rounded-lg border border-blue-500/20">
+                <div className="bg-gradient-to-r from-blue-500/10 via-cyan-500/10 to-blue-500/10 p-4 rounded-xl border border-blue-500/20">
                   <div className="overflow-x-auto pb-4 -mx-4 px-4">
                     <div className="flex gap-4">
                       {marketplaceListings.map(listing => renderMarketplaceCard(listing))}
