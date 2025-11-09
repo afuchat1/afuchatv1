@@ -5,6 +5,7 @@ import {
   SheetClose 
 } from '@/components/ui/sheet';
 import { LogOut, Settings, User } from 'lucide-react';
+import { useNavigate } from 'react-router-dom';
 
 interface ProfileActionsSheetProps {
   isOpen: boolean;
@@ -14,6 +15,8 @@ interface ProfileActionsSheetProps {
 }
 
 const ProfileActionsSheet = ({ isOpen, onClose, onLogout, onEditProfile }: ProfileActionsSheetProps) => {
+  const navigate = useNavigate();
+
   return (
     <Sheet open={isOpen} onOpenChange={onClose}>
       <SheetContent 
@@ -41,7 +44,7 @@ const ProfileActionsSheet = ({ isOpen, onClose, onLogout, onEditProfile }: Profi
             <Button
               variant="ghost"
               className="w-full justify-start py-4 h-auto text-base hover:bg-muted/80 rounded-lg"
-              onClick={() => window.location.href = '/settings'}
+              onClick={() => navigate('/settings')}
             >
               <Settings className="h-5 w-5 mr-3 text-muted-foreground" />
               <span>Settings</span>
