@@ -3,7 +3,7 @@ import { useNavigate, Link } from 'react-router-dom';
 import { useAuth } from '@/contexts/AuthContext';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Button } from '@/components/ui/button';
-import { MessageSquare, Radio, Send, MessageSquarePlus, Search as SearchIcon, User, Shield, Trophy } from 'lucide-react';
+import { MessageSquare, Radio, Send, MessageSquarePlus, Search as SearchIcon, User, Shield, Trophy, ShoppingBag } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { useTranslation } from 'react-i18next';
 import Chats from './Chats';
@@ -226,13 +226,11 @@ const Index = () => {
             {user ? (
               // Logged In: Show icons
               <>
-                <Button 
-                  size="sm" 
-                  variant="default" 
-                  className="hidden md:flex text-xs font-semibold h-8 px-3 rounded-full bg-pink-500 hover:bg-pink-600 text-white"
-                >
-                  {t('navigation.subscribe')}
-                </Button>
+                <Link to="/shop">
+                  <Button size="icon" variant="ghost" className="rounded-full h-8 w-8 md:h-10 md:w-10" title="Shop">
+                    <ShoppingBag className="h-4 w-4 md:h-5 md:w-5 text-primary" />
+                  </Button>
+                </Link>
                 <Link to="/leaderboard">
                   <Button size="icon" variant="ghost" className="rounded-full h-8 w-8 md:h-10 md:w-10" title={t('gamification.leaderboard')}>
                     <Trophy className="h-4 w-4 md:h-5 md:w-5 text-yellow-500" />
@@ -284,7 +282,7 @@ const Index = () => {
         className={`fixed bottom-0 left-0 right-0 bg-background z-30 transition-transform duration-300 ease-in-out border-t border-border/30 lg:hidden ${navTranslateClass}`}
       >
         <div className="container mx-auto px-3 sm:px-4 max-w-7xl">
-          <div className="grid grid-cols-4 h-14 sm:h-16">
+          <div className="grid grid-cols-5 h-14 sm:h-16">
             <button
               onClick={() => setActiveTab('feed')}
               className={`flex flex-col items-center justify-center gap-0.5 sm:gap-1 transition-colors ${
@@ -303,7 +301,13 @@ const Index = () => {
               <SearchIcon className="h-4 w-4 sm:h-5 sm:w-5" />
               <span className="text-[10px] sm:text-xs font-medium">{t('navigation.search')}</span>
             </button>
-            
+            <button
+              onClick={() => navigate('/shop')}
+              className="flex flex-col items-center justify-center gap-0.5 sm:gap-1 transition-colors text-muted-foreground hover:text-primary"
+            >
+              <ShoppingBag className="h-4 w-4 sm:h-5 sm:w-5" />
+              <span className="text-[10px] sm:text-xs font-medium">Shop</span>
+            </button>
             {/* MODIFIED CHATS BUTTON */}
             <button
               onClick={() => user ? setActiveTab('chats') : handleLoginRequired()}
