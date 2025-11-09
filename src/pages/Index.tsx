@@ -227,11 +227,15 @@ const Index = () => {
             {user ? (
               // Logged In: Show icons
               <>
-                <Link to="/shop">
-                  <Button size="icon" variant="ghost" className="rounded-full h-8 w-8 md:h-10 md:w-10" title="Shop">
-                    <ShoppingBag className="h-4 w-4 md:h-5 md:w-5 text-primary" />
-                  </Button>
-                </Link>
+                <Button 
+                  size="icon" 
+                  variant="ghost" 
+                  className="rounded-full h-8 w-8 md:h-10 md:w-10" 
+                  title="Shop"
+                  onClick={() => setActiveTab('shop')}
+                >
+                  <ShoppingBag className="h-4 w-4 md:h-5 md:w-5 text-primary" />
+                </Button>
                 <Link to="/leaderboard">
                   <Button size="icon" variant="ghost" className="rounded-full h-8 w-8 md:h-10 md:w-10" title={t('gamification.leaderboard')}>
                     <Trophy className="h-4 w-4 md:h-5 md:w-5 text-yellow-500" />
