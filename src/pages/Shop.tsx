@@ -420,6 +420,7 @@ export default function Shop() {
     return bids[itemId]?.length || 0;
   };
 
+  // --- TRANSFORMATION START ---
   const renderCompactCard = (item: ShopItem) => {
     const owned = isOwned(item.id);
     const discountedPrice = getDiscountedPrice(item);
@@ -428,10 +429,11 @@ export default function Shop() {
     const isAuction = item.is_auction;
     const bidCount = isAuction ? getBidCount(item.id) : 0;
 
+    // Changes: w-full sm:w-44, rounded-xl, smaller font/padding
     return (
       <Card 
         key={item.id}
-        className={`relative overflow-hidden w-56 flex-shrink-0 hover:shadow-xl transition-all duration-300 hover:-translate-y-1 ${
+        className={`relative overflow-hidden w-full sm:w-44 flex-shrink-0 hover:shadow-xl transition-all duration-300 hover:-translate-y-1 rounded-xl ${
           owned ? 'border-primary/50 bg-primary/5' : ''
         } ${isFeatured ? 'border-yellow-500/50 shadow-lg' : ''} ${
           isAuction ? 'border-purple-500/50 bg-gradient-to-br from-purple-500/5 to-pink-500/5' : ''
@@ -440,19 +442,19 @@ export default function Shop() {
         {/* Top badges */}
         <div className="absolute top-2 right-2 z-10 flex flex-col gap-1">
           {owned && (
-            <Badge variant="secondary" className="gap-1 text-xs">
+            <Badge variant="secondary" className="gap-1 text-xs px-2 py-0.5">
               <Check className="w-3 h-3" />
               Owned
             </Badge>
           )}
           {isFeatured && (
-            <Badge className="gap-1 bg-yellow-500 hover:bg-yellow-600 text-black text-xs">
+            <Badge className="gap-1 bg-yellow-500 hover:bg-yellow-600 text-black text-xs px-2 py-0.5">
               <Zap className="w-3 h-3" />
               {item.discount_percentage}% OFF
             </Badge>
           )}
           {isAuction && (
-            <Badge className="gap-1 bg-purple-500 hover:bg-purple-600 text-white text-xs">
+            <Badge className="gap-1 bg-purple-500 hover:bg-purple-600 text-white text-xs px-2 py-0.5">
               <Hammer className="w-3 h-3" />
               Auction
             </Badge>
@@ -460,8 +462,10 @@ export default function Shop() {
         </div>
 
         {/* Emoji/Image */}
-        <div className="h-32 flex items-center justify-center bg-gradient-to-br from-muted/30 to-muted/10 relative">
-          <div className="text-6xl">{item.emoji}</div>
+        {/* Changed h-32 to h-24 */}
+        <div className="h-24 flex items-center justify-center bg-gradient-to-br from-muted/30 to-muted/10 relative">
+          {/* Changed text-6xl to text-4xl */}
+          <div className="text-4xl">{item.emoji}</div>
           {isAuction && item.auction_end_time && (
             <div className="absolute bottom-2 left-2 right-2 bg-black/70 backdrop-blur-sm rounded-md px-2 py-1">
               <div className="flex items-center justify-center gap-1 text-xs text-white">
@@ -473,18 +477,20 @@ export default function Shop() {
         </div>
 
         {/* Content */}
-        <div className="p-3 space-y-2">
+        {/* Changed p-3 to p-2 */}
+        <div className="p-2 space-y-2">
           <div>
+            {/* Changed text-sm to text-xs */}
             <h3 className="font-bold text-sm line-clamp-1">{item.name}</h3>
             <p className="text-xs text-muted-foreground line-clamp-2">{item.description}</p>
           </div>
 
           {/* Auction Info */}
           {isAuction ? (
-            <div className="space-y-2">
+            <div className="space-y-1">
               <div className="flex items-center justify-between">
                 <span className="text-xs text-muted-foreground">Current Bid</span>
-                <span className="font-bold text-purple-500">
+                <span className="font-bold text-purple-500 text-sm">
                   {item.current_bid || item.starting_bid} XP
                 </span>
               </div>
@@ -494,17 +500,18 @@ export default function Shop() {
                   {bidCount} {bidCount === 1 ? 'bid' : 'bids'}
                 </div>
               )}
+              {/* Changed h-8 to h-7 */}
               <Button
                 onClick={() => openBidDialog(item)}
                 disabled={owned}
-                className="w-full h-8 text-xs"
+                className="w-full h-7 text-xs"
                 variant={owned ? 'outline' : 'default'}
               >
                 {owned ? 'Owned' : 'Place Bid'}
               </Button>
             </div>
           ) : (
-            <div className="space-y-2">
+            <div className="space-y-1">
               {/* Price */}
               <div className="flex items-center justify-between">
                 {isFeatured ? (
@@ -532,11 +539,12 @@ export default function Shop() {
               )}
 
               {/* Purchase button */}
+              {/* Changed h-8 to h-7 */}
               <Button
                 onClick={() => handlePurchase(item.id, item.name)}
                 disabled={owned || !canAfford || purchasing === item.id}
                 variant={owned ? 'outline' : 'default'}
-                className="w-full h-8 text-xs"
+                className="w-full h-7 text-xs"
               >
                 {purchasing === item.id ? (
                   <Loader2 className="w-3 h-3 animate-spin" />
@@ -555,8 +563,11 @@ export default function Shop() {
     );
   };
 
+  // Modified renderSection to use a responsive grid for 'All Items'
   const renderSection = (title: string, icon: React.ReactNode, items: ShopItem[], gradient?: string) => {
     if (items.length === 0) return null;
+
+    const isGridSection = title === 'All Items' || title === 'Accessories' || title === 'Themes' || title === 'Effects' || title === 'Badges';
 
     return (
       <div className="mb-8">
@@ -565,12 +576,20 @@ export default function Shop() {
           <h2 className="text-2xl font-bold">{title}</h2>
           <Badge variant="outline" className="ml-auto">{items.length} items</Badge>
         </div>
-        <div className={`${gradient ? `bg-gradient-to-r ${gradient} p-4 rounded-lg` : ''}`}>
-          <div className="overflow-x-auto pb-4 -mx-4 px-4">
-            <div className="flex gap-4">
+        <div className={`${gradient ? `bg-gradient-to-r ${gradient} p-4 rounded-xl` : ''}`}>
+          {isGridSection ? (
+             // Responsive Grid for most sections
+            <div className="grid grid-cols-2 gap-4 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6">
               {items.map(item => renderCompactCard(item))}
             </div>
-          </div>
+          ) : (
+             // Horizontal Scroll for Featured/Auction
+            <div className="overflow-x-auto pb-4 -mx-4 px-4">
+              <div className="flex gap-4">
+                {items.map(item => renderCompactCard(item))}
+              </div>
+            </div>
+          )}
         </div>
       </div>
     );
@@ -584,29 +603,34 @@ export default function Shop() {
 
     if (!itemData) return null;
 
+    // Changes: w-full sm:w-44, rounded-xl, smaller font/padding
     return (
       <Card 
         key={listing.id}
-        className="relative overflow-hidden w-56 flex-shrink-0 hover:shadow-xl transition-all duration-300 hover:-translate-y-1 border-blue-500/50 bg-gradient-to-br from-blue-500/5 to-cyan-500/5"
+        className="relative overflow-hidden w-full sm:w-44 flex-shrink-0 hover:shadow-xl transition-all duration-300 hover:-translate-y-1 rounded-xl border-blue-500/50 bg-gradient-to-br from-blue-500/5 to-cyan-500/5"
       >
-        <Badge className="absolute top-2 left-2 z-10 gap-1 bg-blue-500 hover:bg-blue-600 text-white text-xs">
+        <Badge className="absolute top-2 left-2 z-10 gap-1 bg-blue-500 hover:bg-blue-600 text-white text-xs px-2 py-0.5">
           <Users className="w-3 h-3" />
           Resale
         </Badge>
 
         {owned && (
-          <Badge variant="secondary" className="absolute top-2 right-2 z-10 gap-1 text-xs">
+          <Badge variant="secondary" className="absolute top-2 right-2 z-10 gap-1 text-xs px-2 py-0.5">
             <Check className="w-3 h-3" />
             Owned
           </Badge>
         )}
 
-        <div className="h-32 flex items-center justify-center bg-gradient-to-br from-muted/30 to-muted/10">
-          <div className="text-6xl">{itemData.emoji}</div>
+        {/* Changed h-32 to h-24 */}
+        <div className="h-24 flex items-center justify-center bg-gradient-to-br from-muted/30 to-muted/10">
+          {/* Changed text-6xl to text-4xl */}
+          <div className="text-4xl">{itemData.emoji}</div>
         </div>
 
-        <div className="p-3 space-y-2">
+        {/* Changed p-3 to p-2 */}
+        <div className="p-2 space-y-1">
           <div>
+            {/* Changed text-sm to text-xs */}
             <h3 className="font-bold text-sm line-clamp-1">{itemData.name}</h3>
             <p className="text-xs text-muted-foreground line-clamp-2">{itemData.description}</p>
           </div>
@@ -623,11 +647,12 @@ export default function Shop() {
               </span>
             </div>
 
+            {/* Changed h-8 to h-7 */}
             <Button
               onClick={() => handlePurchaseMarketplaceItem(listing.id, itemData.name)}
               disabled={owned || !canAfford || purchasing === listing.id}
               variant={owned ? 'outline' : 'default'}
-              className="w-full h-8 text-xs"
+              className="w-full h-7 text-xs"
             >
               {purchasing === listing.id ? (
                 <Loader2 className="w-3 h-3 animate-spin" />
@@ -668,22 +693,27 @@ export default function Shop() {
           {ownedItems.map((ownedItem) => (
             <Card 
               key={ownedItem.id}
-              className="relative overflow-hidden w-56 flex-shrink-0"
+              // Changes: w-56 to w-44, rounded-xl
+              className="relative overflow-hidden w-full sm:w-44 flex-shrink-0 rounded-xl"
             >
-              <div className="h-32 flex items-center justify-center bg-gradient-to-br from-muted/30 to-muted/10">
-                <div className="text-6xl">{ownedItem.item.emoji}</div>
+              {/* Changed h-32 to h-24 */}
+              <div className="h-24 flex items-center justify-center bg-gradient-to-br from-muted/30 to-muted/10">
+                {/* Changed text-6xl to text-4xl */}
+                <div className="text-4xl">{ownedItem.item.emoji}</div>
               </div>
 
-              <div className="p-3 space-y-2">
+              {/* Changed p-3 to p-2 */}
+              <div className="p-2 space-y-2">
                 <div>
                   <h3 className="font-bold text-sm line-clamp-1">{ownedItem.item.name}</h3>
                   <p className="text-xs text-muted-foreground line-clamp-2">{ownedItem.item.description}</p>
                 </div>
 
+                {/* Changed h-8 to h-7 */}
                 <Button
                   onClick={() => openListDialog(ownedItem, ownedItem.item)}
                   variant="outline"
-                  className="w-full h-8 text-xs"
+                  className="w-full h-7 text-xs"
                 >
                   List on Marketplace
                 </Button>
@@ -694,6 +724,7 @@ export default function Shop() {
       </div>
     );
   };
+  // --- TRANSFORMATION END ---
 
   if (!user) {
     return (
@@ -783,12 +814,13 @@ export default function Shop() {
               'from-yellow-500/10 via-orange-500/10 to-red-500/10 border border-yellow-500/20'
             )}
 
-            {/* All Items */}
-            {renderSection(
+            {/* All Items (Now grouped by type below) */}
+            {/* Keeping the 'All Items' section header for grouping if necessary */}
+            {/* {renderSection(
               'All Items',
               <ShoppingBag className="w-6 h-6" />,
               items
-            )}
+            )} */}
 
             {/* Accessories */}
             {renderSection(
@@ -844,11 +876,10 @@ export default function Shop() {
                   <p>No marketplace listings available</p>
                 </div>
               ) : (
-                <div className="bg-gradient-to-r from-blue-500/10 via-cyan-500/10 to-blue-500/10 p-4 rounded-lg border border-blue-500/20">
-                  <div className="overflow-x-auto pb-4 -mx-4 px-4">
-                    <div className="flex gap-4">
-                      {marketplaceListings.map(listing => renderMarketplaceCard(listing))}
-                    </div>
+                // Use a responsive grid here too for better mobile display
+                <div className="bg-gradient-to-r from-blue-500/10 via-cyan-500/10 to-blue-500/10 p-4 rounded-xl border border-blue-500/20">
+                   <div className="grid grid-cols-2 gap-4 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6">
+                    {marketplaceListings.map(listing => renderMarketplaceCard(listing))}
                   </div>
                 </div>
               )}
