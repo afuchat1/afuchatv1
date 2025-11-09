@@ -7,6 +7,7 @@ import { BrowserRouter, Routes, Route, Navigate, useParams } from "react-router-
 import { AuthProvider } from "./contexts/AuthContext";
 import { useDailyLogin } from "./hooks/useDailyLogin";
 import { useLanguageSync } from "./hooks/useLanguageSync";
+import { useScrollRestoration } from "./hooks/useScrollRestoration";
 import Index from "./pages/Index";
 import Auth from "./pages/Auth";
 import ChatRoom from "./pages/ChatRoom";
@@ -38,6 +39,8 @@ const AppRoutes = () => {
   useDailyLogin();
   // Sync language preference from database
   useLanguageSync();
+  // Restore scroll positions on navigation
+  useScrollRestoration();
 
   return (
     <Routes>
