@@ -161,6 +161,12 @@ const NewPostModal: React.FC<NewPostModalProps> = ({ isOpen, onClose }) => {
             });
 
             if (error) throw error;
+            
+            // Ensure we have a valid post string
+            if (!data || typeof data.post !== 'string') {
+                throw new Error('Invalid response from AI service');
+            }
+            
             setNewPost(data.post);
             setShowAIDialog(false);
             setAiTopic('');
