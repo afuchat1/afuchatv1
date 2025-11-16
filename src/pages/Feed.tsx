@@ -1105,14 +1105,6 @@ const Feed = () => {
   }
 
   const currentPosts = activeTab === 'foryou' ? posts : followingPosts;
-  const [isRefreshing, setIsRefreshing] = useState(false);
-
-  const handleManualRefresh = async () => {
-    setIsRefreshing(true);
-    await fetchPosts();
-    setIsRefreshing(false);
-    toast.success('Feed refreshed');
-  };
 
   return (
     <div className="h-full flex flex-col max-w-4xl mx-auto">
