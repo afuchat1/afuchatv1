@@ -4,9 +4,7 @@ import Search from './Search';
 const SearchPage = () => {
   return (
     <Layout>
-      <div className="h-screen overflow-hidden">
-        <Search />
-      </div>
+      <Search />
     </Layout>
   );
 };

@@ -22,7 +22,7 @@ const ChatsPage = () => {
 
   return (
     <Layout>
-      <div className="relative h-screen overflow-hidden">
+      <div className="relative">
         <Chats />
 
         {/* Floating Action Button */}

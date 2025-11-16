@@ -4,9 +4,7 @@ import Shop from './Shop';
 const ShopPage = () => {
   return (
     <Layout>
-      <div className="h-screen overflow-hidden">
-        <Shop />
-      </div>
+      <Shop />
     </Layout>
   );
 };

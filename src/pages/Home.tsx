@@ -22,7 +22,7 @@ const Home = () => {
 
   return (
     <Layout>
-      <div className="relative h-screen overflow-hidden">
+      <div className="relative">
         <Feed />
 
         {/* Floating Action Button */}
