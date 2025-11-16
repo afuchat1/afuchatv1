@@ -31,6 +31,13 @@ const AIChat: React.FC = () => {
   const navigate = useNavigate();
   const location = useLocation();
   
+  useEffect(() => {
+    if (!user) {
+      toast.error('Please log in to chat with AfuAI');
+      navigate('/auth');
+    }
+  }, [user, navigate]);
+  
   const [messages, setMessages] = useState<Message[]>([
     {
       role: 'assistant',
@@ -93,6 +100,13 @@ const AIChat: React.FC = () => {
 
   const handleSend = async () => {
     if (!input.trim() || loading) return;
+    
+    if (!user) {
+      toast.error('You must be logged in to chat');
+      return;
+    }
+
+    console.log('Sending message:', input.trim());
 
     const userMessage: Message = {
       role: 'user',
@@ -105,12 +119,15 @@ const AIChat: React.FC = () => {
     setLoading(true);
 
     try {
+      console.log('Invoking chat-with-afuai function...');
       const { data, error } = await supabase.functions.invoke('chat-with-afuai', {
         body: {
           message: userMessage.content,
           history: messages.slice(-5),
         }
       });
+
+      console.log('Response:', { data, error });
 
       if (error) {
         if (error.message?.includes('429')) {
