@@ -9,9 +9,12 @@ import { ThemeProvider } from "./contexts/ThemeContext";
 import { useDailyLogin } from "./hooks/useDailyLogin";
 import { useLanguageSync } from "./hooks/useLanguageSync";
 import { useScrollRestoration } from "./hooks/useScrollRestoration";
-import Index from "./pages/Index";
+import Home from "./pages/Home";
 import Auth from "./pages/Auth";
+import ChatsPage from "./pages/ChatsPage";
 import ChatRoom from "./pages/ChatRoom";
+import SearchPage from "./pages/SearchPage";
+import ShopPage from "./pages/ShopPage";
 import Profile from "./pages/Profile";
 import EditProfile from "./pages/EditProfile";
 import NotFound from "./pages/NotFound";
@@ -26,8 +29,8 @@ import PrivacyPolicy from "./pages/PrivacyPolicy";
 import Leaderboard from "./pages/Leaderboard";
 import AvatarEditor from "./pages/AvatarEditor";
 import GiftLeaderboard from "./pages/GiftLeaderboard";
-import Shop from "./pages/Shop";
 import TrendingHashtags from "./pages/TrendingHashtags";
+import Layout from "./components/Layout";
 
 const queryClient = new QueryClient();
 
@@ -46,27 +49,29 @@ const AppRoutes = () => {
 
   return (
     <Routes>
-      <Route path="/" element={<Index />} />
+      <Route path="/" element={<Home />} />
       <Route path="/auth" element={<Auth />} />
-      <Route path="/chat/:chatId" element={<ChatRoom />} />
-      <Route path="/notifications" element={<Notifications />} />
-      <Route path="/post/:postId" element={<PostDetail />} />
-      <Route path="/admin" element={<AdminDashboard />} />
+      <Route path="/chats" element={<ChatsPage />} />
+      <Route path="/chat/:chatId" element={<Layout><ChatRoom /></Layout>} />
+      <Route path="/search" element={<SearchPage />} />
+      <Route path="/shop" element={<ShopPage />} />
+      <Route path="/notifications" element={<Layout><Notifications /></Layout>} />
+      <Route path="/post/:postId" element={<Layout><PostDetail /></Layout>} />
+      <Route path="/admin" element={<Layout><AdminDashboard /></Layout>} />
       <Route path="/ai-chat" element={<AIChat />} />
       <Route path="/install" element={<Install />} />
-      <Route path="/settings" element={<Settings />} />
+      <Route path="/settings" element={<Layout><Settings /></Layout>} />
       <Route path="/terms" element={<TermsOfUse />} />
       <Route path="/privacy" element={<PrivacyPolicy />} />
-      <Route path="/leaderboard" element={<Leaderboard />} />
-      <Route path="/gift-leaderboard" element={<GiftLeaderboard />} />
+      <Route path="/leaderboard" element={<Layout><Leaderboard /></Layout>} />
+      <Route path="/gift-leaderboard" element={<Layout><GiftLeaderboard /></Layout>} />
       <Route path="/avatar/edit" element={<AvatarEditor />} />
-      <Route path="/shop" element={<Shop />} />
-      <Route path="/trending" element={<TrendingHashtags />} />
+      <Route path="/trending" element={<Layout><TrendingHashtags /></Layout>} />
 
       <Route path="/profile/:userId" element={<ProfileRedirect />} />
 
-      <Route path="/:userId" element={<Profile />} />
-      <Route path="/:userId/edit" element={<EditProfile />} />
+      <Route path="/:userId" element={<Layout><Profile /></Layout>} />
+      <Route path="/:userId/edit" element={<Layout><EditProfile /></Layout>} />
 
       <Route path="*" element={<NotFound />} />
     </Routes>
