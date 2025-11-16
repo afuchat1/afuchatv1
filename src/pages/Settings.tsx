@@ -6,11 +6,12 @@ import { Button } from '@/components/ui/button';
 import { Separator } from '@/components/ui/separator';
 import { Switch } from '@/components/ui/switch';
 import { Badge } from '@/components/ui/badge';
-import { ArrowLeft, User, Bell, Lock, Shield, FileText, LogOut, Languages } from 'lucide-react';
+import { ArrowLeft, User, Bell, Lock, Shield, FileText, LogOut, Languages, Sun, Moon, Monitor } from 'lucide-react';
 import { toast } from 'sonner';
 import { supabase } from '@/integrations/supabase/client';
 import Logo from '@/components/Logo';
 import { useTranslation } from 'react-i18next';
+import { useTheme } from '@/contexts/ThemeContext';
 import {
   Select,
   SelectContent,
@@ -23,6 +24,7 @@ const Settings = () => {
   const navigate = useNavigate();
   const { user } = useAuth();
   const { t, i18n } = useTranslation();
+  const { theme, setTheme } = useTheme();
   const [notificationsEnabled, setNotificationsEnabled] = useState(true);
   const [privateAccount, setPrivateAccount] = useState(false);
 
@@ -187,6 +189,58 @@ const Settings = () => {
                   checked={notificationsEnabled}
                   onCheckedChange={setNotificationsEnabled}
                 />
+              </div>
+            </div>
+          </Card>
+
+          {/* Theme Settings */}
+          <Card className="p-4 sm:p-6">
+            <div className="space-y-4">
+              <div className="flex items-center gap-3">
+                <Sun className="h-5 w-5 text-muted-foreground" />
+                <h2 className="text-lg font-semibold">Theme</h2>
+              </div>
+              <Separator />
+              <div className="py-3 px-2 space-y-3">
+                <div>
+                  <p className="font-medium mb-1">Appearance</p>
+                  <p className="text-sm text-muted-foreground mb-3">Choose how the app looks</p>
+                </div>
+                <div className="grid grid-cols-3 gap-3">
+                  <button
+                    onClick={() => setTheme('light')}
+                    className={`flex flex-col items-center gap-2 p-3 rounded-lg border-2 transition-all ${
+                      theme === 'light' 
+                        ? 'border-primary bg-primary/10' 
+                        : 'border-border hover:bg-muted'
+                    }`}
+                  >
+                    <Sun className="h-5 w-5" />
+                    <span className="text-sm font-medium">Light</span>
+                  </button>
+                  <button
+                    onClick={() => setTheme('dark')}
+                    className={`flex flex-col items-center gap-2 p-3 rounded-lg border-2 transition-all ${
+                      theme === 'dark' 
+                        ? 'border-primary bg-primary/10' 
+                        : 'border-border hover:bg-muted'
+                    }`}
+                  >
+                    <Moon className="h-5 w-5" />
+                    <span className="text-sm font-medium">Dark</span>
+                  </button>
+                  <button
+                    onClick={() => setTheme('system')}
+                    className={`flex flex-col items-center gap-2 p-3 rounded-lg border-2 transition-all ${
+                      theme === 'system' 
+                        ? 'border-primary bg-primary/10' 
+                        : 'border-border hover:bg-muted'
+                    }`}
+                  >
+                    <Monitor className="h-5 w-5" />
+                    <span className="text-sm font-medium">System</span>
+                  </button>
+                </div>
               </div>
             </div>
           </Card>

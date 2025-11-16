@@ -40,6 +40,7 @@ interface Post {
   created_at: string;
   updated_at: string;
   author_id: string;
+  image_url: string | null;
   profiles: {
     display_name: string;
     handle: string;
@@ -458,6 +459,15 @@ const PostCard = ({ post, addReply, user, navigate, onAcknowledge, onDeletePost,
                 : parsePostContent(post.content, navigate)
             }
           />
+          {post.image_url && (
+            <div className="mt-2 rounded-lg overflow-hidden border border-border">
+              <img 
+                src={post.image_url} 
+                alt="Post image" 
+                className="w-full h-auto max-h-96 object-cover"
+              />
+            </div>
+          )}
           {i18n.language !== 'en' && (
             <Button
               variant="ghost"

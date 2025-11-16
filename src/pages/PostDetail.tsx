@@ -67,6 +67,7 @@ interface Post {
   id: string;
   content: string;
   created_at: string;
+  image_url: string | null;
   likes_count: number;
   replies_count: number;
   
@@ -100,7 +101,7 @@ const PostDetail = () => {
       const postPromise = supabase
         .from('posts')
         .select(`
-          id, content, created_at,
+          id, content, created_at, image_url,
           profiles!inner (id, display_name, handle, is_verified, is_organization_verified)
         `)
         .eq('id', postId)
@@ -136,6 +137,7 @@ const PostDetail = () => {
         id: postData.id,
         content: postData.content,
         created_at: postData.created_at,
+        image_url: postData.image_url || null,
         likes_count: likesCount,
         replies_count: repliesCount,
         author: {
@@ -264,6 +266,17 @@ const PostDetail = () => {
             <p className="text-2xl leading-relaxed whitespace-pre-wrap mb-4">
               {renderContentWithMentions(translatedPost || post.content)}
             </p>
+            
+            {/* POST IMAGE */}
+            {post.image_url && (
+              <div className="mb-4 rounded-lg overflow-hidden border border-border">
+                <img 
+                  src={post.image_url} 
+                  alt="Post image" 
+                  className="w-full h-auto max-h-[500px] object-cover"
+                />
+              </div>
+            )}
             
             {/* Translate Button */}
             {i18n.language !== 'en' && (

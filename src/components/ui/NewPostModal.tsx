@@ -1,11 +1,11 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/contexts/AuthContext';
 import { useXP } from '@/hooks/useXP';
 import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';
 import { toast } from 'sonner';
-import { Send, X, Sparkles, Image as ImageIcon, AtSign, Hash, Smile, TrendingUp, Wand2 } from 'lucide-react';
+import { Send, X, Sparkles, Image as ImageIcon, Loader2, TrendingUp, Wand2 } from 'lucide-react';
 import { postSchema, aiTopicSchema, aiToneSchema, aiLengthSchema } from '@/lib/validation';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Card, CardContent } from '@/components/ui/card';
@@ -102,6 +102,10 @@ const NewPostModal: React.FC<NewPostModalProps> = ({ isOpen, onClose }) => {
     const [aiTone, setAiTone] = useState('casual');
     const [aiLength, setAiLength] = useState('medium');
     const [generatingAI, setGeneratingAI] = useState(false);
+    const [selectedImage, setSelectedImage] = useState<File | null>(null);
+    const [imagePreview, setImagePreview] = useState<string | null>(null);
+    const [uploadingImage, setUploadingImage] = useState(false);
+    const fileInputRef = useRef<HTMLInputElement>(null);
 
     const { remaining, variant, length } = useCharacterCount(newPost);
 
@@ -118,12 +122,40 @@ const NewPostModal: React.FC<NewPostModalProps> = ({ isOpen, onClose }) => {
 
         setIsPosting(true);
         const postContent = newPost.trim();
+        let imageUrl: string | null = null;
 
         try {
+            // Upload image if selected
+            if (selectedImage) {
+                setUploadingImage(true);
+                const fileExt = selectedImage.name.split('.').pop();
+                const fileName = `${user.id}/${Date.now()}.${fileExt}`;
+                
+                const { error: uploadError, data } = await supabase.storage
+                    .from('post-images')
+                    .upload(fileName, selectedImage);
+
+                if (uploadError) {
+                    console.error('Image upload error:', uploadError);
+                    toast.error('Failed to upload image');
+                    setUploadingImage(false);
+                    setIsPosting(false);
+                    return;
+                }
+
+                const { data: { publicUrl } } = supabase.storage
+                    .from('post-images')
+                    .getPublicUrl(fileName);
+                
+                imageUrl = publicUrl;
+                setUploadingImage(false);
+            }
+
             // Database insert
             const { error } = await supabase.from('posts').insert({
                 content: postContent,
                 author_id: user.id,
+                image_url: imageUrl,
             });
 
             if (error) {
@@ -134,11 +166,12 @@ const NewPostModal: React.FC<NewPostModalProps> = ({ isOpen, onClose }) => {
                 awardXP('create_post', { content: postContent.substring(0, 50) }, true);
                 
                 setNewPost(''); 
+                setSelectedImage(null);
+                setImagePreview(null);
                 setShowPreview(false);
                 setShowAIAssist(false);
                 setAiTopic('');
                 onClose(); // Close modal on success
-                // Success toast handled by the real-time subscription in Feed.tsx 
                 toast.success('Post created! ✨', {
                     description: 'Your thoughts are now live.',
                     duration: 3000,
@@ -149,6 +182,7 @@ const NewPostModal: React.FC<NewPostModalProps> = ({ isOpen, onClose }) => {
             toast.error('Network error—check connection.');
         } finally {
             setIsPosting(false);
+            setUploadingImage(false);
         }
     };
 
@@ -208,6 +242,38 @@ const NewPostModal: React.FC<NewPostModalProps> = ({ isOpen, onClose }) => {
         return () => clearTimeout(timer);
     }, [newPost]);
 
+    const handleImageSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
+        const file = e.target.files?.[0];
+        if (!file) return;
+
+        // Validate file type
+        if (!file.type.startsWith('image/')) {
+            toast.error('Please select an image file');
+            return;
+        }
+
+        // Validate file size (5MB)
+        if (file.size > 5 * 1024 * 1024) {
+            toast.error('Image must be less than 5MB');
+            return;
+        }
+
+        setSelectedImage(file);
+        const reader = new FileReader();
+        reader.onloadend = () => {
+            setImagePreview(reader.result as string);
+        };
+        reader.readAsDataURL(file);
+    };
+
+    const handleRemoveImage = () => {
+        setSelectedImage(null);
+        setImagePreview(null);
+        if (fileInputRef.current) {
+            fileInputRef.current.value = '';
+        }
+    };
+
     // Fallback for animations
     const MotionDiv = motion ? motion.div : (({ children, ...props }: any) => <div {...props}>{children}</div>);
     const MotionSend = motion ? motion.div : (({ children, ...props }: any) => <div {...props}>{children}</div>);
@@ -253,6 +319,54 @@ const NewPostModal: React.FC<NewPostModalProps> = ({ isOpen, onClose }) => {
                                     )}
                                     disabled={isPosting}
                                 />
+
+                                {/* Image Upload Section */}
+                                <div className="space-y-3">
+                                    <input
+                                        ref={fileInputRef}
+                                        type="file"
+                                        accept="image/*"
+                                        onChange={handleImageSelect}
+                                        className="hidden"
+                                    />
+                                    
+                                    {!imagePreview ? (
+                                        <Button
+                                            type="button"
+                                            onClick={() => fileInputRef.current?.click()}
+                                            variant="outline"
+                                            size="sm"
+                                            className="w-full flex items-center gap-2"
+                                            disabled={isPosting}
+                                        >
+                                            <ImageIcon className="h-4 w-4" />
+                                            Add Image (Optional)
+                                        </Button>
+                                    ) : (
+                                        <div className="relative rounded-lg overflow-hidden border-2 border-border">
+                                            <img 
+                                                src={imagePreview} 
+                                                alt="Preview" 
+                                                className="w-full h-48 object-cover"
+                                            />
+                                            <Button
+                                                type="button"
+                                                onClick={handleRemoveImage}
+                                                variant="destructive"
+                                                size="icon"
+                                                className="absolute top-2 right-2"
+                                                disabled={isPosting || uploadingImage}
+                                            >
+                                                <X className="h-4 w-4" />
+                                            </Button>
+                                            {uploadingImage && (
+                                                <div className="absolute inset-0 bg-background/80 flex items-center justify-center">
+                                                    <Loader2 className="h-8 w-8 animate-spin text-primary" />
+                                                </div>
+                                            )}
+                                        </div>
+                                    )}
+                                </div>
 
                                 {/* AI Assist Button */}
                                 <Button

@@ -595,6 +595,7 @@ export type Database = {
           content: string
           created_at: string | null
           id: string
+          image_url: string | null
           language_code: string | null
           updated_at: string | null
         }
@@ -603,6 +604,7 @@ export type Database = {
           content: string
           created_at?: string | null
           id?: string
+          image_url?: string | null
           language_code?: string | null
           updated_at?: string | null
         }
@@ -611,6 +613,7 @@ export type Database = {
           content?: string
           created_at?: string | null
           id?: string
+          image_url?: string | null
           language_code?: string | null
           updated_at?: string | null
         }
@@ -1110,10 +1113,25 @@ export type Database = {
       }
       check_daily_login_streak: { Args: { p_user_id: string }; Returns: Json }
       check_profile_completion: { Args: { p_user_id: string }; Returns: Json }
-      create_marketplace_listing: {
-        Args: { p_asking_price: number; p_purchase_id: string }
-        Returns: Json
-      }
+      create_marketplace_listing:
+        | {
+            Args: { p_asking_price: number; p_purchase_id: string }
+            Returns: {
+              message: string
+              success: boolean
+            }[]
+          }
+        | {
+            Args: {
+              p_asking_price: number
+              p_purchase_id: string
+              p_user_id?: string
+            }
+            Returns: {
+              message: string
+              success: boolean
+            }[]
+          }
       create_new_chat: { Args: { other_user_id: string }; Returns: string }
       finalize_auction: { Args: { p_shop_item_id: string }; Returns: Json }
       get_gift_price: { Args: { p_gift_id: string }; Returns: number }
@@ -1156,17 +1174,39 @@ export type Database = {
       mark_notifications_as_read: { Args: never; Returns: undefined }
       place_bid: {
         Args: { p_bid_amount: number; p_shop_item_id: string }
-        Returns: Json
+        Returns: {
+          message: string
+          success: boolean
+        }[]
       }
-      process_referral_reward: {
-        Args: { p_referral_code: string; p_referred_id: string }
-        Returns: Json
-      }
+      process_referral_reward:
+        | {
+            Args: { p_referral_code: string; p_referred_id: string }
+            Returns: Json
+          }
+        | {
+            Args: { p_referral_id: string }
+            Returns: {
+              message: string
+              success: boolean
+            }[]
+          }
       purchase_marketplace_item: {
         Args: { p_listing_id: string }
-        Returns: Json
+        Returns: {
+          message: string
+          new_xp: number
+          success: boolean
+        }[]
       }
-      purchase_shop_item: { Args: { p_shop_item_id: string }; Returns: Json }
+      purchase_shop_item: {
+        Args: { p_shop_item_id: string }
+        Returns: {
+          message: string
+          new_xp: number
+          success: boolean
+        }[]
+      }
       rotate_featured_items: { Args: never; Returns: undefined }
       send_gift: {
         Args: { p_gift_id: string; p_message?: string; p_receiver_id: string }
@@ -1192,6 +1232,18 @@ export type Database = {
           p_xp_amount: number
         }
         Returns: Json
+      }
+      tip_post_author: {
+        Args: {
+          p_message?: string
+          p_post_id: string
+          p_sender_id?: string
+          p_xp_amount: number
+        }
+        Returns: {
+          message: string
+          success: boolean
+        }[]
       }
     }
     Enums: {
