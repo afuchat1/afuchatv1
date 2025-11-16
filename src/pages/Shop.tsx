@@ -338,7 +338,11 @@ export default function Shop() {
 
       if (error) throw error;
 
-      const result = data as { success: boolean; message: string };
+      if (!data || data.length === 0) {
+        throw new Error('No response from server');
+      }
+
+      const result = data[0] as { success: boolean; message: string };
 
       if (result.success) {
         toast.success('Item listed on marketplace!');
@@ -372,7 +376,11 @@ export default function Shop() {
 
       if (error) throw error;
 
-      const result = data as { success: boolean; message: string; new_xp?: number };
+      if (!data || data.length === 0) {
+        throw new Error('No response from server');
+      }
+
+      const result = data[0] as { success: boolean; message: string; new_xp?: number };
 
       if (result.success) {
         toast.success(`Purchased ${itemName}!`);
