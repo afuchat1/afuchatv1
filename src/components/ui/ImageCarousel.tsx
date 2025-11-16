@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { ChevronLeft, ChevronRight } from 'lucide-react';
 import { Button } from './button';
 import { cn } from '@/lib/utils';
+import { ImageLightbox } from './ImageLightbox';
 
 interface ImageCarouselProps {
   images: Array<{ url: string; alt?: string }> | string[];
@@ -10,6 +11,8 @@ interface ImageCarouselProps {
 
 export const ImageCarousel = ({ images, className }: ImageCarouselProps) => {
   const [currentIndex, setCurrentIndex] = useState(0);
+  const [lightboxOpen, setLightboxOpen] = useState(false);
+  const [lightboxIndex, setLightboxIndex] = useState(0);
 
   if (!images || images.length === 0) return null;
 
@@ -34,31 +37,43 @@ export const ImageCarousel = ({ images, className }: ImageCarouselProps) => {
     ? 'grid-cols-2'
     : 'grid-cols-2';
 
+  const handleImageClick = (index: number) => {
+    setLightboxIndex(index);
+    setLightboxOpen(true);
+  };
+
+  const imageObjects = images.map(img => typeof img === 'string' ? { url: img, alt: 'Post image' } : img);
+
   return (
-    <div className={cn('relative group', className)}>
-      {imageUrls.length === 1 ? (
-        <div className="relative rounded-2xl overflow-hidden border border-border">
-          <img
-            src={imageUrls[0]}
-            alt={imageAlts[0]}
-            className="w-full max-h-[500px] object-cover"
-          />
-        </div>
-      ) : (
-        <div className={cn('grid gap-0.5 rounded-2xl overflow-hidden border border-border', gridClass)}>
-          {imageUrls.slice(0, 4).map((image, index) => (
-            <div
-              key={index}
-              className={cn(
-                'relative aspect-square overflow-hidden',
-                imageUrls.length === 3 && index === 0 && 'row-span-2'
-              )}
-            >
-              <img
-                src={image}
-                alt={imageAlts[index]}
-                className="w-full h-full object-cover hover:scale-105 transition-transform duration-300"
-              />
+    <>
+      <div className={cn('relative group', className)}>
+        {imageUrls.length === 1 ? (
+          <div 
+            className="relative rounded-2xl overflow-hidden border border-border cursor-pointer"
+            onClick={() => handleImageClick(0)}
+          >
+            <img
+              src={imageUrls[0]}
+              alt={imageAlts[0]}
+              className="w-full max-h-[500px] object-cover hover:opacity-90 transition-opacity"
+            />
+          </div>
+        ) : (
+          <div className={cn('grid gap-0.5 rounded-2xl overflow-hidden border border-border', gridClass)}>
+            {imageUrls.slice(0, 4).map((image, index) => (
+              <div
+                key={index}
+                className={cn(
+                  'relative aspect-square overflow-hidden cursor-pointer',
+                  imageUrls.length === 3 && index === 0 && 'row-span-2'
+                )}
+                onClick={() => handleImageClick(index)}
+              >
+                <img
+                  src={image}
+                  alt={imageAlts[index]}
+                  className="w-full h-full object-cover hover:scale-105 transition-transform duration-300"
+                />
               {imageUrls.length > 4 && index === 3 && (
                 <div className="absolute inset-0 bg-black/60 flex items-center justify-center">
                   <span className="text-white text-2xl font-bold">+{imageUrls.length - 4}</span>
@@ -107,6 +122,15 @@ export const ImageCarousel = ({ images, className }: ImageCarouselProps) => {
           </div>
         </>
       )}
-    </div>
+      </div>
+
+      {lightboxOpen && (
+        <ImageLightbox
+          images={imageObjects}
+          initialIndex={lightboxIndex}
+          onClose={() => setLightboxOpen(false)}
+        />
+      )}
+    </>
   );
 };
