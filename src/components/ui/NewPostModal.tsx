@@ -137,7 +137,7 @@ const NewPostModal: React.FC<NewPostModalProps> = ({ isOpen, onClose }) => {
                 await supabase.from('post_link_previews').insert(previewInserts);
             }
 
-            await awardXP('create_post', 10, {});
+            await awardXP('create_post');
             toast.success('Post created successfully!');
             handleClose();
         } catch (error) {
@@ -471,7 +471,7 @@ const NewPostModal: React.FC<NewPostModalProps> = ({ isOpen, onClose }) => {
             {/* Image Editor */}
             {showImageEditor && editingImagePreview && (
                 <ImageEditor
-                    imageData={editingImagePreview}
+                    image={editingImagePreview}
                     onSave={(blob) => {
                         if (editingImageIndex !== null) {
                             const file = new File([blob], selectedImages[editingImageIndex]?.name || 'edited.png', {
@@ -501,28 +501,13 @@ const NewPostModal: React.FC<NewPostModalProps> = ({ isOpen, onClose }) => {
             {/* Batch Editor */}
             {showBatchEditor && imagePreviews.length > 0 && (
                 <BatchImageEditor
+                    isOpen={showBatchEditor}
+                    onClose={() => setShowBatchEditor(false)}
                     images={imagePreviews}
-                    onApply={(editedBlobs) => {
-                        const newImages = editedBlobs.map((blob, i) => 
-                            new File([blob], selectedImages[i]?.name || `edited-${i}.png`, { type: 'image/png' })
-                        );
-                        setSelectedImages(newImages);
-                        const newPreviews: string[] = [];
-                        let loaded = 0;
-                        newImages.forEach((file, i) => {
-                            const reader = new FileReader();
-                            reader.onloadend = () => {
-                                newPreviews[i] = reader.result as string;
-                                loaded++;
-                                if (loaded === newImages.length) {
-                                    setImagePreviews(newPreviews);
-                                }
-                            };
-                            reader.readAsDataURL(file);
-                        });
+                    onApply={(editedImages) => {
+                        setImagePreviews(editedImages);
                         setShowBatchEditor(false);
                     }}
-                    onCancel={() => setShowBatchEditor(false)}
                 />
             )}
 
