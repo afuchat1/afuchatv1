@@ -21,6 +21,7 @@ import { SendGiftDialog } from '@/components/gifts/SendGiftDialog';
 import { ReadMoreText } from '@/components/ui/ReadMoreText';
 import { TipButton } from '@/components/tips/TipButton';
 import { ImageCarousel } from '@/components/ui/ImageCarousel';
+import { renderContentWithLinks } from '@/lib/postUtils';
 
 
 // --- INTERFACES ---
@@ -140,30 +141,68 @@ const parsePostContent = (content: string, navigate: (path: string) => void) => 
     navigate(`/profile/${data.id}`); 
   };
   
-  const mentionRegex = /@([a-zA-Z0-9_-]+)/g; 
+  // First process mentions, then process hashtags and links
+  const combinedRegex = /(@[a-zA-Z0-9_-]+|#\w+|https?:\/\/[^\s]+)/g;
   const parts: (string | JSX.Element)[] = [];
   let lastIndex = 0;
   
-  content.replace(mentionRegex, (match, handle, index) => {
+  const matches = Array.from(content.matchAll(combinedRegex));
+  
+  matches.forEach((match, idx) => {
+    const matchText = match[0];
+    const index = match.index!;
+    
     if (index > lastIndex) {
       parts.push(content.substring(lastIndex, index));
     }
-
-    const MentionComponent = (
-      <span
-        key={`mention-${index}-${handle}`}
-        className="text-blue-500 font-medium cursor-pointer hover:underline"
-        onClick={(e) => {
-          e.stopPropagation(); 
-          lookupAndNavigateByHandle(handle); 
-        }}
-      >
-        {match}
-      </span>
-    );
-    parts.push(MentionComponent);
-    lastIndex = index + match.length;
-    return match;
+    
+    if (matchText.startsWith('@')) {
+      const handle = matchText.substring(1);
+      const MentionComponent = (
+        <span
+          key={`mention-${idx}`}
+          className="text-blue-500 font-medium cursor-pointer hover:underline"
+          onClick={(e) => {
+            e.stopPropagation(); 
+            lookupAndNavigateByHandle(handle); 
+          }}
+        >
+          {matchText}
+        </span>
+      );
+      parts.push(MentionComponent);
+    } else if (matchText.startsWith('#')) {
+      const hashtag = matchText.substring(1);
+      parts.push(
+        <a
+          key={`hashtag-${idx}`}
+          href={`/search?q=${encodeURIComponent(hashtag)}`}
+          className="text-primary hover:underline font-medium"
+          onClick={(e) => {
+            e.stopPropagation();
+          }}
+        >
+          {matchText}
+        </a>
+      );
+    } else if (matchText.startsWith('http')) {
+      parts.push(
+        <a
+          key={`url-${idx}`}
+          href={matchText}
+          target="_blank"
+          rel="noopener noreferrer"
+          className="text-primary hover:underline"
+          onClick={(e) => {
+            e.stopPropagation();
+          }}
+        >
+          {matchText.length > 50 ? matchText.substring(0, 50) + '...' : matchText}
+        </a>
+      );
+    }
+    
+    lastIndex = index + matchText.length;
   });
 
   if (lastIndex < content.length) {

@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef } from 'react';
-import { X, Share2, ChevronLeft, ChevronRight } from 'lucide-react';
+import { X, Share2, ChevronLeft, ChevronRight, Download } from 'lucide-react';
 import { Button } from './button';
 import { cn } from '@/lib/utils';
 import { toast } from 'sonner';
@@ -122,9 +122,31 @@ export const ImageLightbox = ({ images, initialIndex, onClose }: ImageLightboxPr
     }
   };
 
+  const handleDownload = async () => {
+    try {
+      const currentImage = images[currentIndex];
+      const response = await fetch(currentImage.url);
+      const blob = await response.blob();
+      const url = window.URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `image-${Date.now()}.jpg`;
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      window.URL.revokeObjectURL(url);
+      toast.success('Image downloaded!');
+    } catch (err) {
+      toast.error('Failed to download image');
+    }
+  };
+
   return (
     <div className="fixed inset-0 z-50 bg-black/95 flex items-center justify-center">
       <div className="absolute top-4 right-4 flex gap-2 z-10">
+        <Button variant="ghost" size="icon" onClick={handleDownload} className="bg-background/10 hover:bg-background/20 text-white">
+          <Download className="h-5 w-5" />
+        </Button>
         <Button variant="ghost" size="icon" onClick={handleShare} className="bg-background/10 hover:bg-background/20 text-white">
           <Share2 className="h-5 w-5" />
         </Button>

@@ -7,6 +7,7 @@ import { Textarea } from '@/components/ui/textarea';
 import { toast } from 'sonner';
 import { Send, X, Sparkles, Image as ImageIcon, Loader2, TrendingUp, Wand2, Pencil } from 'lucide-react';
 import { ImageEditor } from '@/components/image-editor/ImageEditor';
+import { BatchImageEditor } from '@/components/image-editor/BatchImageEditor';
 import { postSchema, aiTopicSchema, aiToneSchema, aiLengthSchema } from '@/lib/validation';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Card, CardContent } from '@/components/ui/card';
@@ -17,6 +18,7 @@ import { Label } from '@/components/ui/label';
 import { Input } from '@/components/ui/input';
 import { useImageDescription } from '@/hooks/useImageDescription';
 import { AltTextEditor } from '@/components/ui/AltTextEditor';
+import { compressImageFile } from '@/lib/imageCompression';
 // Optional: Framer Motion for animations (install with: npm i framer-motion)
 let motion, AnimatePresence;
 try {
@@ -112,6 +114,7 @@ const NewPostModal: React.FC<NewPostModalProps> = ({ isOpen, onClose }) => {
     const [showImageEditor, setShowImageEditor] = useState(false);
     const [editingImageIndex, setEditingImageIndex] = useState<number | null>(null);
     const [editingImagePreview, setEditingImagePreview] = useState<string | null>(null);
+    const [showBatchEditor, setShowBatchEditor] = useState(false);
     const fileInputRef = useRef<HTMLInputElement>(null);
     const { generateDescription, isGenerating } = useImageDescription();
 
@@ -270,7 +273,7 @@ const NewPostModal: React.FC<NewPostModalProps> = ({ isOpen, onClose }) => {
         return () => clearTimeout(timer);
     }, [newPost]);
 
-    const handleImageSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const handleImageSelect = async (e: React.ChangeEvent<HTMLInputElement>) => {
         const files = Array.from(e.target.files || []);
         if (files.length === 0) return;
 
@@ -283,36 +286,54 @@ const NewPostModal: React.FC<NewPostModalProps> = ({ isOpen, onClose }) => {
         const newPreviews: string[] = [];
         let processedCount = 0;
 
-        files.forEach(file => {
+        // Show compression toast
+        toast.info('Compressing images...');
+
+        for (const file of files) {
             if (!file.type.startsWith('image/')) {
                 toast.error(`${file.name} is not an image file`);
-                return;
+                continue;
             }
 
             if (file.size > 5 * 1024 * 1024) {
                 toast.error(`${file.name} is larger than 5MB`);
-                return;
+                continue;
             }
 
-            validFiles.push(file);
-            const reader = new FileReader();
-            reader.onloadend = async () => {
-                newPreviews.push(reader.result as string);
-                processedCount++;
-                if (processedCount === validFiles.length) {
-                    setImagePreviews(prev => [...prev, ...newPreviews]);
-                    
-                    // Auto-generate alt text for new images
-                    const newAltTexts: string[] = [];
-                    for (const preview of newPreviews) {
-                        const altText = await generateDescription(preview);
-                        newAltTexts.push(altText || '');
-                    }
-                    setImageAltTexts(prev => [...prev, ...newAltTexts]);
+            try {
+                // Compress image
+                const compressedFile = await compressImageFile(file);
+                const originalSizeMB = (file.size / (1024 * 1024)).toFixed(2);
+                const compressedSizeMB = (compressedFile.size / (1024 * 1024)).toFixed(2);
+                
+                if (compressedFile.size < file.size) {
+                    console.log(`Compressed ${file.name}: ${originalSizeMB}MB → ${compressedSizeMB}MB`);
                 }
-            };
-            reader.readAsDataURL(file);
-        });
+
+                validFiles.push(compressedFile);
+                const reader = new FileReader();
+                reader.onloadend = async () => {
+                    newPreviews.push(reader.result as string);
+                    processedCount++;
+                    if (processedCount === validFiles.length) {
+                        setImagePreviews(prev => [...prev, ...newPreviews]);
+                        
+                        // Auto-generate alt text for new images
+                        const newAltTexts: string[] = [];
+                        for (const preview of newPreviews) {
+                            const altText = await generateDescription(preview);
+                            newAltTexts.push(altText || '');
+                        }
+                        setImageAltTexts(prev => [...prev, ...newAltTexts]);
+                        toast.success('Images compressed and ready!');
+                    }
+                };
+                reader.readAsDataURL(compressedFile);
+            } catch (error) {
+                console.error('Compression error:', error);
+                toast.error(`Failed to compress ${file.name}`);
+            }
+        }
 
         setSelectedImages(prev => [...prev, ...validFiles]);
     };
@@ -362,12 +383,41 @@ const NewPostModal: React.FC<NewPostModalProps> = ({ isOpen, onClose }) => {
         setEditingImagePreview(null);
     };
 
+    const handleBatchEdit = (editedImages: string[]) => {
+        const newFiles: File[] = [];
+        editedImages.forEach((dataUrl, index) => {
+            fetch(dataUrl)
+                .then(res => res.blob())
+                .then(blob => {
+                    const file = new File([blob], selectedImages[index]?.name || `edited-${index}.jpg`, {
+                        type: 'image/jpeg',
+                    });
+                    newFiles.push(file);
+                    
+                    if (newFiles.length === editedImages.length) {
+                        setSelectedImages(newFiles);
+                        setImagePreviews(editedImages);
+                    }
+                });
+        });
+    };
+
     // Fallback for animations
     const MotionDiv = motion ? motion.div : (({ children, ...props }: any) => <div {...props}>{children}</div>);
     const MotionSend = motion ? motion.div : (({ children, ...props }: any) => <div {...props}>{children}</div>);
 
     return (
         <ErrorBoundary>
+            {/* Batch Image Editor Dialog */}
+            {showBatchEditor && (
+                <BatchImageEditor
+                    isOpen={showBatchEditor}
+                    onClose={() => setShowBatchEditor(false)}
+                    images={imagePreviews}
+                    onApply={handleBatchEdit}
+                />
+            )}
+
             {/* Image Editor Dialog */}
             {showImageEditor && editingImagePreview && (
                 <Dialog open={showImageEditor} onOpenChange={handleImageEditorCancel}>
@@ -544,19 +594,35 @@ const NewPostModal: React.FC<NewPostModalProps> = ({ isOpen, onClose }) => {
                                                     </div>
                                                 ))}
                                             </div>
-                                            {imagePreviews.length < 4 && (
-                                                <Button
-                                                    type="button"
-                                                    onClick={() => fileInputRef.current?.click()}
-                                                    variant="outline"
-                                                    size="sm"
-                                                    className="w-full flex items-center gap-2"
-                                                    disabled={isPosting}
-                                                >
-                                                    <ImageIcon className="h-4 w-4" />
-                                                    Add More ({4 - imagePreviews.length} remaining)
-                                                </Button>
-                                            )}
+                                            
+                                            <div className="flex gap-2">
+                                                {imagePreviews.length < 4 && (
+                                                    <Button
+                                                        type="button"
+                                                        onClick={() => fileInputRef.current?.click()}
+                                                        variant="outline"
+                                                        size="sm"
+                                                        className="flex-1 flex items-center gap-2"
+                                                        disabled={isPosting}
+                                                    >
+                                                        <ImageIcon className="h-4 w-4" />
+                                                        Add More ({4 - imagePreviews.length})
+                                                    </Button>
+                                                )}
+                                                {imagePreviews.length > 1 && (
+                                                    <Button
+                                                        type="button"
+                                                        onClick={() => setShowBatchEditor(true)}
+                                                        variant="secondary"
+                                                        size="sm"
+                                                        className="flex-1 flex items-center gap-2"
+                                                        disabled={isPosting || uploadingImage}
+                                                    >
+                                                        <Wand2 className="h-4 w-4" />
+                                                        Batch Edit
+                                                    </Button>
+                                                )}
+                                            </div>
                                         </div>
                                     )}
                                 </div>
