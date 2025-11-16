@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from 'react';
-import { Canvas as FabricCanvas, FabricImage } from 'fabric';
+import { Canvas as FabricCanvas, FabricImage, filters } from 'fabric';
 import { ImageEditorControls } from './ImageEditorControls';
 
 interface ImageEditorProps {
@@ -58,17 +58,17 @@ export const ImageEditor = ({ image, onSave, onCancel }: ImageEditorProps) => {
   useEffect(() => {
     if (!fabricImage) return;
 
-    const filters: any[] = [];
+    const imageFilters: any[] = [];
 
     if (brightness !== 0) {
-      filters.push(new (window as any).fabric.Image.filters.Brightness({ brightness: brightness / 100 }));
+      imageFilters.push(new filters.Brightness({ brightness: brightness / 100 }));
     }
 
     if (contrast !== 0) {
-      filters.push(new (window as any).fabric.Image.filters.Contrast({ contrast: contrast / 100 }));
+      imageFilters.push(new filters.Contrast({ contrast: contrast / 100 }));
     }
 
-    fabricImage.filters = filters;
+    fabricImage.filters = imageFilters;
     fabricImage.applyFilters();
     fabricCanvas?.renderAll();
   }, [brightness, contrast, fabricImage, fabricCanvas]);
@@ -86,16 +86,16 @@ export const ImageEditor = ({ image, onSave, onCancel }: ImageEditorProps) => {
     let filter;
     switch (filterType) {
       case 'grayscale':
-        filter = new (window as any).fabric.Image.filters.Grayscale();
+        filter = new filters.Grayscale();
         break;
       case 'sepia':
-        filter = new (window as any).fabric.Image.filters.Sepia();
+        filter = new filters.Sepia();
         break;
       case 'vintage':
-        filter = new (window as any).fabric.Image.filters.Vintage();
+        filter = new filters.Saturation({ saturation: -0.5 });
         break;
       case 'polaroid':
-        filter = new (window as any).fabric.Image.filters.Polaroid();
+        filter = new filters.Contrast({ contrast: 0.2 });
         break;
       case 'none':
         fabricImage.filters = [];

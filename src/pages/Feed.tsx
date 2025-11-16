@@ -20,6 +20,7 @@ import { useUserAvatar } from '@/hooks/useUserAvatar';
 import { SendGiftDialog } from '@/components/gifts/SendGiftDialog';
 import { ReadMoreText } from '@/components/ui/ReadMoreText';
 import { TipButton } from '@/components/tips/TipButton';
+import { ImageCarousel } from '@/components/ui/ImageCarousel';
 
 
 // --- INTERFACES ---
@@ -42,6 +43,7 @@ interface Post {
   updated_at: string;
   author_id: string;
   image_url: string | null;
+  post_images?: Array<{ image_url: string; display_order: number }>;
   profiles: {
     display_name: string;
     handle: string;
@@ -462,14 +464,15 @@ const PostCard = ({ post, addReply, user, navigate, onAcknowledge, onDeletePost,
                 : parsePostContent(post.content, navigate)
             }
           />
-          {post.image_url && (
-            <div className="mt-2 rounded-lg overflow-hidden border border-border">
-              <img 
-                src={post.image_url} 
-                alt="Post image" 
-                className="w-full h-auto max-h-96 object-cover"
-              />
-            </div>
+          {((post.post_images && post.post_images.length > 0) || post.image_url) && (
+            <ImageCarousel 
+              images={
+                post.post_images && post.post_images.length > 0
+                  ? post.post_images.sort((a, b) => a.display_order - b.display_order).map(img => img.image_url)
+                  : post.image_url ? [post.image_url] : []
+              }
+              className="mt-2"
+            />
           )}
           {i18n.language !== 'en' && (
             <Button
@@ -776,7 +779,11 @@ const Feed = () => {
       // Fetch all posts for "For You" tab
       let { data: postData, error: postsError } = await supabase
         .from('posts')
-        .select('*, profiles(display_name, handle, is_verified, is_organization_verified)')
+        .select(`
+          *,
+          profiles(display_name, handle, is_verified, is_organization_verified),
+          post_images(image_url, display_order)
+        `)
         .order('created_at', { ascending: false })
         .limit(50);
 
@@ -795,7 +802,11 @@ const Feed = () => {
           const followingIds = followingData.map((f) => f.following_id);
           const { data: followingPostsData } = await supabase
             .from('posts')
-            .select('*, profiles(display_name, handle, is_verified, is_organization_verified)')
+            .select(`
+              *,
+              profiles(display_name, handle, is_verified, is_organization_verified),
+              post_images(image_url, display_order)
+            `)
             .in('author_id', followingIds)
             .order('created_at', { ascending: false })
             .limit(50);

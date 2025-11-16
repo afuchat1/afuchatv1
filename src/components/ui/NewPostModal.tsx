@@ -103,10 +103,11 @@ const NewPostModal: React.FC<NewPostModalProps> = ({ isOpen, onClose }) => {
     const [aiTone, setAiTone] = useState('casual');
     const [aiLength, setAiLength] = useState('medium');
     const [generatingAI, setGeneratingAI] = useState(false);
-    const [selectedImage, setSelectedImage] = useState<File | null>(null);
-    const [imagePreview, setImagePreview] = useState<string | null>(null);
+    const [selectedImages, setSelectedImages] = useState<File[]>([]);
+    const [imagePreviews, setImagePreviews] = useState<string[]>([]);
     const [uploadingImage, setUploadingImage] = useState(false);
     const [showImageEditor, setShowImageEditor] = useState(false);
+    const [editingImageIndex, setEditingImageIndex] = useState<number | null>(null);
     const [editingImagePreview, setEditingImagePreview] = useState<string | null>(null);
     const fileInputRef = useRef<HTMLInputElement>(null);
 
@@ -125,41 +126,60 @@ const NewPostModal: React.FC<NewPostModalProps> = ({ isOpen, onClose }) => {
 
         setIsPosting(true);
         const postContent = newPost.trim();
-        let imageUrl: string | null = null;
 
         try {
-            // Upload image if selected
-            if (selectedImage) {
+            // Create the post first
+            const { data: postData, error: postError } = await supabase
+                .from('posts')
+                .insert({
+                    content: postContent,
+                    author_id: user.id,
+                })
+                .select()
+                .single();
+
+            if (postError) {
+                console.error("Supabase Post Error:", postError);
+                toast.error('Failed to create post. Please try again.');
+                setIsPosting(false);
+                return;
+            }
+
+            // Upload images if selected
+            if (selectedImages.length > 0) {
                 setUploadingImage(true);
-                const fileExt = selectedImage.name.split('.').pop();
-                const fileName = `${user.id}/${Date.now()}.${fileExt}`;
                 
-                const { error: uploadError, data } = await supabase.storage
-                    .from('post-images')
-                    .upload(fileName, selectedImage);
+                for (let i = 0; i < selectedImages.length; i++) {
+                    const image = selectedImages[i];
+                    const fileExt = image.name.split('.').pop();
+                    const fileName = `${user.id}/${Date.now()}_${i}.${fileExt}`;
+                    
+                    const { error: uploadError } = await supabase.storage
+                        .from('post-images')
+                        .upload(fileName, image);
 
-                if (uploadError) {
-                    console.error('Image upload error:', uploadError);
-                    toast.error('Failed to upload image');
-                    setUploadingImage(false);
-                    setIsPosting(false);
-                    return;
+                    if (uploadError) {
+                        console.error('Image upload error:', uploadError);
+                        toast.error(`Failed to upload image ${i + 1}`);
+                        continue;
+                    }
+
+                    const { data: { publicUrl } } = supabase.storage
+                        .from('post-images')
+                        .getPublicUrl(fileName);
+                    
+                    // Insert into post_images table
+                    await supabase.from('post_images').insert({
+                        post_id: postData.id,
+                        image_url: publicUrl,
+                        display_order: i,
+                    });
                 }
-
-                const { data: { publicUrl } } = supabase.storage
-                    .from('post-images')
-                    .getPublicUrl(fileName);
                 
-                imageUrl = publicUrl;
                 setUploadingImage(false);
             }
 
-            // Database insert
-            const { error } = await supabase.from('posts').insert({
-                content: postContent,
-                author_id: user.id,
-                image_url: imageUrl,
-            });
+            const { error } = { error: null };
 
             if (error) {
                 console.error("Supabase Post Error:", error);
@@ -169,8 +189,8 @@ const NewPostModal: React.FC<NewPostModalProps> = ({ isOpen, onClose }) => {
                 awardXP('create_post', { content: postContent.substring(0, 50) }, true);
                 
                 setNewPost(''); 
-                setSelectedImage(null);
-                setImagePreview(null);
+                setSelectedImages([]);
+                setImagePreviews([]);
                 setShowPreview(false);
                 setShowAIAssist(false);
                 setAiTopic('');
@@ -246,60 +266,77 @@ const NewPostModal: React.FC<NewPostModalProps> = ({ isOpen, onClose }) => {
     }, [newPost]);
 
     const handleImageSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
-        const file = e.target.files?.[0];
-        if (!file) return;
+        const files = Array.from(e.target.files || []);
+        if (files.length === 0) return;
 
-        // Validate file type
-        if (!file.type.startsWith('image/')) {
-            toast.error('Please select an image file');
+        if (selectedImages.length + files.length > 4) {
+            toast.error('You can only upload up to 4 images per post');
             return;
         }
 
-        // Validate file size (5MB)
-        if (file.size > 5 * 1024 * 1024) {
-            toast.error('Image must be less than 5MB');
-            return;
-        }
+        const validFiles: File[] = [];
+        const newPreviews: string[] = [];
+        let processedCount = 0;
 
-        setSelectedImage(file);
-        const reader = new FileReader();
-        reader.onloadend = () => {
-            setImagePreview(reader.result as string);
-        };
-        reader.readAsDataURL(file);
+        files.forEach(file => {
+            if (!file.type.startsWith('image/')) {
+                toast.error(`${file.name} is not an image file`);
+                return;
+            }
+
+            if (file.size > 5 * 1024 * 1024) {
+                toast.error(`${file.name} is larger than 5MB`);
+                return;
+            }
+
+            validFiles.push(file);
+            const reader = new FileReader();
+            reader.onloadend = () => {
+                newPreviews.push(reader.result as string);
+                processedCount++;
+                if (processedCount === validFiles.length) {
+                    setImagePreviews(prev => [...prev, ...newPreviews]);
+                }
+            };
+            reader.readAsDataURL(file);
+        });
+
+        setSelectedImages(prev => [...prev, ...validFiles]);
     };
 
-    const handleRemoveImage = () => {
-        setSelectedImage(null);
-        setImagePreview(null);
-        setEditingImagePreview(null);
-        setShowImageEditor(false);
+    const handleRemoveImage = (index: number) => {
+        setSelectedImages(prev => prev.filter((_, i) => i !== index));
+        setImagePreviews(prev => prev.filter((_, i) => i !== index));
         if (fileInputRef.current) {
             fileInputRef.current.value = '';
         }
     };
 
-    const handleEditImage = () => {
-        if (imagePreview) {
-            setEditingImagePreview(imagePreview);
-            setShowImageEditor(true);
-        }
+    const handleEditImage = (index: number) => {
+        setEditingImageIndex(index);
+        setEditingImagePreview(imagePreviews[index]);
+        setShowImageEditor(true);
     };
 
     const handleImageEditorSave = (editedBlob: Blob) => {
-        // Convert blob to file
-        const file = new File([editedBlob], selectedImage?.name || 'edited-image.png', {
+        if (editingImageIndex === null) return;
+
+        const file = new File([editedBlob], selectedImages[editingImageIndex]?.name || 'edited-image.png', {
             type: 'image/png',
         });
         
-        setSelectedImage(file);
+        const newImages = [...selectedImages];
+        newImages[editingImageIndex] = file;
+        setSelectedImages(newImages);
         
-        // Update preview
         const reader = new FileReader();
         reader.onloadend = () => {
-            setImagePreview(reader.result as string);
+            const newPreviews = [...imagePreviews];
+            newPreviews[editingImageIndex] = reader.result as string;
+            setImagePreviews(newPreviews);
             setShowImageEditor(false);
             setEditingImagePreview(null);
+            setEditingImageIndex(null);
         };
         reader.readAsDataURL(file);
         
@@ -379,11 +416,12 @@ const NewPostModal: React.FC<NewPostModalProps> = ({ isOpen, onClose }) => {
                                         ref={fileInputRef}
                                         type="file"
                                         accept="image/*"
+                                        multiple
                                         onChange={handleImageSelect}
                                         className="hidden"
                                     />
                                     
-                                    {!imagePreview ? (
+                                    {imagePreviews.length === 0 ? (
                                         <Button
                                             type="button"
                                             onClick={() => fileInputRef.current?.click()}
@@ -393,39 +431,60 @@ const NewPostModal: React.FC<NewPostModalProps> = ({ isOpen, onClose }) => {
                                             disabled={isPosting}
                                         >
                                             <ImageIcon className="h-4 w-4" />
-                                            Add Image (Optional)
+                                            Add Images (Up to 4)
                                         </Button>
                                     ) : (
-                                        <div className="relative rounded-lg overflow-hidden border-2 border-border">
-                                            <img 
-                                                src={imagePreview} 
-                                                alt="Preview" 
-                                                className="w-full h-48 object-cover"
-                                            />
-                                            <div className="absolute top-2 right-2 flex gap-2">
-                                                <Button
-                                                    type="button"
-                                                    onClick={handleEditImage}
-                                                    variant="secondary"
-                                                    size="icon"
-                                                    disabled={isPosting || uploadingImage}
-                                                >
-                                                    <Pencil className="h-4 w-4" />
-                                                </Button>
-                                                <Button
-                                                    type="button"
-                                                    onClick={handleRemoveImage}
-                                                    variant="destructive"
-                                                    size="icon"
-                                                    disabled={isPosting || uploadingImage}
-                                                >
-                                                    <X className="h-4 w-4" />
-                                                </Button>
+                                        <div className="space-y-2">
+                                            <div className="grid grid-cols-2 gap-2">
+                                                {imagePreviews.map((preview, index) => (
+                                                    <div key={index} className="relative rounded-lg overflow-hidden border-2 border-border group">
+                                                        <img 
+                                                            src={preview} 
+                                                            alt={`Preview ${index + 1}`} 
+                                                            className="w-full h-32 object-cover"
+                                                        />
+                                                        <div className="absolute top-1 right-1 flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+                                                            <Button
+                                                                type="button"
+                                                                onClick={() => handleEditImage(index)}
+                                                                variant="secondary"
+                                                                size="icon"
+                                                                className="h-7 w-7"
+                                                                disabled={isPosting || uploadingImage}
+                                                            >
+                                                                <Pencil className="h-3 w-3" />
+                                                            </Button>
+                                                            <Button
+                                                                type="button"
+                                                                onClick={() => handleRemoveImage(index)}
+                                                                variant="destructive"
+                                                                size="icon"
+                                                                className="h-7 w-7"
+                                                                disabled={isPosting || uploadingImage}
+                                                            >
+                                                                <X className="h-3 w-3" />
+                                                            </Button>
+                                                        </div>
+                                                        {uploadingImage && (
+                                                            <div className="absolute inset-0 bg-background/80 flex items-center justify-center">
+                                                                <Loader2 className="h-6 w-6 animate-spin text-primary" />
+                                                            </div>
+                                                        )}
+                                                    </div>
+                                                ))}
                                             </div>
-                                            {uploadingImage && (
-                                                <div className="absolute inset-0 bg-background/80 flex items-center justify-center">
-                                                    <Loader2 className="h-8 w-8 animate-spin text-primary" />
-                                                </div>
+                                            {imagePreviews.length < 4 && (
+                                                <Button
+                                                    type="button"
+                                                    onClick={() => fileInputRef.current?.click()}
+                                                    variant="outline"
+                                                    size="sm"
+                                                    className="w-full flex items-center gap-2"
+                                                    disabled={isPosting}
+                                                >
+                                                    <ImageIcon className="h-4 w-4" />
+                                                    Add More ({4 - imagePreviews.length} remaining)
+                                                </Button>
                                             )}
                                         </div>
                                     )}

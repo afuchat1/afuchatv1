@@ -6,6 +6,7 @@ import { ArrowLeft, User as UserIcon } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
 import { useTranslation } from 'react-i18next';
+import { ImageCarousel } from '@/components/ui/ImageCarousel';
 import { useAITranslation } from '@/hooks/useAITranslation';
 // Note: Verified Badge components must be imported or defined here
 
@@ -68,6 +69,7 @@ interface Post {
   content: string;
   created_at: string;
   image_url: string | null;
+  post_images?: Array<{ image_url: string; display_order: number }>;
   likes_count: number;
   replies_count: number;
   
@@ -102,7 +104,8 @@ const PostDetail = () => {
         .from('posts')
         .select(`
           id, content, created_at, image_url,
-          profiles!inner (id, display_name, handle, is_verified, is_organization_verified)
+          profiles!inner (id, display_name, handle, is_verified, is_organization_verified),
+          post_images(image_url, display_order)
         `)
         .eq('id', postId)
         .single();
@@ -138,6 +141,7 @@ const PostDetail = () => {
         content: postData.content,
         created_at: postData.created_at,
         image_url: postData.image_url || null,
+        post_images: postData.post_images || [],
         likes_count: likesCount,
         replies_count: repliesCount,
         author: {
@@ -268,14 +272,15 @@ const PostDetail = () => {
             </p>
             
             {/* POST IMAGE */}
-            {post.image_url && (
-              <div className="mb-4 rounded-lg overflow-hidden border border-border">
-                <img 
-                  src={post.image_url} 
-                  alt="Post image" 
-                  className="w-full h-auto max-h-[500px] object-cover"
-                />
-              </div>
+            {((post.post_images && post.post_images.length > 0) || post.image_url) && (
+              <ImageCarousel
+                images={
+                  post.post_images && post.post_images.length > 0
+                    ? post.post_images.sort((a, b) => a.display_order - b.display_order).map(img => img.image_url)
+                    : post.image_url ? [post.image_url] : []
+                }
+                className="mb-4"
+              />
             )}
             
             {/* Translate Button */}
