@@ -1105,24 +1105,34 @@ const Feed = () => {
   }
 
   const currentPosts = activeTab === 'foryou' ? posts : followingPosts;
+  const [isRefreshing, setIsRefreshing] = useState(false);
+
+  const handleManualRefresh = async () => {
+    setIsRefreshing(true);
+    await fetchPosts();
+    setIsRefreshing(false);
+    toast.success('Feed refreshed');
+  };
 
   return (
     <div className="h-full flex flex-col max-w-4xl mx-auto">
       <Tabs value={activeTab} onValueChange={(v) => setActiveTab(v as 'foryou' | 'following')} className="w-full">
-        <TabsList className="grid grid-cols-2 w-full h-12 rounded-none bg-background border-b">
-          <TabsTrigger
-            value="foryou"
-            className="data-[state=active]:bg-transparent data-[state=active]:text-foreground border-b-2 data-[state=active]:border-primary data-[state=inactive]:border-transparent rounded-none font-bold"
-          >
-            For You
-          </TabsTrigger>
-          <TabsTrigger
-            value="following"
-            className="data-[state=active]:bg-transparent data-[state=active]:text-foreground border-b-2 data-[state=active]:border-primary data-[state=inactive]:border-transparent rounded-none font-bold"
-          >
-            Following
-          </TabsTrigger>
-        </TabsList>
+        <div className="sticky top-0 z-10 bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
+          <TabsList className="grid grid-cols-2 w-full h-14 rounded-none bg-transparent border-b">
+            <TabsTrigger
+              value="foryou"
+              className="data-[state=active]:bg-transparent data-[state=active]:text-foreground data-[state=active]:border-b-4 data-[state=active]:border-primary data-[state=inactive]:border-transparent rounded-none font-bold h-full flex items-center gap-1.5 hover:bg-muted/50 transition-colors"
+            >
+              For you
+            </TabsTrigger>
+            <TabsTrigger
+              value="following"
+              className="data-[state=active]:bg-transparent data-[state=active]:text-foreground data-[state=active]:border-b-4 data-[state=active]:border-primary data-[state=inactive]:border-transparent rounded-none font-bold h-full hover:bg-muted/50 transition-colors"
+            >
+              Following
+            </TabsTrigger>
+          </TabsList>
+        </div>
 
         <TabsContent value={activeTab} className="flex-1 overflow-y-auto m-0" ref={feedRef}>
           {currentPosts.length === 0 && !effectiveLoading ? (
