@@ -22,6 +22,7 @@ import ProfileActionsSheet from '@/components/ProfileActionsSheet';
 import { OwlAvatar } from '@/components/avatar/OwlAvatar';
 import { useUserAvatar } from '@/hooks/useUserAvatar';
 import { useAITranslation } from '@/hooks/useAITranslation';
+import { ImageCarousel } from '@/components/ui/ImageCarousel';
 
 interface Profile {
 	id: string;
@@ -42,6 +43,11 @@ interface Post {
 	created_at: string;
 	acknowledgment_count: number;
 	reply_count: number;
+	post_images?: Array<{
+		image_url: string;
+		alt_text: string | null;
+		display_order: number;
+	}>;
 }
 
 const isUUID = (str: string): boolean => {
@@ -306,7 +312,16 @@ const Profile = () => {
 		
 		const { data, error } = await supabase
 			.from('posts')
-			.select('id, content, created_at')
+			.select(`
+				id, 
+				content, 
+				created_at,
+				post_images (
+					image_url,
+					alt_text,
+					display_order
+				)
+			`)
 			.eq('author_id', id)
 			.order('created_at', { ascending: false })
 			.limit(20);
@@ -743,8 +758,17 @@ const Profile = () => {
 						) : (
 							<div className="space-y-0 divide-y divide-border">
 								{posts.map((post) => (
-									<Card key={post.id} className="p-4 rounded-none border-x-0 border-t-0 hover:bg-muted/10 cursor-pointer transition-colors">
+									<Card key={post.id} className="p-4 rounded-none border-x-0 border-t-0 hover:bg-muted/10 cursor-pointer transition-colors" onClick={() => navigate(`/post/${post.id}`)}>
 										<ContentParser content={post.content} />
+										{post.post_images && post.post_images.length > 0 && (
+											<div className="mt-3">
+												<ImageCarousel 
+													images={post.post_images
+														.sort((a, b) => a.display_order - b.display_order)
+														.map(img => ({ url: img.image_url, alt: img.alt_text || 'Post image' }))}
+												/>
+											</div>
+										)}
 										<div className="flex justify-between items-center text-xs text-muted-foreground mt-2">
 											<span>{new Date(post.created_at).toLocaleString('en-US', { hour: '2-digit', minute: '2-digit', day: 'numeric', month: 'short' })}</span>
 										</div>

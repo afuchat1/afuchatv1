@@ -8,6 +8,7 @@ import { cn } from '@/lib/utils';
 import { useTranslation } from 'react-i18next';
 import { ImageCarousel } from '@/components/ui/ImageCarousel';
 import { useAITranslation } from '@/hooks/useAITranslation';
+import { LinkPreviewCard } from '@/components/ui/LinkPreviewCard';
 // Note: Verified Badge components must be imported or defined here
 
 // --- START: Verified Badge Components (Unchanged) ---
@@ -70,6 +71,13 @@ interface Post {
   created_at: string;
   image_url: string | null;
   post_images?: Array<{ image_url: string; display_order: number; alt_text?: string }>;
+  post_link_previews?: Array<{
+    url: string;
+    title?: string | null;
+    description?: string | null;
+    image_url?: string | null;
+    site_name?: string | null;
+  }>;
   likes_count: number;
   replies_count: number;
   
@@ -105,7 +113,8 @@ const PostDetail = () => {
         .select(`
           id, content, created_at, image_url,
           profiles!inner (id, display_name, handle, is_verified, is_organization_verified),
-          post_images(image_url, display_order, alt_text)
+          post_images(image_url, display_order, alt_text),
+          post_link_previews(url, title, description, image_url, site_name)
         `)
         .eq('id', postId)
         .single();
@@ -142,6 +151,7 @@ const PostDetail = () => {
         created_at: postData.created_at,
         image_url: postData.image_url || null,
         post_images: postData.post_images || [],
+        post_link_previews: postData.post_link_previews || [],
         likes_count: likesCount,
         replies_count: repliesCount,
         author: {
@@ -285,7 +295,22 @@ const PostDetail = () => {
                 className="mb-4"
               />
             )}
-            {/* Translate Button */}
+            
+            {post.post_link_previews && post.post_link_previews.length > 0 && (
+              <div className="mb-4 space-y-2">
+                {post.post_link_previews.map((preview, index) => (
+                  <LinkPreviewCard
+                    key={index}
+                    url={preview.url}
+                    title={preview.title}
+                    description={preview.description}
+                    image_url={preview.image_url}
+                    site_name={preview.site_name}
+                  />
+                ))}
+              </div>
+            )}
+            
             {i18n.language !== 'en' && (
               <Button
                 variant="ghost"

@@ -21,7 +21,7 @@ import { SendGiftDialog } from '@/components/gifts/SendGiftDialog';
 import { ReadMoreText } from '@/components/ui/ReadMoreText';
 import { TipButton } from '@/components/tips/TipButton';
 import { ImageCarousel } from '@/components/ui/ImageCarousel';
-import { renderContentWithLinks } from '@/lib/postUtils';
+import { LinkPreviewCard } from '@/components/ui/LinkPreviewCard';
 
 
 // --- INTERFACES ---
@@ -45,6 +45,13 @@ interface Post {
   author_id: string;
   image_url: string | null;
   post_images?: Array<{ image_url: string; display_order: number; alt_text?: string }>;
+  post_link_previews?: Array<{
+    url: string;
+    title?: string | null;
+    description?: string | null;
+    image_url?: string | null;
+    site_name?: string | null;
+  }>;
   profiles: {
     display_name: string;
     handle: string;
@@ -517,6 +524,20 @@ const PostCard = ({ post, addReply, user, navigate, onAcknowledge, onDeletePost,
               className="mt-2"
             />
           )}
+          {post.post_link_previews && post.post_link_previews.length > 0 && (
+            <div className="mt-2 space-y-2">
+              {post.post_link_previews.map((preview, index) => (
+                <LinkPreviewCard
+                  key={index}
+                  url={preview.url}
+                  title={preview.title}
+                  description={preview.description}
+                  image_url={preview.image_url}
+                  site_name={preview.site_name}
+                />
+              ))}
+            </div>
+          )}
           {i18n.language !== 'en' && (
             <Button
               variant="ghost"
@@ -825,7 +846,8 @@ const Feed = () => {
         .select(`
           *,
           profiles(display_name, handle, is_verified, is_organization_verified),
-          post_images(image_url, display_order, alt_text)
+          post_images(image_url, display_order, alt_text),
+          post_link_previews(url, title, description, image_url, site_name)
         `)
         .order('created_at', { ascending: false })
         .limit(50);
@@ -848,7 +870,8 @@ const Feed = () => {
             .select(`
               *,
               profiles(display_name, handle, is_verified, is_organization_verified),
-              post_images(image_url, display_order, alt_text)
+              post_images(image_url, display_order, alt_text),
+              post_link_previews(url, title, description, image_url, site_name)
             `)
             .in('author_id', followingIds)
             .order('created_at', { ascending: false })

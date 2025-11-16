@@ -27,6 +27,7 @@ import Leaderboard from "./pages/Leaderboard";
 import AvatarEditor from "./pages/AvatarEditor";
 import GiftLeaderboard from "./pages/GiftLeaderboard";
 import Shop from "./pages/Shop";
+import TrendingHashtags from "./pages/TrendingHashtags";
 
 const queryClient = new QueryClient();
 
@@ -60,6 +61,7 @@ const AppRoutes = () => {
       <Route path="/gift-leaderboard" element={<GiftLeaderboard />} />
       <Route path="/avatar/edit" element={<AvatarEditor />} />
       <Route path="/shop" element={<Shop />} />
+      <Route path="/trending" element={<TrendingHashtags />} />
 
       <Route path="/profile/:userId" element={<ProfileRedirect />} />
 

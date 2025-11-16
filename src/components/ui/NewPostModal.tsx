@@ -187,6 +187,31 @@ const NewPostModal: React.FC<NewPostModalProps> = ({ isOpen, onClose }) => {
                 setUploadingImage(false);
             }
 
+            // Extract URLs and fetch link previews
+            const urls = postContent.match(/(https?:\/\/[^\s]+)/g);
+            if (urls && urls.length > 0) {
+                for (const url of urls.slice(0, 2)) { // Max 2 previews per post
+                    try {
+                        const { data: previewData } = await supabase.functions.invoke('fetch-link-preview', {
+                            body: { url },
+                        });
+                        
+                        if (previewData && !previewData.error) {
+                            await supabase.from('post_link_previews').insert({
+                                post_id: postData.id,
+                                url: previewData.url,
+                                title: previewData.title,
+                                description: previewData.description,
+                                image_url: previewData.image_url,
+                                site_name: previewData.site_name,
+                            });
+                        }
+                    } catch (error) {
+                        console.error('Failed to fetch link preview:', error);
+                    }
+                }
+            }
+
             const { error } = { error: null };
 
             if (error) {
