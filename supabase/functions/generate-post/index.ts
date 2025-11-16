@@ -12,35 +12,37 @@ serve(async (req) => {
   }
 
   try {
+    const supabaseUrl = Deno.env.get('SUPABASE_URL');
+    const supabaseAnonKey = Deno.env.get('SUPABASE_ANON_KEY');
     const authHeader = req.headers.get('Authorization');
-    console.log('Auth header present:', !!authHeader);
     
-    if (!authHeader) {
-      console.error('No authorization header found');
+    // Create Supabase client with auth header for authenticated requests
+    const supabaseClient = createClient(supabaseUrl!, supabaseAnonKey!, {
+      global: { headers: { Authorization: authHeader! } },
+      auth: { persistSession: false }
+    });
+    
+    // Get user from JWT token (already verified by edge function with verify_jwt = true)
+    const jwt = authHeader?.replace('Bearer ', '');
+    if (!jwt) {
       return new Response(
         JSON.stringify({ error: 'Authentication required' }),
         { status: 401, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
       );
     }
-
-    const supabaseUrl = Deno.env.get('SUPABASE_URL');
-    const supabaseAnonKey = Deno.env.get('SUPABASE_ANON_KEY');
     
-    const supabaseClient = createClient(supabaseUrl!, supabaseAnonKey!, {
-      global: { headers: { Authorization: authHeader } }
-    });
+    // Decode JWT to get user ID (JWT already verified by Supabase)
+    const payload = JSON.parse(atob(jwt.split('.')[1]));
+    const userId = payload.sub;
     
-    // Get authenticated user
-    const { data: { user }, error: authError } = await supabaseClient.auth.getUser();
-    if (authError || !user) {
-      console.error('Auth verification failed:', authError?.message);
+    if (!userId) {
       return new Response(
         JSON.stringify({ error: 'Invalid authentication' }),
         { status: 401, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
       );
     }
 
-    console.log('User authenticated:', user.id);
+    console.log('User authenticated:', userId);
 
     const { topic, tone, length }: { topic: string; tone: string; length: string } = await req.json();
     
@@ -114,7 +116,7 @@ serve(async (req) => {
 
     // Award XP for using AI
     await supabaseClient.rpc('award_xp', {
-      p_user_id: user.id,
+      p_user_id: userId,
       p_action_type: 'use_ai',
       p_xp_amount: 5,
       p_metadata: { action: 'generate_post', topic }
