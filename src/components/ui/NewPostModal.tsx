@@ -451,8 +451,45 @@ const NewPostModal: React.FC<NewPostModalProps> = ({ isOpen, onClose }) => {
                                         <div className="space-y-3">
                                             <div className="grid grid-cols-2 gap-2">
                                                 {imagePreviews.map((preview, index) => (
-                                                    <div key={index} className="space-y-2">
+                                                    <div 
+                                                        key={index} 
+                                                        className="space-y-2 cursor-move"
+                                                        draggable
+                                                        onDragStart={(e) => {
+                                                            e.dataTransfer.effectAllowed = 'move';
+                                                            e.dataTransfer.setData('text/html', index.toString());
+                                                        }}
+                                                        onDragOver={(e) => {
+                                                            e.preventDefault();
+                                                            e.dataTransfer.dropEffect = 'move';
+                                                        }}
+                                                        onDrop={(e) => {
+                                                            e.preventDefault();
+                                                            const dragIndex = parseInt(e.dataTransfer.getData('text/html'));
+                                                            const dropIndex = index;
+                                                            if (dragIndex !== dropIndex) {
+                                                                const newPreviews = [...imagePreviews];
+                                                                const newAltTexts = [...imageAltTexts];
+                                                                const newFiles = [...selectedImages];
+                                                                
+                                                                const [draggedPreview] = newPreviews.splice(dragIndex, 1);
+                                                                const [draggedAlt] = newAltTexts.splice(dragIndex, 1);
+                                                                const [draggedFile] = newFiles.splice(dragIndex, 1);
+                                                                
+                                                                newPreviews.splice(dropIndex, 0, draggedPreview);
+                                                                newAltTexts.splice(dropIndex, 0, draggedAlt);
+                                                                newFiles.splice(dropIndex, 0, draggedFile);
+                                                                
+                                                                setImagePreviews(newPreviews);
+                                                                setImageAltTexts(newAltTexts);
+                                                                setSelectedImages(newFiles);
+                                                            }
+                                                        }}
+                                                    >
                                                         <div className="relative rounded-lg overflow-hidden border-2 border-border group">
+                                                            <div className="absolute top-1 left-1 bg-background/80 text-xs px-2 py-0.5 rounded z-10">
+                                                                {index + 1}
+                                                            </div>
                                                             <img 
                                                                 src={preview} 
                                                                 alt={imageAltTexts[index] || `Preview ${index + 1}`} 

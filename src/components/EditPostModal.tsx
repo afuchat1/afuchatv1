@@ -93,12 +93,79 @@ export const EditPostModal: React.FC<EditPostModalProps> = ({ isOpen, onClose, p
           ) : (
             <div className="grid grid-cols-2 gap-2">
               {existingImages.map((url, i) => (
-                <div key={i} className="relative"><img src={url} className="w-full h-32 object-cover rounded" />
+                <div 
+                  key={`existing-${i}`} 
+                  className="relative cursor-move"
+                  draggable
+                  onDragStart={(e) => {
+                    e.dataTransfer.effectAllowed = 'move';
+                    e.dataTransfer.setData('text/html', `existing-${i}`);
+                  }}
+                  onDragOver={(e) => {
+                    e.preventDefault();
+                    e.dataTransfer.dropEffect = 'move';
+                  }}
+                  onDrop={(e) => {
+                    e.preventDefault();
+                    const dragId = e.dataTransfer.getData('text/html');
+                    const [dragType, dragIndexStr] = dragId.split('-');
+                    const dragIndex = parseInt(dragIndexStr);
+                    
+                    if (dragType === 'existing' && dragIndex !== i) {
+                      const newImages = [...existingImages];
+                      const [draggedImage] = newImages.splice(dragIndex, 1);
+                      newImages.splice(i, 0, draggedImage);
+                      setExistingImages(newImages);
+                    }
+                  }}
+                >
+                  <img src={url} className="w-full h-32 object-cover rounded" />
+                  <div className="absolute top-1 left-1 bg-background/80 text-xs px-2 py-0.5 rounded">
+                    {i + 1}
+                  </div>
                   <Button onClick={() => setExistingImages(prev => prev.filter((_, idx) => idx !== i))} variant="destructive" size="icon" className="absolute top-1 right-1 h-7 w-7"><X className="h-3 w-3" /></Button>
                 </div>
               ))}
               {imagePreviews.map((p, i) => (
-                <div key={i} className="relative"><img src={p} className="w-full h-32 object-cover rounded" /></div>
+                <div 
+                  key={`new-${i}`} 
+                  className="relative cursor-move"
+                  draggable
+                  onDragStart={(e) => {
+                    e.dataTransfer.effectAllowed = 'move';
+                    e.dataTransfer.setData('text/html', `new-${i}`);
+                  }}
+                  onDragOver={(e) => {
+                    e.preventDefault();
+                    e.dataTransfer.dropEffect = 'move';
+                  }}
+                  onDrop={(e) => {
+                    e.preventDefault();
+                    const dragId = e.dataTransfer.getData('text/html');
+                    const [dragType, dragIndexStr] = dragId.split('-');
+                    const dragIndex = parseInt(dragIndexStr);
+                    
+                    if (dragType === 'new' && dragIndex !== i) {
+                      const newPreviews = [...imagePreviews];
+                      const newFiles = [...selectedImages];
+                      const [draggedPreview] = newPreviews.splice(dragIndex, 1);
+                      const [draggedFile] = newFiles.splice(dragIndex, 1);
+                      newPreviews.splice(i, 0, draggedPreview);
+                      newFiles.splice(i, 0, draggedFile);
+                      setImagePreviews(newPreviews);
+                      setSelectedImages(newFiles);
+                    }
+                  }}
+                >
+                  <img src={p} className="w-full h-32 object-cover rounded" />
+                  <div className="absolute top-1 left-1 bg-background/80 text-xs px-2 py-0.5 rounded">
+                    {existingImages.length + i + 1}
+                  </div>
+                  <Button onClick={() => {
+                    setImagePreviews(prev => prev.filter((_, idx) => idx !== i));
+                    setSelectedImages(prev => prev.filter((_, idx) => idx !== i));
+                  }} variant="destructive" size="icon" className="absolute top-1 right-1 h-7 w-7"><X className="h-3 w-3" /></Button>
+                </div>
               ))}
             </div>
           )}
