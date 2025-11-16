@@ -552,6 +552,7 @@ export type Database = {
       }
       post_images: {
         Row: {
+          alt_text: string | null
           created_at: string | null
           display_order: number
           id: string
@@ -559,6 +560,7 @@ export type Database = {
           post_id: string
         }
         Insert: {
+          alt_text?: string | null
           created_at?: string | null
           display_order?: number
           id?: string
@@ -566,6 +568,7 @@ export type Database = {
           post_id: string
         }
         Update: {
+          alt_text?: string | null
           created_at?: string | null
           display_order?: number
           id?: string

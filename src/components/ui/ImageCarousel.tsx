@@ -4,7 +4,7 @@ import { Button } from './button';
 import { cn } from '@/lib/utils';
 
 interface ImageCarouselProps {
-  images: string[];
+  images: Array<{ url: string; alt?: string }> | string[];
   className?: string;
 }
 
@@ -13,52 +13,55 @@ export const ImageCarousel = ({ images, className }: ImageCarouselProps) => {
 
   if (!images || images.length === 0) return null;
 
+  const imageUrls = images.map(img => typeof img === 'string' ? img : img.url);
+  const imageAlts = images.map(img => typeof img === 'string' ? 'Post image' : (img.alt || 'Post image'));
+
   const goToPrevious = (e: React.MouseEvent) => {
     e.stopPropagation();
-    setCurrentIndex((prev) => (prev === 0 ? images.length - 1 : prev - 1));
+    setCurrentIndex((prev) => (prev === 0 ? imageUrls.length - 1 : prev - 1));
   };
 
   const goToNext = (e: React.MouseEvent) => {
     e.stopPropagation();
-    setCurrentIndex((prev) => (prev === images.length - 1 ? 0 : prev + 1));
+    setCurrentIndex((prev) => (prev === imageUrls.length - 1 ? 0 : prev + 1));
   };
 
-  const gridClass = images.length === 1 
+  const gridClass = imageUrls.length === 1 
     ? 'grid-cols-1'
-    : images.length === 2
+    : imageUrls.length === 2
     ? 'grid-cols-2'
-    : images.length === 3
+    : imageUrls.length === 3
     ? 'grid-cols-2'
     : 'grid-cols-2';
 
   return (
     <div className={cn('relative group', className)}>
-      {images.length === 1 ? (
+      {imageUrls.length === 1 ? (
         <div className="relative rounded-2xl overflow-hidden border border-border">
           <img
-            src={images[0]}
-            alt="Post image"
+            src={imageUrls[0]}
+            alt={imageAlts[0]}
             className="w-full max-h-[500px] object-cover"
           />
         </div>
       ) : (
         <div className={cn('grid gap-0.5 rounded-2xl overflow-hidden border border-border', gridClass)}>
-          {images.slice(0, 4).map((image, index) => (
+          {imageUrls.slice(0, 4).map((image, index) => (
             <div
               key={index}
               className={cn(
                 'relative aspect-square overflow-hidden',
-                images.length === 3 && index === 0 && 'row-span-2'
+                imageUrls.length === 3 && index === 0 && 'row-span-2'
               )}
             >
               <img
                 src={image}
-                alt={`Post image ${index + 1}`}
+                alt={imageAlts[index]}
                 className="w-full h-full object-cover hover:scale-105 transition-transform duration-300"
               />
-              {images.length > 4 && index === 3 && (
+              {imageUrls.length > 4 && index === 3 && (
                 <div className="absolute inset-0 bg-black/60 flex items-center justify-center">
-                  <span className="text-white text-2xl font-bold">+{images.length - 4}</span>
+                  <span className="text-white text-2xl font-bold">+{imageUrls.length - 4}</span>
                 </div>
               )}
             </div>
@@ -66,7 +69,7 @@ export const ImageCarousel = ({ images, className }: ImageCarouselProps) => {
         </div>
       )}
 
-      {images.length > 1 && (
+      {imageUrls.length > 1 && (
         <>
           <Button
             variant="outline"
@@ -86,7 +89,7 @@ export const ImageCarousel = ({ images, className }: ImageCarouselProps) => {
           </Button>
 
           <div className="absolute bottom-3 left-1/2 -translate-x-1/2 flex gap-1.5">
-            {images.map((_, index) => (
+            {imageUrls.map((_, index) => (
               <button
                 key={index}
                 onClick={(e) => {

@@ -15,6 +15,8 @@ import { Separator } from '@/components/ui/separator';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Label } from '@/components/ui/label';
 import { Input } from '@/components/ui/input';
+import { useImageDescription } from '@/hooks/useImageDescription';
+import { AltTextEditor } from '@/components/ui/AltTextEditor';
 // Optional: Framer Motion for animations (install with: npm i framer-motion)
 let motion, AnimatePresence;
 try {
@@ -105,11 +107,13 @@ const NewPostModal: React.FC<NewPostModalProps> = ({ isOpen, onClose }) => {
     const [generatingAI, setGeneratingAI] = useState(false);
     const [selectedImages, setSelectedImages] = useState<File[]>([]);
     const [imagePreviews, setImagePreviews] = useState<string[]>([]);
+    const [imageAltTexts, setImageAltTexts] = useState<string[]>([]);
     const [uploadingImage, setUploadingImage] = useState(false);
     const [showImageEditor, setShowImageEditor] = useState(false);
     const [editingImageIndex, setEditingImageIndex] = useState<number | null>(null);
     const [editingImagePreview, setEditingImagePreview] = useState<string | null>(null);
     const fileInputRef = useRef<HTMLInputElement>(null);
+    const { generateDescription, isGenerating } = useImageDescription();
 
     const { remaining, variant, length } = useCharacterCount(newPost);
 
@@ -168,11 +172,12 @@ const NewPostModal: React.FC<NewPostModalProps> = ({ isOpen, onClose }) => {
                         .from('post-images')
                         .getPublicUrl(fileName);
                     
-                    // Insert into post_images table
+                    // Insert into post_images table with alt text
                     await supabase.from('post_images').insert({
                         post_id: postData.id,
                         image_url: publicUrl,
                         display_order: i,
+                        alt_text: imageAltTexts[i] || null,
                     });
                 }
                 
@@ -291,11 +296,19 @@ const NewPostModal: React.FC<NewPostModalProps> = ({ isOpen, onClose }) => {
 
             validFiles.push(file);
             const reader = new FileReader();
-            reader.onloadend = () => {
+            reader.onloadend = async () => {
                 newPreviews.push(reader.result as string);
                 processedCount++;
                 if (processedCount === validFiles.length) {
                     setImagePreviews(prev => [...prev, ...newPreviews]);
+                    
+                    // Auto-generate alt text for new images
+                    const newAltTexts: string[] = [];
+                    for (const preview of newPreviews) {
+                        const altText = await generateDescription(preview);
+                        newAltTexts.push(altText || '');
+                    }
+                    setImageAltTexts(prev => [...prev, ...newAltTexts]);
                 }
             };
             reader.readAsDataURL(file);
@@ -307,6 +320,7 @@ const NewPostModal: React.FC<NewPostModalProps> = ({ isOpen, onClose }) => {
     const handleRemoveImage = (index: number) => {
         setSelectedImages(prev => prev.filter((_, i) => i !== index));
         setImagePreviews(prev => prev.filter((_, i) => i !== index));
+        setImageAltTexts(prev => prev.filter((_, i) => i !== index));
         if (fileInputRef.current) {
             fileInputRef.current.value = '';
         }
@@ -433,43 +447,63 @@ const NewPostModal: React.FC<NewPostModalProps> = ({ isOpen, onClose }) => {
                                             <ImageIcon className="h-4 w-4" />
                                             Add Images (Up to 4)
                                         </Button>
-                                    ) : (
-                                        <div className="space-y-2">
+                                     ) : (
+                                        <div className="space-y-3">
                                             <div className="grid grid-cols-2 gap-2">
                                                 {imagePreviews.map((preview, index) => (
-                                                    <div key={index} className="relative rounded-lg overflow-hidden border-2 border-border group">
-                                                        <img 
-                                                            src={preview} 
-                                                            alt={`Preview ${index + 1}`} 
-                                                            className="w-full h-32 object-cover"
-                                                        />
-                                                        <div className="absolute top-1 right-1 flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
-                                                            <Button
-                                                                type="button"
-                                                                onClick={() => handleEditImage(index)}
-                                                                variant="secondary"
-                                                                size="icon"
-                                                                className="h-7 w-7"
-                                                                disabled={isPosting || uploadingImage}
-                                                            >
-                                                                <Pencil className="h-3 w-3" />
-                                                            </Button>
-                                                            <Button
-                                                                type="button"
-                                                                onClick={() => handleRemoveImage(index)}
-                                                                variant="destructive"
-                                                                size="icon"
-                                                                className="h-7 w-7"
-                                                                disabled={isPosting || uploadingImage}
-                                                            >
-                                                                <X className="h-3 w-3" />
-                                                            </Button>
-                                                        </div>
-                                                        {uploadingImage && (
-                                                            <div className="absolute inset-0 bg-background/80 flex items-center justify-center">
-                                                                <Loader2 className="h-6 w-6 animate-spin text-primary" />
+                                                    <div key={index} className="space-y-2">
+                                                        <div className="relative rounded-lg overflow-hidden border-2 border-border group">
+                                                            <img 
+                                                                src={preview} 
+                                                                alt={imageAltTexts[index] || `Preview ${index + 1}`} 
+                                                                className="w-full h-32 object-cover"
+                                                            />
+                                                            <div className="absolute top-1 right-1 flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+                                                                <Button
+                                                                    type="button"
+                                                                    onClick={() => handleEditImage(index)}
+                                                                    variant="secondary"
+                                                                    size="icon"
+                                                                    className="h-7 w-7"
+                                                                    disabled={isPosting || uploadingImage}
+                                                                >
+                                                                    <Pencil className="h-3 w-3" />
+                                                                </Button>
+                                                                <Button
+                                                                    type="button"
+                                                                    onClick={() => handleRemoveImage(index)}
+                                                                    variant="destructive"
+                                                                    size="icon"
+                                                                    className="h-7 w-7"
+                                                                    disabled={isPosting || uploadingImage}
+                                                                >
+                                                                    <X className="h-3 w-3" />
+                                                                </Button>
                                                             </div>
-                                                        )}
+                                                            {uploadingImage && (
+                                                                <div className="absolute inset-0 bg-background/80 flex items-center justify-center">
+                                                                    <Loader2 className="h-6 w-6 animate-spin text-primary" />
+                                                                </div>
+                                                            )}
+                                                        </div>
+                                                        <AltTextEditor
+                                                            value={imageAltTexts[index] || ''}
+                                                            onChange={(value) => {
+                                                                const newAltTexts = [...imageAltTexts];
+                                                                newAltTexts[index] = value;
+                                                                setImageAltTexts(newAltTexts);
+                                                            }}
+                                                            onGenerate={async () => {
+                                                                const description = await generateDescription(preview);
+                                                                if (description) {
+                                                                    const newAltTexts = [...imageAltTexts];
+                                                                    newAltTexts[index] = description;
+                                                                    setImageAltTexts(newAltTexts);
+                                                                    toast.success('Alt text generated!');
+                                                                }
+                                                            }}
+                                                            isGenerating={isGenerating}
+                                                        />
                                                     </div>
                                                 ))}
                                             </div>

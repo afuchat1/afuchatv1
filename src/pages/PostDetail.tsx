@@ -69,7 +69,7 @@ interface Post {
   content: string;
   created_at: string;
   image_url: string | null;
-  post_images?: Array<{ image_url: string; display_order: number }>;
+  post_images?: Array<{ image_url: string; display_order: number; alt_text?: string }>;
   likes_count: number;
   replies_count: number;
   
@@ -105,7 +105,7 @@ const PostDetail = () => {
         .select(`
           id, content, created_at, image_url,
           profiles!inner (id, display_name, handle, is_verified, is_organization_verified),
-          post_images(image_url, display_order)
+          post_images(image_url, display_order, alt_text)
         `)
         .eq('id', postId)
         .single();
@@ -270,19 +270,21 @@ const PostDetail = () => {
             <p className="text-2xl leading-relaxed whitespace-pre-wrap mb-4">
               {renderContentWithMentions(translatedPost || post.content)}
             </p>
-            
             {/* POST IMAGE */}
             {((post.post_images && post.post_images.length > 0) || post.image_url) && (
               <ImageCarousel
                 images={
                   post.post_images && post.post_images.length > 0
-                    ? post.post_images.sort((a, b) => a.display_order - b.display_order).map(img => img.image_url)
-                    : post.image_url ? [post.image_url] : []
+                    ? post.post_images
+                        .sort((a, b) => a.display_order - b.display_order)
+                        .map(img => ({ url: img.image_url, alt: img.alt_text || 'Post image' }))
+                    : post.image_url 
+                      ? [{ url: post.image_url, alt: 'Post image' }] 
+                      : []
                 }
                 className="mb-4"
               />
             )}
-            
             {/* Translate Button */}
             {i18n.language !== 'en' && (
               <Button
