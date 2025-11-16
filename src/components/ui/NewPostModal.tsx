@@ -1,256 +1,169 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useRef } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/contexts/AuthContext';
 import { useXP } from '@/hooks/useXP';
 import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';
 import { toast } from 'sonner';
-import { Send, X, Sparkles, Image as ImageIcon, Loader2, TrendingUp, Wand2, Pencil } from 'lucide-react';
+import { X, Sparkles, Image as ImageIcon, Loader2, Globe } from 'lucide-react';
 import { ImageEditor } from '@/components/image-editor/ImageEditor';
 import { BatchImageEditor } from '@/components/image-editor/BatchImageEditor';
-import { postSchema, aiTopicSchema, aiToneSchema, aiLengthSchema } from '@/lib/validation';
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
-import { Card, CardContent } from '@/components/ui/card';
-import { Badge } from '@/components/ui/badge';
-import { Separator } from '@/components/ui/separator';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Label } from '@/components/ui/label';
-import { Input } from '@/components/ui/input';
+import { postSchema } from '@/lib/validation';
+import { Dialog, DialogContent } from '@/components/ui/dialog';
 import { useImageDescription } from '@/hooks/useImageDescription';
 import { AltTextEditor } from '@/components/ui/AltTextEditor';
 import { compressImageFile } from '@/lib/imageCompression';
-// Optional: Framer Motion for animations (install with: npm i framer-motion)
-let motion, AnimatePresence;
-try {
-  const fm = require('framer-motion');
-  motion = fm.motion;
-  AnimatePresence = fm.AnimatePresence;
-} catch (e) {
-  console.warn('Framer Motion not installed - animations disabled. Run: npm i framer-motion');
-  motion = null;
-  AnimatePresence = null;
-}
-// Fallback cn utility (if '@/lib/utils' missing)
-const cn = (...classes: (string | undefined)[]) => classes.filter(Boolean).join(' ');
+import { OwlAvatar } from '@/components/avatar/OwlAvatar';
+import { useUserAvatar } from '@/hooks/useUserAvatar';
+import { cn } from '@/lib/utils';
+import { useLinkPreview } from '@/hooks/useLinkPreview';
+import { LinkPreviewCard } from '@/components/ui/LinkPreviewCard';
+import { extractUrls } from '@/lib/postUtils';
 
-// NOTE: This interface syntax is valid in a .tsx file.
 interface NewPostModalProps {
     isOpen: boolean;
     onClose: () => void;
 }
 
-// Custom hook for character counting with color thresholds
-const useCharacterCount = (text: string) => {
-    const length = text.length;
-    const remaining = 280 - length;
-    const getVariant = () => {
-        if (length > 250) return 'destructive';
-        if (length > 200) return 'secondary';
-        return 'default';
-    };
-    return { remaining, variant: getVariant(), length };
-};
-
-// Error Boundary Component (wraps modal to catch crashes)
-class ErrorBoundary extends React.Component<{ children: React.ReactNode }, { hasError: boolean }> {
-    constructor(props: any) {
-        super(props);
-        this.state = { hasError: false };
-    }
-
-    static getDerivedStateFromError() {
-        return { hasError: true };
-    }
-
-    componentDidCatch(error: Error, errorInfo: React.ErrorInfo) {
-        console.error('Modal Error:', error, errorInfo);
-        toast.error('Something went wrong—try again.');
-    }
-
-    render() {
-        if (this.state.hasError) {
-            return <div className="p-4 text-center text-destructive">Error loading modal. <Button onClick={() => this.setState({ hasError: false })}>Retry</Button></div>;
-        }
-        return this.props.children;
-    }
-}
-
-// NOTE: Component declaration should use React.FC<NewPostModalProps>
 const NewPostModal: React.FC<NewPostModalProps> = ({ isOpen, onClose }) => {
     const { user } = useAuth();
+    const { avatarConfig } = useUserAvatar(user?.id);
     const { awardXP } = useXP();
     const [newPost, setNewPost] = useState('');
     const [isPosting, setIsPosting] = useState(false);
-    const [showAIAssist, setShowAIAssist] = useState(false);
+    const [showAIDialog, setShowAIDialog] = useState(false);
     const [aiTopic, setAiTopic] = useState('');
-    const [aiTone, setAiTone] = useState('casual');
-    const [aiLength, setAiLength] = useState('medium');
     const [generatingAI, setGeneratingAI] = useState(false);
     const [selectedImages, setSelectedImages] = useState<File[]>([]);
     const [imagePreviews, setImagePreviews] = useState<string[]>([]);
     const [imageAltTexts, setImageAltTexts] = useState<string[]>([]);
-    const [uploadingImage, setUploadingImage] = useState(false);
     const [showImageEditor, setShowImageEditor] = useState(false);
     const [editingImageIndex, setEditingImageIndex] = useState<number | null>(null);
-    const [editingImagePreview, setEditingImagePreview] = useState<string | null>(null);
+    const [editingImagePreview, setEditingImagePreview] = useState<string>('');
     const [showBatchEditor, setShowBatchEditor] = useState(false);
+    const [showAltTextEditor, setShowAltTextEditor] = useState(false);
+    const [editingAltTextIndex, setEditingAltTextIndex] = useState<number | null>(null);
     const fileInputRef = useRef<HTMLInputElement>(null);
+    const textareaRef = useRef<HTMLTextAreaElement>(null);
     const { generateDescription, isGenerating } = useImageDescription();
+    const { fetchPreview } = useLinkPreview();
+    const [linkPreviews, setLinkPreviews] = useState<any[]>([]);
 
-    const { remaining, variant, length } = useCharacterCount(newPost);
+    const charCount = 280 - newPost.length;
+    const charCountColor = charCount < 20 ? 'text-destructive' : charCount < 50 ? 'text-warning' : 'text-muted-foreground';
 
-  const handlePost = async () => {
-        // Validation
-        if (!user) return;
-        
-        try {
-            postSchema.parse(newPost);
-        } catch (error: any) {
-            toast.error(error.errors?.[0]?.message || 'Invalid post');
+    const handleClose = () => {
+        setNewPost('');
+        setSelectedImages([]);
+        setImagePreviews([]);
+        setImageAltTexts([]);
+        setShowAIDialog(false);
+        setAiTopic('');
+        setLinkPreviews([]);
+        onClose();
+    };
+
+    const handlePost = async () => {
+        if (!newPost.trim() && selectedImages.length === 0) {
+            toast.error('Post cannot be empty');
+            return;
+        }
+
+        const validation = postSchema.safeParse({ content: newPost });
+        if (!validation.success) {
+            toast.error(validation.error.errors[0].message);
             return;
         }
 
         setIsPosting(true);
-        const postContent = newPost.trim();
-
         try {
-            // Create the post first
+            const imageUrls: string[] = [];
+            
+            for (let i = 0; i < selectedImages.length; i++) {
+                const file = selectedImages[i];
+                const fileExt = file.name.split('.').pop();
+                const fileName = `${user?.id}-${Date.now()}-${i}.${fileExt}`;
+                const { data: uploadData, error: uploadError } = await supabase.storage
+                    .from('post-images')
+                    .upload(fileName, file);
+
+                if (uploadError) throw uploadError;
+                
+                const { data: { publicUrl } } = supabase.storage
+                    .from('post-images')
+                    .getPublicUrl(fileName);
+                
+                imageUrls.push(publicUrl);
+            }
+
             const { data: postData, error: postError } = await supabase
                 .from('posts')
                 .insert({
-                    content: postContent,
-                    author_id: user.id,
+                    content: newPost,
+                    author_id: user?.id,
+                    image_url: imageUrls.length > 0 ? imageUrls[0] : null,
                 })
                 .select()
                 .single();
 
-            if (postError) {
-                console.error("Supabase Post Error:", postError);
-                toast.error('Failed to create post. Please try again.');
-                setIsPosting(false);
-                return;
+            if (postError) throw postError;
+
+            if (imageUrls.length > 0 && postData) {
+                const imageInserts = imageUrls.map((url, index) => ({
+                    post_id: postData.id,
+                    image_url: url,
+                    display_order: index,
+                    alt_text: imageAltTexts[index] || '',
+                }));
+
+                const { error: imageError } = await supabase
+                    .from('post_images')
+                    .insert(imageInserts);
+
+                if (imageError) throw imageError;
             }
 
-            // Upload images if selected
-            if (selectedImages.length > 0) {
-                setUploadingImage(true);
-                
-                for (let i = 0; i < selectedImages.length; i++) {
-                    const image = selectedImages[i];
-                    const fileExt = image.name.split('.').pop();
-                    const fileName = `${user.id}/${Date.now()}_${i}.${fileExt}`;
-                    
-                    const { error: uploadError } = await supabase.storage
-                        .from('post-images')
-                        .upload(fileName, image);
+            // Save link previews
+            if (linkPreviews.length > 0 && postData) {
+                const previewInserts = linkPreviews.map(preview => ({
+                    post_id: postData.id,
+                    url: preview.url,
+                    title: preview.title,
+                    description: preview.description,
+                    image_url: preview.image_url,
+                    site_name: preview.site_name,
+                }));
 
-                    if (uploadError) {
-                        console.error('Image upload error:', uploadError);
-                        toast.error(`Failed to upload image ${i + 1}`);
-                        continue;
-                    }
-
-                    const { data: { publicUrl } } = supabase.storage
-                        .from('post-images')
-                        .getPublicUrl(fileName);
-                    
-                    // Insert into post_images table with alt text
-                    await supabase.from('post_images').insert({
-                        post_id: postData.id,
-                        image_url: publicUrl,
-                        display_order: i,
-                        alt_text: imageAltTexts[i] || null,
-                    });
-                }
-                
-                setUploadingImage(false);
+                await supabase.from('post_link_previews').insert(previewInserts);
             }
 
-            // Extract URLs and fetch link previews
-            const urls = postContent.match(/(https?:\/\/[^\s]+)/g);
-            if (urls && urls.length > 0) {
-                for (const url of urls.slice(0, 2)) { // Max 2 previews per post
-                    try {
-                        const { data: previewData } = await supabase.functions.invoke('fetch-link-preview', {
-                            body: { url },
-                        });
-                        
-                        if (previewData && !previewData.error) {
-                            await supabase.from('post_link_previews').insert({
-                                post_id: postData.id,
-                                url: previewData.url,
-                                title: previewData.title,
-                                description: previewData.description,
-                                image_url: previewData.image_url,
-                                site_name: previewData.site_name,
-                            });
-                        }
-                    } catch (error) {
-                        console.error('Failed to fetch link preview:', error);
-                    }
-                }
-            }
-
-            // Award XP for creating a post
-            awardXP('create_post', { content: postContent.substring(0, 50) }, true);
-            
-            setNewPost(''); 
-            setSelectedImages([]);
-            setImagePreviews([]);
-            setShowAIAssist(false);
-            setAiTopic('');
-            onClose(); // Close modal on success
-            toast.success('Post created! ✨', {
-                description: 'Your thoughts are now live.',
-                duration: 3000,
-            });
-        } catch (err) {
-            console.error('Post Error:', err);
-            toast.error('Network error—check connection.');
+            await awardXP('create_post', 10, {});
+            toast.success('Post created successfully!');
+            handleClose();
+        } catch (error) {
+            console.error('Error creating post:', error);
+            toast.error('Failed to create post');
         } finally {
             setIsPosting(false);
-            setUploadingImage(false);
         }
     };
 
-    const handleGenerateAI = async () => {
-        // Validate AI inputs
-        try {
-            aiTopicSchema.parse(aiTopic);
-            aiToneSchema.parse(aiTone);
-            aiLengthSchema.parse(aiLength);
-        } catch (error: any) {
-            toast.error(error.errors?.[0]?.message || 'Invalid input');
+    const handleAIGenerate = async () => {
+        if (!aiTopic.trim()) {
+            toast.error('Please enter a topic');
             return;
         }
 
         setGeneratingAI(true);
         try {
-            const response = await fetch(
-                `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/generate-post`,
-                {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json',
-                        'Authorization': `Bearer ${import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY}`,
-                    },
-                    body: JSON.stringify({
-                        topic: aiTopic,
-                        tone: aiTone,
-                        length: aiLength,
-                    }),
-                }
-            );
+            const { data, error } = await supabase.functions.invoke('generate-post', {
+                body: { topic: aiTopic, tone: 'casual', length: 'medium' }
+            });
 
-            if (!response.ok) {
-                const errorData = await response.json();
-                toast.error(errorData.error || 'Failed to generate post');
-                return;
-            }
-
-            const data = await response.json();
+            if (error) throw error;
             setNewPost(data.post);
-            setShowAIAssist(false);
+            setShowAIDialog(false);
+            setAiTopic('');
             toast.success('AI post generated! ✨');
         } catch (error) {
             console.error('AI generation error:', error);
@@ -273,7 +186,6 @@ const NewPostModal: React.FC<NewPostModalProps> = ({ isOpen, onClose }) => {
         const newPreviews: string[] = [];
         let processedCount = 0;
 
-        // Show compression toast
         toast.info('Compressing images...');
 
         for (const file of files) {
@@ -288,15 +200,7 @@ const NewPostModal: React.FC<NewPostModalProps> = ({ isOpen, onClose }) => {
             }
 
             try {
-                // Compress image
                 const compressedFile = await compressImageFile(file);
-                const originalSizeMB = (file.size / (1024 * 1024)).toFixed(2);
-                const compressedSizeMB = (compressedFile.size / (1024 * 1024)).toFixed(2);
-                
-                if (compressedFile.size < file.size) {
-                    console.log(`Compressed ${file.name}: ${originalSizeMB}MB → ${compressedSizeMB}MB`);
-                }
-
                 validFiles.push(compressedFile);
                 const reader = new FileReader();
                 reader.onloadend = async () => {
@@ -304,15 +208,13 @@ const NewPostModal: React.FC<NewPostModalProps> = ({ isOpen, onClose }) => {
                     processedCount++;
                     if (processedCount === validFiles.length) {
                         setImagePreviews(prev => [...prev, ...newPreviews]);
-                        
-                        // Auto-generate alt text for new images
                         const newAltTexts: string[] = [];
                         for (const preview of newPreviews) {
                             const altText = await generateDescription(preview);
                             newAltTexts.push(altText || '');
                         }
                         setImageAltTexts(prev => [...prev, ...newAltTexts]);
-                        toast.success('Images compressed and ready!');
+                        toast.success('Images ready!');
                     }
                 };
                 reader.readAsDataURL(compressedFile);
@@ -329,463 +231,303 @@ const NewPostModal: React.FC<NewPostModalProps> = ({ isOpen, onClose }) => {
         setSelectedImages(prev => prev.filter((_, i) => i !== index));
         setImagePreviews(prev => prev.filter((_, i) => i !== index));
         setImageAltTexts(prev => prev.filter((_, i) => i !== index));
-        if (fileInputRef.current) {
-            fileInputRef.current.value = '';
+    };
+
+    const handleTextChange = async (e: React.ChangeEvent<HTMLTextAreaElement>) => {
+        const text = e.target.value;
+        setNewPost(text);
+        
+        const urls = extractUrls(text);
+        for (const url of urls) {
+            if (!linkPreviews.find(p => p.url === url)) {
+                const preview = await fetchPreview(url);
+                if (preview) {
+                    setLinkPreviews(prev => [...prev, preview]);
+                }
+            }
         }
     };
 
-    const handleEditImage = (index: number) => {
-        setEditingImageIndex(index);
-        setEditingImagePreview(imagePreviews[index]);
-        setShowImageEditor(true);
-    };
-
-    const handleImageEditorSave = (editedBlob: Blob) => {
-        if (editingImageIndex === null) return;
-
-        const file = new File([editedBlob], selectedImages[editingImageIndex]?.name || 'edited-image.png', {
-            type: 'image/png',
-        });
-        
-        const newImages = [...selectedImages];
-        newImages[editingImageIndex] = file;
-        setSelectedImages(newImages);
-        
-        const reader = new FileReader();
-        reader.onloadend = () => {
-            const newPreviews = [...imagePreviews];
-            newPreviews[editingImageIndex] = reader.result as string;
-            setImagePreviews(newPreviews);
-            setShowImageEditor(false);
-            setEditingImagePreview(null);
-            setEditingImageIndex(null);
-        };
-        reader.readAsDataURL(file);
-        
-        toast.success('Image edited successfully!');
-    };
-
-    const handleImageEditorCancel = () => {
-        setShowImageEditor(false);
-        setEditingImagePreview(null);
-    };
-
-    const handleBatchEdit = (editedImages: string[]) => {
-        const newFiles: File[] = [];
-        editedImages.forEach((dataUrl, index) => {
-            fetch(dataUrl)
-                .then(res => res.blob())
-                .then(blob => {
-                    const file = new File([blob], selectedImages[index]?.name || `edited-${index}.jpg`, {
-                        type: 'image/jpeg',
-                    });
-                    newFiles.push(file);
-                    
-                    if (newFiles.length === editedImages.length) {
-                        setSelectedImages(newFiles);
-                        setImagePreviews(editedImages);
-                    }
-                });
-        });
-    };
-
-    // Fallback for animations
-    const MotionDiv = motion ? motion.div : (({ children, ...props }: any) => <div {...props}>{children}</div>);
+    if (!isOpen) return null;
 
     return (
-        <ErrorBoundary>
-            {/* Batch Image Editor Dialog */}
-            {showBatchEditor && (
-                <BatchImageEditor
-                    isOpen={showBatchEditor}
-                    onClose={() => setShowBatchEditor(false)}
-                    images={imagePreviews}
-                    onApply={handleBatchEdit}
-                />
-            )}
+        <>
+            <Dialog open={isOpen} onOpenChange={handleClose}>
+                <DialogContent className="max-w-2xl p-0 gap-0 border-border/50">
+                    {/* Header */}
+                    <div className="flex items-center justify-between px-4 py-3 border-b border-border/50">
+                        <Button
+                            variant="ghost"
+                            size="icon"
+                            onClick={handleClose}
+                            className="h-8 w-8 rounded-full"
+                        >
+                            <X className="h-5 w-5" />
+                        </Button>
+                        <Button
+                            onClick={handlePost}
+                            disabled={isPosting || (!newPost.trim() && selectedImages.length === 0)}
+                            className="rounded-full px-6 font-semibold"
+                            size="sm"
+                        >
+                            {isPosting ? (
+                                <>
+                                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                                    Posting
+                                </>
+                            ) : (
+                                'Post'
+                            )}
+                        </Button>
+                    </div>
 
-            {/* Image Editor Dialog */}
-            {showImageEditor && editingImagePreview && (
-                <Dialog open={showImageEditor} onOpenChange={handleImageEditorCancel}>
-                    <DialogContent className="max-w-4xl">
-                        <DialogHeader>
-                            <DialogTitle>Edit Image</DialogTitle>
-                        </DialogHeader>
-                        <ImageEditor
-                            image={editingImagePreview}
-                            onSave={handleImageEditorSave}
-                            onCancel={handleImageEditorCancel}
-                        />
-                    </DialogContent>
-                </Dialog>
-            )}
+                    {/* Content */}
+                    <div className="p-4">
+                        <div className="flex gap-3">
+                            {/* Avatar */}
+                            <div className="flex-shrink-0">
+                                <div className="h-10 w-10 rounded-full overflow-hidden bg-muted">
+                                    <OwlAvatar config={avatarConfig} size={40} />
+                                </div>
+                            </div>
 
-            {/* The Dialog component handles the backdrop click close (the implicit "cancel") */}
-            <Dialog open={isOpen} onOpenChange={onClose}>
-                {/* DialogContent Styling: Enforced small centered size (90vw and max-w-sm) */}
-                <DialogContent className={cn(
-                    "w-[90vw] max-w-sm sm:max-w-md rounded-xl shadow-2xl p-0 overflow-hidden border-2 border-primary/50",
-                    "data-[state=open]:fixed data-[state=open]:top-[50%] data-[state=open]:left-[50%] data-[state=open]:translate-x-[-50%] data-[state=open]:translate-y-[-50%] data-[state=open]:duration-300",
-                    "mx-auto my-8" 
-                )}>
-                    <MotionDiv
-                        key="header"
-                        initial={motion ? { opacity: 0, y: -20 } : {}}
-                        animate={motion ? { opacity: 1, y: 0 } : {}}
-                        exit={motion ? { opacity: 0, y: -20 } : {}}
-                        transition={motion ? { duration: 0.2, ease: "easeInOut" } : {}}
-                        className="p-4 border-b border-muted-foreground/10 flex flex-row items-center justify-between bg-gradient-to-r from-primary/5 to-secondary/5"
-                    >
-                        <DialogTitle className="text-xl font-extrabold text-foreground flex items-center gap-2">
-                            <Sparkles className="h-5 w-5 text-primary animate-pulse" />
-                            Create Post
-                        </DialogTitle>
-                    </MotionDiv>
-                    
-                    {/* Post Input Area */}
-                    <div className="p-4 space-y-4 overflow-hidden"> 
+                            {/* Post Content */}
+                            <div className="flex-1 min-w-0">
+                                <Textarea
+                                    ref={textareaRef}
+                                    value={newPost}
+                                    onChange={handleTextChange}
+                                    placeholder="What's happening?"
+                                    className="min-h-[120px] text-lg border-0 shadow-none resize-none focus-visible:ring-0 p-0 placeholder:text-muted-foreground/50"
+                                />
 
-                        {!showAIAssist ? (
-                            <>
-                                {/* Textarea: Max height and forced vertical scroll, blocked horizontal expansion */}
-                                <MotionDiv
-                                    initial={motion ? { opacity: 0, scale: 0.95 } : {}}
-                                    animate={motion ? { opacity: 1, scale: 1 } : {}}
-                                    transition={motion ? { duration: 0.15, ease: "easeOut" } : {}}
-                                >
-                                    <Textarea
-                                        placeholder="Share your thoughts... What's on your mind today? (Text-only, max 280 characters)"
-                                        value={newPost}
-                                        onChange={(e) => setNewPost(e.target.value)}
-                                        maxLength={280}
-                                        rows={4}
-                                        className={cn(
-                                            "mb-3 resize-none focus-visible:ring-primary min-h-[100px] max-h-40 overflow-y-auto overflow-x-hidden",
-                                            "placeholder:text-muted-foreground/70 transition-all duration-200 ease-in-out"
-                                        )}
-                                        disabled={isPosting}
-                                    />
-                                </MotionDiv>
+                                {/* Link Previews */}
+                                {linkPreviews.length > 0 && (
+                                    <div className="mt-3 space-y-2">
+                                        {linkPreviews.map((preview, index) => (
+                                            <LinkPreviewCard key={index} {...preview} />
+                                        ))}
+                                    </div>
+                                )}
 
-                                {/* Image Upload Section */}
-                                <div className="space-y-3">
-                                    <input
-                                        ref={fileInputRef}
-                                        type="file"
-                                        accept="image/*"
-                                        multiple
-                                        onChange={handleImageSelect}
-                                        className="hidden"
-                                    />
-                                    
-                                    {imagePreviews.length === 0 ? (
-                                        <MotionDiv
-                                            initial={motion ? { opacity: 0, y: 10 } : {}}
-                                            animate={motion ? { opacity: 1, y: 0 } : {}}
-                                            transition={motion ? { duration: 0.2, ease: "easeOut" } : {}}
-                                        >
-                                            <Button
-                                                type="button"
-                                                onClick={() => fileInputRef.current?.click()}
-                                                variant="outline"
-                                                size="sm"
-                                                className="w-full flex items-center gap-2 transition-all duration-200 hover:scale-105"
-                                                disabled={isPosting}
+                                {/* Image Previews */}
+                                {imagePreviews.length > 0 && (
+                                    <div className={cn(
+                                        "mt-3 gap-2 rounded-2xl overflow-hidden border border-border/50",
+                                        imagePreviews.length === 1 && "grid grid-cols-1",
+                                        imagePreviews.length === 2 && "grid grid-cols-2",
+                                        imagePreviews.length >= 3 && "grid grid-cols-2"
+                                    )}>
+                                        {imagePreviews.map((preview, index) => (
+                                            <div
+                                                key={index}
+                                                className={cn(
+                                                    "relative group aspect-square overflow-hidden bg-muted",
+                                                    imagePreviews.length === 3 && index === 0 && "col-span-2"
+                                                )}
                                             >
-                                                <ImageIcon className="h-4 w-4" />
-                                                Add Images (Up to 4)
-                                            </Button>
-                                        </MotionDiv>
-                                     ) : (
-                                        <div className="space-y-3">
-                                            <div className="grid grid-cols-2 gap-2">
-                                                {imagePreviews.map((preview, index) => (
-                                                    <MotionDiv 
-                                                        key={index} 
-                                                        initial={motion ? { opacity: 0, scale: 0.9 } : {}}
-                                                        animate={motion ? { opacity: 1, scale: 1 } : {}}
-                                                        transition={motion ? { duration: 0.15, delay: index * 0.05 } : {}}
-                                                        className="space-y-2 cursor-move"
-                                                        draggable
-                                                        onDragStart={(e) => {
-                                                            e.dataTransfer.effectAllowed = 'move';
-                                                            e.dataTransfer.setData('text/html', index.toString());
-                                                        }}
-                                                        onDragOver={(e) => {
-                                                            e.preventDefault();
-                                                            e.dataTransfer.dropEffect = 'move';
-                                                        }}
-                                                        onDrop={(e) => {
-                                                            e.preventDefault();
-                                                            const dragIndex = parseInt(e.dataTransfer.getData('text/html'));
-                                                            const dropIndex = index;
-                                                            if (dragIndex !== dropIndex) {
-                                                                const newPreviews = [...imagePreviews];
-                                                                const newAltTexts = [...imageAltTexts];
-                                                                const newFiles = [...selectedImages];
-                                                                
-                                                                const [draggedPreview] = newPreviews.splice(dragIndex, 1);
-                                                                const [draggedAlt] = newAltTexts.splice(dragIndex, 1);
-                                                                const [draggedFile] = newFiles.splice(dragIndex, 1);
-                                                                
-                                                                newPreviews.splice(dropIndex, 0, draggedPreview);
-                                                                newAltTexts.splice(dropIndex, 0, draggedAlt);
-                                                                newFiles.splice(dropIndex, 0, draggedFile);
-                                                                
-                                                                setImagePreviews(newPreviews);
-                                                                setImageAltTexts(newAltTexts);
-                                                                setSelectedImages(newFiles);
-                                                            }
-                                                        }}
+                                                <img
+                                                    src={preview}
+                                                    alt={`Upload ${index + 1}`}
+                                                    className="w-full h-full object-cover"
+                                                />
+                                                <div className="absolute inset-0 bg-black/0 group-hover:bg-black/40 transition-colors">
+                                                    <Button
+                                                        variant="ghost"
+                                                        size="icon"
+                                                        onClick={() => handleRemoveImage(index)}
+                                                        className="absolute top-2 right-2 h-8 w-8 rounded-full bg-black/60 hover:bg-black/80 text-white opacity-0 group-hover:opacity-100 transition-opacity"
                                                     >
-                                                        <div className="relative rounded-lg overflow-hidden border-2 border-border group transition-all duration-200 hover:border-primary/50">
-                                                            <div className="absolute top-1 left-1 bg-background/80 text-xs px-2 py-0.5 rounded z-10">
-                                                                {index + 1}
-                                                            </div>
-                                                            <img 
-                                                                src={preview} 
-                                                                alt={imageAltTexts[index] || `Preview ${index + 1}`} 
-                                                                className="w-full h-32 object-cover transition-transform duration-200 group-hover:scale-105"
-                                                            />
-                                                            <div className="absolute top-1 right-1 flex gap-1 opacity-0 group-hover:opacity-100 transition-all duration-200">
-                                                                <Button
-                                                                    type="button"
-                                                                    onClick={() => handleEditImage(index)}
-                                                                    variant="secondary"
-                                                                    size="icon"
-                                                                    className="h-7 w-7 hover:scale-110"
-                                                                    disabled={isPosting || uploadingImage}
-                                                                >
-                                                                    <Pencil className="h-3 w-3" />
-                                                                </Button>
-                                                                <Button
-                                                                    type="button"
-                                                                    onClick={() => handleRemoveImage(index)}
-                                                                    variant="destructive"
-                                                                    size="icon"
-                                                                    className="h-7 w-7 hover:scale-110"
-                                                                    disabled={isPosting || uploadingImage}
-                                                                >
-                                                                    <X className="h-3 w-3" />
-                                                                </Button>
-                                                            </div>
-                                                            {uploadingImage && (
-                                                                <div className="absolute inset-0 bg-background/80 flex items-center justify-center transition-opacity duration-200">
-                                                                    <Loader2 className="h-6 w-6 animate-spin text-primary" />
-                                                                </div>
-                                                            )}
-                                                        </div>
-                                                        <AltTextEditor
-                                                            value={imageAltTexts[index] || ''}
-                                                            onChange={(value) => {
-                                                                const newAltTexts = [...imageAltTexts];
-                                                                newAltTexts[index] = value;
-                                                                setImageAltTexts(newAltTexts);
-                                                            }}
-                                                            onGenerate={async () => {
-                                                                const description = await generateDescription(preview);
-                                                                if (description) {
-                                                                    const newAltTexts = [...imageAltTexts];
-                                                                    newAltTexts[index] = description;
-                                                                    setImageAltTexts(newAltTexts);
-                                                                    toast.success('Alt text generated!');
-                                                                }
-                                                            }}
-                                                            isGenerating={isGenerating}
-                                                        />
-                                                    </MotionDiv>
-                                                ))}
+                                                        <X className="h-4 w-4" />
+                                                    </Button>
+                                                </div>
                                             </div>
-                                            
-                                            <div className="flex gap-2">
-                                                {imagePreviews.length < 4 && (
-                                                    <Button
-                                                        type="button"
-                                                        onClick={() => fileInputRef.current?.click()}
-                                                        variant="outline"
-                                                        size="sm"
-                                                        className="flex-1 flex items-center gap-2 transition-all duration-200 hover:scale-105"
-                                                        disabled={isPosting}
-                                                    >
-                                                        <ImageIcon className="h-4 w-4" />
-                                                        Add More ({4 - imagePreviews.length})
-                                                    </Button>
-                                                )}
-                                                {imagePreviews.length > 1 && (
-                                                    <Button
-                                                        type="button"
-                                                        onClick={() => setShowBatchEditor(true)}
-                                                        variant="secondary"
-                                                        size="sm"
-                                                        className="flex-1 flex items-center gap-2 transition-all duration-200 hover:scale-105"
-                                                        disabled={isPosting || uploadingImage}
-                                                    >
-                                                        <Wand2 className="h-4 w-4" />
-                                                        Batch Edit
-                                                    </Button>
-                                                )}
+                                        ))}
+                                    </div>
+                                )}
+
+                                {/* Bottom Toolbar */}
+                                <div className="flex items-center justify-between pt-3 mt-3 border-t border-border/50">
+                                    <div className="flex items-center gap-1">
+                                        <Button
+                                            variant="ghost"
+                                            size="icon"
+                                            onClick={() => fileInputRef.current?.click()}
+                                            className="h-9 w-9 rounded-full text-primary hover:bg-primary/10"
+                                        >
+                                            <ImageIcon className="h-5 w-5" />
+                                        </Button>
+                                        <Button
+                                            variant="ghost"
+                                            size="icon"
+                                            onClick={() => setShowAIDialog(true)}
+                                            className="h-9 w-9 rounded-full text-primary hover:bg-primary/10"
+                                        >
+                                            <Sparkles className="h-5 w-5" />
+                                        </Button>
+                                        <Button
+                                            variant="ghost"
+                                            size="icon"
+                                            className="h-9 w-9 rounded-full text-primary hover:bg-primary/10"
+                                        >
+                                            <Globe className="h-5 w-5" />
+                                        </Button>
+                                    </div>
+
+                                    {/* Character Count */}
+                                    {newPost.length > 0 && (
+                                        <div className="flex items-center gap-2">
+                                            <span className={cn("text-sm tabular-nums", charCountColor)}>
+                                                {charCount}
+                                            </span>
+                                            <div className="w-8 h-8 relative">
+                                                <svg className="transform -rotate-90 w-8 h-8">
+                                                    <circle
+                                                        cx="16"
+                                                        cy="16"
+                                                        r="14"
+                                                        stroke="currentColor"
+                                                        strokeWidth="2"
+                                                        fill="none"
+                                                        className="text-muted/20"
+                                                    />
+                                                    <circle
+                                                        cx="16"
+                                                        cy="16"
+                                                        r="14"
+                                                        stroke="currentColor"
+                                                        strokeWidth="2"
+                                                        fill="none"
+                                                        strokeDasharray={`${2 * Math.PI * 14}`}
+                                                        strokeDashoffset={`${2 * Math.PI * 14 * (1 - newPost.length / 280)}`}
+                                                        className={cn(
+                                                            "transition-all",
+                                                            charCount < 20 ? "text-destructive" : 
+                                                            charCount < 50 ? "text-warning" : "text-primary"
+                                                        )}
+                                                    />
+                                                </svg>
                                             </div>
                                         </div>
                                     )}
                                 </div>
+                            </div>
+                        </div>
+                    </div>
 
-                                {/* AI Assist Button */}
-                                <MotionDiv
-                                    initial={motion ? { opacity: 0, y: 10 } : {}}
-                                    animate={motion ? { opacity: 1, y: 0 } : {}}
-                                    transition={motion ? { duration: 0.2, ease: "easeOut" } : {}}
-                                >
-                                    <Button
-                                        onClick={() => setShowAIAssist(true)}
-                                        variant="outline"
-                                        size="sm"
-                                        className="w-full flex items-center gap-2 transition-all duration-200 hover:scale-105"
-                                    >
-                                        <Wand2 className="h-4 w-4" />
-                                        Need help? Let AI generate a post
-                                    </Button>
-                                </MotionDiv>
+                    <input
+                        ref={fileInputRef}
+                        type="file"
+                        accept="image/*"
+                        multiple
+                        onChange={handleImageSelect}
+                        className="hidden"
+                    />
+                </DialogContent>
+            </Dialog>
 
-                                {/* Character counter with progress bar */}
-                                <div className="flex items-center justify-between">
-                                    <Badge variant={variant as "default" | "destructive" | "outline" | "secondary"} className="text-xs transition-colors duration-200">
-                                        {remaining} left • {length}/280
-                                    </Badge>
-                                    <div className="w-20 bg-muted rounded-full h-1.5 overflow-hidden">
-                                        <div 
-                                            className={cn(
-                                                "h-1.5 rounded-full transition-all duration-300 ease-in-out",
-                                                length > 250 ? "bg-destructive" : length > 200 ? "bg-secondary" : "bg-primary"
-                                            )} 
-                                            style={{ width: `${(length / 280) * 100}%` }}
-                                        />
-                                    </div>
-                                </div>
-
-                                <Separator className="transition-opacity duration-200" />
-
-                                {/* Post Button with loading state */}
-                                <MotionDiv
-                                    initial={motion ? { opacity: 0, scale: 0.95 } : {}}
-                                    animate={motion ? { opacity: 1, scale: 1 } : {}}
-                                    transition={motion ? { duration: 0.2, ease: "easeOut" } : {}}
-                                >
-                                    <Button 
-                                        onClick={handlePost} 
-                                        disabled={!newPost.trim() || newPost.length > 280 || isPosting} 
-                                        className={cn(
-                                            "w-full flex items-center justify-center space-x-2 shadow-lg rounded-full px-6 py-3 h-12 font-bold transition-all duration-300 ease-in-out",
-                                            "hover:shadow-xl transform hover:scale-[1.02] active:scale-[0.98]",
-                                            (newPost.trim() && newPost.length <= 280 && !isPosting) 
-                                                ? "bg-gradient-to-r from-primary to-secondary hover:from-primary/90 hover:to-secondary/90" 
-                                                : "bg-muted cursor-not-allowed"
-                                        )}
-                                    >
-                                        {isPosting ? (
-                                            <div className="flex items-center space-x-2">
-                                                <Loader2 className="h-4 w-4 animate-spin" />
-                                                <span>Posting...</span>
-                                            </div>
-                                        ) : (
-                                            <div className="flex items-center space-x-2">
-                                                <Send className="h-4 w-4" />
-                                                <span>Share Post</span>
-                                            </div>
-                                        )}
-                                    </Button>
-                                </MotionDiv>
-                            </>
-                        ) : (
-                            <>
-                                {/* AI Generation Form */}
-                                <div className="space-y-4">
-                                    <MotionDiv
-                                        initial={motion ? { opacity: 0, y: 20 } : {}}
-                                        animate={motion ? { opacity: 1, y: 0 } : {}}
-                                        transition={motion ? { duration: 0.2, ease: "easeOut" } : {}}
-                                    >
-                                        <div className="flex items-center justify-between">
-                                            <h3 className="text-sm font-semibold flex items-center gap-2">
-                                                <Wand2 className="h-4 w-4 text-primary" />
-                                                AI Post Generator
-                                            </h3>
-                                            <Button
-                                                variant="ghost"
-                                                size="sm"
-                                                onClick={() => setShowAIAssist(false)}
-                                                className="transition-all duration-200 hover:scale-105"
-                                            >
-                                                Back
-                                            </Button>
-                                        </div>
-                                    </MotionDiv>
-
-                                    <div className="space-y-3">
-                                        <div>
-                                            <Label htmlFor="topic" className="text-xs">What's your topic?</Label>
-                                            <Input
-                                                id="topic"
-                                                value={aiTopic}
-                                                onChange={(e) => setAiTopic(e.target.value)}
-                                                placeholder="e.g., morning motivation, tech trends, funny story..."
-                                                className="mt-1 transition-all duration-200 focus:scale-[1.01]"
-                                            />
-                                        </div>
-
-                                        <div>
-                                            <Label htmlFor="tone" className="text-xs">Tone</Label>
-                                            <Select value={aiTone} onValueChange={setAiTone}>
-                                                <SelectTrigger className="mt-1 transition-all duration-200">
-                                                    <SelectValue />
-                                                </SelectTrigger>
-                                                <SelectContent>
-                                                    <SelectItem value="casual">Casual & Friendly</SelectItem>
-                                                    <SelectItem value="professional">Professional</SelectItem>
-                                                    <SelectItem value="funny">Funny & Entertaining</SelectItem>
-                                                    <SelectItem value="inspiring">Motivational</SelectItem>
-                                                </SelectContent>
-                                            </Select>
-                                        </div>
-
-                                        <div>
-                                            <Label htmlFor="length" className="text-xs">Length</Label>
-                                            <Select value={aiLength} onValueChange={setAiLength}>
-                                                <SelectTrigger className="mt-1 transition-all duration-200">
-                                                    <SelectValue />
-                                                </SelectTrigger>
-                                                <SelectContent>
-                                                    <SelectItem value="short">Short (50-100 chars)</SelectItem>
-                                                    <SelectItem value="medium">Medium (100-200 chars)</SelectItem>
-                                                    <SelectItem value="long">Long (200-280 chars)</SelectItem>
-                                                </SelectContent>
-                                            </Select>
-                                        </div>
-                                    </div>
-
-                                    <Button
-                                        onClick={handleGenerateAI}
-                                        disabled={generatingAI || !aiTopic.trim()}
-                                        className="w-full transition-all duration-300 ease-in-out hover:scale-[1.02]"
-                                    >
-                                        {generatingAI ? (
-                                            <>
-                                                <Sparkles className="h-4 w-4 mr-2 animate-spin" />
-                                                Generating...
-                                            </>
-                                        ) : (
-                                            <>
-                                                <Sparkles className="h-4 w-4 mr-2" />
-                                                Generate Post
-                                            </>
-                                        )}
-                                    </Button>
-                                </div>
-                            </>
-                        )}
+            {/* AI Dialog */}
+            <Dialog open={showAIDialog} onOpenChange={setShowAIDialog}>
+                <DialogContent className="sm:max-w-md">
+                    <div className="space-y-4">
+                        <div>
+                            <h3 className="text-lg font-semibold mb-2">AI Post Generator</h3>
+                            <p className="text-sm text-muted-foreground">
+                                Tell AI what you want to post about
+                            </p>
+                        </div>
+                        <Textarea
+                            value={aiTopic}
+                            onChange={(e) => setAiTopic(e.target.value)}
+                            placeholder="E.g., my thoughts on climate change..."
+                            className="min-h-[100px]"
+                        />
+                        <div className="flex gap-2">
+                            <Button
+                                onClick={handleAIGenerate}
+                                disabled={generatingAI || !aiTopic.trim()}
+                                className="flex-1"
+                            >
+                                {generatingAI ? (
+                                    <>
+                                        <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                                        Generating
+                                    </>
+                                ) : (
+                                    <>
+                                        <Sparkles className="mr-2 h-4 w-4" />
+                                        Generate
+                                    </>
+                                )}
+                            </Button>
+                            <Button variant="outline" onClick={() => setShowAIDialog(false)}>
+                                Cancel
+                            </Button>
+                        </div>
                     </div>
                 </DialogContent>
             </Dialog>
-        </ErrorBoundary>
+
+            {/* Image Editor */}
+            {showImageEditor && editingImagePreview && (
+                <ImageEditor
+                    imageData={editingImagePreview}
+                    onSave={(blob) => {
+                        if (editingImageIndex !== null) {
+                            const file = new File([blob], selectedImages[editingImageIndex]?.name || 'edited.png', {
+                                type: 'image/png',
+                            });
+                            const newImages = [...selectedImages];
+                            newImages[editingImageIndex] = file;
+                            setSelectedImages(newImages);
+                            const reader = new FileReader();
+                            reader.onloadend = () => {
+                                const newPreviews = [...imagePreviews];
+                                newPreviews[editingImageIndex] = reader.result as string;
+                                setImagePreviews(newPreviews);
+                            };
+                            reader.readAsDataURL(file);
+                        }
+                        setShowImageEditor(false);
+                        setEditingImageIndex(null);
+                    }}
+                    onCancel={() => {
+                        setShowImageEditor(false);
+                        setEditingImageIndex(null);
+                    }}
+                />
+            )}
+
+            {/* Batch Editor */}
+            {showBatchEditor && imagePreviews.length > 0 && (
+                <BatchImageEditor
+                    images={imagePreviews}
+                    onApply={(editedBlobs) => {
+                        const newImages = editedBlobs.map((blob, i) => 
+                            new File([blob], selectedImages[i]?.name || `edited-${i}.png`, { type: 'image/png' })
+                        );
+                        setSelectedImages(newImages);
+                        const newPreviews: string[] = [];
+                        let loaded = 0;
+                        newImages.forEach((file, i) => {
+                            const reader = new FileReader();
+                            reader.onloadend = () => {
+                                newPreviews[i] = reader.result as string;
+                                loaded++;
+                                if (loaded === newImages.length) {
+                                    setImagePreviews(newPreviews);
+                                }
+                            };
+                            reader.readAsDataURL(file);
+                        });
+                        setShowBatchEditor(false);
+                    }}
+                    onCancel={() => setShowBatchEditor(false)}
+                />
+            )}
+
+            {/* Alt Text Editor removed - simplified design */}
+        </>
     );
 };
 
