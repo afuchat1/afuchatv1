@@ -125,7 +125,7 @@ const Layout = ({ children }: LayoutProps) => {
           {[
             { path: '/', icon: Home },
             { path: '/search', icon: Search },
-            { path: '/notifications', icon: Bell, badge: true },
+            { path: '/shop', icon: ShoppingBag },
             { path: '/chats', icon: MessageSquare },
             { path: user ? `/${user.id}` : '/auth', icon: User }
           ].map((item) => (
@@ -137,14 +137,10 @@ const Layout = ({ children }: LayoutProps) => {
                 isActive(item.path) ? "text-primary" : "text-muted-foreground"
               )}
             >
-              {item.badge && item.path === '/notifications' ? (
-                <NotificationIcon />
-              ) : (
-                <item.icon className={cn(
-                  "h-6 w-6",
-                  isActive(item.path) && "fill-current"
-                )} />
-              )}
+              <item.icon className={cn(
+                "h-6 w-6",
+                isActive(item.path) && "fill-current"
+              )} />
             </Link>
           ))}
         </div>
