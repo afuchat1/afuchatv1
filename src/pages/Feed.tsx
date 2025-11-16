@@ -503,7 +503,6 @@ const PostCard = ({ post, addReply, user, navigate, onAcknowledge, onDeletePost,
         <Link 
           to={`/post/${post.id}`} 
           className="block"
-          onClick={() => sessionStorage.setItem('returningToFeed', 'true')}
         >
           <ReadMoreText
             maxLines={4}
@@ -666,7 +665,6 @@ const Feed = () => {
   const [forceLoaded, setForceLoaded] = useState(false);
   const [activeTab, setActiveTab] = useState<'foryou' | 'following'>('foryou');
   const [newPostsCount, setNewPostsCount] = useState(0);
-  const [isReturningFromDetail, setIsReturningFromDetail] = useState(false);
   const navigate = useNavigate();
   const feedRef = useRef<HTMLDivElement>(null);
   
@@ -675,14 +673,81 @@ const Feed = () => {
   const [editPost, setEditPost] = useState<Post | null>(null);
   const [isDeleting, setIsDeleting] = useState(false);
 
-  // Check if returning from post detail
+  // Load cached data immediately on mount
   useEffect(() => {
-    const returning = sessionStorage.getItem('returningToFeed');
-    if (returning === 'true') {
-      setIsReturningFromDetail(true);
+    const cachedPosts = sessionStorage.getItem('feedPosts');
+    const cachedFollowingPosts = sessionStorage.getItem('feedFollowingPosts');
+    const cachedTab = sessionStorage.getItem('feedActiveTab');
+
+    if (cachedPosts) {
+      const parsed = JSON.parse(cachedPosts);
+      setPosts(parsed);
       setLoading(false);
-      sessionStorage.removeItem('returningToFeed');
+      setForceLoaded(true);
     }
+    if (cachedFollowingPosts) {
+      setFollowingPosts(JSON.parse(cachedFollowingPosts));
+    }
+    if (cachedTab) {
+      setActiveTab(cachedTab as 'foryou' | 'following');
+    }
+    
+    // If no cache, fetch normally
+    if (!cachedPosts) {
+      fetchPosts();
+    }
+  }, []);
+
+  // Save to cache whenever posts change
+  useEffect(() => {
+    if (posts.length > 0) {
+      sessionStorage.setItem('feedPosts', JSON.stringify(posts));
+    }
+  }, [posts]);
+
+  useEffect(() => {
+    if (followingPosts.length > 0) {
+      sessionStorage.setItem('feedFollowingPosts', JSON.stringify(followingPosts));
+    }
+  }, [followingPosts]);
+
+  useEffect(() => {
+    sessionStorage.setItem('feedActiveTab', activeTab);
+  }, [activeTab]);
+
+  // Restore scroll position after content is rendered
+  useEffect(() => {
+    if (posts.length > 0 && feedRef.current) {
+      const savedPosition = sessionStorage.getItem('feedScrollPosition');
+      if (savedPosition) {
+        // Small delay to ensure content is rendered
+        setTimeout(() => {
+          if (feedRef.current) {
+            feedRef.current.scrollTop = parseInt(savedPosition);
+          }
+        }, 50);
+      }
+    }
+  }, [posts.length]);
+
+  // Save scroll position continuously
+  useEffect(() => {
+    const handleScroll = () => {
+      if (feedRef.current) {
+        sessionStorage.setItem('feedScrollPosition', feedRef.current.scrollTop.toString());
+      }
+    };
+
+    const currentRef = feedRef.current;
+    if (currentRef) {
+      currentRef.addEventListener('scroll', handleScroll);
+    }
+
+    return () => {
+      if (currentRef) {
+        currentRef.removeEventListener('scroll', handleScroll);
+      }
+    };
   }, []);
 
   const addReply = useCallback((postId: string, newReply: Reply) => {
@@ -972,58 +1037,7 @@ const Feed = () => {
     }
   }, [user]);
 
-  // Save scroll position and mark that we're navigating away
   useEffect(() => {
-    const handleBeforeUnload = () => {
-      if (feedRef.current) {
-        sessionStorage.setItem('feedScrollPosition', feedRef.current.scrollTop.toString());
-        sessionStorage.setItem('feedPosts', JSON.stringify(posts));
-        sessionStorage.setItem('feedFollowingPosts', JSON.stringify(followingPosts));
-        sessionStorage.setItem('feedActiveTab', activeTab);
-      }
-    };
-
-    window.addEventListener('beforeunload', handleBeforeUnload);
-    return () => {
-      handleBeforeUnload();
-      window.removeEventListener('beforeunload', handleBeforeUnload);
-    };
-  }, [posts, followingPosts, activeTab]);
-
-  // Restore cached data and scroll position immediately on mount
-  useEffect(() => {
-    const cachedPosts = sessionStorage.getItem('feedPosts');
-    const cachedFollowingPosts = sessionStorage.getItem('feedFollowingPosts');
-    const cachedTab = sessionStorage.getItem('feedActiveTab');
-    const savedPosition = sessionStorage.getItem('feedScrollPosition');
-
-    if (cachedPosts) {
-      setPosts(JSON.parse(cachedPosts));
-      setIsReturningFromDetail(true);
-    }
-    if (cachedFollowingPosts) {
-      setFollowingPosts(JSON.parse(cachedFollowingPosts));
-    }
-    if (cachedTab) {
-      setActiveTab(cachedTab as 'foryou' | 'following');
-    }
-
-    // Restore scroll after a brief delay to ensure content is rendered
-    if (savedPosition && feedRef.current) {
-      setTimeout(() => {
-        if (feedRef.current) {
-          feedRef.current.scrollTop = parseInt(savedPosition);
-        }
-      }, 100);
-    }
-  }, []);
-
-  useEffect(() => {
-    // Only fetch if not returning with cached data
-    if (!isReturningFromDetail) {
-      fetchPosts();
-    }
-
     const postsChannel = supabase
       .channel('feed-updates')
       .on(

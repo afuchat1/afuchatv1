@@ -226,10 +226,7 @@ const PostDetail = () => {
         <div className="flex items-center mb-6">
         <Button 
           variant="ghost" 
-          onClick={() => {
-            sessionStorage.setItem('returningToFeed', 'true');
-            navigate(-1);
-          }} 
+          onClick={() => navigate(-1)} 
           className="p-2"
         >
           <ArrowLeft className="h-5 w-5" />
@@ -252,10 +249,7 @@ const PostDetail = () => {
       <div className="p-4 text-center min-h-screen">
         <h1 className="text-2xl font-bold">Post not found</h1>
         <Button 
-          onClick={() => {
-            sessionStorage.setItem('returningToFeed', 'true');
-            navigate(-1);
-          }} 
+          onClick={() => navigate(-1)} 
           variant="link"
         >
           Go Back
@@ -271,10 +265,7 @@ const PostDetail = () => {
         <Button 
           variant="ghost" 
           size="icon" 
-          onClick={() => {
-            sessionStorage.setItem('returningToFeed', 'true');
-            navigate(-1);
-          }} 
+          onClick={() => navigate(-1)} 
           className="p-2"
         >
           <ArrowLeft className="h-5 w-5" />
