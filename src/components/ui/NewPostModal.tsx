@@ -69,7 +69,7 @@ const NewPostModal: React.FC<NewPostModalProps> = ({ isOpen, onClose }) => {
             return;
         }
 
-        const validation = postSchema.safeParse({ content: newPost });
+        const validation = postSchema.safeParse(newPost);
         if (!validation.success) {
             toast.error(validation.error.errors[0].message);
             return;
