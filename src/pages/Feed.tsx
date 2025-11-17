@@ -15,7 +15,7 @@ import PostActionsSheet from '@/components/PostActionsSheet';
 import DeletePostSheet from '@/components/DeletePostSheet';
 import ReportPostSheet from '@/components/ReportPostSheet';
 import { EditPostModal } from '@/components/EditPostModal';
-import { OwlAvatar } from '@/components/avatar/OwlAvatar';
+import { DefaultAvatar } from '@/components/avatar/DefaultAvatar';
 import { useUserAvatar } from '@/hooks/useUserAvatar';
 import { SendGiftDialog } from '@/components/gifts/SendGiftDialog';
 import { ReadMoreText } from '@/components/ui/ReadMoreText';
@@ -57,6 +57,7 @@ interface Post {
     handle: string;
     is_verified: boolean;
     is_organization_verified: boolean;
+    avatar_url?: string | null;
   };
   replies: Reply[];
   like_count: number;
@@ -75,6 +76,7 @@ interface Reply {
     handle: string;
     is_verified: boolean;
     is_organization_verified: boolean;
+    avatar_url?: string | null;
   };
 }
 
@@ -220,7 +222,7 @@ const parsePostContent = (content: string, navigate: (path: string) => void) => 
 };
 
 // Avatar Display Components
-const UserAvatarSmall = ({ userId }: { userId: string }) => {
+const UserAvatarSmall = ({ userId, name, avatarUrl }: { userId: string; name: string; avatarUrl?: string | null }) => {
 	const { avatarConfig, loading } = useUserAvatar(userId);
 
 	if (loading) {
@@ -229,10 +231,20 @@ const UserAvatarSmall = ({ userId }: { userId: string }) => {
 		);
 	}
 
-	return <OwlAvatar config={avatarConfig} size={28} className="flex-shrink-0" />;
+	if (avatarUrl) {
+		return (
+			<img
+				src={avatarUrl}
+				alt={name}
+				className="h-6 w-6 sm:h-7 sm:w-7 rounded-full object-cover flex-shrink-0"
+			/>
+		);
+	}
+
+	return <DefaultAvatar name={name} size={28} className="flex-shrink-0" />;
 };
 
-const UserAvatarMedium = ({ userId }: { userId: string }) => {
+const UserAvatarMedium = ({ userId, name, avatarUrl }: { userId: string; name: string; avatarUrl?: string | null }) => {
 	const { avatarConfig, loading } = useUserAvatar(userId);
 
 	if (loading) {
@@ -241,7 +253,17 @@ const UserAvatarMedium = ({ userId }: { userId: string }) => {
 		);
 	}
 
-	return <OwlAvatar config={avatarConfig} size={40} className="flex-shrink-0" />;
+	if (avatarUrl) {
+		return (
+			<img
+				src={avatarUrl}
+				alt={name}
+				className="h-8 w-8 sm:h-10 sm:w-10 rounded-full object-cover flex-shrink-0"
+			/>
+		);
+	}
+
+	return <DefaultAvatar name={name} size={40} className="flex-shrink-0" />;
 };
 
 // --- REPLY ITEM (Unchanged) ---
@@ -275,7 +297,11 @@ const ReplyItem = ({ reply, navigate, handleViewProfile }: { reply: Reply; navig
                 className="mr-1.5 sm:mr-2 flex-shrink-0 cursor-pointer z-10"
                 onClick={() => handleViewProfile(reply.author_id)}
             >
-                <UserAvatarSmall userId={reply.author_id} />
+                <UserAvatarSmall 
+                  userId={reply.author_id} 
+                  name={reply.profiles.display_name}
+                  avatarUrl={reply.profiles.avatar_url}
+                />
             </div>
 
             <div className="flex-1 min-w-0">
@@ -322,7 +348,7 @@ const ReplyItem = ({ reply, navigate, handleViewProfile }: { reply: Reply; navig
 
 // --- POST CARD (Updated to accept and pass through new props) ---
 
-const PostCard = ({ post, addReply, user, navigate, onAcknowledge, onDeletePost, onReportPost, onEditPost }:
+const PostCard = ({ post, addReply, user, navigate, onAcknowledge, onDeletePost, onReportPost, onEditPost, userProfile }:
   { 
       post: Post; 
       addReply: (postId: string, reply: Reply) => void; 
@@ -332,6 +358,7 @@ const PostCard = ({ post, addReply, user, navigate, onAcknowledge, onDeletePost,
       onDeletePost: (postId: string) => void;
       onReportPost: (postId: string) => void;
       onEditPost: (postId: string) => void;
+      userProfile: { display_name: string; avatar_url: string | null } | null;
   }) => {
 
   const { t, i18n } = useTranslation();
@@ -450,7 +477,11 @@ const PostCard = ({ post, addReply, user, navigate, onAcknowledge, onDeletePost,
         className="mr-2 sm:mr-3 flex-shrink-0 cursor-pointer ml-0.5 sm:ml-1"
         onClick={() => handleViewProfile(post.author_id)}
       >
-        <UserAvatarMedium userId={post.author_id} />
+        <UserAvatarMedium 
+          userId={post.author_id} 
+          name={post.profiles.display_name}
+          avatarUrl={post.profiles.avatar_url}
+        />
       </div>
 
       <div className="flex-1 min-w-0">
@@ -619,7 +650,11 @@ const PostCard = ({ post, addReply, user, navigate, onAcknowledge, onDeletePost,
           {showComments && user && (
             <div className="mt-2 flex items-center gap-1.5 sm:gap-2">
               <div className="flex-shrink-0">
-                <UserAvatarSmall userId={user.id} />
+                <UserAvatarSmall 
+                  userId={user.id}
+                  name={userProfile?.display_name || 'You'}
+                  avatarUrl={userProfile?.avatar_url}
+                />
               </div>
               <Input
                 value={replyText}
@@ -665,6 +700,7 @@ const Feed = () => {
   const [forceLoaded, setForceLoaded] = useState(false);
   const [activeTab, setActiveTab] = useState<'foryou' | 'following'>('foryou');
   const [newPostsCount, setNewPostsCount] = useState(0);
+  const [userProfile, setUserProfile] = useState<{ display_name: string; avatar_url: string | null } | null>(null);
   const navigate = useNavigate();
   const feedRef = useRef<HTMLDivElement>(null);
   
@@ -697,6 +733,22 @@ const Feed = () => {
       fetchPosts();
     }
   }, []);
+
+  // Fetch current user profile
+  useEffect(() => {
+    if (user) {
+      supabase
+        .from('profiles')
+        .select('display_name, avatar_url')
+        .eq('id', user.id)
+        .single()
+        .then(({ data }) => {
+          if (data) {
+            setUserProfile(data);
+          }
+        });
+    }
+  }, [user]);
 
   // Save to cache whenever posts change
   useEffect(() => {
@@ -926,7 +978,7 @@ const Feed = () => {
         .from('posts')
         .select(`
           *,
-          profiles(display_name, handle, is_verified, is_organization_verified),
+          profiles(display_name, handle, is_verified, is_organization_verified, avatar_url),
           post_images(image_url, display_order, alt_text),
           post_link_previews(url, title, description, image_url, site_name)
         `)
@@ -950,7 +1002,7 @@ const Feed = () => {
             .from('posts')
             .select(`
               *,
-              profiles(display_name, handle, is_verified, is_organization_verified),
+              profiles(display_name, handle, is_verified, is_organization_verified, avatar_url),
               post_images(image_url, display_order, alt_text),
               post_link_previews(url, title, description, image_url, site_name)
             `)
@@ -1224,6 +1276,7 @@ const Feed = () => {
                 onDeletePost={handleDeletePost}
                 onReportPost={handleReportPost}
                 onEditPost={handleEditPost}
+                userProfile={userProfile}
               />
             ))
           )}

@@ -17,12 +17,31 @@ const Layout = ({ children }: LayoutProps) => {
   const location = useLocation();
   const navigate = useNavigate();
   const [isAdmin, setIsAdmin] = useState(false);
+  const [isScrollingDown, setIsScrollingDown] = useState(false);
+  const [lastScrollY, setLastScrollY] = useState(0);
 
   useEffect(() => {
     if (user) {
       checkAdminStatus();
     }
   }, [user]);
+
+  useEffect(() => {
+    const handleScroll = () => {
+      const currentScrollY = window.scrollY;
+      
+      if (currentScrollY > lastScrollY && currentScrollY > 100) {
+        setIsScrollingDown(true);
+      } else {
+        setIsScrollingDown(false);
+      }
+      
+      setLastScrollY(currentScrollY);
+    };
+
+    window.addEventListener('scroll', handleScroll, { passive: true });
+    return () => window.removeEventListener('scroll', handleScroll);
+  }, [lastScrollY]);
 
   const checkAdminStatus = async () => {
     if (!user) return;
@@ -120,7 +139,10 @@ const Layout = ({ children }: LayoutProps) => {
       </main>
 
       {/* Mobile Bottom Navigation */}
-      <nav className="lg:hidden fixed bottom-0 left-0 right-0 bg-background border-t border-border z-50">
+      <nav className={cn(
+        "lg:hidden fixed bottom-0 left-0 right-0 bg-background border-t border-border z-50 transition-transform duration-300",
+        isScrollingDown ? "translate-y-full" : "translate-y-0"
+      )}>
         <div className="flex justify-around items-center h-16 px-2">
           {[
             { path: '/', icon: Home },

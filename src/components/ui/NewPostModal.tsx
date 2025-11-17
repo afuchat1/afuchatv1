@@ -13,7 +13,7 @@ import { Dialog, DialogContent } from '@/components/ui/dialog';
 import { useImageDescription } from '@/hooks/useImageDescription';
 import { AltTextEditor } from '@/components/ui/AltTextEditor';
 import { compressImageFile } from '@/lib/imageCompression';
-import { OwlAvatar } from '@/components/avatar/OwlAvatar';
+import { DefaultAvatar } from '@/components/avatar/DefaultAvatar';
 import { useUserAvatar } from '@/hooks/useUserAvatar';
 import { cn } from '@/lib/utils';
 import { useLinkPreview } from '@/hooks/useLinkPreview';
@@ -43,6 +43,7 @@ const NewPostModal: React.FC<NewPostModalProps> = ({ isOpen, onClose }) => {
     const [showBatchEditor, setShowBatchEditor] = useState(false);
     const [showAltTextEditor, setShowAltTextEditor] = useState(false);
     const [editingAltTextIndex, setEditingAltTextIndex] = useState<number | null>(null);
+    const [userProfile, setUserProfile] = useState<{ display_name: string; avatar_url: string | null } | null>(null);
     const fileInputRef = useRef<HTMLInputElement>(null);
     const textareaRef = useRef<HTMLTextAreaElement>(null);
     const { generateDescription, isGenerating } = useImageDescription();
@@ -51,6 +52,19 @@ const NewPostModal: React.FC<NewPostModalProps> = ({ isOpen, onClose }) => {
 
     const charCount = 280 - newPost.length;
     const charCountColor = charCount < 20 ? 'text-destructive' : charCount < 50 ? 'text-warning' : 'text-muted-foreground';
+
+    React.useEffect(() => {
+        if (user) {
+            supabase
+                .from('profiles')
+                .select('display_name, avatar_url')
+                .eq('id', user.id)
+                .single()
+                .then(({ data }) => {
+                    if (data) setUserProfile(data);
+                });
+        }
+    }, [user]);
 
     const handleClose = () => {
         setNewPost('');
@@ -292,9 +306,18 @@ const NewPostModal: React.FC<NewPostModalProps> = ({ isOpen, onClose }) => {
                         <div className="flex gap-3">
                             {/* Avatar */}
                             <div className="flex-shrink-0">
-                                <div className="h-10 w-10 rounded-full overflow-hidden bg-muted">
-                                    <OwlAvatar config={avatarConfig} size={40} />
-                                </div>
+                                {userProfile?.avatar_url ? (
+                                    <img 
+                                        src={userProfile.avatar_url} 
+                                        alt={userProfile.display_name}
+                                        className="h-10 w-10 rounded-full object-cover"
+                                    />
+                                ) : (
+                                    <DefaultAvatar 
+                                        name={userProfile?.display_name || 'You'} 
+                                        size={40} 
+                                    />
+                                )}
                             </div>
 
                             {/* Post Content */}

@@ -39,11 +39,11 @@ export const AvatarEditor = ({ imageFile, onSave, onCancel }: AvatarEditorProps)
       FabricImage.fromURL(e.target?.result as string, {
         crossOrigin: 'anonymous',
       }).then((img) => {
-        // Scale image to fit
+        // Scale image to fit without zooming in
         const scaleToFit = Math.min(
-          CANVAS_SIZE / (img.width || 1),
-          CANVAS_SIZE / (img.height || 1)
-        ) * 0.8;
+          CROP_SIZE / (img.width || 1),
+          CROP_SIZE / (img.height || 1)
+        );
         
         img.scale(scaleToFit);
         img.set({
