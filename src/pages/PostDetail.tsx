@@ -183,6 +183,9 @@ const PostDetail = () => {
           content: r.content,
           created_at: r.created_at,
           parent_reply_id: r.parent_reply_id,
+          is_pinned: r.is_pinned,
+          pinned_by: r.pinned_by,
+          pinned_at: r.pinned_at,
           author: {
             display_name: r.profiles.display_name,
             handle: r.profiles.handle,
@@ -286,7 +289,25 @@ const PostDetail = () => {
       .select('*, profiles!inner(display_name, handle, is_verified, is_organization_verified, avatar_url)')
       .eq('post_id', postId);
     
-    if (data) setReplies(data as any);
+    if (data) {
+      const mappedReplies: Reply[] = data.map((r: any) => ({
+        id: r.id,
+        content: r.content,
+        created_at: r.created_at,
+        parent_reply_id: r.parent_reply_id,
+        is_pinned: r.is_pinned,
+        pinned_by: r.pinned_by,
+        pinned_at: r.pinned_at,
+        author: {
+          display_name: r.profiles.display_name,
+          handle: r.profiles.handle,
+          is_verified: r.profiles.is_verified,
+          is_organization_verified: r.profiles.is_organization_verified,
+          avatar_url: r.profiles.avatar_url,
+        },
+      }));
+      setReplies(organizeReplies(mappedReplies));
+    }
   };
 
   const handleDeleteReply = async (replyId: string) => {
@@ -340,8 +361,26 @@ const PostDetail = () => {
         .eq('post_id', postId)
         .order('created_at', { ascending: true });
 
-      const organizedReplies = organizeReplies(repliesData || []);
-      setReplies(organizedReplies);
+      if (repliesData) {
+        const mappedReplies: Reply[] = repliesData.map((r: any) => ({
+          id: r.id,
+          content: r.content,
+          created_at: r.created_at,
+          parent_reply_id: r.parent_reply_id,
+          is_pinned: r.is_pinned,
+          pinned_by: r.pinned_by,
+          pinned_at: r.pinned_at,
+          author: {
+            display_name: r.profiles.display_name,
+            handle: r.profiles.handle,
+            is_verified: r.profiles.is_verified,
+            is_organization_verified: r.profiles.is_organization_verified,
+            avatar_url: r.profiles.avatar_url,
+          },
+        }));
+        const organizedReplies = organizeReplies(mappedReplies);
+        setReplies(organizedReplies);
+      }
     } catch (error) {
       console.error('Error posting reply:', error);
       toast.error('Failed to post reply');
@@ -559,11 +598,6 @@ const PostDetail = () => {
                 }}
                 onPinReply={handlePinReply}
                 onDeleteReply={handleDeleteReply}
-                isPostAuthor={user?.id === post?.author.id}
-                currentUserId={user?.id}
-                VerifiedBadge={VerifiedBadge}
-                renderContentWithMentions={renderContentWithMentions}
-              />
                 isPostAuthor={user?.id === post?.author.id}
                 currentUserId={user?.id}
                 VerifiedBadge={VerifiedBadge}
