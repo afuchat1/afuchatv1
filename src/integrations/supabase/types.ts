@@ -632,7 +632,10 @@ export type Database = {
           content: string
           created_at: string | null
           id: string
+          is_pinned: boolean | null
           parent_reply_id: string | null
+          pinned_at: string | null
+          pinned_by: string | null
           post_id: string | null
         }
         Insert: {
@@ -640,7 +643,10 @@ export type Database = {
           content: string
           created_at?: string | null
           id?: string
+          is_pinned?: boolean | null
           parent_reply_id?: string | null
+          pinned_at?: string | null
+          pinned_by?: string | null
           post_id?: string | null
         }
         Update: {
@@ -648,7 +654,10 @@ export type Database = {
           content?: string
           created_at?: string | null
           id?: string
+          is_pinned?: boolean | null
           parent_reply_id?: string | null
+          pinned_at?: string | null
+          pinned_by?: string | null
           post_id?: string | null
         }
         Relationships: [

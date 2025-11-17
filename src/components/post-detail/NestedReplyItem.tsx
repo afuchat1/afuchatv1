@@ -9,6 +9,9 @@ interface Reply {
   content: string;
   created_at: string;
   parent_reply_id: string | null;
+  is_pinned?: boolean;
+  pinned_by?: string | null;
+  pinned_at?: string | null;
   author: {
     display_name: string;
     handle: string;
@@ -25,6 +28,10 @@ interface NestedReplyItemProps {
   onTranslate: (replyId: string, content: string) => void;
   translatedReplies: { [key: string]: string };
   onReplyClick: (replyId: string, authorHandle: string) => void;
+  onPinReply?: (replyId: string, currentPinnedState: boolean) => void;
+  onDeleteReply?: (replyId: string) => void;
+  isPostAuthor?: boolean;
+  currentUserId?: string;
   VerifiedBadge: React.ComponentType<{ isVerified?: boolean; isOrgVerified?: boolean }>;
   renderContentWithMentions: (content: string) => React.ReactNode;
 }
@@ -37,6 +44,10 @@ export const NestedReplyItem = ({
   onTranslate,
   translatedReplies,
   onReplyClick,
+  onPinReply,
+  onDeleteReply,
+  isPostAuthor,
+  currentUserId,
   VerifiedBadge,
   renderContentWithMentions,
 }: NestedReplyItemProps) => {
@@ -45,7 +56,12 @@ export const NestedReplyItem = ({
 
   return (
     <div className={`${depth > 0 ? 'ml-8 mt-3' : ''}`}>
-      <div className="p-4 border-b border-border hover:bg-muted/50 transition-colors">
+      <div className={`p-4 border-b border-border ${reply.is_pinned ? 'bg-primary/5 border-l-4 border-l-primary' : 'hover:bg-muted/50'} transition-colors`}>
+        {reply.is_pinned && (
+          <div className="text-xs text-primary font-medium mb-2 flex items-center gap-1">
+            📌 Pinned by author
+          </div>
+        )}
         <div className="flex items-start gap-3">
               <UserAvatar
                 userId={reply.author.handle}
@@ -103,6 +119,32 @@ export const NestedReplyItem = ({
                   className="text-xs text-muted-foreground hover:text-primary p-0 h-auto"
                 >
                   {t('feed.replyTo', 'Reply')}
+                </Button>
+              )}
+              
+              {onPinReply && isPostAuthor && depth === 0 && (
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={() => onPinReply(reply.id, reply.is_pinned || false)}
+                  className="text-xs text-muted-foreground hover:text-primary p-0 h-auto"
+                >
+                  {reply.is_pinned ? '📌 Unpin' : '📌 Pin'}
+                </Button>
+              )}
+              
+              {onDeleteReply && currentUserId && (currentUserId === reply.author.handle || isPostAuthor) && (
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={() => {
+                    if (confirm('Delete this comment?')) {
+                      onDeleteReply(reply.id);
+                    }
+                  }}
+                  className="text-xs text-red-500 hover:text-red-600 p-0 h-auto"
+                >
+                  Delete
                 </Button>
               )}
             </div>

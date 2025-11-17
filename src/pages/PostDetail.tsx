@@ -61,6 +61,9 @@ interface Reply {
   content: string;
   created_at: string;
   parent_reply_id: string | null;
+  is_pinned?: boolean;
+  pinned_by?: string | null;
+  pinned_at?: string | null;
   author: {
     display_name: string;
     handle: string;
@@ -247,7 +250,60 @@ const PostDetail = () => {
       }
     });
 
-    return rootReplies;
+    // Sort: pinned first, then by date
+    return rootReplies.sort((a, b) => {
+      if (a.is_pinned && !b.is_pinned) return -1;
+      if (!a.is_pinned && b.is_pinned) return 1;
+      return new Date(b.created_at).getTime() - new Date(a.created_at).getTime();
+    });
+  };
+
+  const handlePinReply = async (replyId: string, currentPinnedState: boolean) => {
+    if (!user || !post || user.id !== post.author.id) {
+      toast.error('Only post authors can pin comments');
+      return;
+    }
+
+    const { error } = await supabase
+      .from('post_replies')
+      .update({ 
+        is_pinned: !currentPinnedState,
+        pinned_by: !currentPinnedState ? user.id : null,
+        pinned_at: !currentPinnedState ? new Date().toISOString() : null
+      })
+      .eq('id', replyId);
+
+    if (error) {
+      toast.error('Failed to update pin status');
+      return;
+    }
+
+    toast.success(currentPinnedState ? 'Comment unpinned' : 'Comment pinned');
+    
+    // Refresh replies
+    const { data } = await supabase
+      .from('post_replies')
+      .select('*, profiles!inner(display_name, handle, is_verified, is_organization_verified, avatar_url)')
+      .eq('post_id', postId);
+    
+    if (data) setReplies(data as any);
+  };
+
+  const handleDeleteReply = async (replyId: string) => {
+    if (!user) return;
+
+    const { error } = await supabase
+      .from('post_replies')
+      .delete()
+      .eq('id', replyId);
+
+    if (error) {
+      toast.error('Failed to delete comment');
+      return;
+    }
+
+    toast.success('Comment deleted');
+    setReplies(prev => prev.filter(r => r.id !== replyId));
   };
 
   const handleReplySubmit = async () => {
@@ -278,17 +334,8 @@ const PostDetail = () => {
       const { data: repliesData } = await supabase
         .from('post_replies')
         .select(`
-          id,
-          content,
-          created_at,
-          parent_reply_id,
-          author:profiles!post_replies_author_id_fkey (
-            display_name,
-            handle,
-            is_verified,
-            is_organization_verified,
-            avatar_url
-          )
+          *,
+          profiles!inner(display_name, handle, is_verified, is_organization_verified, avatar_url)
         `)
         .eq('post_id', postId)
         .order('created_at', { ascending: true });
@@ -510,6 +557,15 @@ const PostDetail = () => {
                   setReplyingTo({ replyId, authorHandle });
                   setReplyText(`@${authorHandle} `);
                 }}
+                onPinReply={handlePinReply}
+                onDeleteReply={handleDeleteReply}
+                isPostAuthor={user?.id === post?.author.id}
+                currentUserId={user?.id}
+                VerifiedBadge={VerifiedBadge}
+                renderContentWithMentions={renderContentWithMentions}
+              />
+                isPostAuthor={user?.id === post?.author.id}
+                currentUserId={user?.id}
                 VerifiedBadge={VerifiedBadge}
                 renderContentWithMentions={renderContentWithMentions}
               />

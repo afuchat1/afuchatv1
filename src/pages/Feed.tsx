@@ -73,6 +73,9 @@ interface Reply {
   content: string;
   created_at: string;
   parent_reply_id?: string | null;
+  is_pinned?: boolean;
+  pinned_by?: string | null;
+  pinned_at?: string | null;
   nested_replies?: Reply[];
   profiles: {
     display_name: string;
@@ -395,7 +398,18 @@ const PostCard = ({ post, addReply, user, navigate, onAcknowledge, onDeletePost,
       }
     });
 
-    return topLevelReplies;
+    // Sort: pinned replies first, then by creation date
+    const sortReplies = (repliesToSort: Reply[]): Reply[] => {
+      return repliesToSort.sort((a, b) => {
+        // Pinned replies come first
+        if (a.is_pinned && !b.is_pinned) return -1;
+        if (!a.is_pinned && b.is_pinned) return 1;
+        // Otherwise sort by date (newest first)
+        return new Date(b.created_at).getTime() - new Date(a.created_at).getTime();
+      });
+    };
+
+    return sortReplies(topLevelReplies);
   };
 
   const organizedReplies = organizeReplies(post.replies || []);
@@ -529,6 +543,63 @@ const PostCard = ({ post, addReply, user, navigate, onAcknowledge, onDeletePost,
     // Refetch replies would happen through realtime subscription
     toast.success('Reply posted!');
     awardXP('create_reply', { post_id: post.id });
+  };
+
+  const handlePinReply = async (replyId: string, currentPinnedState: boolean) => {
+    if (!user || user.id !== post.author_id) {
+      toast.error('Only post authors can pin comments');
+      return;
+    }
+
+    const { error } = await supabase
+      .from('post_replies')
+      .update({ 
+        is_pinned: !currentPinnedState,
+        pinned_by: !currentPinnedState ? user.id : null,
+        pinned_at: !currentPinnedState ? new Date().toISOString() : null
+      })
+      .eq('id', replyId);
+
+    if (error) {
+      toast.error('Failed to update pin status');
+      console.error(error);
+      return;
+    }
+
+    toast.success(currentPinnedState ? 'Comment unpinned' : 'Comment pinned');
+    
+    // Update local state
+    const updatedReplies = post.replies.map(r => 
+      r.id === replyId 
+        ? { ...r, is_pinned: !currentPinnedState, pinned_by: !currentPinnedState ? user.id : null, pinned_at: !currentPinnedState ? new Date().toISOString() : null }
+        : r
+    );
+    
+    // Update the post in the parent's state would typically happen via realtime
+  };
+
+  const handleDeleteReply = async (replyId: string) => {
+    if (!user) {
+      toast.error('Please sign in to delete');
+      return;
+    }
+
+    const { error } = await supabase
+      .from('post_replies')
+      .delete()
+      .eq('id', replyId);
+
+    if (error) {
+      toast.error('Failed to delete comment');
+      console.error(error);
+      return;
+    }
+
+    toast.success('Comment deleted');
+    
+    // Update local state by removing the reply
+    const updatedReplies = post.replies.filter(r => r.id !== replyId);
+    // Trigger parent refresh would happen via realtime
   };
 
   return (
@@ -738,6 +809,10 @@ const PostCard = ({ post, addReply, user, navigate, onAcknowledge, onDeletePost,
                   depth={0}
                   handleViewProfile={handleViewProfile}
                   onReplyToReply={handleReplyToReply}
+                  onPinReply={handlePinReply}
+                  onDeleteReply={handleDeleteReply}
+                  isPostAuthor={user?.id === post.author_id}
+                  currentUserId={user?.id}
                   parsePostContent={(content, postId) => parsePostContent(content, postId, navigate)}
                   formatTime={formatTime}
                   UserAvatarSmall={UserAvatarSmall}

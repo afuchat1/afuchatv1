@@ -13,6 +13,9 @@ interface Reply {
   content: string;
   created_at: string;
   parent_reply_id?: string | null;
+  is_pinned?: boolean;
+  pinned_by?: string | null;
+  pinned_at?: string | null;
   nested_replies?: Reply[];
   profiles: {
     display_name: string;
@@ -28,6 +31,10 @@ interface NestedReplyItemProps {
   depth: number;
   handleViewProfile: (id: string) => void;
   onReplyToReply: (parentReplyId: string, content: string) => void;
+  onPinReply: (replyId: string, currentPinnedState: boolean) => void;
+  onDeleteReply: (replyId: string) => void;
+  isPostAuthor: boolean;
+  currentUserId?: string;
   parsePostContent: (content: string, navigate: any) => React.ReactNode;
   formatTime: (time: string) => string;
   UserAvatarSmall: React.ComponentType<{
@@ -46,6 +53,10 @@ export const NestedReplyItem = ({
   depth,
   handleViewProfile,
   onReplyToReply,
+  onPinReply,
+  onDeleteReply,
+  isPostAuthor,
+  currentUserId,
   parsePostContent,
   formatTime,
   UserAvatarSmall,
@@ -84,7 +95,12 @@ export const NestedReplyItem = ({
   const leftMargin = Math.min(depth * 16, 48); // Cap the left margin
 
   return (
-    <div style={{ marginLeft: `${leftMargin}px` }} className="pt-2 pb-1 border-l-2 border-border/30 pl-2">
+    <div style={{ marginLeft: `${leftMargin}px` }} className={`pt-2 pb-1 border-l-2 ${reply.is_pinned ? 'border-primary bg-primary/5' : 'border-border/30'} pl-2`}>
+      {reply.is_pinned && (
+        <div className="text-[9px] sm:text-[10px] text-primary font-medium mb-1 flex items-center gap-1">
+          📌 Pinned by author
+        </div>
+      )}
       <div className="flex">
         <div
           className="mr-1.5 sm:mr-2 flex-shrink-0 cursor-pointer"
@@ -152,6 +168,32 @@ export const NestedReplyItem = ({
                 Reply
               </Button>
             )}
+            
+            {isPostAuthor && depth === 0 && (
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={() => onPinReply(reply.id, reply.is_pinned || false)}
+                className="text-[10px] sm:text-xs text-muted-foreground hover:text-primary p-0 h-auto"
+              >
+                {reply.is_pinned ? '📌 Unpin' : '📌 Pin'}
+              </Button>
+            )}
+            
+            {currentUserId && (currentUserId === reply.author_id || isPostAuthor) && (
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={() => {
+                  if (confirm('Delete this comment?')) {
+                    onDeleteReply(reply.id);
+                  }
+                }}
+                className="text-[10px] sm:text-xs text-red-500 hover:text-red-600 p-0 h-auto"
+              >
+                Delete
+              </Button>
+            )}
           </div>
 
           {showReplyInput && (
@@ -186,6 +228,10 @@ export const NestedReplyItem = ({
                   depth={depth + 1}
                   handleViewProfile={handleViewProfile}
                   onReplyToReply={onReplyToReply}
+                  onPinReply={onPinReply}
+                  onDeleteReply={onDeleteReply}
+                  isPostAuthor={isPostAuthor}
+                  currentUserId={currentUserId}
                   parsePostContent={parsePostContent}
                   formatTime={formatTime}
                   UserAvatarSmall={UserAvatarSmall}
