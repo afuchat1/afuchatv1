@@ -23,6 +23,7 @@ import { OwlAvatar } from '@/components/avatar/OwlAvatar';
 import { useUserAvatar } from '@/hooks/useUserAvatar';
 import { useAITranslation } from '@/hooks/useAITranslation';
 import { ImageCarousel } from '@/components/ui/ImageCarousel';
+import { DefaultAvatar } from '@/components/avatar/DefaultAvatar';
 
 interface Profile {
 	id: string;
@@ -35,6 +36,7 @@ interface Profile {
 	created_at?: string;
 	xp: number;
 	current_grade: Grade;
+	avatar_url?: string | null;
 }
 
 interface Post {
@@ -163,7 +165,7 @@ const ContentParser: React.FC<{ content: string, isBio?: boolean }> = ({ content
 };
 
 // Profile Avatar Display Component
-const ProfileAvatarDisplay = ({ profileId }: { profileId: string | null }) => {
+const ProfileAvatarDisplay = ({ profileId, profile }: { profileId: string | null; profile: Profile | null }) => {
 	const { avatarConfig, loading } = useUserAvatar(profileId || undefined);
 	const { user } = useAuth();
 	const navigate = useNavigate();
@@ -178,10 +180,41 @@ const ProfileAvatarDisplay = ({ profileId }: { profileId: string | null }) => {
 
 	const handleClick = () => {
 		if (isOwnProfile) {
-			navigate('/avatar/edit');
+			navigate(`/${profileId}/edit`);
 		}
 	};
 
+	// Show uploaded avatar if available
+	if (profile?.avatar_url) {
+		return (
+			<div 
+				className={`w-full h-full ${isOwnProfile ? 'cursor-pointer hover:opacity-80 transition-opacity' : ''}`}
+				onClick={handleClick}
+				title={isOwnProfile ? 'Click to edit profile picture' : undefined}
+			>
+				<img 
+					src={profile.avatar_url} 
+					alt={profile.display_name}
+					className="w-full h-full object-cover"
+				/>
+			</div>
+		);
+	}
+
+	// Fall back to default avatar
+	if (profile?.display_name) {
+		return (
+			<div 
+				className={`w-full h-full flex items-center justify-center ${isOwnProfile ? 'cursor-pointer hover:opacity-80 transition-opacity' : ''}`}
+				onClick={handleClick}
+				title={isOwnProfile ? 'Click to edit profile picture' : undefined}
+			>
+				<DefaultAvatar name={profile.display_name} size={128} />
+			</div>
+		);
+	}
+
+	// Fallback to owl avatar if no other option
 	return (
 		<div 
 			className={isOwnProfile ? 'cursor-pointer hover:opacity-80 transition-opacity' : ''}
@@ -583,7 +616,7 @@ const Profile = () => {
 				<div className="p-4">
 					<div className="flex justify-between items-end -mt-20 sm:-mt-16">
 						<div className="h-24 w-24 sm:h-32 sm:w-32 border-4 border-background shadow-lg rounded-full overflow-hidden bg-background">
-							<ProfileAvatarDisplay profileId={profileId} />
+							<ProfileAvatarDisplay profileId={profileId} profile={profile} />
 						</div>
 
 					{user && user.id === profileId ? (

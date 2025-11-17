@@ -1,6 +1,5 @@
 import { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-// 🚨 NOTE: useAuth now returns 'loading' which we need to access.
 import { useAuth } from '@/contexts/AuthContext'; 
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
@@ -11,9 +10,13 @@ import { Textarea } from '@/components/ui/textarea';
 import { Switch } from '@/components/ui/switch';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Separator } from '@/components/ui/separator'; 
-import { Loader2, User, Lock, Eye, MessageCircle, MapPin, Globe } from 'lucide-react';
+import { Loader2, User, Lock, Eye, MessageCircle, Upload, X } from 'lucide-react';
 import { handleSchema, displayNameSchema, bioSchema } from '@/lib/validation';
 import { useXP } from '@/hooks/useXP';
+import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
+import { DefaultAvatar } from '@/components/avatar/DefaultAvatar';
+import { AvatarEditor } from '@/components/avatar/AvatarEditor';
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 
 // Import Supabase types
 import type { Database } from '@/integrations/supabase/types';
@@ -28,6 +31,7 @@ interface EditProfileForm {
   is_private: boolean;
   show_online_status: boolean;
   show_read_receipts: boolean;
+  avatar_url: string | null;
 }
 
 const EditProfile: React.FC = () => {
@@ -44,10 +48,13 @@ const EditProfile: React.FC = () => {
     is_private: false,
     show_online_status: true,
     show_read_receipts: true,
+    avatar_url: null,
   });
-  // This state tracks profile data fetching, separate from global auth loading.
   const [loadingProfile, setLoadingProfile] = useState<boolean>(true); 
   const [saving, setSaving] = useState<boolean>(false);
+  const [avatarFile, setAvatarFile] = useState<File | null>(null);
+  const [showAvatarEditor, setShowAvatarEditor] = useState(false);
+  const [uploadingAvatar, setUploadingAvatar] = useState(false);
 
   useEffect(() => {
     // 🚨 FIX 2: Check the global Auth loading state first. Exit if still checking session.
@@ -90,6 +97,7 @@ const EditProfile: React.FC = () => {
             is_private: data.is_private || false,
             show_online_status: data.show_online_status || true,
             show_read_receipts: data.show_read_receipts || true,
+            avatar_url: data.avatar_url || null,
           });
         } else {
           setProfile({
@@ -99,6 +107,7 @@ const EditProfile: React.FC = () => {
             is_private: false,
             show_online_status: true,
             show_read_receipts: true,
+            avatar_url: null,
           });
         }
       } catch (error: any) {
@@ -194,6 +203,93 @@ const EditProfile: React.FC = () => {
     navigate(`/${user?.id}`);
   };
 
+  const handleAvatarChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    // Validate file type
+    if (!file.type.startsWith('image/')) {
+      toast.error('Please select an image file');
+      return;
+    }
+
+    // Validate file size (5MB)
+    if (file.size > 5 * 1024 * 1024) {
+      toast.error('Image must be less than 5MB');
+      return;
+    }
+
+    setAvatarFile(file);
+    setShowAvatarEditor(true);
+  };
+
+  const handleRemoveAvatar = async () => {
+    if (!user) return;
+
+    setUploadingAvatar(true);
+    try {
+      // Remove from storage if exists
+      if (profile.avatar_url) {
+        const fileName = profile.avatar_url.split('/').pop();
+        if (fileName) {
+          await supabase.storage.from('avatars').remove([`${user.id}/${fileName}`]);
+        }
+      }
+
+      // Update profile
+      await supabase.from('profiles').update({ avatar_url: null }).eq('id', user.id);
+
+      setProfile((prev) => ({ ...prev, avatar_url: null }));
+      toast.success('Avatar removed');
+    } catch (error) {
+      console.error('Error removing avatar:', error);
+      toast.error('Failed to remove avatar');
+    } finally {
+      setUploadingAvatar(false);
+    }
+  };
+
+  const handleSaveAvatar = async (blob: Blob) => {
+    if (!user) return;
+
+    setUploadingAvatar(true);
+    try {
+      // Delete old avatar if exists
+      if (profile.avatar_url) {
+        const oldFileName = profile.avatar_url.split('/').pop();
+        if (oldFileName) {
+          await supabase.storage.from('avatars').remove([`${user.id}/${oldFileName}`]);
+        }
+      }
+
+      // Upload new avatar
+      const fileName = `${user.id}/${Date.now()}.png`;
+      const { error: uploadError } = await supabase.storage
+        .from('avatars')
+        .upload(fileName, blob);
+
+      if (uploadError) throw uploadError;
+
+      // Get public URL
+      const {
+        data: { publicUrl },
+      } = supabase.storage.from('avatars').getPublicUrl(fileName);
+
+      // Update profile
+      await supabase.from('profiles').update({ avatar_url: publicUrl }).eq('id', user.id);
+
+      setProfile((prev) => ({ ...prev, avatar_url: publicUrl }));
+      setShowAvatarEditor(false);
+      setAvatarFile(null);
+      toast.success('Avatar updated successfully!');
+    } catch (error) {
+      console.error('Error uploading avatar:', error);
+      toast.error('Failed to upload avatar');
+    } finally {
+      setUploadingAvatar(false);
+    }
+  };
+
   // 🚨 FIX 4: Check BOTH the global auth loading and the local profile fetching state.
   if (isLoadingAuth || loadingProfile) {
     return (
@@ -214,9 +310,66 @@ const EditProfile: React.FC = () => {
             Update your basic public-facing information.
           </CardDescription>
         </CardHeader>
-        <CardContent className="pt-6">
-            {/* ... rest of the form ... */}
-            <div className="space-y-6">
+        <CardContent className="p-6 space-y-8">
+          {/* Avatar Section */}
+          <div className="space-y-4">
+            <h3 className="text-lg font-semibold border-b pb-2 text-primary">Profile Picture</h3>
+            <div className="flex items-center gap-6">
+              <Avatar className="h-24 w-24 border-2 border-border">
+                {profile.avatar_url ? (
+                  <AvatarImage src={profile.avatar_url} alt={profile.display_name} />
+                ) : (
+                  <AvatarFallback className="bg-muted">
+                    <DefaultAvatar name={profile.display_name} size={96} />
+                  </AvatarFallback>
+                )}
+              </Avatar>
+
+              <div className="flex-1 space-y-3">
+                <div className="flex gap-2">
+                  <input
+                    type="file"
+                    id="avatar-upload"
+                    accept="image/*"
+                    onChange={handleAvatarChange}
+                    className="hidden"
+                    disabled={uploadingAvatar}
+                  />
+                  <Label htmlFor="avatar-upload">
+                    <Button
+                      type="button"
+                      variant="outline"
+                      disabled={uploadingAvatar}
+                      asChild
+                    >
+                      <span className="cursor-pointer">
+                        <Upload className="h-4 w-4 mr-2" />
+                        {uploadingAvatar ? 'Uploading...' : 'Upload Photo'}
+                      </span>
+                    </Button>
+                  </Label>
+                  {profile.avatar_url && (
+                    <Button
+                      type="button"
+                      variant="outline"
+                      onClick={handleRemoveAvatar}
+                      disabled={uploadingAvatar}
+                    >
+                      <X className="h-4 w-4 mr-2" />
+                      Remove
+                    </Button>
+                  )}
+                </div>
+                <p className="text-sm text-muted-foreground">
+                  JPG, PNG, or GIF (max 5MB). Square images work best.
+                </p>
+              </div>
+            </div>
+          </div>
+
+          <Separator className="my-8 bg-border/50" />
+
+          <div className="space-y-6">
             
             <h3 className="text-lg font-semibold border-b pb-2 text-primary">Basic Information</h3>
 
@@ -329,8 +482,7 @@ const EditProfile: React.FC = () => {
 
             {/* Location - Coming Soon */}
             <div className="space-y-2">
-              <Label className="text-sm font-medium text-foreground flex items-center gap-2">
-                <MapPin className="h-4 w-4 text-muted-foreground" />
+              <Label className="text-sm font-medium text-foreground">
                 Location
               </Label>
               <div className="h-11 bg-muted/50 flex items-center justify-center rounded-md text-sm text-muted-foreground">
@@ -340,8 +492,7 @@ const EditProfile: React.FC = () => {
 
             {/* Website - Coming Soon */}
             <div className="space-y-2">
-              <Label className="text-sm font-medium text-foreground flex items-center gap-2">
-                <Globe className="h-4 w-4 text-muted-foreground" />
+              <Label className="text-sm font-medium text-foreground">
                 Website
               </Label>
               <div className="h-11 bg-muted/50 flex items-center justify-center rounded-md text-sm text-muted-foreground">
@@ -374,6 +525,25 @@ const EditProfile: React.FC = () => {
           </div>
         </CardContent>
       </Card>
+
+      {/* Avatar Editor Dialog */}
+      <Dialog open={showAvatarEditor} onOpenChange={setShowAvatarEditor}>
+        <DialogContent className="max-w-2xl">
+          <DialogHeader>
+            <DialogTitle>Edit Profile Picture</DialogTitle>
+          </DialogHeader>
+          {avatarFile && (
+            <AvatarEditor
+              imageFile={avatarFile}
+              onSave={handleSaveAvatar}
+              onCancel={() => {
+                setShowAvatarEditor(false);
+                setAvatarFile(null);
+              }}
+            />
+          )}
+        </DialogContent>
+      </Dialog>
     </div>
   );
 };
