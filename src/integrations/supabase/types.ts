@@ -632,6 +632,7 @@ export type Database = {
           content: string
           created_at: string | null
           id: string
+          parent_reply_id: string | null
           post_id: string | null
         }
         Insert: {
@@ -639,6 +640,7 @@ export type Database = {
           content: string
           created_at?: string | null
           id?: string
+          parent_reply_id?: string | null
           post_id?: string | null
         }
         Update: {
@@ -646,6 +648,7 @@ export type Database = {
           content?: string
           created_at?: string | null
           id?: string
+          parent_reply_id?: string | null
           post_id?: string | null
         }
         Relationships: [
@@ -654,6 +657,13 @@ export type Database = {
             columns: ["author_id"]
             isOneToOne: false
             referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "post_replies_parent_reply_id_fkey"
+            columns: ["parent_reply_id"]
+            isOneToOne: false
+            referencedRelation: "post_replies"
             referencedColumns: ["id"]
           },
           {

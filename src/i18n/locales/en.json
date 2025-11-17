@@ -74,6 +74,7 @@
     "post": "Post",
     "acknowledge": "Acknowledge",
     "reply": "Reply",
+    "replyTo": "Reply to {{name}}...",
     "share": "Share",
     "noPostsYet": "No posts yet",
     "startConversation": "Be the first to start a conversation!",

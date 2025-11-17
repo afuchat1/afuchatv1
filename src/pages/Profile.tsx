@@ -23,6 +23,7 @@ import { OwlAvatar } from '@/components/avatar/OwlAvatar';
 import { useUserAvatar } from '@/hooks/useUserAvatar';
 import { useAITranslation } from '@/hooks/useAITranslation';
 import { ImageCarousel } from '@/components/ui/ImageCarousel';
+import { LinkPreviewCard } from '@/components/ui/LinkPreviewCard';
 import { DefaultAvatar } from '@/components/avatar/DefaultAvatar';
 
 interface Profile {
@@ -49,6 +50,13 @@ interface Post {
 		image_url: string;
 		alt_text: string | null;
 		display_order: number;
+	}>;
+	post_link_previews?: Array<{
+		url: string;
+		title?: string | null;
+		description?: string | null;
+		image_url?: string | null;
+		site_name?: string | null;
 	}>;
 }
 
@@ -98,6 +106,7 @@ const ContentParser: React.FC<{ content: string, isBio?: boolean }> = ({ content
 	const { translateText } = useAITranslation();
 	const [translatedContent, setTranslatedContent] = useState<string | null>(null);
 	const [isTranslating, setIsTranslating] = useState(false);
+	const navigate = useNavigate();
 
 	const handleTranslate = async () => {
 		if (translatedContent) {
@@ -111,32 +120,65 @@ const ContentParser: React.FC<{ content: string, isBio?: boolean }> = ({ content
 	};
 
 	const displayContent = translatedContent || content;
+	
+	// Parse mentions, hashtags, and links (including plain domains like afuchat.com)
+	const combinedRegex = /(@[a-zA-Z0-9_-]+|#\w+|https?:\/\/[^\s]+|(?:www\.)?[a-zA-Z0-9-]+\.[a-zA-Z]{2,}(?:\/[^\s]*)?)/g;
 	const parts: React.ReactNode[] = [];
 	let lastIndex = 0;
-	let match;
-
-	const MENTION_REGEX_LOCAL = /@(\w+)/g;
-	while ((match = MENTION_REGEX_LOCAL.exec(displayContent)) !== null) {
-		const mentionText = match[0];
-		const handle = match[1];
-
-		if (match.index > lastIndex) {
-			parts.push(displayContent.substring(lastIndex, match.index));
+	
+	const matches = Array.from(displayContent.matchAll(combinedRegex));
+	
+	matches.forEach((match, idx) => {
+		const matchText = match[0];
+		const index = match.index!;
+		
+		if (index > lastIndex) {
+			parts.push(displayContent.substring(lastIndex, index));
 		}
-
-		parts.push(
-			<Link
-				key={`mention-${match.index}-${handle}`}
-				to={`/${handle}`} 
-				className="text-blue-500 hover:text-blue-400 font-medium transition-colors"
-				onClick={(e) => e.stopPropagation()}
-			>
-				{mentionText}
-			</Link>
-		);
-
-		lastIndex = match.index + mentionText.length;
-	}
+		
+		if (matchText.startsWith('@')) {
+			const handle = matchText.substring(1);
+			parts.push(
+				<Link
+					key={`mention-${idx}`}
+					to={`/${handle}`} 
+					className="text-blue-500 hover:text-blue-400 font-medium transition-colors"
+					onClick={(e) => e.stopPropagation()}
+				>
+					{matchText}
+				</Link>
+			);
+		} else if (matchText.startsWith('#')) {
+			const hashtag = matchText.substring(1);
+			parts.push(
+				<Link
+					key={`hashtag-${idx}`}
+					to={`/search?q=${encodeURIComponent(hashtag)}`}
+					className="text-primary hover:underline font-medium"
+					onClick={(e) => e.stopPropagation()}
+				>
+					{matchText}
+				</Link>
+			);
+		} else {
+			// It's a URL (either with protocol or plain domain)
+			const url = matchText.startsWith('http') ? matchText : `https://${matchText}`;
+			parts.push(
+				<a
+					key={`url-${idx}`}
+					href={url}
+					target="_blank"
+					rel="noopener noreferrer"
+					className="text-primary hover:underline"
+					onClick={(e) => e.stopPropagation()}
+				>
+					{matchText.length > 50 ? matchText.substring(0, 50) + '...' : matchText}
+				</a>
+			);
+		}
+		
+		lastIndex = index + matchText.length;
+	});
 
 	if (lastIndex < displayContent.length) {
 		parts.push(displayContent.substring(lastIndex));
@@ -353,6 +395,13 @@ const Profile = () => {
 					image_url,
 					alt_text,
 					display_order
+				),
+				post_link_previews (
+					url,
+					title,
+					description,
+					image_url,
+					site_name
 				)
 			`)
 			.eq('author_id', id)

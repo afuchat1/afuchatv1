@@ -15,6 +15,7 @@ import PostActionsSheet from '@/components/PostActionsSheet';
 import DeletePostSheet from '@/components/DeletePostSheet';
 import ReportPostSheet from '@/components/ReportPostSheet';
 import { EditPostModal } from '@/components/EditPostModal';
+import { NestedReplyItem } from '@/components/feed/NestedReplyItem';
 import { DefaultAvatar } from '@/components/avatar/DefaultAvatar';
 import { useUserAvatar } from '@/hooks/useUserAvatar';
 import { SendGiftDialog } from '@/components/gifts/SendGiftDialog';
@@ -71,6 +72,8 @@ interface Reply {
   author_id: string;
   content: string;
   created_at: string;
+  parent_reply_id?: string | null;
+  nested_replies?: Reply[];
   profiles: {
     display_name: string;
     handle: string;
@@ -150,8 +153,8 @@ const parsePostContent = (content: string, navigate: (path: string) => void) => 
     navigate(`/profile/${data.id}`); 
   };
   
-  // First process mentions, then process hashtags and links
-  const combinedRegex = /(@[a-zA-Z0-9_-]+|#\w+|https?:\/\/[^\s]+)/g;
+  // First process mentions, then process hashtags and links (including plain domains)
+  const combinedRegex = /(@[a-zA-Z0-9_-]+|#\w+|https?:\/\/[^\s]+|(?:www\.)?[a-zA-Z0-9-]+\.[a-zA-Z]{2,}(?:\/[^\s]*)?)/g;
   const parts: (string | JSX.Element)[] = [];
   let lastIndex = 0;
   
@@ -194,11 +197,13 @@ const parsePostContent = (content: string, navigate: (path: string) => void) => 
           {matchText}
         </a>
       );
-    } else if (matchText.startsWith('http')) {
+    } else {
+      // It's a URL (either with http/https or a plain domain)
+      const url = matchText.startsWith('http') ? matchText : `https://${matchText}`;
       parts.push(
         <a
           key={`url-${idx}`}
-          href={matchText}
+          href={url}
           target="_blank"
           rel="noopener noreferrer"
           className="text-primary hover:underline"
@@ -369,6 +374,32 @@ const PostCard = ({ post, addReply, user, navigate, onAcknowledge, onDeletePost,
   const [translatedContent, setTranslatedContent] = useState<string | null>(null);
   const [isTranslating, setIsTranslating] = useState(false);
   
+  // Organize replies into a tree structure
+  const organizeReplies = (replies: Reply[]): Reply[] => {
+    const replyMap = new Map<string, Reply>();
+    const topLevelReplies: Reply[] = [];
+
+    // First pass: create reply objects with nested_replies arrays
+    replies.forEach(reply => {
+      replyMap.set(reply.id, { ...reply, nested_replies: [] });
+    });
+
+    // Second pass: organize into tree structure
+    replies.forEach(reply => {
+      const replyWithNested = replyMap.get(reply.id)!;
+      if (reply.parent_reply_id && replyMap.has(reply.parent_reply_id)) {
+        const parent = replyMap.get(reply.parent_reply_id)!;
+        parent.nested_replies!.push(replyWithNested);
+      } else {
+        topLevelReplies.push(replyWithNested);
+      }
+    });
+
+    return topLevelReplies;
+  };
+
+  const organizedReplies = organizeReplies(post.replies || []);
+  
   const handleViewProfile = (userId: string) => {
     navigate(`/profile/${userId}`);
   };
@@ -446,6 +477,8 @@ const PostCard = ({ post, addReply, user, navigate, onAcknowledge, onDeletePost,
       author_id: user.id,
       content: trimmedReplyText,
       created_at: new Date().toISOString(),
+      parent_reply_id: null,
+      nested_replies: [],
       profiles: {
         display_name: user?.user_metadata?.display_name || 'User',
         handle: user?.user_metadata?.handle || 'user',
@@ -460,6 +493,7 @@ const PostCard = ({ post, addReply, user, navigate, onAcknowledge, onDeletePost,
       post_id: post.id,
       author_id: user.id,
       content: trimmedReplyText,
+      parent_reply_id: null,
     });
 
     if (error) {
@@ -467,8 +501,33 @@ const PostCard = ({ post, addReply, user, navigate, onAcknowledge, onDeletePost,
       console.error(error);
     } else {
       // Award XP for creating a reply
+      toast.success('Reply posted!');
       awardXP('create_reply', { post_id: post.id });
     }
+  };
+
+  const handleReplyToReply = async (parentReplyId: string, content: string) => {
+    if (!user) {
+      navigate('/auth');
+      return;
+    }
+
+    const { error } = await supabase.from('post_replies').insert({
+      post_id: post.id,
+      author_id: user.id,
+      content: content,
+      parent_reply_id: parentReplyId,
+    });
+
+    if (error) {
+      toast.error('Failed to post reply');
+      console.error(error);
+      return;
+    }
+
+    // Refetch replies would happen through realtime subscription
+    toast.success('Reply posted!');
+    awardXP('create_reply', { post_id: post.id });
   };
 
   return (
@@ -636,12 +695,17 @@ const PostCard = ({ post, addReply, user, navigate, onAcknowledge, onDeletePost,
 
           {showComments && post.replies && post.replies.length > 0 && (
             <div className="space-y-1 pt-2 border-l border-border/80 pl-3 sm:pl-4 ml-2 sm:ml-3"> 
-              {post.replies.map((reply) => (
-                <ReplyItem 
-                    key={reply.id} 
-                    reply={reply} 
-                    navigate={navigate} 
-                    handleViewProfile={handleViewProfile}
+              {organizedReplies.map((reply) => (
+                <NestedReplyItem
+                  key={reply.id} 
+                  reply={reply}
+                  depth={0}
+                  handleViewProfile={handleViewProfile}
+                  onReplyToReply={handleReplyToReply}
+                  parsePostContent={parsePostContent}
+                  formatTime={formatTime}
+                  UserAvatarSmall={UserAvatarSmall}
+                  VerifiedBadge={VerifiedBadge}
                 />
               ))}
             </div>
@@ -1018,7 +1082,7 @@ const Feed = () => {
 
       const { data: repliesData, error: repliesError } = await supabase
         .from('post_replies')
-        .select('*, profiles(display_name, handle, is_verified, is_organization_verified)')
+        .select('*, profiles(display_name, handle, is_verified, is_organization_verified, avatar_url)')
         .in('post_id', postIds)
         .order('created_at', { ascending: true });
 

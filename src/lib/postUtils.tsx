@@ -1,12 +1,20 @@
 import React from 'react';
 
 /**
- * Extracts URLs from text content
+ * Extracts URLs from text content including plain domains
  */
 export function extractUrls(text: string): string[] {
-  const urlRegex = /(https?:\/\/[^\s]+)/g;
+  // Match both https?:// URLs and plain domain names like afuchat.com
+  const urlRegex = /(https?:\/\/[^\s]+|(?:www\.)?[a-zA-Z0-9-]+\.[a-zA-Z]{2,}(?:\/[^\s]*)?)/g;
   const matches = text.match(urlRegex);
-  return matches || [];
+  
+  // Normalize URLs - add https:// to plain domains if needed
+  return matches?.map(url => {
+    if (!url.startsWith('http://') && !url.startsWith('https://')) {
+      return `https://${url}`;
+    }
+    return url;
+  }) || [];
 }
 
 /**
