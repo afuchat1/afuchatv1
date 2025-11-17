@@ -10,7 +10,9 @@ import { useDailyLogin } from "./hooks/useDailyLogin";
 import { useLanguageSync } from "./hooks/useLanguageSync";
 import { useScrollRestoration } from "./hooks/useScrollRestoration";
 import Home from "./pages/Home";
-import Auth from "./pages/Auth";
+import Welcome from "./pages/auth/Welcome";
+import SignIn from "./pages/auth/SignIn";
+import SignUp from "./pages/auth/SignUp";
 import ChatsPage from "./pages/ChatsPage";
 import ChatRoom from "./pages/ChatRoom";
 import SearchPage from "./pages/SearchPage";
@@ -49,12 +51,14 @@ const AppRoutes = () => {
 
   return (
     <Routes>
-      <Route path="/" element={<Home />} />
-      <Route path="/auth" element={<Auth />} />
-      <Route path="/chats" element={<ChatsPage />} />
+      <Route path="/" element={<Layout><Home /></Layout>} />
+      <Route path="/auth" element={<Welcome />} />
+      <Route path="/auth/signin" element={<SignIn />} />
+      <Route path="/auth/signup" element={<SignUp />} />
+      <Route path="/chats" element={<Layout><ChatsPage /></Layout>} />
       <Route path="/chat/:chatId" element={<Layout><ChatRoom /></Layout>} />
-      <Route path="/search" element={<SearchPage />} />
-      <Route path="/shop" element={<ShopPage />} />
+      <Route path="/search" element={<Layout><SearchPage /></Layout>} />
+      <Route path="/shop" element={<Layout><ShopPage /></Layout>} />
       <Route path="/notifications" element={<Layout><Notifications /></Layout>} />
       <Route path="/post/:postId" element={<Layout><PostDetail /></Layout>} />
       <Route path="/admin" element={<Layout><AdminDashboard /></Layout>} />
