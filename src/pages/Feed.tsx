@@ -373,6 +373,7 @@ const PostCard = ({ post, addReply, user, navigate, onAcknowledge, onDeletePost,
   const [replyText, setReplyText] = useState('');
   const [translatedContent, setTranslatedContent] = useState<string | null>(null);
   const [isTranslating, setIsTranslating] = useState(false);
+  const [visibleRepliesCount, setVisibleRepliesCount] = useState(5);
   
   // Organize replies into a tree structure
   const organizeReplies = (replies: Reply[]): Reply[] => {
@@ -484,6 +485,7 @@ const PostCard = ({ post, addReply, user, navigate, onAcknowledge, onDeletePost,
         handle: user?.user_metadata?.handle || 'user',
         is_verified: user?.user_metadata?.is_verified || false,
         is_organization_verified: user?.user_metadata?.is_organization_verified || false,
+        avatar_url: userProfile?.avatar_url || null,
       },
     };
     addReply(post.id, optimisticReply);
@@ -695,7 +697,7 @@ const PostCard = ({ post, addReply, user, navigate, onAcknowledge, onDeletePost,
 
           {showComments && post.replies && post.replies.length > 0 && (
             <div className="space-y-1 pt-2 border-l border-border/80 pl-3 sm:pl-4 ml-2 sm:ml-3"> 
-              {organizedReplies.map((reply) => (
+              {organizedReplies.slice(0, visibleRepliesCount).map((reply) => (
                 <NestedReplyItem
                   key={reply.id} 
                   reply={reply}
@@ -708,6 +710,16 @@ const PostCard = ({ post, addReply, user, navigate, onAcknowledge, onDeletePost,
                   VerifiedBadge={VerifiedBadge}
                 />
               ))}
+              {organizedReplies.length > visibleRepliesCount && (
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={() => setVisibleRepliesCount(prev => prev + 10)}
+                  className="text-primary text-xs mt-2 hover:underline"
+                >
+                  {t('feed.loadMoreComments', { count: organizedReplies.length - visibleRepliesCount })}
+                </Button>
+              )}
             </div>
           )}
 

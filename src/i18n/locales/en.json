@@ -80,8 +80,10 @@
     "startConversation": "Be the first to start a conversation!",
     "addComment": "Add a comment...",
     "signInToReply": "Sign in to reply",
+    "replyTo": "Reply to",
     "viewComments": "View all {{count}} comment",
     "viewComments_other": "View all {{count}} comments",
+    "loadMoreComments": "Load {{count}} more comments",
     "linkCopied": "Link copied to clipboard!",
     "failedToCopy": "Failed to copy link",
     "analyzePost": "Analyze post with AfuAI"
