@@ -1,11 +1,11 @@
-import { useState } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import { supabase } from '@/integrations/supabase/client';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { toast } from 'sonner';
-import { Eye, EyeOff, X, Loader2 } from 'lucide-react';
+import { Eye, EyeOff, X, Loader2, CheckCircle2, XCircle } from 'lucide-react';
 import Logo from '@/components/Logo';
 import { emailSchema, passwordSchema, handleSchema, displayNameSchema } from '@/lib/validation';
 import { Separator } from '@/components/ui/separator';
@@ -21,10 +21,68 @@ const SignUp = () => {
   const [handle, setHandle] = useState('');
   const [googleLoading, setGoogleLoading] = useState(false);
   const [githubLoading, setGithubLoading] = useState(false);
+  const [usernameStatus, setUsernameStatus] = useState<'idle' | 'checking' | 'available' | 'taken'>('idle');
+  const [usernameError, setUsernameError] = useState('');
 
   // Capture referral code from URL
   const urlParams = new URLSearchParams(window.location.search);
   const referralCode = urlParams.get('ref');
+
+  // Check username availability with debounce
+  const checkUsernameAvailability = useCallback(async (username: string) => {
+    if (!username || username.length < 4) {
+      setUsernameStatus('idle');
+      setUsernameError('');
+      return;
+    }
+
+    try {
+      handleSchema.parse(username);
+      setUsernameError('');
+    } catch (error: any) {
+      setUsernameStatus('idle');
+      setUsernameError(error.errors?.[0]?.message || 'Invalid username');
+      return;
+    }
+
+    setUsernameStatus('checking');
+
+    try {
+      const { data, error } = await supabase
+        .from('profiles')
+        .select('handle')
+        .eq('handle', username)
+        .maybeSingle();
+
+      if (error) throw error;
+
+      if (data) {
+        setUsernameStatus('taken');
+        setUsernameError('Username is already taken');
+      } else {
+        setUsernameStatus('available');
+        setUsernameError('');
+      }
+    } catch (error) {
+      console.error('Error checking username:', error);
+      setUsernameStatus('idle');
+    }
+  }, []);
+
+  // Debounce username check
+  useEffect(() => {
+    if (!handle) {
+      setUsernameStatus('idle');
+      setUsernameError('');
+      return;
+    }
+
+    const timer = setTimeout(() => {
+      checkUsernameAvailability(handle);
+    }, 500);
+
+    return () => clearTimeout(timer);
+  }, [handle, checkUsernameAvailability]);
 
   const handleNext = (e: React.FormEvent) => {
     e.preventDefault();
@@ -46,6 +104,12 @@ const SignUp = () => {
       passwordSchema.parse(password);
       displayNameSchema.parse(displayName);
       handleSchema.parse(handle);
+
+      // Check if username is available before proceeding
+      if (usernameStatus !== 'available') {
+        toast.error('Please choose an available username');
+        return;
+      }
 
       const signupData: any = {
         display_name: displayName,
@@ -235,18 +299,40 @@ const SignUp = () => {
 
             <div className="space-y-2">
               <Label htmlFor="handle">Username</Label>
-              <Input
-                id="handle"
-                type="text"
-                placeholder="username"
-                value={handle}
-                onChange={(e) => setHandle(e.target.value.replace(/[^a-zA-Z0-9_]/g, ''))}
-                required
-                className="h-12"
-              />
-              <p className="text-xs text-muted-foreground">
-                Letters, numbers, and underscores only
-              </p>
+              <div className="relative">
+                <Input
+                  id="handle"
+                  type="text"
+                  placeholder="username"
+                  value={handle}
+                  onChange={(e) => setHandle(e.target.value.replace(/[^a-zA-Z0-9_]/g, ''))}
+                  required
+                  className={`h-12 pr-10 ${
+                    usernameStatus === 'available' ? 'border-green-500' : 
+                    usernameStatus === 'taken' ? 'border-red-500' : ''
+                  }`}
+                />
+                <div className="absolute right-3 top-1/2 -translate-y-1/2">
+                  {usernameStatus === 'checking' && (
+                    <Loader2 className="h-5 w-5 animate-spin text-muted-foreground" />
+                  )}
+                  {usernameStatus === 'available' && (
+                    <CheckCircle2 className="h-5 w-5 text-green-500" />
+                  )}
+                  {usernameStatus === 'taken' && (
+                    <XCircle className="h-5 w-5 text-red-500" />
+                  )}
+                </div>
+              </div>
+              {usernameError ? (
+                <p className="text-xs text-red-500">{usernameError}</p>
+              ) : usernameStatus === 'available' ? (
+                <p className="text-xs text-green-500">Username is available!</p>
+              ) : (
+                <p className="text-xs text-muted-foreground">
+                  At least 4 characters. Letters, numbers, and underscores only
+                </p>
+              )}
             </div>
 
             <div className="space-y-2">
@@ -277,7 +363,7 @@ const SignUp = () => {
             <Button
               type="submit"
               className="w-full h-12 text-base font-semibold"
-              disabled={loading || googleLoading || githubLoading}
+              disabled={loading || googleLoading || githubLoading || usernameStatus !== 'available'}
             >
               {loading ? (
                 <>

@@ -24,9 +24,9 @@ export const postSchema = z.string()
 // Handle validation
 export const handleSchema = z.string()
   .trim()
-  .min(3, 'Handle must be at least 3 characters')
-  .max(20, 'Handle must be less than 20 characters')
-  .regex(/^[a-zA-Z0-9_]+$/, 'Handle can only contain letters, numbers, and underscores');
+  .min(4, 'Username must be at least 4 characters')
+  .max(20, 'Username must be less than 20 characters')
+  .regex(/^[a-zA-Z0-9_]+$/, 'Username can only contain letters, numbers, and underscores');
 
 // Display name validation
 export const displayNameSchema = z.string()
