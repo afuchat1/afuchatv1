@@ -28,6 +28,7 @@ interface EditProfileForm {
   display_name: string;
   handle: string;
   bio: string;
+  website_url: string;
   is_private: boolean;
   show_online_status: boolean;
   show_read_receipts: boolean;
@@ -45,6 +46,7 @@ const EditProfile: React.FC = () => {
     display_name: '',
     handle: '',
     bio: '',
+    website_url: '',
     is_private: false,
     show_online_status: true,
     show_read_receipts: true,
@@ -94,6 +96,7 @@ const EditProfile: React.FC = () => {
             display_name: data.display_name,
             handle: data.handle,
             bio: data.bio || '',
+            website_url: data.website_url || '',
             is_private: data.is_private || false,
             show_online_status: data.show_online_status || true,
             show_read_receipts: data.show_read_receipts || true,
@@ -104,6 +107,7 @@ const EditProfile: React.FC = () => {
             display_name: user.user_metadata?.full_name || '',
             handle: user.user_metadata?.user_name || '',
             bio: '',
+            website_url: '',
             is_private: false,
             show_online_status: true,
             show_read_receipts: true,
@@ -162,10 +166,11 @@ const EditProfile: React.FC = () => {
     setSaving(true);
     try {
       const updateData: ProfileUpdate = {
-        id: user.id, // CRITICAL: Explicitly include the user ID
+        id: user.id,
         display_name: profile.display_name.trim(),
         handle: profile.handle.trim(),
-        bio: profile.bio.trim() || null, 
+        bio: profile.bio.trim() || null,
+        website_url: profile.website_url.trim() || null,
         is_private: profile.is_private,
         show_online_status: profile.show_online_status,
         show_read_receipts: profile.show_read_receipts,
@@ -523,8 +528,8 @@ const EditProfile: React.FC = () => {
               {saving ? 'Saving...' : 'Save Changes'}
             </Button>
           </div>
-        </CardContent>
-      </Card>
+          </CardContent>
+        </Card>
 
       {/* Avatar Editor Dialog */}
       <Dialog open={showAvatarEditor} onOpenChange={setShowAvatarEditor}>

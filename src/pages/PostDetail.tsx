@@ -9,6 +9,10 @@ import { useTranslation } from 'react-i18next';
 import { ImageCarousel } from '@/components/ui/ImageCarousel';
 import { useAITranslation } from '@/hooks/useAITranslation';
 import { LinkPreviewCard } from '@/components/ui/LinkPreviewCard';
+import { Textarea } from '@/components/ui/textarea';
+import { toast } from 'sonner';
+import { useAuth } from '@/contexts/AuthContext';
+import { NestedReplyItem } from '@/components/post-detail/NestedReplyItem';
 // Note: Verified Badge components must be imported or defined here
 
 // --- START: Verified Badge Components (Unchanged) ---
@@ -56,12 +60,15 @@ interface Reply {
   id: string;
   content: string;
   created_at: string;
+  parent_reply_id: string | null;
   author: {
     display_name: string;
     handle: string;
     is_verified: boolean;
     is_organization_verified: boolean;
+    avatar_url: string | null;
   };
+  nested_replies?: Reply[];
 }
 
 // Define the main Post type
@@ -92,6 +99,7 @@ interface Post {
 
 const PostDetail = () => {
   const { postId } = useParams();
+  const { user } = useAuth();
   const [post, setPost] = useState<Post | null>(null);
   const [replies, setReplies] = useState<Reply[]>([]); // NEW state for replies
   const [loading, setLoading] = useState(true);
@@ -101,6 +109,9 @@ const PostDetail = () => {
   const [translatedPost, setTranslatedPost] = useState<string | null>(null);
   const [translatedReplies, setTranslatedReplies] = useState<Record<string, string>>({});
   const [isTranslatingPost, setIsTranslatingPost] = useState(false);
+  const [replyText, setReplyText] = useState('');
+  const [replyingTo, setReplyingTo] = useState<{ replyId: string; authorHandle: string } | null>(null);
+  const [submittingReply, setSubmittingReply] = useState(false);
 
   useEffect(() => {
     if (!postId) return;
@@ -168,14 +179,17 @@ const PostDetail = () => {
           id: r.id,
           content: r.content,
           created_at: r.created_at,
+          parent_reply_id: r.parent_reply_id,
           author: {
             display_name: r.profiles.display_name,
             handle: r.profiles.handle,
             is_verified: r.profiles.is_verified,
             is_organization_verified: r.profiles.is_organization_verified,
+            avatar_url: r.profiles.avatar_url,
           },
         }));
-        setReplies(mappedReplies);
+        const organizedReplies = organizeReplies(mappedReplies);
+        setReplies(organizedReplies);
       }
 
       setLoading(false);
@@ -208,6 +222,85 @@ const PostDetail = () => {
 
     const translated = await translateText(content, i18n.language);
     setTranslatedReplies(prev => ({ ...prev, [replyId]: translated }));
+  };
+
+  const organizeReplies = (allReplies: Reply[]): Reply[] => {
+    const replyMap = new Map<string, Reply>();
+    const rootReplies: Reply[] = [];
+
+    allReplies.forEach(reply => {
+      replyMap.set(reply.id, { ...reply, nested_replies: [] });
+    });
+
+    allReplies.forEach(reply => {
+      const replyWithNested = replyMap.get(reply.id)!;
+      if (reply.parent_reply_id) {
+        const parent = replyMap.get(reply.parent_reply_id);
+        if (parent) {
+          parent.nested_replies = parent.nested_replies || [];
+          parent.nested_replies.push(replyWithNested);
+        } else {
+          rootReplies.push(replyWithNested);
+        }
+      } else {
+        rootReplies.push(replyWithNested);
+      }
+    });
+
+    return rootReplies;
+  };
+
+  const handleReplySubmit = async () => {
+    if (!replyText.trim()) return;
+    if (!user) {
+      toast.error('Please sign in to reply');
+      return;
+    }
+
+    setSubmittingReply(true);
+    try {
+      const { error } = await supabase
+        .from('post_replies')
+        .insert({
+          post_id: postId,
+          author_id: user.id,
+          content: replyText.trim(),
+          parent_reply_id: replyingTo?.replyId || null,
+        });
+
+      if (error) throw error;
+
+      toast.success('Reply posted!');
+      setReplyText('');
+      setReplyingTo(null);
+      
+      // Refresh replies
+      const { data: repliesData } = await supabase
+        .from('post_replies')
+        .select(`
+          id,
+          content,
+          created_at,
+          parent_reply_id,
+          author:profiles!post_replies_author_id_fkey (
+            display_name,
+            handle,
+            is_verified,
+            is_organization_verified,
+            avatar_url
+          )
+        `)
+        .eq('post_id', postId)
+        .order('created_at', { ascending: true });
+
+      const organizedReplies = organizeReplies(repliesData || []);
+      setReplies(organizedReplies);
+    } catch (error) {
+      console.error('Error posting reply:', error);
+      toast.error('Failed to post reply');
+    } finally {
+      setSubmittingReply(false);
+    }
   };
 
   // Remove auto-translate effect - now translate is manual via button
@@ -358,54 +451,60 @@ const PostDetail = () => {
             </div>
         </div>
 
-        {/* --- REPLY INPUT SECTION (Placeholder) --- */}
+        {/* --- REPLY INPUT SECTION --- */}
         <div className="p-4 border-b border-border">
-            {/* You would insert your Reply Input component here */}
-            <p className="text-muted-foreground">Reply input placeholder...</p>
+          {user ? (
+            <div className="space-y-3">
+              {replyingTo && (
+                <div className="flex items-center justify-between text-sm text-muted-foreground bg-muted/50 p-2 rounded">
+                  <span>Replying to @{replyingTo.authorHandle}</span>
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    onClick={() => setReplyingTo(null)}
+                    className="h-6 px-2"
+                  >
+                    Cancel
+                  </Button>
+                </div>
+              )}
+              <div className="flex gap-3">
+                <Textarea
+                  value={replyText}
+                  onChange={(e) => setReplyText(e.target.value)}
+                  placeholder={replyingTo ? `Reply to @${replyingTo.authorHandle}...` : "Post your reply..."}
+                  className="min-h-[80px] resize-none"
+                  disabled={submittingReply}
+                />
+              </div>
+              <div className="flex justify-end">
+                <Button
+                  onClick={handleReplySubmit}
+                  disabled={!replyText.trim() || submittingReply}
+                  size="sm"
+                >
+                  {submittingReply ? 'Posting...' : 'Reply'}
+                </Button>
+              </div>
+            </div>
+          ) : (
+            <p className="text-muted-foreground text-center">Sign in to reply</p>
+          )}
         </div>
 
-        {/* --- REPLIES LIST (NEW SECTION) --- */}
+        {/* --- REPLIES LIST --- */}
         <div className="flex flex-col">
             {replies.map(reply => (
-                <div key={reply.id} className="p-4 border-b border-border hover:bg-muted/50 transition-colors">
-                    <div className="flex items-start gap-3">
-                        {/* Reply Author Avatar Placeholder */}
-                        <div className="h-10 w-10 rounded-full bg-secondary flex items-center justify-center text-secondary-foreground flex-shrink-0 mt-1">
-                            <UserIcon className="h-5 w-5" />
-                        </div>
-                        
-                        <div className="flex-1 min-w-0">
-                            <div className="flex items-center justify-between">
-                                <div className="flex items-center">
-                                    <Link to={`/profile/${reply.author.handle}`} className="font-bold hover:underline truncate">
-                                        {reply.author.display_name}
-                                    </Link>
-                                    <VerifiedBadge 
-                                        isVerified={reply.author.is_verified} 
-                                        isOrgVerified={reply.author.is_organization_verified} 
-                                    />
-                                    <span className="text-sm text-muted-foreground ml-2">@{reply.author.handle}</span>
-                                </div>
-                                <span className="text-xs text-muted-foreground ml-4 flex-shrink-0">
-                                    {new Date(reply.created_at).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}
-                                </span>
-                            </div>
-                            <p className="text-foreground mt-1 whitespace-pre-wrap">
-                                {renderContentWithMentions(translatedReplies[reply.id] || reply.content)}
-                            </p>
-                            {i18n.language !== 'en' && (
-                              <Button
-                                variant="ghost"
-                                size="sm"
-                                onClick={() => handleTranslateReply(reply.id, reply.content)}
-                                className="text-xs text-muted-foreground hover:text-primary mt-1 p-0 h-auto"
-                              >
-                                {translatedReplies[reply.id] ? t('common.showOriginal') : t('common.translate')}
-                              </Button>
-                            )}
-                        </div>
-                    </div>
-                </div>
+              <NestedReplyItem
+                key={reply.id}
+                reply={reply}
+                depth={0}
+                onTranslate={handleTranslateReply}
+                translatedReplies={translatedReplies}
+                onReplyClick={(replyId, authorHandle) => setReplyingTo({ replyId, authorHandle })}
+                VerifiedBadge={VerifiedBadge}
+                renderContentWithMentions={renderContentWithMentions}
+              />
             ))}
             {replies.length === 0 && (
                 <p className="text-center text-muted-foreground p-8">No replies yet. Be the first!</p>

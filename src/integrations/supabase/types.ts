@@ -742,6 +742,7 @@ export type Database = {
           show_online_status: boolean | null
           show_read_receipts: boolean | null
           updated_at: string | null
+          website_url: string | null
           xp: number
         }
         Insert: {
@@ -765,6 +766,7 @@ export type Database = {
           show_online_status?: boolean | null
           show_read_receipts?: boolean | null
           updated_at?: string | null
+          website_url?: string | null
           xp?: number
         }
         Update: {
@@ -788,6 +790,7 @@ export type Database = {
           show_online_status?: boolean | null
           show_read_receipts?: boolean | null
           updated_at?: string | null
+          website_url?: string | null
           xp?: number
         }
         Relationships: [

@@ -134,8 +134,43 @@ const formatTime = (isoString: string) => {
 };
 
 
-const parsePostContent = (content: string, navigate: (path: string) => void) => {
-  if (!content) return null;
+  const parsePostContent = (content: string, postId: string) => {
+    const parts = content.split(/(@\w+|https?:\/\/[^\s]+|(?:www\.)?[a-zA-Z0-9-]+\.[a-zA-Z]{2,}(?:\/[^\s]*)?)/g);
+    
+    return parts.map((part, index) => {
+      if (part.startsWith('@')) {
+        const handle = part.substring(1);
+        return (
+          <Link 
+            key={`${postId}-mention-${index}`} 
+            to={`/profile/${handle}`}
+            className="text-primary hover:underline font-semibold"
+            onClick={(e) => e.stopPropagation()}
+          >
+            {part}
+          </Link>
+        );
+      }
+      
+      if (part.match(/^https?:\/\//i) || part.match(/^(?:www\.)?[a-zA-Z0-9-]+\.[a-zA-Z]{2,}/)) {
+        const url = part.startsWith('http') ? part : `https://${part}`;
+        return (
+          <a
+            key={`${postId}-link-${index}`}
+            href={url}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="text-primary hover:underline"
+            onClick={(e) => e.stopPropagation()}
+          >
+            {part}
+          </a>
+        );
+      }
+      
+      return part;
+    });
+  };
   
   const lookupAndNavigateByHandle = async (handle: string) => {
     const { data, error } = await supabase
@@ -596,15 +631,45 @@ const PostCard = ({ post, addReply, user, navigate, onAcknowledge, onDeletePost,
           to={`/post/${post.id}`} 
           className="block"
         >
-          <ReadMoreText
-            maxLines={4}
-            className="text-foreground text-xs sm:text-sm mt-0.5 mb-1.5 leading-relaxed whitespace-pre-wrap break-words"
-            text={
-              translatedContent
-                ? parsePostContent(translatedContent, navigate)
-                : parsePostContent(post.content, navigate)
-            }
-          />
+          <div className="text-foreground whitespace-pre-wrap">
+            {expandedPosts.has(post.id) ? (
+              <>
+                {parsePostContent(translatedContent || post.content, post.id)}
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    setExpandedPosts(prev => {
+                      const newSet = new Set(prev);
+                      newSet.delete(post.id);
+                      return newSet;
+                    });
+                  }}
+                  className="text-primary hover:text-primary/80 p-0 h-auto font-normal mt-1"
+                >
+                  Show less
+                </Button>
+              </>
+            ) : (
+              <>
+                <div className="line-clamp-4">
+                  {parsePostContent(translatedContent || post.content, post.id)}
+                </div>
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    setExpandedPosts(prev => new Set(prev).add(post.id));
+                  }}
+                  className="text-primary hover:text-primary/80 p-0 h-auto font-normal mt-1"
+                >
+                  Read more
+                </Button>
+              </>
+            )}
+          </div>
           {((post.post_images && post.post_images.length > 0) || post.image_url) && (
             <ImageCarousel 
               images={
