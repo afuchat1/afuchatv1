@@ -23,6 +23,7 @@ import { ReadMoreText } from '@/components/ui/ReadMoreText';
 import { TipButton } from '@/components/tips/TipButton';
 import { ImageCarousel } from '@/components/ui/ImageCarousel';
 import { LinkPreviewCard } from '@/components/ui/LinkPreviewCard';
+import { MentionInput } from '@/components/MentionInput';
 
 
 // --- INTERFACES ---
@@ -833,22 +834,21 @@ const PostCard = ({ post, addReply, user, navigate, onAcknowledge, onDeletePost,
           )}
 
           {showComments && user && (
-            <div className="mt-2 flex items-center gap-1.5 sm:gap-2">
-              <div className="flex-shrink-0">
+            <div className="mt-2 flex items-start gap-1.5 sm:gap-2">
+              <div className="flex-shrink-0 mt-2">
                 <UserAvatarSmall 
                   userId={user.id}
                   name={userProfile?.display_name || 'You'}
                   avatarUrl={userProfile?.avatar_url}
                 />
               </div>
-              <Input
+              <MentionInput
                 value={replyText}
-                onChange={(e) => setReplyText(e.target.value)}
-                onKeyDown={(e) => {
-                  if (e.key === 'Enter') handleReplySubmit();
-                }}
+                onChange={setReplyText}
+                mention={post.profiles.handle ? `@${post.profiles.handle}` : undefined}
                 placeholder={t('feed.addComment')}
-                className="flex-1 bg-transparent border-b border-input text-[10px] sm:text-xs text-foreground focus:outline-none focus:ring-0 focus:border-primary p-1"
+                className="flex-1 bg-transparent border-b border-input text-[10px] sm:text-xs text-foreground focus:outline-none focus:ring-0 focus:border-primary p-1 min-h-[32px]"
+                onSubmit={handleReplySubmit}
               />
               <Button
                 variant="ghost"

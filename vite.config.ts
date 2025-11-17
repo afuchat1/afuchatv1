@@ -45,6 +45,29 @@ export default defineConfig(({ mode }) => ({
             sizes: '512x512',
             type: 'image/jpeg'
           }
+        ],
+        shortcuts: [
+          {
+            name: 'New Post',
+            short_name: 'Post',
+            description: 'Create a new post',
+            url: '/?action=new-post',
+            icons: [{ src: '/logo.jpg', sizes: '192x192' }]
+          },
+          {
+            name: 'Chats',
+            short_name: 'Chats',
+            description: 'Open your chats',
+            url: '/chats',
+            icons: [{ src: '/logo.jpg', sizes: '192x192' }]
+          },
+          {
+            name: 'Notifications',
+            short_name: 'Notifications',
+            description: 'View notifications',
+            url: '/notifications',
+            icons: [{ src: '/logo.jpg', sizes: '192x192' }]
+          }
         ]
       },
       // The 'workbox' config is no longer needed here,

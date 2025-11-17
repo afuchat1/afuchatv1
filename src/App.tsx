@@ -9,6 +9,7 @@ import { ThemeProvider } from "./contexts/ThemeContext";
 import { useDailyLogin } from "./hooks/useDailyLogin";
 import { useLanguageSync } from "./hooks/useLanguageSync";
 import { useScrollRestoration } from "./hooks/useScrollRestoration";
+import { usePushNotifications } from "./hooks/usePushNotifications";
 import Home from "./pages/Home";
 import Welcome from "./pages/auth/Welcome";
 import SignIn from "./pages/auth/SignIn";
@@ -50,6 +51,8 @@ const AppRoutes = () => {
   useLanguageSync();
   // Restore scroll positions on navigation
   useScrollRestoration();
+  // Setup push notifications
+  usePushNotifications();
 
   return (
     <Routes>

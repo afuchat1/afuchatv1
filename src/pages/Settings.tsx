@@ -12,6 +12,7 @@ import { supabase } from '@/integrations/supabase/client';
 import Logo from '@/components/Logo';
 import { useTranslation } from 'react-i18next';
 import { useTheme } from '@/contexts/ThemeContext';
+import EnableNotificationsButton from '@/components/EnableNotificationsButton';
 import {
   Select,
   SelectContent,
@@ -372,15 +373,25 @@ const Settings = () => {
                 <h2 className="text-lg font-semibold">{t('settings.notifications')}</h2>
               </div>
               <Separator />
-              <div className="flex items-center justify-between py-3 px-2">
+              <div className="space-y-3">
                 <div>
-                  <p className="font-medium">{t('settings.pushNotifications')}</p>
-                  <p className="text-sm text-muted-foreground">{t('settings.pushNotificationsDesc')}</p>
+                  <p className="font-medium mb-2">Push Notifications</p>
+                  <p className="text-sm text-muted-foreground mb-3">
+                    Enable push notifications to receive alerts for new messages, likes, and replies even when the app is closed
+                  </p>
+                  <EnableNotificationsButton />
                 </div>
-                <Switch
-                  checked={notificationsEnabled}
-                  onCheckedChange={setNotificationsEnabled}
-                />
+                <Separator />
+                <div className="flex items-center justify-between py-3 px-2">
+                  <div>
+                    <p className="font-medium">{t('settings.pushNotifications')}</p>
+                    <p className="text-sm text-muted-foreground">{t('settings.pushNotificationsDesc')}</p>
+                  </div>
+                  <Switch
+                    checked={notificationsEnabled}
+                    onCheckedChange={setNotificationsEnabled}
+                  />
+                </div>
               </div>
             </div>
           </Card>

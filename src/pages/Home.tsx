@@ -1,5 +1,5 @@
-import { useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useState, useEffect } from 'react';
+import { useNavigate, useSearchParams } from 'react-router-dom';
 import { useAuth } from '@/contexts/AuthContext';
 import { Send } from 'lucide-react';
 import { Button } from '@/components/ui/button';
@@ -10,7 +10,16 @@ import Layout from '@/components/Layout';
 const Home = () => {
   const { user } = useAuth();
   const navigate = useNavigate();
+  const [searchParams, setSearchParams] = useSearchParams();
   const [isPostModalOpen, setIsPostModalOpen] = useState(false);
+
+  useEffect(() => {
+    // Handle app shortcut for new post
+    if (searchParams.get('action') === 'new-post' && user) {
+      setIsPostModalOpen(true);
+      setSearchParams({});
+    }
+  }, [searchParams, user, setSearchParams]);
 
   const handleNewPost = () => {
     if (!user) {

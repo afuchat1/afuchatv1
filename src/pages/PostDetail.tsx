@@ -10,6 +10,7 @@ import { ImageCarousel } from '@/components/ui/ImageCarousel';
 import { useAITranslation } from '@/hooks/useAITranslation';
 import { LinkPreviewCard } from '@/components/ui/LinkPreviewCard';
 import { Textarea } from '@/components/ui/textarea';
+import { MentionInput } from '@/components/MentionInput';
 import { toast } from 'sonner';
 import { useAuth } from '@/contexts/AuthContext';
 import { NestedReplyItem } from '@/components/post-detail/NestedReplyItem';
@@ -547,7 +548,10 @@ const PostDetail = () => {
                   <Button
                     variant="ghost"
                     size="sm"
-                    onClick={() => setReplyingTo(null)}
+                    onClick={() => {
+                      setReplyingTo(null);
+                      setReplyText('');
+                    }}
                     className="h-6 px-2"
                   >
                     Cancel
@@ -555,17 +559,13 @@ const PostDetail = () => {
                 </div>
               )}
               <div className="flex gap-3">
-                <Textarea
+                <MentionInput
                   value={replyText}
-                  onChange={(e) => setReplyText(e.target.value)}
-                  onFocus={() => {
-                    if (!replyingTo && !replyText && post) {
-                      setReplyText(`@${post.author.handle} `);
-                    }
-                  }}
+                  onChange={setReplyText}
+                  mention={replyingTo ? `@${replyingTo.authorHandle}` : (post ? `@${post.author.handle}` : undefined)}
                   placeholder={replyingTo ? `Reply to @${replyingTo.authorHandle}...` : "Post your reply..."}
                   className="min-h-[80px] resize-none"
-                  disabled={submittingReply}
+                  onSubmit={handleReplySubmit}
                 />
               </div>
               <div className="flex justify-end">
