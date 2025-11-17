@@ -179,7 +179,7 @@ export default function TrendingHashtags() {
                 <p className="text-center text-muted-foreground py-8">No posts found</p>
               ) : (
                 <div className="space-y-3 max-h-[600px] overflow-y-auto">
-                  {posts.map((pst) => (
+                  {posts.map((post) => (
                     <button
                       key={post.id}
                       onClick={() => navigate(`/post/${post.id}`)}
