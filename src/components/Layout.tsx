@@ -5,6 +5,7 @@ import { Home, MessageSquare, Search, ShoppingBag, Bell, User, Settings, Trophy,
 import { Button } from '@/components/ui/button';
 import Logo from '@/components/Logo';
 import NotificationIcon from '@/components/nav/NotificationIcon';
+import InstallPromptBanner from '@/components/InstallPromptBanner';
 import { supabase } from '@/integrations/supabase/client';
 import { cn } from '@/lib/utils';
 
@@ -85,6 +86,8 @@ const Layout = ({ children }: LayoutProps) => {
 
   return (
     <div className="min-h-screen bg-background">
+      <InstallPromptBanner />
+      
       {/* Desktop Sidebar */}
       <aside className="hidden lg:flex fixed left-0 top-0 bottom-0 w-64 xl:w-72 border-r border-border flex-col p-4">
         <div className="mb-8">
@@ -92,25 +95,28 @@ const Layout = ({ children }: LayoutProps) => {
         </div>
 
         <nav className="flex-1 space-y-1">
-          {navItems.map((item) => (
-            <Link
-              key={item.path}
-              to={item.path}
-              className={cn(
-                "flex items-center gap-4 px-4 py-3 rounded-full transition-colors text-xl font-semibold",
-                isActive(item.path)
-                  ? "bg-primary/10 text-primary"
-                  : "hover:bg-muted text-foreground"
-              )}
-            >
-              {item.badge && item.path === '/notifications' ? (
-                <NotificationIcon />
-              ) : (
+          {navItems.map((item) => {
+            // Special handling for notifications - it's already a Link component
+            if (item.badge && item.path === '/notifications') {
+              return <NotificationIcon key={item.path} />;
+            }
+            
+            return (
+              <Link
+                key={item.path}
+                to={item.path}
+                className={cn(
+                  "flex items-center gap-4 px-4 py-3 rounded-full transition-colors text-xl font-semibold",
+                  isActive(item.path)
+                    ? "bg-primary/10 text-primary"
+                    : "hover:bg-muted text-foreground"
+                )}
+              >
                 <item.icon className="h-7 w-7" />
-              )}
-              <span>{item.label}</span>
-            </Link>
-          ))}
+                <span>{item.label}</span>
+              </Link>
+            );
+          })}
         </nav>
 
         {user && (

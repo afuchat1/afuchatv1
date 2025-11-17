@@ -2,11 +2,13 @@ import { useEffect, useState } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/contexts/AuthContext';
 import { Bell } from 'lucide-react';
-import { Link } from 'react-router-dom';
+import { Link, useLocation } from 'react-router-dom';
 import { toast } from 'sonner';
+import { cn } from '@/lib/utils';
 
 const NotificationIcon = () => {
   const { user } = useAuth();
+  const location = useLocation();
   const [unreadCount, setUnreadCount] = useState(0);
 
   useEffect(() => {
@@ -61,17 +63,30 @@ const NotificationIcon = () => {
     };
   }, [user]);
 
+  const isActive = location.pathname === '/notifications';
+
   return (
-    <Link to="/notifications" className="relative p-2">
-      <Bell className="h-5 w-5" />
-      {unreadCount > 0 && (
-        <span className="absolute top-1 right-1 flex h-3 w-3">
-          {/* Ping animation for new notification */}
-          <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-red-400 opacity-75"></span>
-          {/* The visible red dot */}
-          <span className="relative inline-flex rounded-full h-3 w-3 bg-red-500"></span>
-        </span>
+    <Link 
+      to="/notifications" 
+      className={cn(
+        "flex items-center gap-4 px-4 py-3 rounded-full transition-colors text-xl font-semibold relative",
+        isActive
+          ? "bg-primary/10 text-primary"
+          : "hover:bg-muted text-foreground"
       )}
+    >
+      <div className="relative">
+        <Bell className="h-7 w-7" />
+        {unreadCount > 0 && (
+          <span className="absolute -top-1 -right-1 flex h-3 w-3">
+            {/* Ping animation for new notification */}
+            <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-red-400 opacity-75"></span>
+            {/* The visible red dot */}
+            <span className="relative inline-flex rounded-full h-3 w-3 bg-red-500"></span>
+          </span>
+        )}
+      </div>
+      <span>Notifications</span>
     </Link>
   );
 };
