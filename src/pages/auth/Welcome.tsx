@@ -6,7 +6,7 @@ const Welcome = () => {
   const navigate = useNavigate();
 
   return (
-    <div className="min-h-screen flex flex-col md:flex-row">
+    <div className="min-h-screen flex flex-col md:flex-row animate-fade-in">
       {/* Left side - Branding */}
       <div className="hidden md:flex md:w-1/2 bg-gradient-to-br from-primary/10 via-secondary/10 to-background items-center justify-center p-8">
         <div className="max-w-md">

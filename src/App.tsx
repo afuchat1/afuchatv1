@@ -13,6 +13,8 @@ import Home from "./pages/Home";
 import Welcome from "./pages/auth/Welcome";
 import SignIn from "./pages/auth/SignIn";
 import SignUp from "./pages/auth/SignUp";
+import ForgotPassword from "./pages/auth/ForgotPassword";
+import ResetPassword from "./pages/auth/ResetPassword";
 import ChatsPage from "./pages/ChatsPage";
 import ChatRoom from "./pages/ChatRoom";
 import SearchPage from "./pages/SearchPage";
@@ -55,6 +57,8 @@ const AppRoutes = () => {
       <Route path="/auth" element={<Welcome />} />
       <Route path="/auth/signin" element={<SignIn />} />
       <Route path="/auth/signup" element={<SignUp />} />
+      <Route path="/auth/forgot-password" element={<ForgotPassword />} />
+      <Route path="/auth/reset-password" element={<ResetPassword />} />
       <Route path="/chats" element={<Layout><ChatsPage /></Layout>} />
       <Route path="/chat/:chatId" element={<Layout><ChatRoom /></Layout>} />
       <Route path="/search" element={<Layout><SearchPage /></Layout>} />
