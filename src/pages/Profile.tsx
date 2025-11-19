@@ -40,6 +40,8 @@ interface Profile {
 	xp: number;
 	current_grade: Grade;
 	avatar_url?: string | null;
+	website_url?: string | null;
+	is_business_mode?: boolean;
 }
 
 interface Post {
@@ -746,6 +748,18 @@ const Profile = () => {
 
 					{profile.bio && (
 						<ContentParser content={profile.bio} isBio={true} />
+					)}
+
+					{/* Website URL - Display for business profiles */}
+					{profile.is_business_mode && profile.website_url && (
+						<a
+							href={profile.website_url}
+							target="_blank"
+							rel="noopener noreferrer"
+							className="text-sm text-primary hover:underline flex items-center gap-1 mt-2"
+						>
+							🌐 {profile.website_url}
+						</a>
 					)}
 
 					{/* XP Progress Bar */}

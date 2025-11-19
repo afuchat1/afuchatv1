@@ -57,6 +57,8 @@ const EditProfile: React.FC = () => {
   const [avatarFile, setAvatarFile] = useState<File | null>(null);
   const [showAvatarEditor, setShowAvatarEditor] = useState(false);
   const [uploadingAvatar, setUploadingAvatar] = useState(false);
+  const [isBusiness, setIsBusiness] = useState(false);
+  const [isAffiliate, setIsAffiliate] = useState(false);
 
   useEffect(() => {
     // 🚨 FIX 2: Check the global Auth loading state first. Exit if still checking session.
@@ -102,6 +104,8 @@ const EditProfile: React.FC = () => {
             show_read_receipts: data.show_read_receipts || true,
             avatar_url: data.avatar_url || null,
           });
+          setIsBusiness(data.is_business_mode || false);
+          setIsAffiliate(data.is_affiliate || false);
         } else {
           setProfile({
             display_name: user.user_metadata?.full_name || '',
@@ -481,26 +485,30 @@ const EditProfile: React.FC = () => {
               </div>
             </div>
 
-            <h3 className="text-lg font-semibold border-b pb-2 text-primary">Additional Information</h3>
+            {/* Website URL - Only for business/affiliate users */}
+            {(isBusiness || isAffiliate) && (
+              <>
+                <h3 className="text-lg font-semibold border-b pb-2 text-primary">Additional Information</h3>
 
-            {/* Personal Website */}
-            <div className="space-y-2">
-              <Label htmlFor="website_url" className="text-sm font-medium text-foreground">
-                Personal Website
-              </Label>
-              <Input
-                id="website_url"
-                name="website_url"
-                value={profile.website_url}
-                onChange={handleInputChange}
-                placeholder="https://yourwebsite.com"
-                disabled={saving}
-                className="text-base h-11 bg-input/50 border border-border/80 focus:border-primary/50"
-              />
-              <p className="text-xs text-muted-foreground">
-                Your personal website, blog, or portfolio
-              </p>
-            </div>
+                <div className="space-y-2">
+                  <Label htmlFor="website_url" className="text-sm font-medium text-foreground">
+                    Business Website
+                  </Label>
+                  <Input
+                    id="website_url"
+                    name="website_url"
+                    value={profile.website_url}
+                    onChange={handleInputChange}
+                    placeholder="https://yourwebsite.com"
+                    disabled={saving}
+                    className="text-base h-11 bg-input/50 border border-border/80 focus:border-primary/50"
+                  />
+                  <p className="text-xs text-muted-foreground">
+                    Your business website or portfolio
+                  </p>
+                </div>
+              </>
+            )}
           </div>
           
           <Separator className="my-8 bg-border/50" />
