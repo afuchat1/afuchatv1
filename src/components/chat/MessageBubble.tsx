@@ -6,7 +6,7 @@ import { Button } from '@/components/ui/button';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 
 export interface Reaction {
-  reaction_emoji: string;
+  reaction: string;
 }
 
 export interface Message {
@@ -35,7 +35,7 @@ export interface Message {
 const aggregateReactions = (reactions: Reaction[]) => {
   if (!reactions || reactions.length === 0) return [];
   const counts = reactions.reduce((acc, reaction) => {
-    acc[reaction.reaction_emoji] = (acc[reaction.reaction_emoji] || 0) + 1;
+    acc[reaction.reaction] = (acc[reaction.reaction] || 0) + 1;
     return acc;
   }, {} as { [key: string]: number });
   return Object.entries(counts).map(([emoji, count]) => ({ emoji, count }));

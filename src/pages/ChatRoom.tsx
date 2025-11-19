@@ -22,9 +22,10 @@ interface Message {
   audio_url?: string;
   sender_id: string;
   sent_at: string;
+  edited_at?: string | null;
   reply_to_message_id?: string | null;
   message_reactions?: Array<{
-    reaction_emoji: string;
+    reaction: string;
     user_id: string;
   }>;
   reply_to_message?: {
@@ -259,7 +260,7 @@ const ChatRoom = () => {
       .select(`
         *,
         profiles(display_name, handle),
-        message_reactions(reaction_emoji, user_id),
+        message_reactions(reaction, user_id),
         reply_to_message:messages!reply_to_message_id(
           encrypted_content,
           audio_url,
