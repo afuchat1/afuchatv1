@@ -1673,6 +1673,17 @@ export type Database = {
       finalize_auction: { Args: { p_shop_item_id: string }; Returns: Json }
       get_gift_price: { Args: { p_gift_id: string }; Returns: number }
       get_or_create_chat: { Args: { other_user_id: string }; Returns: string }
+      get_protected_profile_fields: {
+        Args: { p_user_id: string }
+        Returns: {
+          affiliated_business_id: string
+          is_admin: boolean
+          is_affiliate: boolean
+          is_business_mode: boolean
+          is_organization_verified: boolean
+          is_verified: boolean
+        }[]
+      }
       get_requesting_user: { Args: never; Returns: string }
       get_trending_topics: {
         Args: { hours_ago?: number; num_topics?: number }
