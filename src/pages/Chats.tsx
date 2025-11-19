@@ -16,7 +16,12 @@ interface Chat {
   name: string | null;
   is_group: boolean;
   updated_at: string;
-  last_message_content?: string; 
+  last_message_content?: string;
+  other_user?: {
+    display_name: string;
+    handle: string;
+    avatar_url: string | null;
+  };
 }
 
 const formatTime = (isoString: string) => {
@@ -85,10 +90,28 @@ const Chats = () => {
               if (memberIds[0] === memberIds[1]) continue;
             }
             
-            validChats.push({
+            let chatData: Chat = {
               ...member.chats,
               last_message_content: member.chats.id.startsWith('group') ? t('chat.lastGroupMessage') : t('chat.lastOneOnOneMessage')
-            });
+            };
+            
+            // For 1-on-1 chats, fetch the other user's profile
+            if (!member.chats.is_group) {
+              const otherUserId = allMembers?.find(m => m.user_id !== user.id)?.user_id;
+              if (otherUserId) {
+                const { data: profile } = await supabase
+                  .from('profiles')
+                  .select('display_name, handle, avatar_url')
+                  .eq('id', otherUserId)
+                  .single();
+                
+                if (profile) {
+                  chatData.other_user = profile;
+                }
+              }
+            }
+            
+            validChats.push(chatData);
           }
           
           validChats.sort((a, b) => new Date(b.updated_at).getTime() - new Date(a.updated_at).getTime());
@@ -166,7 +189,9 @@ const Chats = () => {
   }
 
   const ChatCard = ({ chat }: { chat: Chat }) => {
-    const chatName = chat.name || (chat.is_group ? t('chat.groupChat') : t('chat.oneOnOne'));
+    const chatName = chat.is_group 
+      ? (chat.name || t('chat.groupChat'))
+      : (chat.other_user?.display_name || t('chat.oneOnOne'));
     const Icon = chat.is_group ? Users : User;
     const timeDisplay = formatTime(chat.updated_at);
     const lastMessagePreview = chat.last_message_content || t('chat.startChatting');
@@ -183,7 +208,13 @@ const Chats = () => {
               ? 'bg-gradient-to-br from-indigo-500 to-purple-600' 
               : 'bg-gradient-to-br from-primary to-primary/80'
           }`}>
-            <Icon className="h-6 w-6 text-white" />
+            {chat.is_group ? (
+              <Icon className="h-6 w-6 text-white" />
+            ) : (
+              <span className="text-lg font-semibold text-white">
+                {chat.other_user?.display_name?.charAt(0).toUpperCase() || 'U'}
+              </span>
+            )}
             <div className="absolute -bottom-0.5 -right-0.5 h-4 w-4 rounded-full bg-green-500" />
           </div>
 
