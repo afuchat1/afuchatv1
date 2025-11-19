@@ -11,6 +11,7 @@ import { OfflineIndicator } from '@/components/OfflineIndicator';
 import { AccountModeSwitcher } from '@/components/AccountModeSwitcher';
 import { supabase } from '@/integrations/supabase/client';
 import { cn } from '@/lib/utils';
+import { useTranslation } from 'react-i18next';
 
 interface LayoutProps {
   children: ReactNode;
@@ -21,6 +22,7 @@ const Layout = ({ children }: LayoutProps) => {
   const { mode, canUseBusiness } = useAccountMode();
   const location = useLocation();
   const navigate = useNavigate();
+  const { t } = useTranslation();
   const [isAdmin, setIsAdmin] = useState(false);
   const [isBusinessMode, setIsBusinessMode] = useState(false);
   const [isScrollingDown, setIsScrollingDown] = useState(false);
@@ -79,27 +81,27 @@ const Layout = ({ children }: LayoutProps) => {
   };
 
   const navItems = [
-    { path: '/', icon: Home, label: 'Home' },
-    { path: '/moments', icon: ImageIcon, label: 'Moments' },
-    { path: '/search', icon: Search, label: 'Explore' },
-    { path: '/notifications', icon: Bell, label: 'Notifications', badge: true },
-    { path: '/chats', icon: MessageSquare, label: 'Messages' },
-    { path: '/services', icon: ShoppingBag, label: 'Services' },
+    { path: '/', icon: Home, label: t('common.home') },
+    { path: '/moments', icon: ImageIcon, label: t('moments.title') },
+    { path: '/search', icon: Search, label: t('search.title') },
+    { path: '/notifications', icon: Bell, label: t('common.notifications'), badge: true },
+    { path: '/chats', icon: MessageSquare, label: t('common.messages') },
+    { path: '/services', icon: ShoppingBag, label: t('services.title') },
   ];
 
   if (user) {
-    navItems.push({ path: `/${user.id}`, icon: User, label: 'Profile', badge: false });
+    navItems.push({ path: `/${user.id}`, icon: User, label: t('common.profile'), badge: false });
   }
 
   if (isAdmin) {
-    navItems.push({ path: '/admin', icon: Shield, label: 'Admin', badge: false });
+    navItems.push({ path: '/admin', icon: Shield, label: t('admin.title'), badge: false });
   }
 
   if (isBusinessMode && mode === 'business') {
-    navItems.push({ path: '/business/dashboard', icon: BarChart3, label: 'Business', badge: false });
+    navItems.push({ path: '/business/dashboard', icon: BarChart3, label: t('business.title'), badge: false });
   }
 
-  navItems.push({ path: '/settings', icon: Settings, label: 'Settings', badge: false });
+  navItems.push({ path: '/settings', icon: Settings, label: t('common.settings'), badge: false });
 
   const isActive = (path: string) => {
     if (path === '/') {

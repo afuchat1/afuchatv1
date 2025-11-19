@@ -11,6 +11,7 @@ import { toast } from 'sonner';
 import { messageSchema } from '@/lib/validation';
 import { ChatRedEnvelope } from '@/components/chat/ChatRedEnvelope';
 import { SendRedEnvelopeDialog } from '@/components/chat/SendRedEnvelopeDialog';
+import { useTranslation } from 'react-i18next';
 
 interface Message {
   id: string;
@@ -47,6 +48,7 @@ const ChatRoom = () => {
   const { chatId } = useParams();
   const { user } = useAuth();
   const navigate = useNavigate();
+  const { t } = useTranslation();
   const [messages, setMessages] = useState<Message[]>([]);
   const [redEnvelopes, setRedEnvelopes] = useState<RedEnvelope[]>([]);
   const [newMessage, setNewMessage] = useState('');
@@ -223,9 +225,9 @@ const ChatRoom = () => {
 
       mediaRecorder.start();
       setRecording(true);
-      toast.success('Recording... Tap to stop');
+      toast.success(t('chat.recording'));
     } catch (err) {
-      toast.error('Microphone access denied');
+      toast.error(t('chat.stopRecording'));
       console.error('Recording error:', err);
     }
   };
@@ -234,7 +236,7 @@ const ChatRoom = () => {
     if (mediaRecorderRef.current && recording) {
       mediaRecorderRef.current.stop();
       setRecording(false);
-      toast.success('Recorded! Tap send to share.');
+      toast.success(t('chatRoom.messageSent'));
     }
   };
 

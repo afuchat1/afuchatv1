@@ -7,6 +7,7 @@ import { MessageSquarePlus, Users, User, Clock } from 'lucide-react';
 import { Skeleton } from '@/components/ui/skeleton';
 import { useNavigate } from 'react-router-dom';
 import NewChatDialog from '@/components/ui/NewChatDialog';
+import { useTranslation } from 'react-i18next';
 
 interface Chat {
   id: string;
@@ -32,6 +33,7 @@ const formatTime = (isoString: string) => {
 const Chats = () => {
   const { user } = useAuth();
   const navigate = useNavigate();
+  const { t } = useTranslation();
   const [chats, setChats] = useState<Chat[]>([]);
   const [loading, setLoading] = useState(true);
   const [forceLoaded, setForceLoaded] = useState(false);
