@@ -6,7 +6,7 @@ import { Button } from '@/components/ui/button';
 import { Separator } from '@/components/ui/separator';
 import { Switch } from '@/components/ui/switch';
 import { Badge } from '@/components/ui/badge';
-import { ArrowLeft, User, Bell, Lock, Shield, FileText, LogOut, Languages, Sun, Moon, Monitor, Link2, Github, Building2, UserPlus } from 'lucide-react';
+import { ArrowLeft, User, Bell, Lock, Shield, FileText, LogOut, Languages, Sun, Moon, Monitor, Link2, Github, Building2, UserPlus, Mail, HelpCircle } from 'lucide-react';
 import { toast } from 'sonner';
 import { supabase } from '@/integrations/supabase/client';
 import Logo from '@/components/Logo';
@@ -642,6 +642,34 @@ const Settings = () => {
                 <span>{t('settings.privacyPolicy')}</span>
                 <span className="text-muted-foreground">›</span>
               </button>
+            </div>
+          </Card>
+
+          {/* Support */}
+          <Card className="p-4 sm:p-6">
+            <div className="space-y-4">
+              <div className="flex items-center gap-3">
+                <HelpCircle className="h-5 w-5 text-muted-foreground" />
+                <h2 className="text-lg font-semibold">Support</h2>
+              </div>
+              <Separator />
+              <div className="bg-muted/50 rounded-lg p-4 border border-border">
+                <div className="flex items-start gap-3">
+                  <Mail className="h-5 w-5 text-primary mt-0.5 shrink-0" />
+                  <div className="space-y-1">
+                    <p className="text-sm font-medium">Need help?</p>
+                    <a 
+                      href="mailto:support@afuchat.com"
+                      className="text-sm text-primary hover:underline"
+                    >
+                      support@afuchat.com
+                    </a>
+                    <p className="text-xs text-muted-foreground mt-2">
+                      Our support team typically responds within 24-48 hours
+                    </p>
+                  </div>
+                </div>
+              </div>
             </div>
           </Card>
 

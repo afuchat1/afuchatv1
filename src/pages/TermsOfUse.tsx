@@ -131,10 +131,27 @@ const TermsOfUse = () => {
           </section>
 
           <section className="mb-8">
-            <h2 className="text-2xl font-semibold mb-4">11. Contact Information</h2>
+            <h2 className="text-2xl font-semibold mb-4">11. Support & Contact Information</h2>
             <p className="text-foreground/90 leading-relaxed mb-4">
-              For questions about these Terms, please contact us through the application or visit our support page.
+              If you have questions, concerns, or need assistance regarding these Terms of Use, our support team is here to help.
             </p>
+            <div className="bg-muted/50 rounded-lg p-6 border border-border">
+              <h3 className="text-lg font-semibold mb-3">Contact Support</h3>
+              <div className="space-y-2">
+                <p className="text-foreground/90">
+                  <span className="font-medium">Email:</span>{' '}
+                  <a 
+                    href="mailto:support@afuchat.com" 
+                    className="text-primary hover:underline"
+                  >
+                    support@afuchat.com
+                  </a>
+                </p>
+                <p className="text-sm text-muted-foreground mt-4">
+                  Our support team typically responds within 24-48 hours. For urgent matters, please mark your email as "Urgent" in the subject line.
+                </p>
+              </div>
+            </div>
           </section>
         </article>
       </main>
