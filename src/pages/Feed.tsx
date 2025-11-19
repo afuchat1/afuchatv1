@@ -24,7 +24,7 @@ import { TipButton } from '@/components/tips/TipButton';
 import { ImageCarousel } from '@/components/ui/ImageCarousel';
 import { LinkPreviewCard } from '@/components/ui/LinkPreviewCard';
 import { MentionInput } from '@/components/MentionInput';
-
+import { VerifiedBadge } from '@/components/VerifiedBadge';
 
 // --- INTERFACES ---
 
@@ -59,6 +59,9 @@ interface Post {
     handle: string;
     is_verified: boolean;
     is_organization_verified: boolean;
+    is_affiliate: boolean;
+    affiliate_business_name: string | null;
+    affiliate_business_logo: string | null;
     avatar_url?: string | null;
   };
   replies: Reply[];
@@ -83,42 +86,13 @@ interface Reply {
     handle: string;
     is_verified: boolean;
     is_organization_verified: boolean;
+    is_affiliate: boolean;
+    affiliate_business_name: string | null;
+    affiliate_business_logo: string | null;
     avatar_url?: string | null;
   };
 }
 
-
-// --- VERIFICATION BADGES (Unchanged) ---
-
-const TwitterVerifiedBadge = () => (
-  <svg
-    viewBox="0 0 22 22"
-    xmlns="http://www.w3.org/2000/svg"
-    className="inline w-[16px] h-[16px] ml-0.5 text-[#1d9bf0] fill-[#1d9bf0] flex-shrink-0"
-  >
-    <path d="m20.396 11c-.018-.646-.215-1.275-.57-1.816-.354-.54-.852-.972-1.438-1.246.223-.607.27-1.264.14-1.897-.131-.634-.437-1.218-.882-1.687-.47-.445-1.053-.75-1.687-.882-.633-.13-1.29-.083-1.897.14-.273-.587-.704-1.086-1.245-1.44S11.647 1.62 11 1.604c-.646.017-1.273.213-1.813.568s-.969.854-1.24 1.44c-.608-.223-1.267-.272-1.902-.14-.635.13-1.22.436-1.69.882-.445.47-.749 1.055-.878 1.688-.13.633-.08 1.29.144 1.896-.587.274-1.087.705-1.443 1.245-.356.54-.555 1.17-.574 1.817.02.647.218 1.276.574 1.817.356.54.856.972 1.443 1.245-.224.606-.274 1.263-.144 1.896.13.634.433 1.218.877 1.688.47.443 1.054.747 1.687.878.633.132 1.29.084 1.897-.136.274.586.705 1.084 1.246 1.439.54.354 1.17.551 1.816.569.647-.016 1.276-.213 1.817-.567s.972-.854 1.245-1.44c.604.239 1.266.296 1.903.164.636-.132 1.22-.447 1.68-.907.46-.46.776-1.044.908-1.681s.075-1.299-.165-1.903c.586-.274 1.084-.705 1.439-1.246.354-.54.551-1.17.569-1.816zM9.662 14.85l-3.429-3.428 1.293-1.302 2.072 2.072 4.4-4.794 1.347 1.246z" />
-  </svg>
-);
-
-const GoldVerifiedBadge = () => (
-  <svg
-    viewBox="0 0 22 22"
-    xmlns="http://www.w3.org/2000/svg"
-    className="inline w-[16px] h-[16px] ml-0.5 text-[#FFD43B] fill-[#FFD43B] flex-shrink-0"
-  >
-    <path d="m20.396 11c-.018-.646-.215-1.275-.57-1.816-.354-.54-.852-.972-1.438-1.246.223-.607.27-1.264.14-1.897-.131-.634-.437-1.218-.882-1.687-.47-.445-1.053-.75-1.687-.882-.633-.13-1.29-.083-1.897.14-.273-.587-.704-1.086-1.245-1.44S11.647 1.62 11 1.604c-.646.017-1.273.213-1.813.568s-.969.854-1.24 1.44c-.608-.223-1.267-.272-1.902-.14-.635.13-1.22.436-1.69.882-.445.47-.749 1.055-.878 1.688-.13.633-.08 1.29.144 1.896-.587.274-1.087.705-1.443 1.245-.356.54-.555 1.17-.574 1.817.02.647.218 1.276.574 1.817.356.54.856.972 1.443 1.245-.224.606-.274 1.263-.144 1.896.13.634.433 1.218.877 1.688.47.443 1.054.747 1.687.878.633.132 1.29.084 1.897-.136.274.586.705 1.084 1.246 1.439.54.354 1.17.551 1.816.569.647-.016 1.276-.213 1.817-.567s.972-.854 1.245-1.44c.604.239 1.266.296 1.903.164.636-.132 1.22-.447 1.68-.907.46-.46.776-1.044.908-1.681s.075-1.299-.165-1.903c.586-.274 1.084-.705 1.439-1.246.354-.54.551-1.17.569-1.816zM9.662 14.85l-3.429-3.428 1.293-1.302 2.072 2.072 4.4-4.794 1.347 1.246z" />
-  </svg>
-);
-
-const VerifiedBadge = ({ isVerified, isOrgVerified }: { isVerified: boolean; isOrgVerified: boolean }) => {
-  if (isOrgVerified) {
-    return <GoldVerifiedBadge />;
-  }
-  if (isVerified) {
-    return <TwitterVerifiedBadge />;
-  }
-  return null;
-};
 
 // --- UTILITY FUNCTIONS (Unchanged) ---
 const formatTime = (isoString: string) => {
@@ -318,7 +292,12 @@ const ReplyItem = ({ reply, navigate, handleViewProfile }: { reply: Reply; navig
                     >
                         {reply.profiles.display_name}
                     </span>
-                    <VerifiedBadge isVerified={reply.profiles.is_verified} isOrgVerified={reply.profiles.is_organization_verified} />
+            <VerifiedBadge 
+              isVerified={reply.profiles.is_verified}
+              isOrgVerified={reply.profiles.is_organization_verified}
+              isAffiliate={reply.profiles.is_affiliate}
+              affiliateBusinessLogo={reply.profiles.affiliate_business_logo}
+            />
 
                     <span
                         className="text-muted-foreground text-[10px] sm:text-xs hover:underline cursor-pointer truncate flex-shrink min-w-0"
@@ -499,6 +478,9 @@ const PostCard = ({ post, addReply, user, navigate, onAcknowledge, onDeletePost,
         handle: user?.user_metadata?.handle || 'user',
         is_verified: user?.user_metadata?.is_verified || false,
         is_organization_verified: user?.user_metadata?.is_organization_verified || false,
+        is_affiliate: false,
+        affiliate_business_name: null,
+        affiliate_business_logo: null,
         avatar_url: userProfile?.avatar_url || null,
       },
     };
@@ -625,7 +607,12 @@ const PostCard = ({ post, addReply, user, navigate, onAcknowledge, onDeletePost,
             >
               {post.profiles.display_name}
             </span>
-            <VerifiedBadge isVerified={post.profiles.is_verified} isOrgVerified={post.profiles.is_organization_verified} />
+            <VerifiedBadge 
+              isVerified={post.profiles.is_verified}
+              isOrgVerified={post.profiles.is_organization_verified}
+              isAffiliate={post.profiles.is_affiliate}
+              affiliateBusinessLogo={post.profiles.affiliate_business_logo}
+            />
 
             <span
               className="text-muted-foreground text-[10px] sm:text-xs hover:underline cursor-pointer truncate flex-shrink min-w-0"
@@ -1164,7 +1151,7 @@ const Feed = () => {
         .from('posts')
         .select(`
           *,
-          profiles(display_name, handle, is_verified, is_organization_verified, avatar_url),
+          profiles(display_name, handle, is_verified, is_organization_verified, is_affiliate, affiliate_business_name, affiliate_business_logo, avatar_url),
           post_images(image_url, display_order, alt_text),
           post_link_previews(url, title, description, image_url, site_name)
         `)
@@ -1188,7 +1175,7 @@ const Feed = () => {
             .from('posts')
             .select(`
               *,
-              profiles(display_name, handle, is_verified, is_organization_verified, avatar_url),
+              profiles(display_name, handle, is_verified, is_organization_verified, is_affiliate, affiliate_business_name, affiliate_business_logo, avatar_url),
               post_images(image_url, display_order, alt_text),
               post_link_previews(url, title, description, image_url, site_name)
             `)
@@ -1204,7 +1191,7 @@ const Feed = () => {
 
       const { data: repliesData, error: repliesError } = await supabase
         .from('post_replies')
-        .select('*, profiles(display_name, handle, is_verified, is_organization_verified, avatar_url)')
+        .select('*, profiles(display_name, handle, is_verified, is_organization_verified, is_affiliate, affiliate_business_name, affiliate_business_logo, avatar_url)')
         .in('post_id', postIds)
         .order('created_at', { ascending: true });
 
@@ -1295,7 +1282,7 @@ const Feed = () => {
         async (payload) => {
           const { data: profile } = await supabase
             .from('profiles')
-            .select('display_name, handle, is_verified, is_organization_verified')
+            .select('display_name, handle, is_verified, is_organization_verified, is_affiliate, affiliate_business_name, affiliate_business_logo')
             .eq('id', payload.new.author_id)
             .single();
 
