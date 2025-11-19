@@ -27,6 +27,7 @@ import { MentionInput } from '@/components/MentionInput';
 import { VerifiedBadge } from '@/components/VerifiedBadge';
 import { BusinessBadge } from '@/components/BusinessBadge';
 import { AffiliatedBadge } from '@/components/AffiliatedBadge';
+import { OnlineStatus } from '@/components/OnlineStatus';
 
 // --- INTERFACES ---
 
@@ -69,6 +70,8 @@ interface Post {
       avatar_url: string | null;
       display_name: string;
     } | null;
+    last_seen?: string | null;
+    show_online_status?: boolean;
   };
   replies: Reply[];
   like_count: number;
@@ -101,6 +104,8 @@ interface Reply {
       avatar_url: string | null;
       display_name: string;
     } | null;
+    last_seen?: string | null;
+    show_online_status?: boolean;
   };
   affiliation_date?: string;
 }
@@ -214,7 +219,19 @@ const parsePostContent = (content: string, postId: string, navigate: ReturnType<
 };
 
 // Avatar Display Components
-const UserAvatarSmall = ({ userId, name, avatarUrl }: { userId: string; name: string; avatarUrl?: string | null }) => {
+const UserAvatarSmall = ({ 
+  userId, 
+  name, 
+  avatarUrl,
+  lastSeen,
+  showOnlineStatus 
+}: { 
+  userId: string; 
+  name: string; 
+  avatarUrl?: string | null;
+  lastSeen?: string | null;
+  showOnlineStatus?: boolean;
+}) => {
   const { avatarConfig, loading } = useUserAvatar(userId);
 
   if (loading) {
@@ -223,20 +240,39 @@ const UserAvatarSmall = ({ userId, name, avatarUrl }: { userId: string; name: st
     );
   }
 
-  if (avatarUrl) {
-    return (
-      <img
-        src={avatarUrl}
-        alt={name}
-        className="h-6 w-6 sm:h-7 sm:w-7 rounded-full object-cover flex-shrink-0"
+  return (
+    <div className="relative">
+      {avatarUrl ? (
+        <img
+          src={avatarUrl}
+          alt={name}
+          className="h-6 w-6 sm:h-7 sm:w-7 rounded-full object-cover flex-shrink-0"
+        />
+      ) : (
+        <DefaultAvatar name={name} size={28} className="flex-shrink-0" />
+      )}
+      <OnlineStatus 
+        lastSeen={lastSeen} 
+        showOnlineStatus={showOnlineStatus}
+        className="w-2 h-2"
       />
-    );
-  }
-
-  return <DefaultAvatar name={name} size={28} className="flex-shrink-0" />;
+    </div>
+  );
 };
 
-const UserAvatarMedium = ({ userId, name, avatarUrl }: { userId: string; name: string; avatarUrl?: string | null }) => {
+const UserAvatarMedium = ({ 
+  userId, 
+  name, 
+  avatarUrl, 
+  lastSeen, 
+  showOnlineStatus 
+}: { 
+  userId: string; 
+  name: string; 
+  avatarUrl?: string | null;
+  lastSeen?: string | null;
+  showOnlineStatus?: boolean;
+}) => {
   const { avatarConfig, loading } = useUserAvatar(userId);
 
   if (loading) {
@@ -245,17 +281,24 @@ const UserAvatarMedium = ({ userId, name, avatarUrl }: { userId: string; name: s
     );
   }
 
-  if (avatarUrl) {
-    return (
-      <img
-        src={avatarUrl}
-        alt={name}
-        className="h-8 w-8 sm:h-10 sm:w-10 rounded-full object-cover flex-shrink-0"
+  return (
+    <div className="relative">
+      {avatarUrl ? (
+        <img
+          src={avatarUrl}
+          alt={name}
+          className="h-8 w-8 sm:h-10 sm:w-10 rounded-full object-cover flex-shrink-0"
+        />
+      ) : (
+        <DefaultAvatar name={name} size={40} className="flex-shrink-0" />
+      )}
+      <OnlineStatus 
+        lastSeen={lastSeen} 
+        showOnlineStatus={showOnlineStatus}
+        className="w-2.5 h-2.5"
       />
-    );
-  }
-
-  return <DefaultAvatar name={name} size={40} className="flex-shrink-0" />;
+    </div>
+  );
 };
 
 // --- REPLY ITEM (Unchanged) ---
@@ -622,6 +665,8 @@ const PostCard = ({ post, addReply, user, navigate, onAcknowledge, onDeletePost,
           userId={post.author_id} 
           name={post.profiles.display_name}
           avatarUrl={post.profiles.avatar_url}
+          lastSeen={post.profiles.last_seen}
+          showOnlineStatus={post.profiles.show_online_status}
         />
       </div>
 
@@ -1196,7 +1241,7 @@ const Feed = () => {
         .from('posts')
         .select(`
           *,
-          profiles(display_name, handle, is_verified, is_organization_verified, is_affiliate, is_business_mode, avatar_url, affiliated_business_id),
+          profiles(display_name, handle, is_verified, is_organization_verified, is_affiliate, is_business_mode, avatar_url, affiliated_business_id, last_seen, show_online_status),
           post_images(image_url, display_order, alt_text),
           post_link_previews(url, title, description, image_url, site_name)
         `)
@@ -1273,7 +1318,7 @@ const Feed = () => {
 
       const { data: repliesData, error: repliesError } = await supabase
         .from('post_replies')
-        .select('*, profiles(display_name, handle, is_verified, is_organization_verified, is_affiliate, is_business_mode, avatar_url, affiliated_business_id)')
+        .select('*, profiles(display_name, handle, is_verified, is_organization_verified, is_affiliate, is_business_mode, avatar_url, affiliated_business_id, last_seen, show_online_status)')
         .in('post_id', postIds)
         .order('created_at', { ascending: true });
 

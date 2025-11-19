@@ -23,6 +23,8 @@ interface Reply {
     is_verified: boolean;
     is_organization_verified: boolean;
     avatar_url?: string | null;
+    last_seen?: string | null;
+    show_online_status?: boolean;
   };
 }
 
@@ -41,6 +43,8 @@ interface NestedReplyItemProps {
     userId: string;
     name: string;
     avatarUrl?: string | null;
+    lastSeen?: string | null;
+    showOnlineStatus?: boolean;
   }>;
   VerifiedBadge: React.ComponentType<{
     isVerified: boolean;
@@ -113,6 +117,8 @@ export const NestedReplyItem = ({
             userId={reply.author_id} 
             name={reply.profiles.display_name}
             avatarUrl={reply.profiles.avatar_url}
+            lastSeen={reply.profiles.last_seen}
+            showOnlineStatus={reply.profiles.show_online_status}
           />
         </div>
 

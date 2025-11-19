@@ -30,6 +30,7 @@ import { BusinessBadge } from '@/components/BusinessBadge';
 import { AffiliatedBadge } from '@/components/AffiliatedBadge';
 import { AffiliateDetailsSheet } from '@/components/AffiliateDetailsSheet';
 import { VerifiedDetailsSheet } from '@/components/VerifiedDetailsSheet';
+import { OnlineStatus } from '@/components/OnlineStatus';
 
 interface Profile {
 	id: string;
@@ -52,6 +53,8 @@ interface Profile {
 		display_name: string;
 	} | null;
 	affiliation_date?: string;
+	last_seen?: string | null;
+	show_online_status?: boolean;
 }
 
 interface Post {
@@ -373,7 +376,7 @@ const Profile = () => {
 
 		let query = supabase
 			.from('profiles')
-			.select('*, created_at')
+			.select('*, created_at, last_seen, show_online_status')
 			.limit(1);
 
 		if (isParamUUID) {
@@ -746,8 +749,9 @@ const Profile = () => {
 
 				<div className="p-4">
 					<div className="flex justify-between items-end -mt-20 sm:-mt-16">
-						<div className="h-24 w-24 sm:h-32 sm:w-32 rounded-full overflow-hidden bg-background">
+						<div className="relative h-24 w-24 sm:h-32 sm:w-32 rounded-full overflow-hidden bg-background">
 							<ProfileAvatarDisplay profileId={profileId} profile={profile} />
+							<OnlineStatus lastSeen={profile.last_seen} showOnlineStatus={profile.show_online_status} />
 						</div>
 
 					{user && user.id === profileId ? (
