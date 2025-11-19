@@ -13,8 +13,11 @@ import { ChatRedEnvelope } from '@/components/chat/ChatRedEnvelope';
 import { SendRedEnvelopeDialog } from '@/components/chat/SendRedEnvelopeDialog';
 import { MessageBubble } from '@/components/chat/MessageBubble';
 import { DateDivider } from '@/components/chat/DateDivider';
+import { TypingIndicator } from '@/components/chat/TypingIndicator';
 import { isSameDay } from 'date-fns';
 import { useTranslation } from 'react-i18next';
+import EmojiPicker, { EmojiClickData } from 'emoji-picker-react';
+import { Dialog, DialogContent, DialogTrigger } from '@/components/ui/dialog';
 
 interface Message {
   id: string;
@@ -79,6 +82,7 @@ const ChatRoom = () => {
   const [audioPlayers, setAudioPlayers] = useState<{ [key: string]: { isPlaying: boolean; audio: HTMLAudioElement | null } }>({});
   const [replyToMessage, setReplyToMessage] = useState<Message | null>(null);
   const [typingUsers, setTypingUsers] = useState<string[]>([]);
+  const [emojiPickerOpen, setEmojiPickerOpen] = useState(false);
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const mediaRecorderRef = useRef<MediaRecorder | null>(null);
   const streamRef = useRef<MediaStream | null>(null);
@@ -652,6 +656,10 @@ const ChatRoom = () => {
                 });
               })()}
               
+              {/* Typing Indicator */}
+              {typingUsers.length > 0 && (
+                <TypingIndicator userName={typingUsers[0]} />
+              )}
             </>
           )}
           <div ref={messagesEndRef} />
@@ -761,14 +769,29 @@ const ChatRoom = () => {
             ) : (
               <>
                 {!newMessage.trim() && (
-                  <Button
-                    type="button"
-                    variant="ghost"
-                    size="icon"
-                    className="h-11 w-11 rounded-full hover:bg-muted/30 text-muted-foreground flex-shrink-0"
-                  >
-                    <Smile className="h-6 w-6" />
-                  </Button>
+                  <Dialog open={emojiPickerOpen} onOpenChange={setEmojiPickerOpen}>
+                    <DialogTrigger asChild>
+                      <Button
+                        type="button"
+                        variant="ghost"
+                        size="icon"
+                        className="h-11 w-11 rounded-full hover:bg-muted/30 text-muted-foreground flex-shrink-0"
+                      >
+                        <Smile className="h-6 w-6" />
+                      </Button>
+                    </DialogTrigger>
+                    <DialogContent className="p-0 border-none bg-transparent shadow-none max-w-full w-auto">
+                      <EmojiPicker
+                        onEmojiClick={(emojiData: EmojiClickData) => {
+                          setNewMessage(prev => prev + emojiData.emoji);
+                          setEmojiPickerOpen(false);
+                        }}
+                        searchDisabled
+                        skinTonesDisabled
+                        previewConfig={{ showPreview: false }}
+                      />
+                    </DialogContent>
+                  </Dialog>
                 )}
                 <Input
                   value={newMessage}

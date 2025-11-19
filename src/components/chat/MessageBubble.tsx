@@ -71,6 +71,15 @@ export const MessageBubble = ({
   const canEdit = isOwn && !isVoice && message.sent_at && 
     (Date.now() - new Date(message.sent_at).getTime()) < 15 * 60 * 1000;
 
+  // Swipe-to-reply gesture
+  const handleDragEnd = (event: any, info: any) => {
+    if (!isOwn && info.offset.x > 80) {
+      onReply(message);
+    } else if (isOwn && info.offset.x < -80) {
+      onReply(message);
+    }
+  };
+
   // Find the message being replied to (if any)
   // In a real app, this might be fetched or passed in
   const repliedMessage = message.reply_to_message;
@@ -199,14 +208,20 @@ export const MessageBubble = ({
   return (
     <motion.div
       drag="x"
-      dragConstraints={{ left: 0, right: 0 }}
-      dragElastic={{ left: 0.1, right: isOwn ? 0 : 0.1 }}
-      onDragEnd={(_, info) => {
-        if (!isOwn && info.offset.x > 50) onReply(message);
-        if (isOwn && info.offset.x < -50) onReply(message);
-      }}
-      className={`flex w-full mb-1 group ${isOwn ? 'justify-end' : 'justify-start'}`}
+      dragConstraints={{ left: isOwn ? -100 : 0, right: isOwn ? 0 : 100 }}
+      dragElastic={0.1}
+      onDragEnd={handleDragEnd}
+      className={`flex w-full mb-1 group ${isOwn ? 'justify-end' : 'justify-start'} relative`}
     >
+      {/* Swipe Reply Indicator */}
+      <motion.div 
+        className={`absolute top-1/2 -translate-y-1/2 ${isOwn ? 'right-full mr-2' : 'left-full ml-2'}`}
+        initial={{ opacity: 0, scale: 0 }}
+        animate={{ opacity: 0, scale: 0 }}
+      >
+        <Reply className="h-5 w-5 text-primary" />
+      </motion.div>
+      
       <div className={`flex items-end gap-1.5 max-w-[75%] sm:max-w-[65%] ${isOwn ? 'flex-row-reverse' : 'flex-row'}`}>
         
         {/* --- Avatar --- */}
