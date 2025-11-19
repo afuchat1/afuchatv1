@@ -830,7 +830,6 @@ export type Database = {
       }
       profiles: {
         Row: {
-          active_account_mode: string | null
           affiliate_business_logo: string | null
           affiliate_business_name: string | null
           ai_chat_id: string | null
@@ -843,6 +842,7 @@ export type Database = {
           id: string
           is_admin: boolean | null
           is_affiliate: boolean | null
+          is_business_mode: boolean
           is_organization_verified: boolean | null
           is_private: boolean | null
           is_verified: boolean | null
@@ -858,7 +858,6 @@ export type Database = {
           xp: number
         }
         Insert: {
-          active_account_mode?: string | null
           affiliate_business_logo?: string | null
           affiliate_business_name?: string | null
           ai_chat_id?: string | null
@@ -871,6 +870,7 @@ export type Database = {
           id: string
           is_admin?: boolean | null
           is_affiliate?: boolean | null
+          is_business_mode?: boolean
           is_organization_verified?: boolean | null
           is_private?: boolean | null
           is_verified?: boolean | null
@@ -886,7 +886,6 @@ export type Database = {
           xp?: number
         }
         Update: {
-          active_account_mode?: string | null
           affiliate_business_logo?: string | null
           affiliate_business_name?: string | null
           ai_chat_id?: string | null
@@ -899,6 +898,7 @@ export type Database = {
           id?: string
           is_admin?: boolean | null
           is_affiliate?: boolean | null
+          is_business_mode?: boolean
           is_organization_verified?: boolean | null
           is_private?: boolean | null
           is_verified?: boolean | null

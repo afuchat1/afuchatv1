@@ -3,8 +3,6 @@ import { useAuth } from './AuthContext';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
 
-type AccountMode = 'personal' | 'business';
-
 interface BusinessAccount {
   id: string;
   name: string;
@@ -13,15 +11,15 @@ interface BusinessAccount {
 }
 
 interface AccountModeContextType {
-  accountMode: AccountMode;
-  setAccountMode: (mode: AccountMode) => Promise<void>;
+  isBusinessMode: boolean;
+  setBusinessMode: (isBusinessMode: boolean) => Promise<void>;
   businessAccount: BusinessAccount | null;
   loading: boolean;
 }
 
 const AccountModeContext = createContext<AccountModeContextType>({
-  accountMode: 'personal',
-  setAccountMode: async () => {},
+  isBusinessMode: false,
+  setBusinessMode: async () => {},
   businessAccount: null,
   loading: true,
 });
@@ -30,13 +28,13 @@ export const useAccountMode = () => useContext(AccountModeContext);
 
 export function AccountModeProvider({ children }: { children: React.ReactNode }) {
   const { user } = useAuth();
-  const [accountMode, setAccountModeState] = useState<AccountMode>('personal');
+  const [isBusinessMode, setIsBusinessModeState] = useState<boolean>(false);
   const [businessAccount, setBusinessAccount] = useState<BusinessAccount | null>(null);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     if (!user) {
-      setAccountModeState('personal');
+      setIsBusinessModeState(false);
       setBusinessAccount(null);
       setLoading(false);
       return;
@@ -47,12 +45,12 @@ export function AccountModeProvider({ children }: { children: React.ReactNode })
         // Get user's current account mode
         const { data: profile } = await supabase
           .from('profiles')
-          .select('active_account_mode')
+          .select('is_business_mode')
           .eq('id', user.id)
           .single();
 
-        if (profile?.active_account_mode) {
-          setAccountModeState(profile.active_account_mode as AccountMode);
+        if (profile) {
+          setIsBusinessModeState(profile.is_business_mode || false);
         }
 
         // Check if user owns a business account
@@ -73,10 +71,10 @@ export function AccountModeProvider({ children }: { children: React.ReactNode })
     loadAccountData();
   }, [user]);
 
-  const setAccountMode = async (mode: AccountMode) => {
+  const setBusinessMode = async (mode: boolean) => {
     if (!user) return;
 
-    if (mode === 'business' && !businessAccount) {
+    if (mode && !businessAccount) {
       toast.error('You need to create a business account first');
       return;
     }
@@ -84,13 +82,13 @@ export function AccountModeProvider({ children }: { children: React.ReactNode })
     try {
       const { error } = await supabase
         .from('profiles')
-        .update({ active_account_mode: mode })
+        .update({ is_business_mode: mode })
         .eq('id', user.id);
 
       if (error) throw error;
 
-      setAccountModeState(mode);
-      toast.success(`Switched to ${mode} account`);
+      setIsBusinessModeState(mode);
+      toast.success(`Switched to ${mode ? 'business' : 'personal'} account`);
     } catch (error) {
       console.error('Error switching account mode:', error);
       toast.error('Failed to switch account mode');
@@ -100,8 +98,8 @@ export function AccountModeProvider({ children }: { children: React.ReactNode })
   return (
     <AccountModeContext.Provider 
       value={{ 
-        accountMode, 
-        setAccountMode, 
+        isBusinessMode, 
+        setBusinessMode, 
         businessAccount,
         loading 
       }}
