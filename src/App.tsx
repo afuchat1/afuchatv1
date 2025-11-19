@@ -37,7 +37,7 @@ import QRCode from "./pages/QRCode";
 import Settings from "./pages/Settings";
 import TermsOfUse from "./pages/TermsOfUse";
 import PrivacyPolicy from "./pages/PrivacyPolicy";
-import AvatarEditor from "./pages/AvatarEditor";
+import AvatarEditor from "@/pages/AvatarEditor";
 import TrendingHashtags from "./pages/TrendingHashtags";
 import AdminAffiliateRequests from "./pages/AdminAffiliateRequests";
 import AffiliateRequest from "./pages/AffiliateRequest";
