@@ -10,7 +10,7 @@ import { Textarea } from '@/components/ui/textarea';
 import { Switch } from '@/components/ui/switch';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Separator } from '@/components/ui/separator'; 
-import { Loader2, User, Lock, Eye, MessageCircle, Upload, X } from 'lucide-react';
+import { Loader2, User, Lock, Eye, MessageCircle, Upload, X, Building2 } from 'lucide-react';
 import { handleSchema, displayNameSchema, bioSchema } from '@/lib/validation';
 import { useXP } from '@/hooks/useXP';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
@@ -33,6 +33,10 @@ interface EditProfileForm {
   show_online_status: boolean;
   show_read_receipts: boolean;
   avatar_url: string | null;
+  business_name: string;
+  business_description: string;
+  business_logo_url: string | null;
+  business_website_url: string;
 }
 
 const EditProfile: React.FC = () => {
@@ -51,12 +55,18 @@ const EditProfile: React.FC = () => {
     show_online_status: true,
     show_read_receipts: true,
     avatar_url: null,
+    business_name: '',
+    business_description: '',
+    business_logo_url: null,
+    business_website_url: '',
   });
   const [loadingProfile, setLoadingProfile] = useState<boolean>(true); 
   const [saving, setSaving] = useState<boolean>(false);
   const [avatarFile, setAvatarFile] = useState<File | null>(null);
   const [showAvatarEditor, setShowAvatarEditor] = useState(false);
   const [uploadingAvatar, setUploadingAvatar] = useState(false);
+  const [businessLogoFile, setBusinessLogoFile] = useState<File | null>(null);
+  const [uploadingBusinessLogo, setUploadingBusinessLogo] = useState(false);
 
   useEffect(() => {
     // 🚨 FIX 2: Check the global Auth loading state first. Exit if still checking session.
@@ -101,6 +111,10 @@ const EditProfile: React.FC = () => {
             show_online_status: data.show_online_status || true,
             show_read_receipts: data.show_read_receipts || true,
             avatar_url: data.avatar_url || null,
+            business_name: data.business_name || '',
+            business_description: data.business_description || '',
+            business_logo_url: data.business_logo_url || null,
+            business_website_url: data.business_website_url || '',
           });
         } else {
           setProfile({
@@ -112,6 +126,10 @@ const EditProfile: React.FC = () => {
             show_online_status: true,
             show_read_receipts: true,
             avatar_url: null,
+            business_name: '',
+            business_description: '',
+            business_logo_url: null,
+            business_website_url: '',
           });
         }
       } catch (error: any) {
@@ -292,6 +310,84 @@ const EditProfile: React.FC = () => {
       toast.error('Failed to upload avatar');
     } finally {
       setUploadingAvatar(false);
+    }
+  };
+
+  const handleBusinessLogoChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file || !user) return;
+
+    // Validate file type
+    if (!file.type.startsWith('image/')) {
+      toast.error('Please select an image file');
+      return;
+    }
+
+    // Validate file size (5MB)
+    if (file.size > 5 * 1024 * 1024) {
+      toast.error('Image must be less than 5MB');
+      return;
+    }
+
+    setUploadingBusinessLogo(true);
+    try {
+      // Delete old logo if exists
+      if (profile.business_logo_url) {
+        const oldFileName = profile.business_logo_url.split('/').pop();
+        if (oldFileName) {
+          await supabase.storage.from('avatars').remove([`${user.id}/business/${oldFileName}`]);
+        }
+      }
+
+      // Upload new logo
+      const fileName = `${user.id}/business/${Date.now()}.png`;
+      const { error: uploadError } = await supabase.storage
+        .from('avatars')
+        .upload(fileName, file);
+
+      if (uploadError) throw uploadError;
+
+      // Get public URL
+      const {
+        data: { publicUrl },
+      } = supabase.storage.from('avatars').getPublicUrl(fileName);
+
+      // Update profile
+      await supabase.from('profiles').update({ business_logo_url: publicUrl }).eq('id', user.id);
+
+      setProfile((prev) => ({ ...prev, business_logo_url: publicUrl }));
+      toast.success('Business logo updated successfully!');
+    } catch (error) {
+      console.error('Error uploading business logo:', error);
+      toast.error('Failed to upload business logo');
+    } finally {
+      setUploadingBusinessLogo(false);
+    }
+  };
+
+  const handleRemoveBusinessLogo = async () => {
+    if (!user) return;
+
+    setUploadingBusinessLogo(true);
+    try {
+      // Remove from storage if exists
+      if (profile.business_logo_url) {
+        const fileName = profile.business_logo_url.split('/').pop();
+        if (fileName) {
+          await supabase.storage.from('avatars').remove([`${user.id}/business/${fileName}`]);
+        }
+      }
+
+      // Update profile
+      await supabase.from('profiles').update({ business_logo_url: null }).eq('id', user.id);
+
+      setProfile((prev) => ({ ...prev, business_logo_url: null }));
+      toast.success('Business logo removed');
+    } catch (error) {
+      console.error('Error removing business logo:', error);
+      toast.error('Failed to remove business logo');
+    } finally {
+      setUploadingBusinessLogo(false);
     }
   };
 
@@ -483,26 +579,151 @@ const EditProfile: React.FC = () => {
 
             <Separator className="my-8 bg-border/50" />
 
-            <h3 className="text-lg font-semibold border-b pb-2 text-primary">Additional Information</h3>
+            <h3 className="text-lg font-semibold border-b pb-2 text-primary flex items-center gap-2">
+              <Building2 className="h-5 w-5" />
+              Business Profile (Optional)
+            </h3>
+            <p className="text-sm text-muted-foreground mb-4">
+              Set up your business profile to enable business mode and appear in affiliate searches.
+            </p>
 
-            {/* Location - Coming Soon */}
-            <div className="space-y-2">
-              <Label className="text-sm font-medium text-foreground">
-                Location
-              </Label>
-              <div className="h-11 bg-muted/50 flex items-center justify-center rounded-md text-sm text-muted-foreground">
-                Coming soon
+            {/* Business Logo */}
+            <div className="space-y-4">
+              <Label className="text-sm font-medium text-foreground">Business Logo</Label>
+              <div className="flex items-center gap-6">
+                <Avatar className="h-24 w-24 border-2 border-border">
+                  {profile.business_logo_url ? (
+                    <AvatarImage src={profile.business_logo_url} alt="Business Logo" />
+                  ) : (
+                    <AvatarFallback className="bg-muted">
+                      <Building2 className="h-12 w-12 text-muted-foreground" />
+                    </AvatarFallback>
+                  )}
+                </Avatar>
+
+                <div className="flex-1 space-y-3">
+                  <div className="flex gap-2">
+                    <input
+                      type="file"
+                      id="business-logo-upload"
+                      accept="image/*"
+                      onChange={handleBusinessLogoChange}
+                      className="hidden"
+                      disabled={uploadingBusinessLogo}
+                    />
+                    <Label htmlFor="business-logo-upload">
+                      <Button
+                        type="button"
+                        variant="outline"
+                        disabled={uploadingBusinessLogo}
+                        asChild
+                      >
+                        <span className="cursor-pointer">
+                          <Upload className="h-4 w-4 mr-2" />
+                          {uploadingBusinessLogo ? 'Uploading...' : 'Upload Logo'}
+                        </span>
+                      </Button>
+                    </Label>
+                    {profile.business_logo_url && (
+                      <Button
+                        type="button"
+                        variant="outline"
+                        onClick={handleRemoveBusinessLogo}
+                        disabled={uploadingBusinessLogo}
+                      >
+                        <X className="h-4 w-4 mr-2" />
+                        Remove
+                      </Button>
+                    )}
+                  </div>
+                  <p className="text-sm text-muted-foreground">
+                    JPG, PNG, or GIF (max 5MB). Square logos work best.
+                  </p>
+                </div>
               </div>
             </div>
 
-            {/* Website - Coming Soon */}
+            {/* Business Name */}
             <div className="space-y-2">
-              <Label className="text-sm font-medium text-foreground">
-                Website
+              <Label htmlFor="business_name" className="text-sm font-medium text-foreground">
+                Business Name
               </Label>
-              <div className="h-11 bg-muted/50 flex items-center justify-center rounded-md text-sm text-muted-foreground">
-                Coming soon
-              </div>
+              <Input
+                id="business_name"
+                name="business_name"
+                value={profile.business_name}
+                onChange={handleInputChange}
+                placeholder="Your business or organization name"
+                disabled={saving}
+                className="text-base h-11 bg-input/50 border border-border/80 focus:border-primary/50"
+              />
+              <p className="text-xs text-muted-foreground">
+                This will be displayed on your profile when in business mode.
+              </p>
+            </div>
+
+            {/* Business Description */}
+            <div className="space-y-2">
+              <Label htmlFor="business_description" className="text-sm font-medium text-foreground">
+                Business Description
+              </Label>
+              <Textarea
+                id="business_description"
+                name="business_description"
+                value={profile.business_description}
+                onChange={handleInputChange}
+                placeholder="Describe your business (max 200 chars)"
+                rows={3}
+                maxLength={200}
+                disabled={saving}
+                className="text-base resize-none bg-input/50 border border-border/80 focus:border-primary/50"
+              />
+              <p className="text-xs text-muted-foreground flex justify-between">
+                <span>Brief description of what your business does</span>
+                <span>{profile.business_description.length}/200</span>
+              </p>
+            </div>
+
+            {/* Business Website */}
+            <div className="space-y-2">
+              <Label htmlFor="business_website_url" className="text-sm font-medium text-foreground">
+                Business Website
+              </Label>
+              <Input
+                id="business_website_url"
+                name="business_website_url"
+                value={profile.business_website_url}
+                onChange={handleInputChange}
+                placeholder="https://yourbusiness.com"
+                disabled={saving}
+                className="text-base h-11 bg-input/50 border border-border/80 focus:border-primary/50"
+              />
+              <p className="text-xs text-muted-foreground">
+                Your business website or online presence
+              </p>
+            </div>
+
+            <Separator className="my-8 bg-border/50" />
+
+            <h3 className="text-lg font-semibold border-b pb-2 text-primary">Additional Information</h3>
+
+            {/* Personal Website */}
+            <div className="space-y-2">
+              <Label htmlFor="website_url" className="text-sm font-medium text-foreground">
+                Personal Website
+              </Label>
+              <Input
+                id="website_url"
+                name="website_url"
+                value={profile.website_url}
+                onChange={handleInputChange}
+                placeholder="https://yourwebsite.com"
+                disabled={saving}
+                className="text-base h-11 bg-input/50 border border-border/80 focus:border-primary/50"
+              />
+              <p className="text-xs text-muted-foreground">
+                Your personal website, blog, or portfolio
+              </p>
             </div>
           </div>
           
