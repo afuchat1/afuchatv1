@@ -16,6 +16,7 @@ import { DateDivider } from '@/components/chat/DateDivider';
 import { TypingIndicator } from '@/components/chat/TypingIndicator';
 import { isSameDay } from 'date-fns';
 import { useTranslation } from 'react-i18next';
+import { FileUploadPreview } from '@/components/chat/FileUploadPreview';
 import EmojiPicker, { EmojiClickData } from 'emoji-picker-react';
 import { Dialog, DialogContent, DialogTrigger } from '@/components/ui/dialog';
 
@@ -23,6 +24,10 @@ interface Message {
   id: string;
   encrypted_content: string;
   audio_url?: string;
+  attachment_url?: string;
+  attachment_type?: string;
+  attachment_name?: string;
+  attachment_size?: number;
   sender_id: string;
   sent_at: string;
   edited_at?: string | null;
@@ -83,6 +88,9 @@ const ChatRoom = () => {
   const [replyToMessage, setReplyToMessage] = useState<Message | null>(null);
   const [typingUsers, setTypingUsers] = useState<string[]>([]);
   const [emojiPickerOpen, setEmojiPickerOpen] = useState(false);
+  const [selectedFile, setSelectedFile] = useState<File | null>(null);
+  const [uploadingFile, setUploadingFile] = useState(false);
+  const fileInputRef = useRef<HTMLInputElement>(null);
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const mediaRecorderRef = useRef<MediaRecorder | null>(null);
   const streamRef = useRef<MediaStream | null>(null);
@@ -386,10 +394,12 @@ const ChatRoom = () => {
   };
 
   const handleSend = async () => {
-    if (!newMessage.trim() || !user || sending) return;
+    if ((!newMessage.trim() && !selectedFile) || !user || sending) return;
 
     try {
-      messageSchema.parse(newMessage);
+      if (newMessage.trim()) {
+        messageSchema.parse(newMessage);
+      }
     } catch (error) {
       toast.error('Message is too long or invalid');
       return;
@@ -397,21 +407,92 @@ const ChatRoom = () => {
 
     setSending(true);
     
-    const { error } = await supabase.from('messages').insert({
-      chat_id: chatId,
-      sender_id: user.id,
-      encrypted_content: newMessage,
-      reply_to_message_id: replyToMessage?.id || null,
-    });
+    try {
+      let attachmentUrl = null;
+      let attachmentType = null;
+      let attachmentName = null;
+      let attachmentSize = null;
 
-    if (error) {
+      // Upload file if selected
+      if (selectedFile) {
+        setUploadingFile(true);
+        const fileExt = selectedFile.name.split('.').pop();
+        const fileName = `${user.id}/${Date.now()}.${fileExt}`;
+        
+        const { error: uploadError } = await supabase.storage
+          .from('chat-attachments')
+          .upload(fileName, selectedFile, {
+            cacheControl: '3600',
+            upsert: false
+          });
+
+        if (uploadError) {
+          toast.error('Failed to upload file');
+          setSending(false);
+          setUploadingFile(false);
+          return;
+        }
+
+        attachmentUrl = fileName;
+        attachmentType = selectedFile.type;
+        attachmentName = selectedFile.name;
+        attachmentSize = selectedFile.size;
+        setUploadingFile(false);
+      }
+
+      const { error } = await supabase.from('messages').insert({
+        chat_id: chatId,
+        sender_id: user.id,
+        encrypted_content: newMessage || '',
+        reply_to_message_id: replyToMessage?.id || null,
+        attachment_url: attachmentUrl,
+        attachment_type: attachmentType,
+        attachment_name: attachmentName,
+        attachment_size: attachmentSize,
+      });
+
+      if (error) {
+        toast.error('Failed to send message');
+      } else {
+        setNewMessage('');
+        setSelectedFile(null);
+        setReplyToMessage(null);
+        removeTypingIndicator();
+      }
+    } catch (error) {
       toast.error('Failed to send message');
-    } else {
-      setNewMessage('');
-      setReplyToMessage(null);
-      removeTypingIndicator();
     }
+    
     setSending(false);
+  };
+
+  const handleFileSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    // Validate file size (10MB limit)
+    if (file.size > 10 * 1024 * 1024) {
+      toast.error('File size must be less than 10MB');
+      return;
+    }
+
+    // Validate file type
+    const allowedTypes = [
+      'image/jpeg', 'image/jpg', 'image/png', 'image/gif', 'image/webp',
+      'application/pdf', 'application/msword',
+      'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
+      'text/plain'
+    ];
+
+    if (!allowedTypes.includes(file.type)) {
+      toast.error('File type not supported');
+      return;
+    }
+
+    setSelectedFile(file);
+    if (fileInputRef.current) {
+      fileInputRef.current.value = '';
+    }
   };
 
   const handleInputChange = (value: string) => {
@@ -707,7 +788,7 @@ const ChatRoom = () => {
         )}
 
         {/* Reply Preview */}
-        {replyToMessage && (
+        {replyToMessage && !selectedFile && (
           <div className="fixed bottom-[68px] left-0 right-0 z-20 bg-card px-4 py-3">
             <div className="flex items-center gap-3">
               <div className="w-1 h-10 bg-primary rounded-full" />
@@ -731,8 +812,23 @@ const ChatRoom = () => {
           </div>
         )}
 
+        {/* File Upload Preview */}
+        {selectedFile && (
+          <FileUploadPreview
+            file={selectedFile}
+            onRemove={() => setSelectedFile(null)}
+          />
+        )}
+
         {/* Input: Telegram style */}
         <div className="fixed bottom-0 left-0 right-0 z-20 bg-card px-3 py-2 pb-[env(safe-area-inset-bottom)]">
+          <input
+            ref={fileInputRef}
+            type="file"
+            className="hidden"
+            accept="image/*,.pdf,.doc,.docx,.txt"
+            onChange={handleFileSelect}
+          />
           <form onSubmit={(e) => { e.preventDefault(); handleSend(); }} className="flex items-center gap-1.5">
             {recording ? (
               <div className="flex-1 flex items-center gap-3 px-4 py-3 bg-destructive/10 rounded-3xl">
@@ -797,18 +893,18 @@ const ChatRoom = () => {
                   value={newMessage}
                   onChange={(e) => handleInputChange(e.target.value)}
                   onKeyDown={(e) => e.key === 'Enter' && !e.shiftKey && (e.preventDefault(), handleSend())}
-                  placeholder="Message"
+                  placeholder={selectedFile ? 'Add a caption...' : 'Message'}
                   className="flex-1 bg-secondary border-none rounded-xl px-4 py-2.5 h-11 text-[15px] placeholder:text-muted-foreground/60 focus-visible:ring-0"
                   disabled={sending}
                 />
-                {newMessage.trim() ? (
+                {(newMessage.trim() || selectedFile) ? (
                   <Button
                     type="submit"
                     size="icon"
                     className="h-11 w-11 rounded-full bg-primary hover:bg-primary/90 text-primary-foreground flex-shrink-0"
-                    disabled={sending}
+                    disabled={sending || uploadingFile}
                   >
-                    {sending ? <Loader2 className="h-5 w-5 animate-spin" /> : <Send className="h-5 w-5" />}
+                    {(sending || uploadingFile) ? <Loader2 className="h-5 w-5 animate-spin" /> : <Send className="h-5 w-5" />}
                   </Button>
                 ) : (
                   <>
@@ -823,6 +919,7 @@ const ChatRoom = () => {
                       variant="ghost"
                       size="icon"
                       className="h-11 w-11 rounded-full hover:bg-muted/30 text-muted-foreground flex-shrink-0"
+                      onClick={() => fileInputRef.current?.click()}
                     >
                       <Paperclip className="h-6 w-6" />
                     </Button>

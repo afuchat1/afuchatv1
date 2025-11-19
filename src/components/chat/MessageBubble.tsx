@@ -1,9 +1,12 @@
 import { motion } from 'framer-motion';
-import { Check, CheckCheck, Play, Pause, Volume2, Smile, Reply, Pencil } from 'lucide-react';
+import { Check, CheckCheck, Play, Pause, Volume2, Smile, Reply, Pencil, FileText, Download, Image as ImageIcon } from 'lucide-react';
 import { Avatar } from './Avatar';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
+import { AttachmentPreview } from './AttachmentPreview';
+import { useState } from 'react';
+import { ImageLightbox } from '@/components/ui/ImageLightbox';
 
 export interface Reaction {
   reaction: string;
@@ -13,6 +16,10 @@ export interface Message {
   id: string;
   encrypted_content: string;
   audio_url?: string;
+  attachment_url?: string;
+  attachment_type?: string;
+  attachment_name?: string;
+  attachment_size?: number;
   sender_id: string;
   sent_at: string;
   edited_at?: string | null;
@@ -64,11 +71,13 @@ export const MessageBubble = ({
   audioPlayerState,
   onEdit
 }: MessageBubbleProps) => {
+  const [lightboxOpen, setLightboxOpen] = useState(false);
   const time = new Date(message.sent_at).toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' });
   const isVoice = !!message.audio_url;
+  const hasAttachment = !!message.attachment_url;
   
   // Check if message can be edited (within 15 minutes)
-  const canEdit = isOwn && !isVoice && message.sent_at && 
+  const canEdit = isOwn && !isVoice && !hasAttachment && message.sent_at && 
     (Date.now() - new Date(message.sent_at).getTime()) < 15 * 60 * 1000;
 
   // Swipe-to-reply gesture
@@ -77,6 +86,25 @@ export const MessageBubble = ({
       onReply(message);
     } else if (isOwn && info.offset.x < -80) {
       onReply(message);
+    }
+  };
+
+  const handleDownload = async () => {
+    if (!message.attachment_url) return;
+    
+    try {
+      const response = await fetch(message.attachment_url);
+      const blob = await response.blob();
+      const url = window.URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = message.attachment_name || 'download';
+      document.body.appendChild(a);
+      a.click();
+      window.URL.revokeObjectURL(url);
+      document.body.removeChild(a);
+    } catch (error) {
+      console.error('Download failed:', error);
     }
   };
 
@@ -107,8 +135,29 @@ export const MessageBubble = ({
         </div>
       )}
       
-      {/* --- Main Content (Text or Voice) --- */}
-      {isVoice ? (
+      {/* --- Main Content (Text or Voice or Attachment) --- */}
+      {hasAttachment ? (
+        <div className="p-2">
+          <AttachmentPreview
+            url={message.attachment_url!}
+            type={message.attachment_type || ''}
+            name={message.attachment_name || 'Attachment'}
+            size={message.attachment_size}
+            isOwn={isOwn}
+            onDownload={message.attachment_type?.startsWith('image/') 
+              ? () => setLightboxOpen(true)
+              : handleDownload
+            }
+          />
+          {message.encrypted_content && (
+            <div className="px-2 py-2 mt-1">
+              <p className="text-[15px] leading-relaxed whitespace-pre-wrap break-words">
+                {message.encrypted_content}
+              </p>
+            </div>
+          )}
+        </div>
+      ) : isVoice ? (
         <div className="flex items-center gap-3 px-3 py-2">
           <Button
             variant="ghost"
@@ -289,6 +338,15 @@ export const MessageBubble = ({
           <ReactionDisplay />
         </div>
       </div>
+      
+      {/* Image Lightbox */}
+      {lightboxOpen && hasAttachment && message.attachment_type?.startsWith('image/') && (
+        <ImageLightbox
+          images={[{ url: message.attachment_url!, alt: message.attachment_name || 'Image' }]}
+          initialIndex={0}
+          onClose={() => setLightboxOpen(false)}
+        />
+      )}
     </motion.div>
   );
 };
