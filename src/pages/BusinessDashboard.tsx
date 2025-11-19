@@ -82,10 +82,7 @@ const BusinessDashboard = () => {
   const [paymentTerms, setPaymentTerms] = useState<string>('Monthly payment based on affiliate performance');
 
   useEffect(() => {
-    if (!user) {
-      navigate('/auth');
-      return;
-    }
+    if (!user) return;
     fetchDashboardData();
   }, [user]);
 
