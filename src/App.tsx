@@ -5,7 +5,6 @@ import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route, Navigate, useParams } from "react-router-dom";
 import { AuthProvider } from "./contexts/AuthContext";
-import { AccountModeProvider } from "./contexts/AccountModeContext";
 import { ThemeProvider } from "./contexts/ThemeContext";
 import { useDailyLogin } from "./hooks/useDailyLogin";
 import { useLanguageSync } from "./hooks/useLanguageSync";
@@ -36,9 +35,7 @@ import Leaderboard from "./pages/Leaderboard";
 import AvatarEditor from "./pages/AvatarEditor";
 import GiftLeaderboard from "./pages/GiftLeaderboard";
 import TrendingHashtags from "./pages/TrendingHashtags";
-import AffiliateRequestPage from "./pages/AffiliateRequestPage";
 import AdminAffiliateRequests from "./pages/AdminAffiliateRequests";
-import BusinessAffiliateRequests from "./pages/BusinessAffiliateRequests";
 import Layout from "./components/Layout";
 
 const queryClient = new QueryClient();
