@@ -1,4 +1,4 @@
-import { useState, useRef, useEffect } from 'react';
+import { useRef } from 'react';
 import { Textarea } from '@/components/ui/textarea';
 
 interface MentionInputProps {
@@ -18,23 +18,12 @@ export const MentionInput = ({
   className,
   onSubmit,
 }: MentionInputProps) => {
-  const [displayValue, setDisplayValue] = useState('');
   const textareaRef = useRef<HTMLTextAreaElement>(null);
-
-  useEffect(() => {
-    if (mention) {
-      // Remove mention from display but keep in actual value
-      setDisplayValue(value.replace(mention, '').trim());
-    } else {
-      setDisplayValue(value);
-    }
-  }, [value, mention]);
 
   const handleChange = (e: React.ChangeEvent<HTMLTextAreaElement>) => {
     const newValue = e.target.value;
-    // Always prepend mention if it exists
-    const fullValue = mention ? `${mention} ${newValue}` : newValue;
-    onChange(fullValue);
+    // Store user's text without mention - mention will be added on submit
+    onChange(newValue);
   };
 
   const handleKeyDown = (e: React.KeyboardEvent<HTMLTextAreaElement>) => {
@@ -46,21 +35,18 @@ export const MentionInput = ({
 
   return (
     <div className="relative">
-      {mention && (
-        <div className="absolute left-3 top-3 pointer-events-none z-10 flex items-center gap-1">
-          <span className="bg-primary/10 text-primary px-2 py-0.5 rounded text-sm font-medium">
-            {mention}
-          </span>
+      {mention && value.trim() === '' && (
+        <div className="absolute left-3 top-3 pointer-events-none text-muted-foreground/40 select-none whitespace-nowrap overflow-hidden">
+          {mention}
         </div>
       )}
       <Textarea
         ref={textareaRef}
-        value={displayValue}
+        value={value}
         onChange={handleChange}
         onKeyDown={handleKeyDown}
         placeholder={placeholder}
-        className={`${mention ? 'pl-20' : ''} ${className}`}
-        style={mention ? { paddingLeft: `${mention.length * 8 + 24}px` } : {}}
+        className={className}
       />
     </div>
   );

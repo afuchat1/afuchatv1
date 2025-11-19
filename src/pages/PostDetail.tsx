@@ -337,12 +337,18 @@ const PostDetail = () => {
 
     setSubmittingReply(true);
     try {
+      // Append mention at the end if it exists
+      const mention = replyingTo 
+        ? `@${replyingTo.authorHandle}` 
+        : (post ? `@${post.author.handle}` : '');
+      const finalContent = mention ? `${replyText.trim()} ${mention}` : replyText.trim();
+
       const { error } = await supabase
         .from('post_replies')
         .insert({
           post_id: postId,
           author_id: user.id,
-          content: replyText.trim(),
+          content: finalContent,
           parent_reply_id: replyingTo?.replyId || null,
         });
 
