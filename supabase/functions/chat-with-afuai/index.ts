@@ -44,6 +44,66 @@ serve(async (req) => {
 
     const { message, history } = await req.json();
     
+    // Input validation
+    if (!message || typeof message !== 'string') {
+      return new Response(
+        JSON.stringify({ error: 'Message is required and must be a string' }),
+        { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      );
+    }
+    
+    if (message.trim().length === 0) {
+      return new Response(
+        JSON.stringify({ error: 'Message cannot be empty' }),
+        { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      );
+    }
+    
+    if (message.length > 2000) {
+      return new Response(
+        JSON.stringify({ error: 'Message must be less than 2000 characters' }),
+        { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      );
+    }
+    
+    if (history && !Array.isArray(history)) {
+      return new Response(
+        JSON.stringify({ error: 'History must be an array' }),
+        { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      );
+    }
+    
+    if (history && history.length > 50) {
+      return new Response(
+        JSON.stringify({ error: 'History cannot exceed 50 messages' }),
+        { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      );
+    }
+    
+    // Validate history messages
+    if (history) {
+      for (const msg of history) {
+        if (!msg.role || !msg.content) {
+          return new Response(
+            JSON.stringify({ error: 'Invalid history format' }),
+            { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+          );
+        }
+        if (!['user', 'assistant'].includes(msg.role)) {
+          return new Response(
+            JSON.stringify({ error: 'Invalid role in history' }),
+            { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+          );
+        }
+        if (msg.content.length > 2000) {
+          return new Response(
+            JSON.stringify({ error: 'History message too long' }),
+            { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+          );
+        }
+      }
+    }
+    
     const LOVABLE_API_KEY = Deno.env.get('LOVABLE_API_KEY');
     
     if (!LOVABLE_API_KEY) {

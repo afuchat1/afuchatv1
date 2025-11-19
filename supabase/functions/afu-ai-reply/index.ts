@@ -14,6 +14,49 @@ serve(async (req) => {
   try {
     const { postId, replyContent, originalPostContent, triggerReplyId } = await req.json();
     
+    // Input validation
+    if (!postId || typeof postId !== 'string') {
+      return new Response(
+        JSON.stringify({ error: 'Post ID is required and must be a string' }),
+        { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      );
+    }
+    
+    if (!replyContent || typeof replyContent !== 'string') {
+      return new Response(
+        JSON.stringify({ error: 'Reply content is required and must be a string' }),
+        { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      );
+    }
+    
+    if (replyContent.trim().length === 0) {
+      return new Response(
+        JSON.stringify({ error: 'Reply content cannot be empty' }),
+        { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      );
+    }
+    
+    if (replyContent.length > 2000) {
+      return new Response(
+        JSON.stringify({ error: 'Reply content must be less than 2000 characters' }),
+        { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      );
+    }
+    
+    if (originalPostContent && typeof originalPostContent !== 'string') {
+      return new Response(
+        JSON.stringify({ error: 'Original post content must be a string' }),
+        { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      );
+    }
+    
+    if (originalPostContent && originalPostContent.length > 2000) {
+      return new Response(
+        JSON.stringify({ error: 'Original post content too long' }),
+        { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      );
+    }
+    
     const LOVABLE_API_KEY = Deno.env.get('LOVABLE_API_KEY');
     const SUPABASE_URL = Deno.env.get('SUPABASE_URL');
     const SUPABASE_SERVICE_ROLE_KEY = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY');
