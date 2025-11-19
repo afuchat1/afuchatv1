@@ -1,7 +1,8 @@
 import { ReactNode, useEffect, useState } from 'react';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { useAuth } from '@/contexts/AuthContext';
-import { Home, MessageSquare, Search, ShoppingBag, Bell, User, Settings, Trophy, Shield } from 'lucide-react';
+import { useAccountMode } from '@/contexts/AccountModeContext';
+import { Home, MessageSquare, Search, ShoppingBag, Bell, User, Settings, Trophy, Shield, BarChart3 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import Logo from '@/components/Logo';
 import NotificationIcon from '@/components/nav/NotificationIcon';
@@ -17,15 +18,18 @@ interface LayoutProps {
 
 const Layout = ({ children }: LayoutProps) => {
   const { user } = useAuth();
+  const { mode, canUseBusiness } = useAccountMode();
   const location = useLocation();
   const navigate = useNavigate();
   const [isAdmin, setIsAdmin] = useState(false);
+  const [isBusinessMode, setIsBusinessMode] = useState(false);
   const [isScrollingDown, setIsScrollingDown] = useState(false);
   const [lastScrollY, setLastScrollY] = useState(0);
 
   useEffect(() => {
     if (user) {
       checkAdminStatus();
+      checkBusinessMode();
     }
   }, [user]);
 
@@ -60,6 +64,20 @@ const Layout = ({ children }: LayoutProps) => {
     }
   };
 
+  const checkBusinessMode = async () => {
+    if (!user) return;
+    
+    const { data, error } = await supabase
+      .from('profiles')
+      .select('is_business_mode')
+      .eq('id', user.id)
+      .single();
+
+    if (!error && data) {
+      setIsBusinessMode(data.is_business_mode || false);
+    }
+  };
+
   const navItems = [
     { path: '/', icon: Home, label: 'Home' },
     { path: '/search', icon: Search, label: 'Explore' },
@@ -75,6 +93,10 @@ const Layout = ({ children }: LayoutProps) => {
 
   if (isAdmin) {
     navItems.push({ path: '/admin', icon: Shield, label: 'Admin', badge: false });
+  }
+
+  if (isBusinessMode && mode === 'business') {
+    navItems.push({ path: '/business/dashboard', icon: BarChart3, label: 'Business', badge: false });
   }
 
   navItems.push({ path: '/settings', icon: Settings, label: 'Settings', badge: false });

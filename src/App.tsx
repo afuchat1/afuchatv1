@@ -38,6 +38,7 @@ import GiftLeaderboard from "./pages/GiftLeaderboard";
 import TrendingHashtags from "./pages/TrendingHashtags";
 import AdminAffiliateRequests from "./pages/AdminAffiliateRequests";
 import AffiliateRequest from "./pages/AffiliateRequest";
+import BusinessDashboard from "./pages/BusinessDashboard";
 import Layout from "./components/Layout";
 
 const queryClient = new QueryClient();
@@ -83,6 +84,7 @@ const AppRoutes = () => {
       <Route path="/trending" element={<Layout><TrendingHashtags /></Layout>} />
       <Route path="/admin/affiliate-requests" element={<Layout><AdminAffiliateRequests /></Layout>} />
       <Route path="/affiliate-request" element={<Layout><AffiliateRequest /></Layout>} />
+      <Route path="/business/dashboard" element={<Layout><BusinessDashboard /></Layout>} />
 
       <Route path="/profile/:userId" element={<ProfileRedirect />} />
 

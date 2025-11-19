@@ -786,6 +786,7 @@ export type Database = {
       }
       profiles: {
         Row: {
+          affiliated_business_id: string | null
           ai_chat_id: string | null
           avatar_url: string | null
           bio: string | null
@@ -812,6 +813,7 @@ export type Database = {
           xp: number
         }
         Insert: {
+          affiliated_business_id?: string | null
           ai_chat_id?: string | null
           avatar_url?: string | null
           bio?: string | null
@@ -838,6 +840,7 @@ export type Database = {
           xp?: number
         }
         Update: {
+          affiliated_business_id?: string | null
           ai_chat_id?: string | null
           avatar_url?: string | null
           bio?: string | null
@@ -864,6 +867,13 @@ export type Database = {
           xp?: number
         }
         Relationships: [
+          {
+            foreignKeyName: "profiles_affiliated_business_id_fkey"
+            columns: ["affiliated_business_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
           {
             foreignKeyName: "profiles_ai_chat_id_fkey"
             columns: ["ai_chat_id"]
@@ -1259,6 +1269,10 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      approve_affiliate_by_business: {
+        Args: { p_request_id: string }
+        Returns: Json
+      }
       approve_affiliate_request: {
         Args: { p_request_id: string }
         Returns: Json
@@ -1372,6 +1386,10 @@ export type Database = {
           new_xp: number
           success: boolean
         }[]
+      }
+      reject_affiliate_by_business: {
+        Args: { p_notes?: string; p_request_id: string }
+        Returns: Json
       }
       reject_affiliate_request: {
         Args: { p_notes?: string; p_request_id: string }
