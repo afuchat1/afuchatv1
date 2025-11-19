@@ -399,29 +399,17 @@ const ReplyItem = ({ reply, navigate, handleViewProfile, setSelectedAffiliate }:
 const PostCard = ({ post, addReply, user, navigate, onAcknowledge, onDeletePost, onReportPost, onEditPost, userProfile, expandedPosts, setExpandedPosts, setSelectedAffiliate }:
   { 
     post: Post;
-    addReply: (postId: string, content: string, parentReplyId?: string) => void;
+    addReply: (postId: string, newReply: Reply) => void;
     user: AuthUser | null;
     navigate: any;
-    onAcknowledge: (postId: string) => void;
+    onAcknowledge: (postId: string, hasLiked: boolean) => void;
     onDeletePost: (postId: string) => void;
     onReportPost: (postId: string) => void;
-    onEditPost: (post: Post) => void;
+    onEditPost: (postId: string) => void;
     userProfile: { display_name: string; avatar_url: string | null } | null;
     expandedPosts: Set<string>;
-    setExpandedPosts: (posts: Set<string>) => void;
+    setExpandedPosts: React.Dispatch<React.SetStateAction<Set<string>>>;
     setSelectedAffiliate: (data: { userName: string; businessName: string; affiliatedDate: string; businessLogo?: string } | null) => void;
-  }) => {
-      post: Post; 
-      addReply: (postId: string, reply: Reply) => void; 
-      user: AuthUser | null;
-      navigate: any; 
-      onAcknowledge: (postId: string, hasLiked: boolean) => void;
-      onDeletePost: (postId: string) => void;
-      onReportPost: (postId: string) => void;
-      onEditPost: (postId: string) => void;
-      userProfile: { display_name: string; avatar_url: string | null } | null;
-      expandedPosts: Set<string>;
-      setExpandedPosts: React.Dispatch<React.SetStateAction<Set<string>>>;
   }) => {
 
   const { t, i18n } = useTranslation();
@@ -1646,6 +1634,7 @@ const Feed = () => {
                 userProfile={userProfile}
                 expandedPosts={expandedPosts}
                 setExpandedPosts={setExpandedPosts}
+                setSelectedAffiliate={setSelectedAffiliate}
               />
             ))
           )}
@@ -1674,6 +1663,18 @@ const Feed = () => {
           onClose={() => setEditPost(null)}
           post={editPost}
           onPostUpdated={handlePostUpdated}
+        />
+      )}
+
+      {/* Affiliate Details Sheet */}
+      {selectedAffiliate && (
+        <AffiliateDetailsSheet
+          open={!!selectedAffiliate}
+          onOpenChange={(open) => !open && setSelectedAffiliate(null)}
+          userName={selectedAffiliate.userName}
+          businessName={selectedAffiliate.businessName}
+          affiliatedDate={selectedAffiliate.affiliatedDate}
+          businessLogo={selectedAffiliate.businessLogo}
         />
       )}
     </div>
