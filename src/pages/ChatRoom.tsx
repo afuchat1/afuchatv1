@@ -68,6 +68,15 @@ interface ChatInfo {
   is_group: boolean;
 }
 
+interface OtherUserProfile {
+  id: string;
+  display_name: string;
+  handle: string;
+  avatar_url: string | null;
+  last_seen: string | null;
+  show_online_status: boolean | null;
+}
+
 const ChatRoom = () => {
   const { chatId } = useParams();
   const { user } = useAuth();
@@ -77,6 +86,7 @@ const ChatRoom = () => {
   const [redEnvelopes, setRedEnvelopes] = useState<RedEnvelope[]>([]);
   const [newMessage, setNewMessage] = useState('');
   const [chatInfo, setChatInfo] = useState<ChatInfo | null>(null);
+  const [otherUser, setOtherUser] = useState<OtherUserProfile | null>(null);
   const [loading, setLoading] = useState(true);
   const [sending, setSending] = useState(false);
   const [online, setOnline] = useState(false);
@@ -259,8 +269,33 @@ const ChatRoom = () => {
     
     if (data) {
       setChatInfo(data);
-      if (!data.is_group) {
-        setOnline(Math.random() > 0.5);
+      
+      // For 1-on-1 chats, fetch the other user's profile
+      if (!data.is_group && user) {
+        const { data: members } = await supabase
+          .from('chat_members')
+          .select('user_id')
+          .eq('chat_id', chatId)
+          .neq('user_id', user.id)
+          .limit(1);
+        
+        if (members && members.length > 0) {
+          const { data: profile } = await supabase
+            .from('profiles')
+            .select('id, display_name, handle, avatar_url, last_seen, show_online_status')
+            .eq('id', members[0].user_id)
+            .single();
+          
+          if (profile) {
+            setOtherUser(profile);
+            // Check if user is online (last seen within 5 minutes)
+            if (profile.last_seen && profile.show_online_status) {
+              const lastSeenTime = new Date(profile.last_seen).getTime();
+              const now = new Date().getTime();
+              setOnline(now - lastSeenTime < 5 * 60 * 1000);
+            }
+          }
+        }
       }
     }
   };
@@ -627,20 +662,26 @@ const ChatRoom = () => {
           
           {/* Profile Picture */}
           <div className="w-11 h-11 rounded-full bg-primary flex items-center justify-center text-white font-medium text-lg flex-shrink-0">
-            {chatInfo?.name?.charAt(0).toUpperCase() || 'T'}
+            {chatInfo?.is_group 
+              ? (chatInfo?.name?.charAt(0).toUpperCase() || 'G')
+              : (otherUser?.display_name?.charAt(0).toUpperCase() || 'U')
+            }
           </div>
           
           <div className="flex-1 min-w-0">
             <h1 className="text-base font-medium truncate">
-              {chatInfo?.name || (chatInfo?.is_group ? 'Group Chat' : 'Direct Message')}
+              {chatInfo?.is_group 
+                ? (chatInfo?.name || 'Group Chat')
+                : (otherUser?.display_name || 'User')
+              }
             </h1>
             {typingUsers.length > 0 ? (
               <p className="text-xs text-primary">
                 {typingUsers.length === 1 ? `${typingUsers[0]} is typing...` : `${typingUsers.length} people are typing...`}
               </p>
-            ) : chatInfo && !chatInfo.is_group && (
+            ) : chatInfo && !chatInfo.is_group && otherUser && (
               <p className="text-xs text-muted-foreground">
-                {online ? 'online' : 'last seen 19:28'}
+                {online ? 'online' : `@${otherUser.handle}`}
               </p>
             )}
           </div>
