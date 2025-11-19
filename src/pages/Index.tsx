@@ -80,6 +80,25 @@ const Index = () => {
     }
   }, [user]);
 
+  useEffect(() => {
+    // Redirect business users to their dashboard by default
+    const redirectBusinessUser = async () => {
+      if (!user) return;
+      
+      const { data } = await supabase
+        .from('profiles')
+        .select('is_business_mode')
+        .eq('id', user.id)
+        .single();
+
+      if (data?.is_business_mode) {
+        navigate('/business/dashboard');
+      }
+    };
+
+    redirectBusinessUser();
+  }, [user, navigate]);
+
   // --- Scroll Logic for Hiding All Elements ---
   useEffect(() => {
     const headerHeight = headerRef.current ? headerRef.current.offsetHeight : 56; // Fallback to 56px (h-14)
