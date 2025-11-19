@@ -26,6 +26,7 @@ import { ImageCarousel } from '@/components/ui/ImageCarousel';
 import { LinkPreviewCard } from '@/components/ui/LinkPreviewCard';
 import { DefaultAvatar } from '@/components/avatar/DefaultAvatar';
 import { VerifiedBadge } from '@/components/VerifiedBadge';
+import { BusinessBadge } from '@/components/BusinessBadge';
 
 interface Profile {
 	id: string;
@@ -701,7 +702,7 @@ const Profile = () => {
 
 					<div className="mt-3">
 
-						{(profile.is_verified || profile.is_organization_verified || profile.is_affiliate) ? (
+						{(profile.is_verified || profile.is_organization_verified || profile.is_affiliate || profile.is_business_mode) ? (
 							<Popover>
 								<PopoverTrigger asChild>
 									<div className="flex items-center gap-1 cursor-pointer w-fit">
@@ -711,6 +712,9 @@ const Profile = () => {
 										isOrgVerified={profile.is_organization_verified}
 										isAffiliate={profile.is_affiliate}
 									/>
+									{profile.is_business_mode && (
+										<BusinessBadge />
+									)}
 									</div>
 								</PopoverTrigger>
 								<PopoverContent className="w-auto p-0 border-none shadow-xl rounded-2xl" onClick={(e) => e.stopPropagation()}>
@@ -740,6 +744,9 @@ const Profile = () => {
 						) : (
 							<div className="flex items-center gap-1">
 								<h1 className="text-xl font-extrabold leading-tight">{profile.display_name}</h1>
+								{profile.is_business_mode && (
+									<BusinessBadge />
+								)}
 							</div>
 						)}
 

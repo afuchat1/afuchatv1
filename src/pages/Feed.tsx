@@ -25,6 +25,7 @@ import { ImageCarousel } from '@/components/ui/ImageCarousel';
 import { LinkPreviewCard } from '@/components/ui/LinkPreviewCard';
 import { MentionInput } from '@/components/MentionInput';
 import { VerifiedBadge } from '@/components/VerifiedBadge';
+import { BusinessBadge } from '@/components/BusinessBadge';
 
 // --- INTERFACES ---
 
@@ -60,6 +61,7 @@ interface Post {
     is_verified: boolean;
     is_organization_verified: boolean;
     is_affiliate: boolean;
+    is_business_mode?: boolean;
     avatar_url?: string | null;
   };
   replies: Reply[];
@@ -85,6 +87,7 @@ interface Reply {
     is_verified: boolean;
     is_organization_verified: boolean;
     is_affiliate: boolean;
+    is_business_mode?: boolean;
     avatar_url?: string | null;
   };
 }
@@ -293,6 +296,9 @@ const ReplyItem = ({ reply, navigate, handleViewProfile }: { reply: Reply; navig
               isOrgVerified={reply.profiles.is_organization_verified}
               isAffiliate={reply.profiles.is_affiliate}
             />
+            {reply.profiles.is_business_mode && (
+              <BusinessBadge size="sm" />
+            )}
 
                     <span
                         className="text-muted-foreground text-[10px] sm:text-xs hover:underline cursor-pointer truncate flex-shrink min-w-0"
@@ -605,6 +611,9 @@ const PostCard = ({ post, addReply, user, navigate, onAcknowledge, onDeletePost,
               isOrgVerified={post.profiles.is_organization_verified}
               isAffiliate={post.profiles.is_affiliate}
             />
+            {post.profiles.is_business_mode && (
+              <BusinessBadge size="sm" />
+            )}
 
             <span
               className="text-muted-foreground text-[10px] sm:text-xs hover:underline cursor-pointer truncate flex-shrink min-w-0"
@@ -1167,7 +1176,7 @@ const Feed = () => {
             .from('posts')
             .select(`
               *,
-              profiles(display_name, handle, is_verified, is_organization_verified, is_affiliate, avatar_url),
+              profiles(display_name, handle, is_verified, is_organization_verified, is_affiliate, is_business_mode, avatar_url),
               post_images(image_url, display_order, alt_text),
               post_link_previews(url, title, description, image_url, site_name)
             `)
@@ -1183,7 +1192,7 @@ const Feed = () => {
 
       const { data: repliesData, error: repliesError } = await supabase
         .from('post_replies')
-        .select('*, profiles(display_name, handle, is_verified, is_organization_verified, is_affiliate, avatar_url)')
+        .select('*, profiles(display_name, handle, is_verified, is_organization_verified, is_affiliate, is_business_mode, avatar_url)')
         .in('post_id', postIds)
         .order('created_at', { ascending: true });
 

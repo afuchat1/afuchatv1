@@ -14,6 +14,16 @@ import { useTranslation } from 'react-i18next';
 import { useTheme } from '@/contexts/ThemeContext';
 import EnableNotificationsButton from '@/components/EnableNotificationsButton';
 import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
+import {
   Select,
   SelectContent,
   SelectItem,
@@ -28,6 +38,8 @@ const Settings = () => {
   const { theme, setTheme } = useTheme();
   const [notificationsEnabled, setNotificationsEnabled] = useState(true);
   const [privateAccount, setPrivateAccount] = useState(false);
+  const [businessMode, setBusinessMode] = useState(false);
+  const [showBusinessConfirm, setShowBusinessConfirm] = useState(false);
   const [connectedProviders, setConnectedProviders] = useState<string[]>([]);
   const [loadingProvider, setLoadingProvider] = useState<string | null>(null);
 
@@ -81,7 +93,22 @@ const Settings = () => {
       }
     };
 
+    const fetchProfileSettings = async () => {
+      if (!user) return;
+
+      const { data } = await supabase
+        .from('profiles')
+        .select('is_business_mode')
+        .eq('id', user.id)
+        .single();
+
+      if (data) {
+        setBusinessMode(data.is_business_mode || false);
+      }
+    };
+
     fetchConnectedProviders();
+    fetchProfileSettings();
   }, [user]);
 
   const handleConnectProvider = async (provider: 'google' | 'github') => {
@@ -126,6 +153,34 @@ const Settings = () => {
       toast.success(`${provider} disconnected successfully`);
     } catch (error: any) {
       toast.error(error.message || `Failed to disconnect ${provider}`);
+    }
+  };
+
+  const handleBusinessModeToggle = (checked: boolean) => {
+    if (checked) {
+      setShowBusinessConfirm(true);
+    } else {
+      updateBusinessMode(false);
+    }
+  };
+
+  const updateBusinessMode = async (enabled: boolean) => {
+    if (!user) return;
+
+    try {
+      const { error } = await supabase
+        .from('profiles')
+        .update({ is_business_mode: enabled })
+        .eq('id', user.id);
+
+      if (error) throw error;
+
+      setBusinessMode(enabled);
+      toast.success(enabled ? 'Business mode enabled' : 'Business mode disabled');
+      setShowBusinessConfirm(false);
+    } catch (error) {
+      console.error('Error updating business mode:', error);
+      toast.error('Failed to update business mode');
     }
   };
 
@@ -345,6 +400,7 @@ const Settings = () => {
           </Card>
 
           {/* Privacy Settings */}
+          {/* Privacy & Business Settings */}
           <Card className="p-4 sm:p-6">
             <div className="space-y-4">
               <div className="flex items-center gap-3">
@@ -360,6 +416,24 @@ const Settings = () => {
                 <Switch
                   checked={privateAccount}
                   onCheckedChange={setPrivateAccount}
+                />
+              </div>
+              
+              <Separator />
+              
+              <div className="flex items-center justify-between py-3 px-2">
+                <div className="flex items-center gap-3">
+                  <Building2 className="h-5 w-5 text-blue-600" />
+                  <div>
+                    <p className="font-medium">Business Mode</p>
+                    <p className="text-sm text-muted-foreground">
+                      Enable business features like website URL display
+                    </p>
+                  </div>
+                </div>
+                <Switch
+                  checked={businessMode}
+                  onCheckedChange={handleBusinessModeToggle}
                 />
               </div>
             </div>
@@ -531,6 +605,32 @@ const Settings = () => {
           </Button>
         </div>
       </main>
+
+      {/* Business Mode Confirmation Dialog */}
+      <AlertDialog open={showBusinessConfirm} onOpenChange={setShowBusinessConfirm}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Enable Business Mode?</AlertDialogTitle>
+            <AlertDialogDescription>
+              Business mode will allow you to:
+              <ul className="list-disc list-inside mt-2 space-y-1">
+                <li>Display your business website URL on your profile</li>
+                <li>Show a business badge next to your name</li>
+                <li>Access business-specific features</li>
+              </ul>
+              <p className="mt-3 text-sm">
+                You can disable business mode at any time from settings.
+              </p>
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancel</AlertDialogCancel>
+            <AlertDialogAction onClick={() => updateBusinessMode(true)}>
+              Enable Business Mode
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 };
