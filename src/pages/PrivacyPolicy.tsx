@@ -173,10 +173,27 @@ const PrivacyPolicy = () => {
           </section>
 
           <section className="mb-8">
-            <h2 className="text-2xl font-semibold mb-4">12. Contact Us</h2>
+            <h2 className="text-2xl font-semibold mb-4">12. Support & Contact Us</h2>
             <p className="text-foreground/90 leading-relaxed mb-4">
-              If you have questions or concerns about this Privacy Policy or our data practices, please contact us through the application settings or support page.
+              If you have questions or concerns about this Privacy Policy, our data practices, or wish to exercise your privacy rights, please contact our dedicated support team.
             </p>
+            <div className="bg-muted/50 rounded-lg p-6 border border-border">
+              <h3 className="text-lg font-semibold mb-3">Contact Support</h3>
+              <div className="space-y-2">
+                <p className="text-foreground/90">
+                  <span className="font-medium">Email:</span>{' '}
+                  <a 
+                    href="mailto:support@afuchat.com" 
+                    className="text-primary hover:underline"
+                  >
+                    support@afuchat.com
+                  </a>
+                </p>
+                <p className="text-sm text-muted-foreground mt-4">
+                  For privacy-related inquiries, please include "Privacy Request" in your email subject line. We will respond to all requests within 30 days as required by applicable data protection laws.
+                </p>
+              </div>
+            </div>
           </section>
         </article>
       </main>
