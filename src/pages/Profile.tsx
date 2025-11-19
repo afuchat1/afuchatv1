@@ -805,7 +805,7 @@ const Profile = () => {
 			</div>
 
 			<div className="flex-1 overflow-y-auto">
-				<div className="relative h-36 bg-gray-300 dark:bg-gray-700 w-full group">
+				<div className="relative h-36 bg-gray-300 dark:bg-gray-700 w-full">
 					{profile?.banner_url ? (
 						<img 
 							src={profile.banner_url} 
@@ -815,8 +815,7 @@ const Profile = () => {
 					) : null}
 					
 					{user && user.id === profileId && (
-						<label className="absolute inset-0 flex items-center justify-center bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity cursor-pointer">
-							<Camera className="h-8 w-8 text-white" />
+						<label className="absolute top-4 right-4 p-2 rounded-full bg-background/80 hover:bg-background cursor-pointer transition-colors backdrop-blur-sm">
 							<input
 								type="file"
 								accept="image/*"
@@ -824,10 +823,10 @@ const Profile = () => {
 								disabled={isUploadingBanner}
 								className="hidden"
 							/>
-							{isUploadingBanner && (
-								<div className="absolute inset-0 flex items-center justify-center bg-black/60">
-									<div className="animate-spin rounded-full h-8 w-8 border-b-2 border-white"></div>
-								</div>
+							{isUploadingBanner ? (
+								<div className="h-5 w-5 animate-spin rounded-full border-2 border-primary border-t-transparent" />
+							) : (
+								<Camera className="h-5 w-5 text-foreground" />
 							)}
 						</label>
 					)}
