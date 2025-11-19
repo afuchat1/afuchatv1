@@ -35,8 +35,9 @@ interface AffiliateRequest {
   };
   business: {
     id: string;
-    name: string;
-    logo_url: string | null;
+    display_name: string;
+    handle: string;
+    avatar_url: string | null;
   };
 }
 
@@ -89,7 +90,7 @@ export default function AdminAffiliateRequests() {
           reviewed_at,
           notes,
           user:profiles!affiliate_requests_user_id_fkey(id, display_name, handle, avatar_url),
-          business:business_accounts(id, name, logo_url)
+          business:profiles!affiliate_requests_business_profile_id_fkey(id, display_name, handle, avatar_url)
         `)
         .order('requested_at', { ascending: false });
 
@@ -230,13 +231,13 @@ export default function AdminAffiliateRequests() {
                       </div>
                       <p className="text-sm text-muted-foreground mb-3">
                         Requesting affiliation with{' '}
-                        <span className="font-medium text-foreground">{request.business.name}</span>
+                        <span className="font-medium text-foreground">{request.business.display_name}</span>
                       </p>
                       <div className="flex items-center gap-2">
-                        {request.business.logo_url && (
+                        {request.business.avatar_url && (
                           <img
-                            src={request.business.logo_url}
-                            alt={request.business.name}
+                            src={request.business.avatar_url}
+                            alt={request.business.display_name}
                             className="h-8 w-8 rounded-full object-cover border"
                           />
                         )}
@@ -285,7 +286,7 @@ export default function AdminAffiliateRequests() {
                       <Badge variant="default">Approved</Badge>
                     </div>
                     <p className="text-sm text-muted-foreground">
-                      Affiliated with {request.business.name}
+                      Affiliated with {request.business.display_name}
                     </p>
                     {request.reviewed_at && (
                       <p className="text-xs text-muted-foreground mt-1">
@@ -313,7 +314,7 @@ export default function AdminAffiliateRequests() {
                       <Badge variant="destructive">Rejected</Badge>
                     </div>
                     <p className="text-sm text-muted-foreground">
-                      Request for {request.business.name}
+                      Request for {request.business.display_name}
                     </p>
                     {request.notes && (
                       <p className="text-sm mt-2 p-2 bg-muted rounded">
