@@ -63,6 +63,11 @@ interface Post {
     is_affiliate: boolean;
     is_business_mode?: boolean;
     avatar_url?: string | null;
+    affiliated_business_id?: string | null;
+    affiliated_business?: {
+      avatar_url: string | null;
+      display_name: string;
+    } | null;
   };
   replies: Reply[];
   like_count: number;
@@ -89,6 +94,11 @@ interface Reply {
     is_affiliate: boolean;
     is_business_mode?: boolean;
     avatar_url?: string | null;
+    affiliated_business_id?: string | null;
+    affiliated_business?: {
+      avatar_url: string | null;
+      display_name: string;
+    } | null;
   };
 }
 
@@ -295,6 +305,8 @@ const ReplyItem = ({ reply, navigate, handleViewProfile }: { reply: Reply; navig
               isVerified={reply.profiles.is_verified}
               isOrgVerified={reply.profiles.is_organization_verified}
               isAffiliate={reply.profiles.is_affiliate}
+              affiliateBusinessLogo={reply.profiles.affiliated_business?.avatar_url}
+              affiliateBusinessName={reply.profiles.affiliated_business?.display_name}
             />
             {reply.profiles.is_business_mode && (
               <BusinessBadge size="sm" />
@@ -606,11 +618,13 @@ const PostCard = ({ post, addReply, user, navigate, onAcknowledge, onDeletePost,
             >
               {post.profiles.display_name}
             </span>
-            <VerifiedBadge 
-              isVerified={post.profiles.is_verified}
-              isOrgVerified={post.profiles.is_organization_verified}
-              isAffiliate={post.profiles.is_affiliate}
-            />
+                <VerifiedBadge 
+                  isVerified={post.profiles.is_verified}
+                  isOrgVerified={post.profiles.is_organization_verified}
+                  isAffiliate={post.profiles.is_affiliate}
+                  affiliateBusinessLogo={post.profiles.affiliated_business?.avatar_url}
+                  affiliateBusinessName={post.profiles.affiliated_business?.display_name}
+                />
             {post.profiles.is_business_mode && (
               <BusinessBadge size="sm" />
             )}
@@ -1152,7 +1166,7 @@ const Feed = () => {
         .from('posts')
         .select(`
           *,
-          profiles(display_name, handle, is_verified, is_organization_verified, is_affiliate, avatar_url),
+          profiles(display_name, handle, is_verified, is_organization_verified, is_affiliate, is_business_mode, avatar_url, affiliated_business_id),
           post_images(image_url, display_order, alt_text),
           post_link_previews(url, title, description, image_url, site_name)
         `)
@@ -1176,7 +1190,7 @@ const Feed = () => {
             .from('posts')
             .select(`
               *,
-              profiles(display_name, handle, is_verified, is_organization_verified, is_affiliate, is_business_mode, avatar_url),
+              profiles(display_name, handle, is_verified, is_organization_verified, is_affiliate, is_business_mode, avatar_url, affiliated_business_id),
               post_images(image_url, display_order, alt_text),
               post_link_previews(url, title, description, image_url, site_name)
             `)
@@ -1190,9 +1204,27 @@ const Feed = () => {
 
       const postIds = postData.map((p) => p.id);
 
+      // Fetch affiliated business profiles
+      const allBusinessIds = Array.from(new Set([
+        ...postData.map(p => p.profiles?.affiliated_business_id).filter(Boolean),
+        ...followingPostData.map(p => p.profiles?.affiliated_business_id).filter(Boolean)
+      ])) as string[];
+
+      let businessProfiles: Map<string, { avatar_url: string | null; display_name: string }> = new Map();
+      if (allBusinessIds.length > 0) {
+        const { data: businessData } = await supabase
+          .from('profiles')
+          .select('id, avatar_url, display_name')
+          .in('id', allBusinessIds);
+        
+        (businessData || []).forEach((b: any) => {
+          businessProfiles.set(b.id, { avatar_url: b.avatar_url, display_name: b.display_name });
+        });
+      }
+
       const { data: repliesData, error: repliesError } = await supabase
         .from('post_replies')
-        .select('*, profiles(display_name, handle, is_verified, is_organization_verified, is_affiliate, is_business_mode, avatar_url)')
+        .select('*, profiles(display_name, handle, is_verified, is_organization_verified, is_affiliate, is_business_mode, avatar_url, affiliated_business_id)')
         .in('post_id', postIds)
         .order('created_at', { ascending: true });
 
@@ -1206,11 +1238,16 @@ const Feed = () => {
       if (ackError) throw ackError;
 
       const repliesByPostId = new Map<string, Reply[]>();
-      (repliesData || []).forEach((r) => {
+      (repliesData || []).forEach((r: any) => {
+        const reply = r as Reply;
+        // Add affiliated business data if available
+        if (reply.profiles?.affiliated_business_id) {
+          reply.profiles.affiliated_business = businessProfiles.get(reply.profiles.affiliated_business_id) || null;
+        }
         if (!repliesByPostId.has(r.post_id)) {
           repliesByPostId.set(r.post_id, []);
         }
-        repliesByPostId.get(r.post_id)!.push(r as Reply);
+        repliesByPostId.get(r.post_id)!.push(reply);
       });
 
       const acksByPostId = new Map<string, string[]>();
@@ -1222,9 +1259,14 @@ const Feed = () => {
       });
 
       const currentUserId = user?.id || null;
-      const finalPosts: Post[] = postData.map((post) => {
+      const finalPosts: Post[] = postData.map((post: any) => {
         const replies = repliesByPostId.get(post.id) || [];
         const acks = acksByPostId.get(post.id) || [];
+
+        // Add affiliated business data if available
+        if (post.profiles?.affiliated_business_id) {
+          post.profiles.affiliated_business = businessProfiles.get(post.profiles.affiliated_business_id) || null;
+        }
 
         return {
           ...post,
@@ -1237,9 +1279,14 @@ const Feed = () => {
       });
 
       // Process following posts
-      const finalFollowingPosts: Post[] = followingPostData.map((post) => {
+      const finalFollowingPosts: Post[] = followingPostData.map((post: any) => {
         const replies = repliesByPostId.get(post.id) || [];
         const acks = acksByPostId.get(post.id) || [];
+
+        // Add affiliated business data if available
+        if (post.profiles?.affiliated_business_id) {
+          post.profiles.affiliated_business = businessProfiles.get(post.profiles.affiliated_business_id) || null;
+        }
 
         return {
           ...post,
@@ -1283,12 +1330,25 @@ const Feed = () => {
         async (payload) => {
           const { data: profile } = await supabase
             .from('profiles')
-            .select('display_name, handle, is_verified, is_organization_verified, is_affiliate')
+            .select('display_name, handle, is_verified, is_organization_verified, is_affiliate, affiliated_business_id')
             .eq('id', payload.new.author_id)
             .single();
 
           if (profile) {
-            const newReply = { ...payload.new, profiles: profile } as Reply;
+            let affiliated_business = null;
+            if (profile.affiliated_business_id) {
+              const { data: businessData } = await supabase
+                .from('profiles')
+                .select('avatar_url, display_name')
+                .eq('id', profile.affiliated_business_id)
+                .single();
+              affiliated_business = businessData || null;
+            }
+
+            const newReply = { 
+              ...payload.new, 
+              profiles: { ...profile, affiliated_business } 
+            } as Reply;
             addReply(payload.new.post_id, newReply);
 
             const mentionsAfuAi = /@afuai/i.test(payload.new.content);

@@ -43,6 +43,11 @@ interface Profile {
 	avatar_url?: string | null;
 	website_url?: string | null;
 	is_business_mode?: boolean;
+	affiliated_business_id?: string | null;
+	affiliated_business?: {
+		avatar_url: string | null;
+		display_name: string;
+	} | null;
 }
 
 interface Post {
@@ -328,7 +333,25 @@ const Profile = () => {
 			return;
 		}
 
-		setProfile(data as Profile);
+		let profileData: Profile = data as Profile;
+
+		// Fetch affiliated business data if user is an affiliate
+		if (profileData.affiliated_business_id) {
+			const { data: businessData } = await supabase
+				.from('profiles')
+				.select('avatar_url, display_name')
+				.eq('id', profileData.affiliated_business_id)
+				.single();
+			
+			if (businessData) {
+				profileData.affiliated_business = {
+					avatar_url: businessData.avatar_url,
+					display_name: businessData.display_name
+				};
+			}
+		}
+
+		setProfile(profileData);
 		setProfileId(data.id);
 		setLoading(false);
 
@@ -711,6 +734,8 @@ const Profile = () => {
 										isVerified={profile.is_verified}
 										isOrgVerified={profile.is_organization_verified}
 										isAffiliate={profile.is_affiliate}
+										affiliateBusinessLogo={profile.affiliated_business?.avatar_url}
+										affiliateBusinessName={profile.affiliated_business?.display_name}
 									/>
 									{profile.is_business_mode && (
 										<BusinessBadge />
