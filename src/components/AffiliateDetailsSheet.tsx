@@ -4,7 +4,6 @@ import {
 } from "@/components/ui/sheet";
 import { Building2, Calendar } from "lucide-react";
 import { format } from "date-fns";
-import { DefaultAvatar } from "./avatar/DefaultAvatar";
 
 interface AffiliateDetailsSheetProps {
   open: boolean;
@@ -25,8 +24,11 @@ export function AffiliateDetailsSheet({
 }: AffiliateDetailsSheetProps) {
   return (
     <Sheet open={open} onOpenChange={onOpenChange}>
-      <SheetContent className="w-full sm:max-w-md p-6">
-        <div className="space-y-6">
+      <SheetContent side="bottom" className="h-auto max-h-[90vh] rounded-t-3xl border-t">
+        {/* Drag indicator */}
+        <div className="absolute top-3 left-1/2 -translate-x-1/2 w-12 h-1 bg-muted-foreground/30 rounded-full" />
+        
+        <div className="pt-8 pb-6 px-6 space-y-6">
           {/* Header */}
           <div>
             <h2 className="text-2xl font-bold">Verified account</h2>
@@ -34,7 +36,7 @@ export function AffiliateDetailsSheet({
           
           {/* Verification Info */}
           <div className="space-y-6">
-            {/* Main verification reason with business logo */}
+            {/* Main verification reason */}
             <div className="flex gap-4 items-start">
               <div className="flex-shrink-0 w-12 h-12 rounded-full bg-primary/10 flex items-center justify-center mt-1">
                 <svg viewBox="0 0 24 24" className="w-7 h-7 text-primary fill-current">
@@ -42,16 +44,16 @@ export function AffiliateDetailsSheet({
                 </svg>
               </div>
               <div className="flex-1 pt-1">
-                <p className="text-base leading-relaxed">
+                <p className="text-base leading-relaxed text-foreground">
                   This account is verified because it's an affiliate of{" "}
-                  <span className="text-primary font-medium">{businessName}</span>.
+                  <span className="text-primary font-medium">@{businessName}</span> on AfuChat.
                 </p>
               </div>
             </div>
 
             {/* Business affiliation */}
             <div className="flex gap-4 items-start">
-              <div className="flex-shrink-0 w-12 h-12 rounded-full overflow-hidden mt-1">
+              <div className="flex-shrink-0 w-12 h-12 rounded-full overflow-hidden bg-muted mt-1">
                 {businessLogo ? (
                   <img 
                     src={businessLogo} 
@@ -59,13 +61,13 @@ export function AffiliateDetailsSheet({
                     className="w-full h-full object-cover"
                   />
                 ) : (
-                  <div className="w-full h-full bg-muted flex items-center justify-center">
+                  <div className="w-full h-full flex items-center justify-center">
                     <Building2 className="w-6 h-6 text-muted-foreground" />
                   </div>
                 )}
               </div>
               <div className="flex-1 pt-1">
-                <p className="text-base leading-relaxed">
+                <p className="text-base leading-relaxed text-foreground">
                   This account is affiliated with{" "}
                   <span className="text-primary font-medium">{businessName}</span>.
                 </p>
@@ -78,7 +80,7 @@ export function AffiliateDetailsSheet({
                 <Calendar className="w-6 h-6 text-muted-foreground" />
               </div>
               <div className="flex-1 pt-1">
-                <p className="text-base leading-relaxed">
+                <p className="text-base leading-relaxed text-foreground">
                   Verified since {format(new Date(affiliatedDate), "MMMM yyyy")}.
                 </p>
               </div>
