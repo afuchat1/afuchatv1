@@ -83,19 +83,50 @@ export default function AdminAffiliateRequests() {
     try {
       const { data, error } = await supabase
         .from('affiliate_requests')
-        .select(`
-          id,
-          status,
-          requested_at,
-          reviewed_at,
-          notes,
-          user:profiles!affiliate_requests_user_id_fkey(id, display_name, handle, avatar_url),
-          business:profiles!affiliate_requests_business_profile_id_fkey(id, display_name, handle, avatar_url)
-        `)
+        .select('id, status, requested_at, reviewed_at, notes, user_id, business_profile_id')
         .order('requested_at', { ascending: false });
 
       if (error) throw error;
-      setRequests(data as any || []);
+      if (!data) {
+        setRequests([]);
+        return;
+      }
+
+      const userIds = Array.from(new Set(data.map((r: any) => r.user_id).filter(Boolean)));
+      const businessIds = Array.from(new Set(data.map((r: any) => r.business_profile_id).filter(Boolean)));
+      const profileIds = Array.from(new Set([...userIds, ...businessIds]));
+
+      const { data: profiles, error: profilesError } = await supabase
+        .from('profiles')
+        .select('id, display_name, handle, avatar_url')
+        .in('id', profileIds);
+
+      if (profilesError) throw profilesError;
+
+      const profileMap = new Map<string, any>();
+      (profiles || []).forEach((p: any) => profileMap.set(p.id, p));
+
+      const mappedRequests: AffiliateRequest[] = data.map((r: any) => ({
+        id: r.id,
+        status: r.status,
+        requested_at: r.requested_at,
+        reviewed_at: r.reviewed_at,
+        notes: r.notes,
+        user: profileMap.get(r.user_id) || {
+          id: r.user_id,
+          display_name: 'Unknown user',
+          handle: 'unknown',
+          avatar_url: null,
+        },
+        business: profileMap.get(r.business_profile_id) || {
+          id: r.business_profile_id,
+          display_name: 'Unknown business',
+          handle: 'unknown',
+          avatar_url: null,
+        },
+      }));
+
+      setRequests(mappedRequests);
     } catch (error) {
       console.error('Error fetching requests:', error);
       toast.error('Failed to load affiliate requests');
