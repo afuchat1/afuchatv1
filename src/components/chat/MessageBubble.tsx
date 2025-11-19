@@ -1,5 +1,5 @@
 import { motion } from 'framer-motion';
-import { User, Check, CheckCheck, Play, Pause, Volume2, Smile, ArrowDownLeft } from 'lucide-react';
+import { User, Check, CheckCheck, Play, Pause, Volume2, Smile, ArrowDownLeft, Pencil } from 'lucide-react';
 import { Avatar } from './Avatar';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
@@ -15,6 +15,7 @@ export interface Message {
   audio_url?: string;
   sender_id: string;
   sent_at: string;
+  edited_at?: string | null;
   reply_to_message_id?: string | null;
   message_reactions?: Reaction[];
   reply_to_message?: {
@@ -49,6 +50,7 @@ interface MessageBubbleProps {
   onReaction: (messageId: string, emoji: string) => void;
   onToggleAudio: () => void;
   audioPlayerState: { isPlaying: boolean };
+  onEdit?: (messageId: string, newContent: string) => void;
 }
 
 export const MessageBubble = ({
@@ -59,10 +61,15 @@ export const MessageBubble = ({
   onReply,
   onReaction,
   onToggleAudio,
-  audioPlayerState
+  audioPlayerState,
+  onEdit
 }: MessageBubbleProps) => {
   const time = new Date(message.sent_at).toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' });
   const isVoice = !!message.audio_url;
+  
+  // Check if message can be edited (within 15 minutes)
+  const canEdit = isOwn && !isVoice && message.sent_at && 
+    (Date.now() - new Date(message.sent_at).getTime()) < 15 * 60 * 1000;
 
   // Find the message being replied to (if any)
   // In a real app, this might be fetched or passed in
@@ -100,9 +107,14 @@ export const MessageBubble = ({
           <span className="text-sm text-muted-foreground">Voice message</span>
         </div>
       ) : (
-        <p className="text-sm whitespace-pre-wrap break-words p-2.5">
-          {message.encrypted_content}
-        </p>
+        <div>
+          <p className="text-sm whitespace-pre-wrap break-words p-2.5">
+            {message.encrypted_content}
+          </p>
+          {message.edited_at && (
+            <p className="text-xs text-muted-foreground px-2.5 pb-1">(edited)</p>
+          )}
+        </div>
       )}
     </>
   );
@@ -214,8 +226,25 @@ export const MessageBubble = ({
               )}
             </div>
             
-            {/* --- Reaction Button --- */}
-            <ReactionButton />
+            {/* --- Edit & Reaction Buttons --- */}
+            <div className="flex items-center gap-0.5">
+              {canEdit && onEdit && (
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  className="h-6 w-6 p-0 rounded-full text-muted-foreground opacity-0 group-hover:opacity-100 transition-opacity"
+                  onClick={() => {
+                    const newContent = prompt('Edit message:', message.encrypted_content);
+                    if (newContent && newContent.trim() && newContent !== message.encrypted_content) {
+                      onEdit(message.id, newContent.trim());
+                    }
+                  }}
+                >
+                  <Pencil className="h-3 w-3" />
+                </Button>
+              )}
+              <ReactionButton />
+            </div>
           </div>
 
           {/* --- Timestamp (outside bubble for other) --- */}

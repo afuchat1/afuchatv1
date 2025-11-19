@@ -452,6 +452,40 @@ const ChatRoom = () => {
     }
   };
 
+  const handleEditMessage = async (messageId: string, newContent: string) => {
+    if (!user) return;
+
+    try {
+      messageSchema.parse(newContent);
+
+      const { error } = await supabase
+        .from('messages')
+        .update({ 
+          encrypted_content: newContent,
+          edited_at: new Date().toISOString()
+        })
+        .eq('id', messageId);
+
+      if (error) throw error;
+
+      // Update local state
+      setMessages(prev => prev.map(msg => 
+        msg.id === messageId 
+          ? { ...msg, encrypted_content: newContent, edited_at: new Date().toISOString() }
+          : msg
+      ));
+
+      toast.success('Message edited');
+    } catch (error: any) {
+      if (error.name === 'ZodError') {
+        toast.error('Message is too long or invalid');
+      } else {
+        console.error('Error editing message:', error);
+        toast.error('Failed to edit message');
+      }
+    }
+  };
+
   const handleReaction = async (messageId: string, emoji: string) => {
     if (!user) return;
 
@@ -629,6 +663,7 @@ const ChatRoom = () => {
                       onReaction={handleReaction}
                       onToggleAudio={() => message.audio_url && toggleAudio(message.id, message.audio_url)}
                       audioPlayerState={audioPlayers[message.id] || { isPlaying: false }}
+                      onEdit={handleEditMessage}
                     />
                   );
                 });
