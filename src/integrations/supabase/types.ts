@@ -477,6 +477,7 @@ export type Database = {
           audio_url: string | null
           chat_id: string | null
           delivered_at: string | null
+          edited_at: string | null
           encrypted_content: string
           id: string
           read_at: string | null
@@ -489,6 +490,7 @@ export type Database = {
           audio_url?: string | null
           chat_id?: string | null
           delivered_at?: string | null
+          edited_at?: string | null
           encrypted_content: string
           id?: string
           read_at?: string | null
@@ -501,6 +503,7 @@ export type Database = {
           audio_url?: string | null
           chat_id?: string | null
           delivered_at?: string | null
+          edited_at?: string | null
           encrypted_content?: string
           id?: string
           read_at?: string | null
