@@ -1,3 +1,5 @@
+import React from 'react';
+
 interface VerifiedBadgeProps {
   isVerified?: boolean;
   isOrgVerified?: boolean;
