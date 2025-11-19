@@ -1,12 +1,12 @@
 import { useState, useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, Link } from 'react-router-dom';
 import { useAuth } from '@/contexts/AuthContext';
 import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Separator } from '@/components/ui/separator';
 import { Switch } from '@/components/ui/switch';
 import { Badge } from '@/components/ui/badge';
-import { ArrowLeft, User, Bell, Lock, Shield, FileText, LogOut, Languages, Sun, Moon, Monitor, Link2, Github, Building2 } from 'lucide-react';
+import { ArrowLeft, User, Bell, Lock, Shield, FileText, LogOut, Languages, Sun, Moon, Monitor, Link2, Github, Building2, UserPlus } from 'lucide-react';
 import { toast } from 'sonner';
 import { supabase } from '@/integrations/supabase/client';
 import Logo from '@/components/Logo';
@@ -271,6 +271,26 @@ const Settings = () => {
                 <span>{t('settings.editProfile')}</span>
                 <span className="text-muted-foreground">›</span>
               </button>
+            </div>
+          </Card>
+
+          {/* Business & Affiliate */}
+          <Card className="p-4 sm:p-6">
+            <div className="space-y-4">
+              <div className="flex items-center gap-3">
+                <Building2 className="h-5 w-5 text-muted-foreground" />
+                <h2 className="text-lg font-semibold">Business & Affiliate</h2>
+              </div>
+              <Separator />
+              <Link to="/affiliate-request">
+                <button className="w-full flex items-center justify-between py-3 px-2 rounded-lg hover:bg-muted transition-colors text-left">
+                  <div className="flex items-center gap-2">
+                    <UserPlus className="h-4 w-4" />
+                    <span>Apply for Affiliate Status</span>
+                  </div>
+                  <span className="text-muted-foreground">›</span>
+                </button>
+              </Link>
             </div>
           </Card>
 

@@ -5,6 +5,7 @@ import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route, Navigate, useParams } from "react-router-dom";
 import { AuthProvider } from "./contexts/AuthContext";
+import { AccountModeProvider } from "./contexts/AccountModeContext";
 import { ThemeProvider } from "./contexts/ThemeContext";
 import { useDailyLogin } from "./hooks/useDailyLogin";
 import { useLanguageSync } from "./hooks/useLanguageSync";
@@ -36,6 +37,7 @@ import AvatarEditor from "./pages/AvatarEditor";
 import GiftLeaderboard from "./pages/GiftLeaderboard";
 import TrendingHashtags from "./pages/TrendingHashtags";
 import AdminAffiliateRequests from "./pages/AdminAffiliateRequests";
+import AffiliateRequest from "./pages/AffiliateRequest";
 import Layout from "./components/Layout";
 
 const queryClient = new QueryClient();
@@ -80,6 +82,7 @@ const AppRoutes = () => {
       <Route path="/avatar/edit" element={<AvatarEditor />} />
       <Route path="/trending" element={<Layout><TrendingHashtags /></Layout>} />
       <Route path="/admin/affiliate-requests" element={<Layout><AdminAffiliateRequests /></Layout>} />
+      <Route path="/affiliate-request" element={<Layout><AffiliateRequest /></Layout>} />
 
       <Route path="/profile/:userId" element={<ProfileRedirect />} />
 
@@ -95,13 +98,15 @@ const App = () => (
   <QueryClientProvider client={queryClient}>
     <ThemeProvider>
       <AuthProvider>
-        <TooltipProvider>
-          <Toaster />
-          <Sonner />
-          <BrowserRouter future={{ v7_startTransition: true }}>
-            <AppRoutes />
-          </BrowserRouter>
-        </TooltipProvider>
+        <AccountModeProvider>
+          <TooltipProvider>
+            <Toaster />
+            <Sonner />
+            <BrowserRouter future={{ v7_startTransition: true }}>
+              <AppRoutes />
+            </BrowserRouter>
+          </TooltipProvider>
+        </AccountModeProvider>
       </AuthProvider>
     </ThemeProvider>
   </QueryClientProvider>

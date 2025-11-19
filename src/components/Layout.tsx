@@ -7,6 +7,7 @@ import Logo from '@/components/Logo';
 import NotificationIcon from '@/components/nav/NotificationIcon';
 import InstallPromptBanner from '@/components/InstallPromptBanner';
 import { OfflineIndicator } from '@/components/OfflineIndicator';
+import { AccountModeSwitcher } from '@/components/AccountModeSwitcher';
 import { supabase } from '@/integrations/supabase/client';
 import { cn } from '@/lib/utils';
 
@@ -92,8 +93,12 @@ const Layout = ({ children }: LayoutProps) => {
       
       {/* Desktop Sidebar */}
       <aside className="hidden lg:flex fixed left-0 top-0 bottom-0 w-64 xl:w-72 border-r border-border flex-col p-4">
-        <div className="mb-8">
+        <div className="mb-6">
           <Logo />
+        </div>
+
+        <div className="mb-6">
+          <AccountModeSwitcher />
         </div>
 
         <nav className="flex-1 space-y-1">
