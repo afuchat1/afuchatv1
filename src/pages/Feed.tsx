@@ -26,6 +26,8 @@ import { LinkPreviewCard } from '@/components/ui/LinkPreviewCard';
 import { MentionInput } from '@/components/MentionInput';
 import { VerifiedBadge } from '@/components/VerifiedBadge';
 import { BusinessBadge } from '@/components/BusinessBadge';
+import { AffiliatedBadge } from '@/components/AffiliatedBadge';
+import { AffiliateDetailsSheet } from '@/components/AffiliateDetailsSheet';
 
 // --- INTERFACES ---
 
@@ -73,6 +75,7 @@ interface Post {
   like_count: number;
   reply_count: number;
   has_liked: boolean;
+  affiliation_date?: string;
 }
 
 interface Reply {
@@ -100,6 +103,7 @@ interface Reply {
       display_name: string;
     } | null;
   };
+  affiliation_date?: string;
 }
 
 
@@ -259,7 +263,12 @@ const UserAvatarMedium = ({ userId, name, avatarUrl }: { userId: string; name: s
 
 // --- REPLY ITEM (Updated with auto-translation) ---
 
-const ReplyItem = ({ reply, navigate, handleViewProfile }: { reply: Reply; navigate: any; handleViewProfile: (id: string) => void }) => {
+const ReplyItem = ({ reply, navigate, handleViewProfile, setSelectedAffiliate }: { 
+  reply: Reply; 
+  navigate: any; 
+  handleViewProfile: (id: string) => void;
+  setSelectedAffiliate: (data: { userName: string; businessName: string; affiliatedDate: string; businessLogo?: string } | null) => void;
+}) => {
     const { i18n, t } = useTranslation();
     const { translateText } = useAITranslation();
     const [translatedContent, setTranslatedContent] = useState<string | null>(null);
@@ -295,22 +304,63 @@ const ReplyItem = ({ reply, navigate, handleViewProfile }: { reply: Reply; navig
 
             <div className="flex-1 min-w-0">
                 <div className="flex items-center gap-x-1 min-w-0">
-                    <span
+                    {reply.profiles.is_affiliate ? (
+                      <button
+                        className="font-bold text-foreground text-[10px] sm:text-xs hover:underline whitespace-nowrap"
+                        onClick={() => reply.profiles.affiliated_business && reply.affiliation_date && setSelectedAffiliate({
+                          userName: reply.profiles.display_name,
+                          businessName: reply.profiles.affiliated_business.display_name,
+                          affiliatedDate: reply.affiliation_date,
+                          businessLogo: reply.profiles.affiliated_business.avatar_url || undefined
+                        })}
+                      >
+                        {reply.profiles.display_name}
+                      </button>
+                    ) : (
+                      <span
                         className="font-bold text-foreground text-[10px] sm:text-xs cursor-pointer hover:underline whitespace-nowrap"
                         onClick={() => handleViewProfile(reply.author_id)}
-                    >
+                      >
                         {reply.profiles.display_name}
-                    </span>
-            <VerifiedBadge 
-              isVerified={reply.profiles.is_verified}
-              isOrgVerified={reply.profiles.is_organization_verified}
-              isAffiliate={reply.profiles.is_affiliate}
-              affiliateBusinessLogo={reply.profiles.affiliated_business?.avatar_url}
-              affiliateBusinessName={reply.profiles.affiliated_business?.display_name}
-            />
-            {reply.profiles.is_business_mode && (
-              <BusinessBadge size="sm" />
-            )}
+                      </span>
+                    )}
+                    
+                    {reply.profiles.is_affiliate && reply.profiles.is_business_mode && reply.profiles.affiliated_business && reply.affiliation_date && (
+                      <AffiliatedBadge 
+                        size="sm"
+                        onClick={() => setSelectedAffiliate({
+                          userName: reply.profiles.display_name,
+                          businessName: reply.profiles.affiliated_business!.display_name,
+                          affiliatedDate: reply.affiliation_date!,
+                          businessLogo: reply.profiles.affiliated_business!.avatar_url || undefined
+                        })}
+                      />
+                    )}
+                    
+                    <div 
+                      onClick={() => {
+                        if (reply.profiles.is_affiliate && reply.profiles.affiliated_business && reply.affiliation_date) {
+                          setSelectedAffiliate({
+                            userName: reply.profiles.display_name,
+                            businessName: reply.profiles.affiliated_business.display_name,
+                            affiliatedDate: reply.affiliation_date,
+                            businessLogo: reply.profiles.affiliated_business.avatar_url || undefined
+                          });
+                        }
+                      }}
+                      className={reply.profiles.is_affiliate ? "cursor-pointer" : ""}
+                    >
+                      <VerifiedBadge 
+                        isVerified={reply.profiles.is_verified}
+                        isOrgVerified={reply.profiles.is_organization_verified}
+                        isAffiliate={reply.profiles.is_affiliate}
+                        affiliateBusinessLogo={reply.profiles.affiliated_business?.avatar_url}
+                        affiliateBusinessName={reply.profiles.affiliated_business?.display_name}
+                      />
+                    </div>
+                    {reply.profiles.is_business_mode && !reply.profiles.is_affiliate && (
+                      <BusinessBadge size="sm" />
+                    )}
 
                     <span
                         className="text-muted-foreground text-[10px] sm:text-xs hover:underline cursor-pointer truncate flex-shrink min-w-0"
@@ -346,8 +396,21 @@ const ReplyItem = ({ reply, navigate, handleViewProfile }: { reply: Reply; navig
 
 // --- POST CARD (Updated to accept and pass through new props) ---
 
-const PostCard = ({ post, addReply, user, navigate, onAcknowledge, onDeletePost, onReportPost, onEditPost, userProfile, expandedPosts, setExpandedPosts }:
+const PostCard = ({ post, addReply, user, navigate, onAcknowledge, onDeletePost, onReportPost, onEditPost, userProfile, expandedPosts, setExpandedPosts, setSelectedAffiliate }:
   { 
+    post: Post;
+    addReply: (postId: string, content: string, parentReplyId?: string) => void;
+    user: AuthUser | null;
+    navigate: any;
+    onAcknowledge: (postId: string) => void;
+    onDeletePost: (postId: string) => void;
+    onReportPost: (postId: string) => void;
+    onEditPost: (post: Post) => void;
+    userProfile: { display_name: string; avatar_url: string | null } | null;
+    expandedPosts: Set<string>;
+    setExpandedPosts: (posts: Set<string>) => void;
+    setSelectedAffiliate: (data: { userName: string; businessName: string; affiliatedDate: string; businessLogo?: string } | null) => void;
+  }) => {
       post: Post; 
       addReply: (postId: string, reply: Reply) => void; 
       user: AuthUser | null;
@@ -612,20 +675,61 @@ const PostCard = ({ post, addReply, user, navigate, onAcknowledge, onDeletePost,
       <div className="flex-1 min-w-0">
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-x-1 min-w-0">
-            <span
-              className="font-bold text-foreground text-xs sm:text-sm cursor-pointer hover:underline whitespace-nowrap"
-              onClick={() => handleViewProfile(post.author_id)}
+            {post.profiles.is_affiliate ? (
+              <button
+                className="font-bold text-foreground text-xs sm:text-sm hover:underline whitespace-nowrap"
+                onClick={() => post.profiles.affiliated_business && post.affiliation_date && setSelectedAffiliate({
+                  userName: post.profiles.display_name,
+                  businessName: post.profiles.affiliated_business.display_name,
+                  affiliatedDate: post.affiliation_date,
+                  businessLogo: post.profiles.affiliated_business.avatar_url || undefined
+                })}
+              >
+                {post.profiles.display_name}
+              </button>
+            ) : (
+              <span
+                className="font-bold text-foreground text-xs sm:text-sm cursor-pointer hover:underline whitespace-nowrap"
+                onClick={() => handleViewProfile(post.author_id)}
+              >
+                {post.profiles.display_name}
+              </span>
+            )}
+            
+            {post.profiles.is_affiliate && post.profiles.is_business_mode && post.profiles.affiliated_business && post.affiliation_date && (
+              <AffiliatedBadge 
+                size="sm"
+                onClick={() => setSelectedAffiliate({
+                  userName: post.profiles.display_name,
+                  businessName: post.profiles.affiliated_business!.display_name,
+                  affiliatedDate: post.affiliation_date!,
+                  businessLogo: post.profiles.affiliated_business!.avatar_url || undefined
+                })}
+              />
+            )}
+            
+            <div 
+              onClick={() => {
+                if (post.profiles.is_affiliate && post.profiles.affiliated_business && post.affiliation_date) {
+                  setSelectedAffiliate({
+                    userName: post.profiles.display_name,
+                    businessName: post.profiles.affiliated_business.display_name,
+                    affiliatedDate: post.affiliation_date,
+                    businessLogo: post.profiles.affiliated_business.avatar_url || undefined
+                  });
+                }
+              }}
+              className={post.profiles.is_affiliate ? "cursor-pointer" : ""}
             >
-              {post.profiles.display_name}
-            </span>
-                <VerifiedBadge 
-                  isVerified={post.profiles.is_verified}
-                  isOrgVerified={post.profiles.is_organization_verified}
-                  isAffiliate={post.profiles.is_affiliate}
-                  affiliateBusinessLogo={post.profiles.affiliated_business?.avatar_url}
-                  affiliateBusinessName={post.profiles.affiliated_business?.display_name}
-                />
-            {post.profiles.is_business_mode && (
+              <VerifiedBadge 
+                isVerified={post.profiles.is_verified}
+                isOrgVerified={post.profiles.is_organization_verified}
+                isAffiliate={post.profiles.is_affiliate}
+                affiliateBusinessLogo={post.profiles.affiliated_business?.avatar_url}
+                affiliateBusinessName={post.profiles.affiliated_business?.display_name}
+              />
+            </div>
+            {post.profiles.is_business_mode && !post.profiles.is_affiliate && (
               <BusinessBadge size="sm" />
             )}
 
@@ -891,6 +995,12 @@ const Feed = () => {
   const [expandedPosts, setExpandedPosts] = useState<Set<string>>(new Set());
   const navigate = useNavigate();
   const feedRef = useRef<HTMLDivElement>(null);
+  const [selectedAffiliate, setSelectedAffiliate] = useState<{
+    userName: string;
+    businessName: string;
+    affiliatedDate: string;
+    businessLogo?: string;
+  } | null>(null);
   
   const [deletePostId, setDeletePostId] = useState<string | null>(null);
   const [reportPostId, setReportPostId] = useState<string | null>(null);
@@ -1204,7 +1314,7 @@ const Feed = () => {
 
       const postIds = postData.map((p) => p.id);
 
-      // Fetch affiliated business profiles
+      // Fetch affiliated business profiles and affiliation dates
       const allBusinessIds = Array.from(new Set([
         ...postData.map(p => p.profiles?.affiliated_business_id).filter(Boolean),
         ...followingPostData.map(p => p.profiles?.affiliated_business_id).filter(Boolean)
@@ -1219,6 +1329,25 @@ const Feed = () => {
         
         (businessData || []).forEach((b: any) => {
           businessProfiles.set(b.id, { avatar_url: b.avatar_url, display_name: b.display_name });
+        });
+      }
+
+      // Fetch affiliation dates from affiliate_requests
+      const allAuthorIds = Array.from(new Set([
+        ...postData.filter(p => p.profiles?.is_affiliate).map(p => p.author_id),
+        ...followingPostData.filter(p => p.profiles?.is_affiliate).map(p => p.author_id)
+      ])) as string[];
+
+      let affiliationDates: Map<string, string> = new Map();
+      if (allAuthorIds.length > 0) {
+        const { data: affiliationData } = await supabase
+          .from('affiliate_requests')
+          .select('user_id, reviewed_at')
+          .in('user_id', allAuthorIds)
+          .eq('status', 'approved');
+        
+        (affiliationData || []).forEach((a: any) => {
+          affiliationDates.set(a.user_id, a.reviewed_at);
         });
       }
 
@@ -1240,9 +1369,12 @@ const Feed = () => {
       const repliesByPostId = new Map<string, Reply[]>();
       (repliesData || []).forEach((r: any) => {
         const reply = r as Reply;
-        // Add affiliated business data if available
+        // Add affiliated business data and affiliation date if available
         if (reply.profiles?.affiliated_business_id) {
           reply.profiles.affiliated_business = businessProfiles.get(reply.profiles.affiliated_business_id) || null;
+        }
+        if (reply.profiles?.is_affiliate && reply.author_id) {
+          reply.affiliation_date = affiliationDates.get(reply.author_id);
         }
         if (!repliesByPostId.has(r.post_id)) {
           repliesByPostId.set(r.post_id, []);
@@ -1263,7 +1395,7 @@ const Feed = () => {
         const replies = repliesByPostId.get(post.id) || [];
         const acks = acksByPostId.get(post.id) || [];
 
-        // Add affiliated business data if available
+        // Add affiliated business data and affiliation date if available
         if (post.profiles?.affiliated_business_id) {
           post.profiles.affiliated_business = businessProfiles.get(post.profiles.affiliated_business_id) || null;
         }
@@ -1275,6 +1407,7 @@ const Feed = () => {
           reply_count: replies.length,
           like_count: acks.length,
           has_liked: currentUserId ? acks.includes(currentUserId) : false,
+          affiliation_date: post.profiles?.is_affiliate && post.author_id ? affiliationDates.get(post.author_id) : undefined,
         } as Post;
       });
 
