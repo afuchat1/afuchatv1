@@ -179,7 +179,7 @@ const PrivacyPolicy = () => {
             </p>
             <div className="bg-muted/50 rounded-lg p-6 border border-border">
               <h3 className="text-lg font-semibold mb-3">Contact Support</h3>
-              <div className="space-y-2">
+              <div className="space-y-3">
                 <p className="text-foreground/90">
                   <span className="font-medium">Email:</span>{' '}
                   <a 
@@ -187,6 +187,15 @@ const PrivacyPolicy = () => {
                     className="text-primary hover:underline"
                   >
                     support@afuchat.com
+                  </a>
+                </p>
+                <p className="text-foreground/90">
+                  <span className="font-medium">Support Center:</span>{' '}
+                  <a 
+                    href="/support" 
+                    className="text-primary hover:underline"
+                  >
+                    Visit our Support Center
                   </a>
                 </p>
                 <p className="text-sm text-muted-foreground mt-4">

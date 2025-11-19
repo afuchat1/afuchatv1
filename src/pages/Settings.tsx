@@ -653,11 +653,21 @@ const Settings = () => {
                 <h2 className="text-lg font-semibold">Support</h2>
               </div>
               <Separator />
+              <button
+                onClick={() => navigate('/support')}
+                className="w-full flex items-center justify-between py-3 px-2 rounded-lg hover:bg-muted transition-colors text-left"
+              >
+                <div className="flex items-center gap-3">
+                  <HelpCircle className="h-5 w-5 text-muted-foreground" />
+                  <span>Support Center</span>
+                </div>
+                <span className="text-muted-foreground">›</span>
+              </button>
               <div className="bg-muted/50 rounded-lg p-4 border border-border">
                 <div className="flex items-start gap-3">
                   <Mail className="h-5 w-5 text-primary mt-0.5 shrink-0" />
                   <div className="space-y-1">
-                    <p className="text-sm font-medium">Need help?</p>
+                    <p className="text-sm font-medium">Email Support</p>
                     <a 
                       href="mailto:support@afuchat.com"
                       className="text-sm text-primary hover:underline"
@@ -665,7 +675,7 @@ const Settings = () => {
                       support@afuchat.com
                     </a>
                     <p className="text-xs text-muted-foreground mt-2">
-                      Our support team typically responds within 24-48 hours
+                      Response time: 24-48 hours
                     </p>
                   </div>
                 </div>
