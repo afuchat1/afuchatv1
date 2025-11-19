@@ -29,6 +29,7 @@ import { VerifiedBadge } from '@/components/VerifiedBadge';
 import { BusinessBadge } from '@/components/BusinessBadge';
 import { AffiliatedBadge } from '@/components/AffiliatedBadge';
 import { AffiliateDetailsSheet } from '@/components/AffiliateDetailsSheet';
+import { VerifiedDetailsSheet } from '@/components/VerifiedDetailsSheet';
 
 interface Profile {
 	id: string;
@@ -262,6 +263,12 @@ const Profile = () => {
 		businessName: string;
 		affiliatedDate: string;
 		businessLogo?: string;
+	} | null>(null);
+	const [selectedVerified, setSelectedVerified] = useState<{
+		userName: string;
+		isVerified: boolean;
+		isOrgVerified: boolean;
+		createdAt?: string;
 	} | null>(null);
 	const [affiliatedUsers, setAffiliatedUsers] = useState<Array<{
 		id: string;
@@ -1105,6 +1112,18 @@ const Profile = () => {
 					businessName={selectedAffiliate.businessName}
 					affiliatedDate={selectedAffiliate.affiliatedDate}
 					businessLogo={selectedAffiliate.businessLogo}
+				/>
+			)}
+
+			{/* Verified Details Sheet */}
+			{selectedVerified && (
+				<VerifiedDetailsSheet
+					open={!!selectedVerified}
+					onOpenChange={(open) => !open && setSelectedVerified(null)}
+					userName={selectedVerified.userName}
+					isVerified={selectedVerified.isVerified}
+					isOrgVerified={selectedVerified.isOrgVerified}
+					createdAt={selectedVerified.createdAt}
 				/>
 			)}
 		</div>

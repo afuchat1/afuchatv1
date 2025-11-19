@@ -2,26 +2,26 @@ import {
   Sheet,
   SheetContent,
 } from "@/components/ui/sheet";
-import { Building2, Calendar, ShieldCheck, BadgeCheck } from "lucide-react";
+import { BadgeCheck, ShieldCheck, Calendar } from "lucide-react";
 import { format } from "date-fns";
 
-interface AffiliateDetailsSheetProps {
+interface VerifiedDetailsSheetProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   userName: string;
-  businessName: string;
-  affiliatedDate: string;
-  businessLogo?: string;
+  isVerified: boolean;
+  isOrgVerified: boolean;
+  createdAt?: string;
 }
 
-export function AffiliateDetailsSheet({
+export function VerifiedDetailsSheet({
   open,
   onOpenChange,
   userName,
-  businessName,
-  affiliatedDate,
-  businessLogo,
-}: AffiliateDetailsSheetProps) {
+  isVerified,
+  isOrgVerified,
+  createdAt,
+}: VerifiedDetailsSheetProps) {
   return (
     <Sheet open={open} onOpenChange={onOpenChange}>
       <SheetContent 
@@ -75,52 +75,52 @@ export function AffiliateDetailsSheet({
             {/* Main verification reason */}
             <div className="flex gap-4 items-start">
               <div className="flex-shrink-0 w-12 h-12 rounded-full bg-primary/10 flex items-center justify-center mt-1">
-                <svg viewBox="0 0 24 24" className="w-7 h-7 text-primary fill-current">
-                  <path d="M12 2C6.5 2 2 6.5 2 12s4.5 10 10 10 10-4.5 10-10S17.5 2 12 2zm-2 15l-5-5 1.41-1.41L10 14.17l7.59-7.59L19 8l-9 9z"/>
-                </svg>
-              </div>
-              <div className="flex-1 pt-1">
-                <p className="text-base leading-relaxed text-foreground">
-                  This account is verified because it's an affiliate of{" "}
-                  <span className="text-primary font-medium">@{businessName}</span> on AfuChat.
-                </p>
-              </div>
-            </div>
-
-            {/* Business affiliation */}
-            <div className="flex gap-4 items-start">
-              <div className="flex-shrink-0 w-12 h-12 rounded-full overflow-hidden bg-muted mt-1">
-                {businessLogo ? (
-                  <img 
-                    src={businessLogo} 
-                    alt={businessName}
-                    className="w-full h-full object-cover"
-                  />
+                {isOrgVerified ? (
+                  <ShieldCheck className="w-7 h-7 text-primary" />
                 ) : (
-                  <div className="w-full h-full flex items-center justify-center">
-                    <Building2 className="w-6 h-6 text-muted-foreground" />
-                  </div>
+                  <BadgeCheck className="w-7 h-7 text-primary" />
                 )}
               </div>
               <div className="flex-1 pt-1">
                 <p className="text-base leading-relaxed text-foreground">
-                  This account is affiliated with{" "}
-                  <span className="text-primary font-medium">{businessName}</span>.
+                  {isOrgVerified ? (
+                    <>This account is verified because it's an official organization on AfuChat.</>
+                  ) : (
+                    <>This account is verified because it's a notable account on AfuChat.</>
+                  )}
                 </p>
               </div>
             </div>
 
-            {/* Affiliation date */}
+            {/* Account type */}
             <div className="flex gap-4 items-start">
               <div className="flex-shrink-0 w-12 h-12 rounded-full bg-muted flex items-center justify-center mt-1">
-                <Calendar className="w-6 h-6 text-muted-foreground" />
+                {isOrgVerified ? (
+                  <ShieldCheck className="w-6 h-6 text-muted-foreground" />
+                ) : (
+                  <BadgeCheck className="w-6 h-6 text-muted-foreground" />
+                )}
               </div>
               <div className="flex-1 pt-1">
                 <p className="text-base leading-relaxed text-foreground">
-                  Verified since {format(new Date(affiliatedDate), "MMMM yyyy")}.
+                  This account is {isOrgVerified ? 'organization' : 'user'} verified.
                 </p>
               </div>
             </div>
+
+            {/* Joined date */}
+            {createdAt && (
+              <div className="flex gap-4 items-start">
+                <div className="flex-shrink-0 w-12 h-12 rounded-full bg-muted flex items-center justify-center mt-1">
+                  <Calendar className="w-6 h-6 text-muted-foreground" />
+                </div>
+                <div className="flex-1 pt-1">
+                  <p className="text-base leading-relaxed text-foreground">
+                    Joined {format(new Date(createdAt), "MMMM yyyy")}.
+                  </p>
+                </div>
+              </div>
+            )}
           </div>
         </div>
       </SheetContent>
