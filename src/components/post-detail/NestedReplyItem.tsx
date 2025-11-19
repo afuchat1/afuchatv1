@@ -56,7 +56,7 @@ export const NestedReplyItem = ({
 
   return (
     <div className={`${depth > 0 ? 'ml-8 mt-3' : ''}`}>
-      <div className={`p-4 border-b border-border ${reply.is_pinned ? 'bg-primary/5 border-l-4 border-l-primary' : 'hover:bg-muted/50'} transition-colors`}>
+      <div className={`p-4 ${reply.is_pinned ? 'bg-primary/5' : 'hover:bg-muted/50'} transition-colors`}>
         {reply.is_pinned && (
           <div className="text-xs text-primary font-medium mb-2 flex items-center gap-1">
             📌 Pinned by author
@@ -153,7 +153,7 @@ export const NestedReplyItem = ({
       </div>
 
       {reply.nested_replies && reply.nested_replies.length > 0 && (
-        <div className="border-l-2 border-border/50 ml-6">
+        <div className="ml-6">
           {reply.nested_replies.map(nestedReply => (
             <NestedReplyItem
               key={nestedReply.id}

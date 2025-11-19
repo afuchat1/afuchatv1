@@ -707,7 +707,7 @@ const Profile = () => {
 
 	return (
 		<div className="h-full flex flex-col">
-			<div className="p-4 sticky top-0 bg-background/80 backdrop-blur-sm z-10 border-b border-border">
+			<div className="p-4 sticky top-0 bg-background/80 backdrop-blur-sm z-10">
 				<div className="flex items-center justify-between">
 					<div className="flex items-center">
 						<Button
@@ -746,7 +746,7 @@ const Profile = () => {
 
 				<div className="p-4">
 					<div className="flex justify-between items-end -mt-20 sm:-mt-16">
-						<div className="h-24 w-24 sm:h-32 sm:w-32 border-4 border-background shadow-lg rounded-full overflow-hidden bg-background">
+						<div className="h-24 w-24 sm:h-32 sm:w-32 rounded-full overflow-hidden bg-background">
 							<ProfileAvatarDisplay profileId={profileId} profile={profile} />
 						</div>
 

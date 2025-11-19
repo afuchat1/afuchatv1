@@ -495,7 +495,7 @@ const ChatRoom = () => {
     <TooltipProvider delayDuration={200}>
       <div className="h-dvh flex flex-col bg-background overflow-hidden">
         {/* Header */}
-        <div className="bg-card border-b border-border sticky top-0 z-10 flex items-center px-4 py-3 gap-3 min-h-[60px]">
+        <div className="bg-card sticky top-0 z-10 flex items-center px-4 py-3 gap-3 min-h-[60px]">
           <Tooltip>
             <TooltipTrigger asChild>
               <Button
@@ -653,7 +653,7 @@ const ChatRoom = () => {
         {/* Beginner Help Overlay */}
         {showHelp && (
           <div className="fixed inset-0 z-50 bg-black/50 flex items-center justify-center p-4">
-            <div className="bg-card rounded-xl p-6 max-w-sm w-full border border-border">
+            <div className="bg-card rounded-xl p-6 max-w-sm w-full">
               <div className="flex items-center gap-2 mb-4">
                 <HelpCircle className="h-5 w-5 text-primary" />
                 <h2 className="text-lg font-semibold text-foreground">Welcome to your chat!</h2>
@@ -692,7 +692,7 @@ const ChatRoom = () => {
         )}
 
         {/* Input: Fixed bottom, with voice recording */}
-        <div className="fixed bottom-0 left-0 right-0 z-20 bg-card border-t border-border px-4 py-3 pb-[env(safe-area-inset-bottom)]">
+        <div className="fixed bottom-0 left-0 right-0 z-20 bg-card px-4 py-3 pb-[env(safe-area-inset-bottom)]">
           <div className="flex items-end gap-2">
             {recording ? (
               <Button
@@ -733,7 +733,7 @@ const ChatRoom = () => {
             )}
             <div className="flex-1 relative min-w-0">
               {replyToMessage && (
-                <div className="absolute bottom-full left-0 right-0 mb-2 px-3 py-2 bg-muted/50 rounded-lg border-l-2 border-primary flex items-center justify-between">
+                <div className="absolute bottom-full left-0 right-0 mb-2 px-3 py-2 bg-muted/50 rounded-lg flex items-center justify-between">
                   <div className="flex-1 min-w-0">
                     <p className="text-xs font-semibold text-primary truncate">
                       Replying to {replyToMessage.profiles.display_name}

@@ -151,7 +151,7 @@ const Chats = () => {
   if (effectiveLoading) {
     return (
       <div className="h-full flex flex-col bg-gradient-to-b from-background to-muted/20">
-        <div className="sticky top-0 z-10 backdrop-blur-xl bg-background/80 border-b border-border/50 p-6">
+        <div className="sticky top-0 z-10 backdrop-blur-xl bg-background/80 p-6">
           <div className="flex items-center justify-between mb-4">
             <Skeleton className="h-8 w-32" />
             <Skeleton className="h-10 w-10 rounded-full" />
@@ -174,7 +174,7 @@ const Chats = () => {
     return (
       <Card
         key={chat.id}
-        className="group relative overflow-hidden p-4 rounded-2xl border border-border/50 bg-gradient-to-br from-card to-card/50 hover:shadow-xl hover:border-primary/30 hover:-translate-y-0.5 cursor-pointer transition-all duration-300"
+        className="group relative overflow-hidden p-4 rounded-2xl bg-gradient-to-br from-card to-card/50 hover:-translate-y-0.5 cursor-pointer transition-all duration-300"
         onClick={() => navigate(`/chat/${chat.id}`)}
       >
         <div className="flex items-center gap-4">
@@ -184,7 +184,7 @@ const Chats = () => {
               : 'bg-gradient-to-br from-primary to-primary/80'
           }`}>
             <Icon className="h-6 w-6 text-white" />
-            <div className="absolute -bottom-0.5 -right-0.5 h-4 w-4 rounded-full bg-green-500 border-2 border-card" />
+            <div className="absolute -bottom-0.5 -right-0.5 h-4 w-4 rounded-full bg-green-500" />
           </div>
 
           <div className="flex-1 min-w-0">
@@ -222,7 +222,7 @@ const Chats = () => {
   return (
     <div className="h-full flex flex-col bg-gradient-to-b from-background to-muted/20">
       {/* Header */}
-      <div className="sticky top-0 z-10 backdrop-blur-xl bg-background/80 border-b border-border/50 shadow-sm">
+      <div className="sticky top-0 z-10 backdrop-blur-xl bg-background/80 p-6">
         <div className="p-6 pb-4">
           <div className="flex items-center justify-between mb-5">
             <div>
@@ -249,7 +249,7 @@ const Chats = () => {
               placeholder={t('chat.searchChats')}
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
-              className="pl-12 h-11 rounded-xl border-border/50 bg-background/50 backdrop-blur-sm focus:bg-background transition-colors"
+              className="pl-12 h-11 rounded-xl bg-background/50 backdrop-blur-sm focus:bg-background transition-colors"
             />
           </div>
         </div>

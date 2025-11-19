@@ -163,7 +163,7 @@ const PostActionsSheet: React.FC<PostActionsSheetProps> = ({ post, user, navigat
     const renderDragHandle = () => (
         <div
             ref={dragRef}
-            className="flex justify-center py-2 border-b border-border cursor-grab active:cursor-grabbing"
+            className="flex justify-center py-2 cursor-grab active:cursor-grabbing"
             onTouchStart={handleTouchStart}
             onTouchMove={handleTouchMove}
             onTouchEnd={handleTouchEnd}
@@ -173,7 +173,7 @@ const PostActionsSheet: React.FC<PostActionsSheetProps> = ({ post, user, navigat
             onMouseLeave={handleDragMouseLeave}
             onDragStart={handleDragStart}
         >
-            <div className={`w-8 h-1 bg-border rounded-full transition-transform duration-200 ease-out ${translateY > 0 ? 'scale-x-75' : ''}`} />
+            <div className={`w-8 h-1 bg-muted rounded-full transition-transform duration-200 ease-out ${translateY > 0 ? 'scale-x-75' : ''}`} />
         </div>
     );
 
@@ -212,7 +212,7 @@ const PostActionsSheet: React.FC<PostActionsSheetProps> = ({ post, user, navigat
                     <SheetClose asChild>
                         <Button 
                             variant="default"
-                            className="w-full justify-center py-4 h-auto bg-primary hover:bg-primary/95 text-primary-foreground font-semibold text-base rounded-2xl shadow-sm transition-all duration-300 ease-out hover:shadow-lg hover:scale-[1.02] active:scale-[0.98] border-none"
+                            className="w-full justify-center py-4 h-auto bg-primary hover:bg-primary/95 text-primary-foreground font-semibold text-base rounded-2xl transition-all duration-300 ease-out hover:scale-[1.02] active:scale-[0.98]"
                             onClick={() => navigate('/auth')} // Assuming '/auth' is your login route
                         >
                             <LogIn className="h-5 w-5 mr-3 flex-shrink-0 transition-transform duration-300 group-hover:scale-110" />
@@ -231,7 +231,7 @@ const PostActionsSheet: React.FC<PostActionsSheetProps> = ({ post, user, navigat
                     <SheetClose asChild>
                         <Button 
                             variant="ghost" 
-                            className="justify-start w-full text-left py-3.5 h-auto text-foreground hover:bg-muted/80 border-b border-border/20 text-sm rounded-lg transition-all duration-300 ease-out hover:scale-[1.005] hover:shadow-sm group"
+                            className="justify-start w-full text-left py-3.5 h-auto text-foreground hover:bg-muted/80 text-sm rounded-lg transition-all duration-300 ease-out hover:scale-[1.005] group"
                             onClick={handleViewDetails}
                         >
                             <EyeOff className="h-4 w-4 mr-4 flex-shrink-0 text-muted-foreground transition-colors duration-300 group-hover:text-foreground" />
@@ -243,7 +243,7 @@ const PostActionsSheet: React.FC<PostActionsSheetProps> = ({ post, user, navigat
                     <SheetClose asChild>
                         <Button 
                             variant="ghost" 
-                            className="justify-start w-full text-left py-3.5 h-auto text-foreground hover:bg-muted/80 border-b border-border/20 text-sm rounded-lg transition-all duration-300 ease-out hover:scale-[1.005] hover:shadow-sm group"
+                            className="justify-start w-full text-left py-3.5 h-auto text-foreground hover:bg-muted/80 text-sm rounded-lg transition-all duration-300 ease-out hover:scale-[1.005] group"
                             onClick={() => navigate(`/profile/${post.profiles.handle}`)}
                         >
                             <UserPlus className="h-4 w-4 mr-4 flex-shrink-0 text-muted-foreground transition-colors duration-300 group-hover:text-foreground" />
@@ -255,7 +255,7 @@ const PostActionsSheet: React.FC<PostActionsSheetProps> = ({ post, user, navigat
                     <SheetClose asChild>
                         <Button 
                             variant="ghost" 
-                            className="justify-start w-full text-left py-3.5 h-auto text-foreground hover:bg-muted/80 border-b border-border/20 text-sm rounded-lg transition-all duration-300 ease-out hover:scale-[1.005] hover:shadow-sm group"
+                            className="justify-start w-full text-left py-3.5 h-auto text-foreground hover:bg-muted/80 text-sm rounded-lg transition-all duration-300 ease-out hover:scale-[1.005] group"
                         >
                             <List className="h-4 w-4 mr-4 flex-shrink-0 text-muted-foreground transition-colors duration-300 group-hover:text-foreground" />
                             <span className="font-normal transition-colors duration-300 group-hover:text-foreground">Add/remove from lists</span>
@@ -266,7 +266,7 @@ const PostActionsSheet: React.FC<PostActionsSheetProps> = ({ post, user, navigat
                     <SheetClose asChild>
                         <Button 
                             variant="ghost" 
-                            className="justify-start w-full text-left py-3.5 h-auto text-foreground hover:bg-muted/80 border-b border-border/20 text-sm rounded-lg transition-all duration-300 ease-out hover:scale-[1.005] hover:shadow-sm group"
+                            className="justify-start w-full text-left py-3.5 h-auto text-foreground hover:bg-muted/80 text-sm rounded-lg transition-all duration-300 ease-out hover:scale-[1.005] group"
                             onClick={() => navigate(`/profile/${post.profiles.handle}`)}
                         >
                             <Volume2 className="h-4 w-4 mr-4 flex-shrink-0 text-muted-foreground transition-colors duration-300 group-hover:text-foreground" />
@@ -278,7 +278,7 @@ const PostActionsSheet: React.FC<PostActionsSheetProps> = ({ post, user, navigat
                     <SheetClose asChild>
                         <Button 
                             variant="ghost" 
-                            className="justify-start w-full text-left py-3.5 h-auto text-foreground hover:bg-muted/80 border-b border-border/20 text-sm rounded-lg transition-all duration-300 ease-out hover:scale-[1.005] hover:shadow-sm group"
+                            className="justify-start w-full text-left py-3.5 h-auto text-foreground hover:bg-muted/80 text-sm rounded-lg transition-all duration-300 ease-out hover:scale-[1.005] group"
                             onClick={() => navigate(`/profile/${post.profiles.handle}`)}
                         >
                             <UserX className="h-4 w-4 mr-4 flex-shrink-0 text-muted-foreground transition-colors duration-300 group-hover:text-foreground" />
@@ -290,7 +290,7 @@ const PostActionsSheet: React.FC<PostActionsSheetProps> = ({ post, user, navigat
                     <SheetClose asChild>
                         <Button 
                             variant="ghost" 
-                            className="justify-start w-full text-left py-3.5 h-auto text-foreground hover:bg-destructive/10 border-b border-border/20 text-sm rounded-lg transition-all duration-300 ease-out hover:scale-[1.005] hover:shadow-sm group" 
+                            className="justify-start w-full text-left py-3.5 h-auto text-foreground hover:bg-destructive/10 text-sm rounded-lg transition-all duration-300 ease-out hover:scale-[1.005] group" 
                             onClick={() => onReport(post.id)}
                         >
                             <AlertTriangle className="h-4 w-4 mr-4 flex-shrink-0 text-destructive transition-colors duration-300 group-hover:text-destructive/90" />
@@ -329,7 +329,7 @@ const PostActionsSheet: React.FC<PostActionsSheetProps> = ({ post, user, navigat
                         <SheetClose asChild>
                             <Button 
                                 variant="ghost" 
-                                className="justify-start w-full text-left py-3.5 h-auto text-destructive hover:bg-destructive/10 font-semibold text-sm rounded-lg transition-all duration-300 ease-out hover:scale-[1.005] hover:shadow-sm group"
+                                className="justify-start w-full text-left py-3.5 h-auto text-destructive hover:bg-destructive/10 font-semibold text-sm rounded-lg transition-all duration-300 ease-out hover:scale-[1.005] group"
                                 onClick={() => onDelete(post.id)}
                             >
                                 <Trash2 className="h-4 w-4 mr-4 flex-shrink-0 text-destructive transition-colors duration-300 group-hover:text-destructive/90" />
@@ -352,7 +352,7 @@ const PostActionsSheet: React.FC<PostActionsSheetProps> = ({ post, user, navigat
             
             <SheetContent 
                 side="bottom" 
-                className="h-auto max-h-[80vh] rounded-t-xl p-0 overflow-hidden shadow-none border-t border-border/50 transition-transform duration-200 ease-out bg-background"
+                className="h-auto max-h-[80vh] rounded-t-xl p-0 overflow-hidden transition-transform duration-200 ease-out bg-background"
                 style={{ transform: `translateY(${translateY}px)` }}
             >
                 {/* Hidden close button for programmatic dismiss */}

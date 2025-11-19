@@ -101,7 +101,7 @@ const AuthSheetContent: React.FC<AuthSheetContentProps> = ({ onClose }) => {
   };
 
   return (
-    <Card className="w-full border border-border/30 shadow-2xl rounded-2xl flex flex-col h-full bg-white dark:bg-gray-900">
+    <Card className="w-full rounded-2xl flex flex-col h-full bg-white dark:bg-gray-900">
       <CardHeader className="pt-4 pb-2 relative flex flex-col items-center">
         {/* The icon has been removed from here */}
 
@@ -277,7 +277,7 @@ const AuthSheet: React.FC<AuthSheetProps> = ({ isOpen, onOpenChange }) => {
     <Dialog open={isOpen} onOpenChange={onOpenChange}>
       <DialogContent
         // ADDED 'data-[state=open]:[&>button]:hidden' to hide the built-in Radix close button (the X icon)
-        className="w-full max-w-[320px] sm:max-w-xs lg:max-w-sm mx-auto p-3 max-h-[95vh] overflow-hidden rounded-2xl shadow-2xl bg-card border-border/20 border data-[state=open]:[&>button]:hidden"
+        className="w-full max-w-[320px] sm:max-w-xs lg:max-w-sm mx-auto p-3 max-h-[95vh] overflow-hidden rounded-2xl bg-card data-[state=open]:[&>button]:hidden"
       >
         <div className="h-full flex flex-col
           data-[state=open]:animate-in

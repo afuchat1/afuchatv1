@@ -98,7 +98,7 @@ export const NestedReplyItem = ({
   const leftMargin = Math.min(depth * 16, 48); // Cap the left margin
 
   return (
-    <div style={{ marginLeft: `${leftMargin}px` }} className={`pt-2 pb-1 border-l-2 ${reply.is_pinned ? 'border-primary bg-primary/5' : 'border-border/30'} pl-2`}>
+    <div style={{ marginLeft: `${leftMargin}px` }} className={`pt-2 pb-1 ${reply.is_pinned ? 'bg-primary/5' : ''} pl-2`}>
       {reply.is_pinned && (
         <div className="text-[9px] sm:text-[10px] text-primary font-medium mb-1 flex items-center gap-1">
           📌 Pinned by author

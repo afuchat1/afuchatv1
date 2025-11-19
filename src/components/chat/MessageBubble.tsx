@@ -72,7 +72,7 @@ export const MessageBubble = ({
     <>
       {/* --- Reply Preview --- */}
       {repliedMessage && (
-        <div className="flex items-center gap-2 p-2 rounded-t-lg bg-black/10 dark:bg-white/10 border-l-2 border-primary pl-2">
+        <div className="flex items-center gap-2 p-2 rounded-t-lg bg-black/10 dark:bg-white/10 pl-2">
           <ArrowDownLeft className="h-4 w-4 text-primary flex-shrink-0" />
           <div className="flex flex-col min-w-0">
             <span className="text-xs font-semibold text-primary truncate">
@@ -142,7 +142,7 @@ export const MessageBubble = ({
     return (
       <div className={`flex gap-1 ${isOwn ? 'justify-end' : ''} -mt-1`}>
         {aggregated.map(({ emoji, count }) => (
-          <Badge key={emoji} variant="secondary" className="shadow-sm">
+          <Badge key={emoji} variant="secondary">
             {emoji} {typeof count === 'number' && count > 1 && <span className="text-xs ml-1">{count}</span>}
           </Badge>
         ))}
@@ -192,8 +192,8 @@ export const MessageBubble = ({
               className={`relative ${
                 isOwn
                   ? 'bg-primary text-primary-foreground'
-                  : 'bg-card border'
-              } shadow-sm max-w-full overflow-hidden
+                  : 'bg-card'
+              } max-w-full overflow-hidden
               ${isGrouped
                 ? isOwn ? 'rounded-lg' : 'rounded-lg'
                 : isOwn ? 'rounded-2xl rounded-br-md' : 'rounded-2xl rounded-bl-md'

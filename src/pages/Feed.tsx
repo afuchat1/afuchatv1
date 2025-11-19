@@ -287,7 +287,7 @@ const ReplyItem = ({ reply, navigate, handleViewProfile }: {
 
     return (
         <div className="flex pt-2 pb-1 relative">
-            <div className="absolute left-5 top-0 bottom-0 w-px bg-border/80 ml-px mt-2.5 mb-1.5" />
+            <div className="absolute left-5 top-0 bottom-0 w-px bg-muted ml-px mt-2.5 mb-1.5" />
             
             <div
                 className="mr-1.5 sm:mr-2 flex-shrink-0 cursor-pointer z-10"
@@ -613,7 +613,7 @@ const PostCard = ({ post, addReply, user, navigate, onAcknowledge, onDeletePost,
   };
 
   return (
-    <div className="flex border-b border-border py-2 pl-0 pr-4 transition-colors hover:bg-muted/5">
+    <div className="flex py-2 pl-0 pr-4 transition-colors hover:bg-muted/5">
       <div
         className="mr-2 sm:mr-3 flex-shrink-0 cursor-pointer ml-0.5 sm:ml-1"
         onClick={() => handleViewProfile(post.author_id)}
@@ -825,7 +825,7 @@ const PostCard = ({ post, addReply, user, navigate, onAcknowledge, onDeletePost,
           )}
 
           {showComments && post.replies && post.replies.length > 0 && (
-            <div className="space-y-1 pt-2 border-l border-border/80 pl-3 sm:pl-4 ml-2 sm:ml-3"> 
+            <div className="space-y-1 pt-2 pl-3 sm:pl-4 ml-2 sm:ml-3">
               {organizedReplies.slice(0, visibleRepliesCount).map((reply) => (
                 <NestedReplyItem
                   key={reply.id} 
@@ -870,7 +870,7 @@ const PostCard = ({ post, addReply, user, navigate, onAcknowledge, onDeletePost,
                 onChange={setReplyText}
                 mention={post.profiles.handle ? `@${post.profiles.handle}` : undefined}
                 placeholder={t('feed.addComment')}
-                className="flex-1 bg-transparent border-b border-input text-[10px] sm:text-xs text-foreground focus:outline-none focus:ring-0 focus:border-primary p-1 min-h-[32px]"
+                className="flex-1 bg-transparent text-[10px] sm:text-xs text-foreground focus:outline-none focus:ring-0 p-1 min-h-[32px]"
                 onSubmit={handleReplySubmit}
               />
               <Button
@@ -1012,7 +1012,7 @@ const Feed = () => {
   }, []);
 
   const addReply = useCallback((postId: string, newReply: Reply) => {
-    setPosts((cur) =>
+    const updateWithReply = (cur: Post[]) =>
       cur.map((p) =>
         p.id === postId
           ? {
@@ -1023,8 +1023,10 @@ const Feed = () => {
             reply_count: (p.reply_count || 0) + 1,
           }
           : p
-      )
-    );
+      );
+    
+    setPosts(updateWithReply);
+    setFollowingPosts(updateWithReply);
   }, []);
 
   const handleAcknowledge = useCallback(async (postId: string, currentHasLiked: boolean) => {
@@ -1034,13 +1036,16 @@ const Feed = () => {
     }
     const currentUserId = user.id;
 
-    setPosts((currentPosts) =>
+    // Update both posts and followingPosts optimistically
+    const updatePosts = (currentPosts: Post[]) =>
       currentPosts.map((p) =>
         p.id === postId
           ? { ...p, has_liked: !currentHasLiked, like_count: p.like_count + (!currentHasLiked ? 1 : -1) }
           : p
-      )
-    );
+      );
+    
+    setPosts(updatePosts);
+    setFollowingPosts(updatePosts);
 
     if (currentHasLiked) {
       const { error } = await supabase
@@ -1050,13 +1055,15 @@ const Feed = () => {
 
       if (error) {
         toast.error('Failed to unacknowledge post');
-        setPosts((currentPosts) =>
+        // Revert both
+        const revertPosts = (currentPosts: Post[]) =>
           currentPosts.map((p) =>
             p.id === postId
               ? { ...p, has_liked: currentHasLiked, like_count: p.like_count + 1 }
               : p
-          )
-        );
+          );
+        setPosts(revertPosts);
+        setFollowingPosts(revertPosts);
       }
     } else {
       const { error } = await supabase
@@ -1065,19 +1072,21 @@ const Feed = () => {
 
       if (error) {
         toast.error('Failed to acknowledge post');
-        setPosts((currentPosts) =>
-            currentPosts.map((p) =>
-              p.id === postId
-                ? { ...p, has_liked: currentHasLiked, like_count: p.like_count - 1 }
-                : p
-            )
-        );
+        // Revert both
+        const revertPosts = (currentPosts: Post[]) =>
+          currentPosts.map((p) =>
+            p.id === postId
+              ? { ...p, has_liked: currentHasLiked, like_count: p.like_count - 1 }
+              : p
+          );
+        setPosts(revertPosts);
+        setFollowingPosts(revertPosts);
       } else {
         // Award XP for giving a reaction
         awardXP('give_reaction', { post_id: postId });
         
         // Award XP to post author for receiving a reaction
-        const post = posts.find(p => p.id === postId);
+        const post = posts.find(p => p.id === postId) || followingPosts.find(p => p.id === postId);
         if (post && post.author_id !== currentUserId) {
           fetch('https://rhnsjqqtdzlkvqazfcbg.supabase.co/functions/v1/award-xp', {
             method: 'POST',
@@ -1095,7 +1104,7 @@ const Feed = () => {
         }
       }
     }
-  }, [user, navigate, posts, awardXP]);
+  }, [user, navigate, posts, followingPosts, awardXP]);
 
   // NEW: Delete Post Handler - Opens confirmation sheet
   const handleDeletePost = useCallback((postId: string) => {
@@ -1460,7 +1469,7 @@ const Feed = () => {
   }, [posts]);
 
   const PostSkeleton = () => (
-    <div className="flex p-3 sm:p-4 border-b border-border">
+    <div className="flex p-3 sm:p-4">
       <Skeleton className="h-8 w-8 sm:h-10 sm:w-10 rounded-full mr-2 sm:mr-3 flex-shrink-0" />
       <div className="flex-1 space-y-2">
         <div className="flex items-center">
@@ -1514,21 +1523,21 @@ const Feed = () => {
           {newPostsCount > 0 && (
             <button
               onClick={handleLoadNewPosts}
-              className="w-full py-3 px-4 bg-primary/10 hover:bg-primary/20 text-primary font-semibold transition-colors border-b border-primary/20 flex items-center justify-center gap-2"
+              className="w-full py-3 px-4 bg-primary/10 hover:bg-primary/20 text-primary font-semibold transition-colors flex items-center justify-center gap-2"
             >
               <span>Show {newPostsCount} new {newPostsCount === 1 ? 'post' : 'posts'}</span>
             </button>
           )}
-          <TabsList className="grid grid-cols-2 w-full h-14 rounded-none bg-transparent border-b">
+          <TabsList className="grid grid-cols-2 w-full h-14 rounded-none bg-transparent">
             <TabsTrigger
               value="foryou"
-              className="data-[state=active]:bg-transparent data-[state=active]:text-foreground data-[state=active]:border-b-4 data-[state=active]:border-primary data-[state=inactive]:border-transparent rounded-none font-bold h-full flex items-center gap-1.5 hover:bg-muted/50 transition-colors"
+              className="data-[state=active]:bg-transparent data-[state=active]:text-foreground data-[state=inactive]:text-muted-foreground rounded-none font-bold h-full flex items-center gap-1.5 hover:bg-muted/50 transition-colors"
             >
               For you
             </TabsTrigger>
             <TabsTrigger
               value="following"
-              className="data-[state=active]:bg-transparent data-[state=active]:text-foreground data-[state=active]:border-b-4 data-[state=active]:border-primary data-[state=inactive]:border-transparent rounded-none font-bold h-full hover:bg-muted/50 transition-colors"
+              className="data-[state=active]:bg-transparent data-[state=active]:text-foreground data-[state=inactive]:text-muted-foreground rounded-none font-bold h-full hover:bg-muted/50 transition-colors"
             >
               Following
             </TabsTrigger>
