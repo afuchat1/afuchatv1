@@ -9,12 +9,14 @@ import { User, Search, Loader2 } from 'lucide-react';
 import { toast } from 'sonner';
 import { Skeleton } from '@/components/ui/skeleton';
 import { useTranslation } from 'react-i18next';
+import { UserAvatar } from '@/components/avatar/UserAvatar';
 
 interface UserProfile {
   id: string;
   display_name: string;
   handle: string;
   bio?: string;
+  avatar_url?: string | null;
   is_verified?: boolean;
   is_organization_verified?: boolean;
 }
@@ -62,7 +64,7 @@ const NewChatDialog = ({ isOpen, onClose }: NewChatDialogProps) => {
         
         const { data: profilesData } = await supabase
           .from('profiles')
-          .select('id, display_name, handle, bio, is_verified, is_organization_verified')
+          .select('id, display_name, handle, bio, avatar_url, is_verified, is_organization_verified')
           .in('id', followingIds)
           .order('display_name');
 
@@ -84,7 +86,7 @@ const NewChatDialog = ({ isOpen, onClose }: NewChatDialogProps) => {
     try {
       const { data } = await supabase
         .from('profiles')
-        .select('id, display_name, handle, bio, is_verified, is_organization_verified')
+        .select('id, display_name, handle, bio, avatar_url, is_verified, is_organization_verified')
         .neq('id', user.id)
         .or(`display_name.ilike.%${searchQuery}%,handle.ilike.%${searchQuery}%`)
         .limit(20);
@@ -170,9 +172,13 @@ const NewChatDialog = ({ isOpen, onClose }: NewChatDialogProps) => {
                   disabled={creating}
                   className="w-full flex items-center gap-3 p-3 rounded-lg hover:bg-muted transition-colors disabled:opacity-50"
                 >
-                  <div className="h-10 w-10 rounded-full bg-primary flex items-center justify-center text-primary-foreground">
-                    <User className="h-5 w-5" />
-                  </div>
+                  <UserAvatar
+                    userId={profile.id}
+                    name={profile.display_name}
+                    avatarUrl={profile.avatar_url}
+                    size={40}
+                    showOwlFallback={true}
+                  />
                   <div className="flex-1 text-left min-w-0">
                     <div className="flex items-center gap-1">
                       <h3 className="font-semibold text-foreground truncate">

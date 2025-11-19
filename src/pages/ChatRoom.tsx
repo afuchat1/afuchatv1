@@ -14,11 +14,12 @@ import { SendRedEnvelopeDialog } from '@/components/chat/SendRedEnvelopeDialog';
 import { MessageBubble } from '@/components/chat/MessageBubble';
 import { DateDivider } from '@/components/chat/DateDivider';
 import { TypingIndicator } from '@/components/chat/TypingIndicator';
-import { isSameDay } from 'date-fns';
+import { isSameDay, formatDistanceToNow } from 'date-fns';
 import { useTranslation } from 'react-i18next';
 import { FileUploadPreview } from '@/components/chat/FileUploadPreview';
 import EmojiPicker, { EmojiClickData } from 'emoji-picker-react';
 import { Dialog, DialogContent, DialogTrigger } from '@/components/ui/dialog';
+import { UserAvatar } from '@/components/avatar/UserAvatar';
 
 interface Message {
   id: string;
@@ -90,6 +91,7 @@ const ChatRoom = () => {
   const [loading, setLoading] = useState(true);
   const [sending, setSending] = useState(false);
   const [online, setOnline] = useState(false);
+  const [presenceChannel, setPresenceChannel] = useState<any>(null);
   const [showHelp, setShowHelp] = useState(true);
   const [recording, setRecording] = useState(false);
   const [audioBlob, setAudioBlob] = useState<Blob | null>(null);
@@ -105,6 +107,72 @@ const ChatRoom = () => {
   const mediaRecorderRef = useRef<MediaRecorder | null>(null);
   const streamRef = useRef<MediaStream | null>(null);
   const typingTimeoutRef = useRef<NodeJS.Timeout | null>(null);
+
+  // Update user's last_seen on mount and interval
+  useEffect(() => {
+    if (!user) return;
+
+    const updateLastSeen = async () => {
+      await supabase
+        .from('profiles')
+        .update({ last_seen: new Date().toISOString() })
+        .eq('id', user.id);
+    };
+
+    updateLastSeen();
+    const interval = setInterval(updateLastSeen, 30000); // Update every 30 seconds
+
+    return () => clearInterval(interval);
+  }, [user]);
+
+  // Set up presence tracking
+  useEffect(() => {
+    if (!chatId || !user) return;
+
+    const channel = supabase.channel(`presence-${chatId}`, {
+      config: {
+        presence: {
+          key: user.id,
+        },
+      },
+    });
+
+    channel
+      .on('presence', { event: 'sync' }, () => {
+        const state = channel.presenceState();
+        // Check if other user is present
+        if (otherUser) {
+          const isPresent = Object.keys(state).some(key => 
+            state[key].some((p: any) => p.user_id === otherUser.id)
+          );
+          setOnline(isPresent);
+        }
+      })
+      .on('presence', { event: 'join' }, ({ key, newPresences }) => {
+        if (otherUser && newPresences.some((p: any) => p.user_id === otherUser.id)) {
+          setOnline(true);
+        }
+      })
+      .on('presence', { event: 'leave' }, ({ key, leftPresences }) => {
+        if (otherUser && leftPresences.some((p: any) => p.user_id === otherUser.id)) {
+          setOnline(false);
+        }
+      })
+      .subscribe(async (status) => {
+        if (status === 'SUBSCRIBED') {
+          await channel.track({
+            user_id: user.id,
+            online_at: new Date().toISOString(),
+          });
+        }
+      });
+
+    setPresenceChannel(channel);
+
+    return () => {
+      supabase.removeChannel(channel);
+    };
+  }, [chatId, user, otherUser]);
 
   useEffect(() => {
     if (!chatId || !user) return;
@@ -661,11 +729,36 @@ const ChatRoom = () => {
           </Button>
           
           {/* Profile Picture */}
-          <div className="w-11 h-11 rounded-full bg-primary flex items-center justify-center text-white font-medium text-lg flex-shrink-0">
-            {chatInfo?.is_group 
-              ? (chatInfo?.name?.charAt(0).toUpperCase() || 'G')
-              : (otherUser?.display_name?.charAt(0).toUpperCase() || 'U')
-            }
+          <div 
+            className="relative cursor-pointer flex-shrink-0"
+            onClick={() => {
+              if (!chatInfo?.is_group && otherUser) {
+                navigate(`/profile/${otherUser.handle}`);
+              }
+            }}
+          >
+            {chatInfo?.is_group ? (
+              <div className="w-11 h-11 rounded-full bg-primary flex items-center justify-center text-white font-medium text-lg">
+                {chatInfo?.name?.charAt(0).toUpperCase() || 'G'}
+              </div>
+            ) : otherUser ? (
+              <>
+                <UserAvatar
+                  userId={otherUser.id}
+                  name={otherUser.display_name}
+                  avatarUrl={otherUser.avatar_url}
+                  size={44}
+                  showOwlFallback={true}
+                />
+                {online && (
+                  <div className="absolute bottom-0 right-0 w-3 h-3 bg-green-500 rounded-full border-2 border-card" />
+                )}
+              </>
+            ) : (
+              <div className="w-11 h-11 rounded-full bg-muted flex items-center justify-center">
+                <User className="h-6 w-6 text-muted-foreground" />
+              </div>
+            )}
           </div>
           
           <div className="flex-1 min-w-0">
@@ -681,7 +774,12 @@ const ChatRoom = () => {
               </p>
             ) : chatInfo && !chatInfo.is_group && otherUser && (
               <p className="text-xs text-muted-foreground">
-                {online ? 'online' : `@${otherUser.handle}`}
+                {online 
+                  ? 'online' 
+                  : otherUser.last_seen 
+                    ? `last seen ${formatDistanceToNow(new Date(otherUser.last_seen), { addSuffix: true })}`
+                    : `@${otherUser.handle}`
+                }
               </p>
             )}
           </div>
