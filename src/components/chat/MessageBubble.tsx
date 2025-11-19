@@ -232,16 +232,16 @@ export const MessageBubble = ({
           <div className={`flex items-end gap-2 ${isOwn ? 'flex-row-reverse' : 'flex-row'}`}>
             {/* --- Message Bubble --- */}
             <div
-              className={`relative shadow-sm ${
+              className={`relative ${
                 isOwn
                   ? 'bg-primary text-primary-foreground'
-                  : 'bg-card border border-border/30'
+                  : 'bg-muted text-foreground'
               } ${
                 isGrouped
-                  ? 'rounded-xl'
+                  ? 'rounded-3xl'
                   : isOwn 
-                    ? 'rounded-2xl rounded-br-md' 
-                    : 'rounded-2xl rounded-bl-md'
+                    ? 'rounded-3xl rounded-br-md' 
+                    : 'rounded-3xl rounded-bl-md'
               }`}
             >
               <MessageContent />

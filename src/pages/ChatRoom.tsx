@@ -6,7 +6,7 @@ import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
-import { ArrowLeft, Send, User, Loader2, Phone, Video, MoreVertical, Check, MessageSquare, HelpCircle, Info, Mic, MicOff, Play, Pause, Volume2, X } from 'lucide-react';
+import { ArrowLeft, Send, User, Loader2, Phone, Video, MoreVertical, Check, MessageSquare, HelpCircle, Info, Mic, MicOff, Play, Pause, Volume2, X, Smile, Paperclip } from 'lucide-react';
 import { toast } from 'sonner';
 import { messageSchema } from '@/lib/validation';
 import { ChatRedEnvelope } from '@/components/chat/ChatRedEnvelope';
@@ -528,26 +528,25 @@ const ChatRoom = () => {
 
   return (
     <TooltipProvider delayDuration={200}>
-      <div className="h-dvh flex flex-col bg-background overflow-hidden">
-        {/* Header */}
-        <div className="bg-background/95 backdrop-blur-sm sticky top-0 z-10 flex items-center px-3 py-2.5 gap-3 border-b border-border/50 shadow-sm">
-          <Tooltip>
-            <TooltipTrigger asChild>
-              <Button
-                variant="ghost"
-                size="icon"
-                className="h-9 w-9 p-0 hover:bg-muted rounded-full flex-shrink-0"
-                onClick={handleBack}
-              >
-                <ArrowLeft className="h-5 w-5" />
-              </Button>
-            </TooltipTrigger>
-            <TooltipContent side="bottom">
-              <p>Back to chats</p>
-            </TooltipContent>
-          </Tooltip>
+      <div className="h-dvh flex flex-col bg-background overflow-hidden dark">
+        {/* Header - Telegram style */}
+        <div className="bg-card sticky top-0 z-10 flex items-center px-4 py-3 gap-3">
+          <Button
+            variant="ghost"
+            size="icon"
+            className="h-10 w-10 p-0 hover:bg-muted/50 rounded-full flex-shrink-0"
+            onClick={handleBack}
+          >
+            <ArrowLeft className="h-6 w-6" />
+          </Button>
+          
+          {/* Profile Picture */}
+          <div className="w-11 h-11 rounded-full bg-primary flex items-center justify-center text-white font-medium text-lg flex-shrink-0">
+            {chatInfo?.name?.charAt(0).toUpperCase() || 'T'}
+          </div>
+          
           <div className="flex-1 min-w-0">
-            <h1 className="text-base font-semibold truncate">
+            <h1 className="text-base font-medium truncate">
               {chatInfo?.name || (chatInfo?.is_group ? 'Group Chat' : 'Direct Message')}
             </h1>
             {typingUsers.length > 0 ? (
@@ -555,41 +554,24 @@ const ChatRoom = () => {
                 {typingUsers.length === 1 ? `${typingUsers[0]} is typing...` : `${typingUsers.length} people are typing...`}
               </p>
             ) : chatInfo && !chatInfo.is_group && (
-              <p className={`text-xs ${online ? 'text-primary' : 'text-muted-foreground'}`}>
-                {online ? 'online' : 'last seen recently'}
+              <p className="text-xs text-muted-foreground">
+                {online ? 'online' : 'last seen 19:28'}
               </p>
             )}
           </div>
+          
           <div className="flex items-center gap-1 flex-shrink-0">
-            <Tooltip>
-              <TooltipTrigger asChild>
-                <Button variant="ghost" size="icon" className="h-9 w-9 p-0 hover:bg-muted rounded-full">
-                  <Phone className="h-5 w-5" />
-                </Button>
-              </TooltipTrigger>
-              <TooltipContent>Voice call</TooltipContent>
-            </Tooltip>
-            <Tooltip>
-              <TooltipTrigger asChild>
-                <Button variant="ghost" size="icon" className="h-9 w-9 p-0 hover:bg-muted rounded-full">
-                  <Video className="h-5 w-5" />
-                </Button>
-              </TooltipTrigger>
-              <TooltipContent>Video call</TooltipContent>
-            </Tooltip>
-            <Tooltip>
-              <TooltipTrigger asChild>
-                <Button variant="ghost" size="icon" className="h-9 w-9 p-0 hover:bg-muted rounded-full">
-                  <MoreVertical className="h-5 w-5" />
-                </Button>
-              </TooltipTrigger>
-              <TooltipContent>More</TooltipContent>
-            </Tooltip>
+            <Button variant="ghost" size="icon" className="h-10 w-10 p-0 hover:bg-muted/50 rounded-full">
+              <Phone className="h-6 w-6" />
+            </Button>
+            <Button variant="ghost" size="icon" className="h-10 w-10 p-0 hover:bg-muted/50 rounded-full">
+              <MoreVertical className="h-6 w-6" />
+            </Button>
           </div>
         </div>
 
-        {/* Messages */}
-        <div className="flex-1 overflow-y-auto px-3 py-4 bg-muted/20" style={{ paddingBottom: '120px' }}>
+        {/* Messages - Telegram background */}
+        <div className="flex-1 overflow-y-auto px-4 py-4 telegram-bg" style={{ paddingBottom: '120px' }}>
           {messages.length === 0 && redEnvelopes.length === 0 ? (
             <div className="flex flex-col items-center justify-center h-full text-center space-y-3 px-4">
               <MessageSquare className="h-14 w-14 text-muted-foreground/40" />
@@ -718,12 +700,12 @@ const ChatRoom = () => {
 
         {/* Reply Preview */}
         {replyToMessage && (
-          <div className="fixed bottom-[72px] left-0 right-0 z-20 bg-background/95 backdrop-blur-sm border-t border-border/50 px-4 py-3">
+          <div className="fixed bottom-[68px] left-0 right-0 z-20 bg-card px-4 py-3">
             <div className="flex items-center gap-3">
               <div className="w-1 h-10 bg-primary rounded-full" />
               <div className="flex-1 min-w-0">
                 <p className="text-xs font-semibold text-primary">
-                  {replyToMessage.profiles.display_name}
+                  {replyToMessage.profiles?.display_name || 'User'}
                 </p>
                 <p className="text-sm text-foreground truncate mt-0.5">
                   {replyToMessage.audio_url ? '🎤 Voice message' : replyToMessage.encrypted_content}
@@ -741,11 +723,11 @@ const ChatRoom = () => {
           </div>
         )}
 
-        {/* Input: Fixed bottom, with voice recording */}
-        <div className="fixed bottom-0 left-0 right-0 z-20 bg-background/95 backdrop-blur-sm border-t border-border/50 px-3 py-2.5 pb-[env(safe-area-inset-bottom)] shadow-lg">
-          <form onSubmit={(e) => { e.preventDefault(); handleSend(); }} className="flex items-end gap-2">
+        {/* Input: Telegram style */}
+        <div className="fixed bottom-0 left-0 right-0 z-20 bg-card px-3 py-2 pb-[env(safe-area-inset-bottom)]">
+          <form onSubmit={(e) => { e.preventDefault(); handleSend(); }} className="flex items-center gap-1.5">
             {recording ? (
-              <div className="flex-1 flex items-center gap-3 px-4 py-3 bg-destructive/10 rounded-3xl border border-destructive/20">
+              <div className="flex-1 flex items-center gap-3 px-4 py-3 bg-destructive/10 rounded-3xl">
                 <div className="flex items-center gap-2 flex-1">
                   <div className="w-2 h-2 bg-destructive rounded-full animate-pulse" />
                   <span className="text-sm text-destructive font-medium">Recording...</span>
@@ -762,7 +744,7 @@ const ChatRoom = () => {
                 </Button>
               </div>
             ) : audioBlob ? (
-              <div className="flex-1 flex items-center gap-3 px-4 py-3 bg-primary/10 rounded-3xl border border-primary/20">
+              <div className="flex-1 flex items-center gap-3 px-4 py-3 bg-primary/10 rounded-3xl">
                 <Volume2 className="h-5 w-5 text-primary" />
                 <span className="text-sm text-primary font-medium flex-1">Voice message ready</span>
                 <Button
@@ -782,32 +764,40 @@ const ChatRoom = () => {
                   type="button"
                   variant="ghost"
                   size="icon"
-                  className="h-10 w-10 rounded-full hover:bg-muted"
-                  onClick={startRecording}
+                  className="h-11 w-11 rounded-full hover:bg-muted/30 text-muted-foreground flex-shrink-0"
                 >
-                  <Mic className="h-5 w-5" />
+                  <Smile className="h-6 w-6" />
                 </Button>
+                <Input
+                  value={newMessage}
+                  onChange={(e) => handleInputChange(e.target.value)}
+                  onKeyDown={(e) => e.key === 'Enter' && !e.shiftKey && (e.preventDefault(), handleSend())}
+                  placeholder="Message"
+                  className="flex-1 bg-secondary border-none rounded-xl px-4 py-2.5 h-11 text-[15px] placeholder:text-muted-foreground/60 focus-visible:ring-0"
+                  disabled={sending}
+                />
                 {chatInfo?.is_group && (
                   <SendRedEnvelopeDialog 
                     chatId={chatId!} 
                     onSuccess={fetchRedEnvelopes}
                   />
                 )}
-                <Input
-                  value={newMessage}
-                  onChange={(e) => handleInputChange(e.target.value)}
-                  onKeyDown={(e) => e.key === 'Enter' && !e.shiftKey && (e.preventDefault(), handleSend())}
-                  placeholder={t('chatRoom.typeHere')}
-                  disabled={sending}
-                  className="flex-1 rounded-3xl bg-muted/50 border-border/50 px-4 py-2.5 h-auto min-h-[42px]"
-                />
                 <Button
-                  type="submit"
-                  disabled={!newMessage.trim() || sending}
+                  type="button"
+                  variant="ghost"
                   size="icon"
-                  className="h-10 w-10 rounded-full"
+                  className="h-11 w-11 rounded-full hover:bg-muted/30 text-muted-foreground flex-shrink-0"
                 >
-                  {sending ? <Loader2 className="h-5 w-5 animate-spin" /> : <Send className="h-5 w-5" />}
+                  <Paperclip className="h-6 w-6" />
+                </Button>
+                <Button
+                  type="button"
+                  variant="ghost"
+                  size="icon"
+                  className="h-11 w-11 rounded-full hover:bg-muted/30 text-muted-foreground flex-shrink-0"
+                  onClick={startRecording}
+                >
+                  <Mic className="h-6 w-6" />
                 </Button>
               </>
             )}

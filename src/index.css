@@ -67,45 +67,51 @@ All colors MUST be HSL.
   }
 
   .dark {
-    /* Brand Cyan Primary - slightly adjusted for dark mode */
-    --primary: 191 75% 50%;
-    --primary-foreground: 0 0% 0%;
+    /* Telegram-style colors */
+    --primary: 263 70% 65%; /* Purple for outgoing messages */
+    --primary-foreground: 0 0% 100%;
     
-    /* Bright Cyan Accent */
-    --accent: 191 75% 45%;
+    /* Accent */
+    --accent: 263 70% 60%;
     --accent-foreground: 0 0% 100%;
     
-    /* Dark mode backgrounds - pure black for OLED */
-    --background: 0 0% 0%;
+    /* Dark Telegram backgrounds */
+    --background: 212 35% 9%; /* Very dark blue-grey #0E1621 */
     --foreground: 0 0% 100%;
     
-    --muted: 0 0% 10%;
-    --muted-foreground: 0 0% 65%;
+    /* Message bubble colors */
+    --muted: 210 15% 20%; /* Dark grey for incoming messages #2F3A42 */
+    --muted-foreground: 0 0% 75%;
     
-    --card: 0 0% 5%;
+    /* Card/Header colors */
+    --card: 210 25% 15%; /* Darker header #1C2A35 */
     --card-foreground: 0 0% 100%;
     
-    --popover: 0 0% 5%;
+    --popover: 210 25% 15%;
     --popover-foreground: 0 0% 100%;
     
-    --border: 0 0% 15%;
-    --input: 0 0% 15%;
-    --ring: 180 100% 30%;
+    /* Borders - subtle */
+    --border: 210 20% 18%;
+    --input: 210 20% 18%;
+    --ring: 263 70% 60%;
     
-    --secondary: 0 0% 15%;
+    /* Secondary */
+    --secondary: 210 15% 22%;
     --secondary-foreground: 0 0% 100%;
     
+    /* Destructive */
     --destructive: 0 84% 60%;
     --destructive-foreground: 0 0% 100%;
     
-    --sidebar-background: 0 0% 5%;
+    /* Sidebar */
+    --sidebar-background: 210 25% 15%;
     --sidebar-foreground: 0 0% 90%;
-    --sidebar-primary: 180 100% 20%;
+    --sidebar-primary: 263 70% 65%;
     --sidebar-primary-foreground: 0 0% 100%;
-    --sidebar-accent: 158 100% 50%;
-    --sidebar-accent-foreground: 0 0% 10%;
-    --sidebar-border: 0 0% 15%;
-    --sidebar-ring: 180 100% 30%;
+    --sidebar-accent: 263 70% 60%;
+    --sidebar-accent-foreground: 0 0% 100%;
+    --sidebar-border: 210 20% 18%;
+    --sidebar-ring: 263 70% 60%;
   }
 }
 
@@ -145,4 +151,13 @@ All colors MUST be HSL.
 
 .status-read {
   @apply bg-accent;
+}
+
+/* Telegram-style chat background pattern */
+.telegram-bg {
+  background-color: hsl(var(--background));
+  background-image: 
+    radial-gradient(circle at 20% 30%, hsla(210, 20%, 25%, 0.1) 0%, transparent 50%),
+    radial-gradient(circle at 80% 70%, hsla(210, 20%, 25%, 0.1) 0%, transparent 50%),
+    radial-gradient(circle at 40% 80%, hsla(210, 20%, 25%, 0.08) 0%, transparent 50%);
 }
