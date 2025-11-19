@@ -14,6 +14,61 @@ export type Database = {
   }
   public: {
     Tables: {
+      affiliate_requests: {
+        Row: {
+          business_id: string
+          id: string
+          notes: string | null
+          requested_at: string | null
+          reviewed_at: string | null
+          reviewed_by: string | null
+          status: string
+          user_id: string
+        }
+        Insert: {
+          business_id: string
+          id?: string
+          notes?: string | null
+          requested_at?: string | null
+          reviewed_at?: string | null
+          reviewed_by?: string | null
+          status?: string
+          user_id: string
+        }
+        Update: {
+          business_id?: string
+          id?: string
+          notes?: string | null
+          requested_at?: string | null
+          reviewed_at?: string | null
+          reviewed_by?: string | null
+          status?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "affiliate_requests_business_id_fkey"
+            columns: ["business_id"]
+            isOneToOne: false
+            referencedRelation: "business_accounts"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "affiliate_requests_reviewed_by_fkey"
+            columns: ["reviewed_by"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "affiliate_requests_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       bids: {
         Row: {
           bid_amount: number
@@ -47,6 +102,50 @@ export type Database = {
           {
             foreignKeyName: "bids_user_id_fkey"
             columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      business_accounts: {
+        Row: {
+          created_at: string | null
+          description: string | null
+          id: string
+          is_verified: boolean | null
+          logo_url: string | null
+          name: string
+          owner_id: string | null
+          updated_at: string | null
+          website_url: string | null
+        }
+        Insert: {
+          created_at?: string | null
+          description?: string | null
+          id?: string
+          is_verified?: boolean | null
+          logo_url?: string | null
+          name: string
+          owner_id?: string | null
+          updated_at?: string | null
+          website_url?: string | null
+        }
+        Update: {
+          created_at?: string | null
+          description?: string | null
+          id?: string
+          is_verified?: boolean | null
+          logo_url?: string | null
+          name?: string
+          owner_id?: string | null
+          updated_at?: string | null
+          website_url?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "business_accounts_owner_id_fkey"
+            columns: ["owner_id"]
             isOneToOne: false
             referencedRelation: "profiles"
             referencedColumns: ["id"]
@@ -1207,6 +1306,10 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      approve_affiliate_request: {
+        Args: { p_request_id: string }
+        Returns: Json
+      }
       award_xp: {
         Args: {
           p_action_type: string
@@ -1316,6 +1419,10 @@ export type Database = {
           new_xp: number
           success: boolean
         }[]
+      }
+      reject_affiliate_request: {
+        Args: { p_notes?: string; p_request_id: string }
+        Returns: Json
       }
       rotate_featured_items: { Args: never; Returns: undefined }
       send_gift: {

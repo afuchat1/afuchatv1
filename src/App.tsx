@@ -35,6 +35,8 @@ import Leaderboard from "./pages/Leaderboard";
 import AvatarEditor from "./pages/AvatarEditor";
 import GiftLeaderboard from "./pages/GiftLeaderboard";
 import TrendingHashtags from "./pages/TrendingHashtags";
+import AffiliateRequestPage from "./pages/AffiliateRequestPage";
+import AdminAffiliateRequests from "./pages/AdminAffiliateRequests";
 import Layout from "./components/Layout";
 
 const queryClient = new QueryClient();
@@ -78,6 +80,8 @@ const AppRoutes = () => {
       <Route path="/gift-leaderboard" element={<Layout><GiftLeaderboard /></Layout>} />
       <Route path="/avatar/edit" element={<AvatarEditor />} />
       <Route path="/trending" element={<Layout><TrendingHashtags /></Layout>} />
+      <Route path="/affiliate/request" element={<Layout><AffiliateRequestPage /></Layout>} />
+      <Route path="/admin/affiliate-requests" element={<Layout><AdminAffiliateRequests /></Layout>} />
 
       <Route path="/profile/:userId" element={<ProfileRedirect />} />
 
