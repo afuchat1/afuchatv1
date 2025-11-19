@@ -7,6 +7,9 @@ import { Button } from '@/components/ui/button';
 import { Separator } from '@/components/ui/separator';
 import { Badge } from '@/components/ui/badge';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
+import { Textarea } from '@/components/ui/textarea';
 import { ArrowLeft, Users, TrendingUp, DollarSign, UserCheck, Clock, CheckCircle, XCircle, Loader2 } from 'lucide-react';
 import { toast } from 'sonner';
 import { supabase } from '@/integrations/supabase/client';
@@ -21,6 +24,14 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
 
 interface AffiliateRequest {
   id: string;
@@ -63,6 +74,12 @@ const BusinessDashboard = () => {
     type: 'approve',
     requestId: null
   });
+  const [approveDialog, setApproveDialog] = useState<{ open: boolean; requestId: string | null }>({
+    open: false,
+    requestId: null
+  });
+  const [commissionRate, setCommissionRate] = useState<string>('10');
+  const [paymentTerms, setPaymentTerms] = useState<string>('Monthly payment based on affiliate performance');
 
   useEffect(() => {
     if (!canUseBusiness || mode !== 'business') {
@@ -125,11 +142,21 @@ const BusinessDashboard = () => {
     }
   };
 
-  const handleApproveRequest = async (requestId: string) => {
-    setProcessingRequest(requestId);
+  const handleApproveRequest = async () => {
+    if (!approveDialog.requestId) return;
+    
+    const commissionValue = parseFloat(commissionRate);
+    if (isNaN(commissionValue) || commissionValue < 0 || commissionValue > 100) {
+      toast.error('Please enter a valid commission rate between 0 and 100');
+      return;
+    }
+
+    setProcessingRequest(approveDialog.requestId);
     try {
       const { data, error } = await supabase.rpc('approve_affiliate_by_business', {
-        p_request_id: requestId
+        p_request_id: approveDialog.requestId,
+        p_commission_rate: commissionValue,
+        p_payment_terms: paymentTerms
       });
 
       if (error) throw error;
@@ -138,6 +165,10 @@ const BusinessDashboard = () => {
       if (result.success) {
         toast.success('Affiliate request approved!');
         fetchDashboardData();
+        setApproveDialog({ open: false, requestId: null });
+        // Reset form
+        setCommissionRate('10');
+        setPaymentTerms('Monthly payment based on affiliate performance');
       } else {
         toast.error(result.message || 'Failed to approve request');
       }
@@ -146,7 +177,6 @@ const BusinessDashboard = () => {
       toast.error(error.message || 'Failed to approve request');
     } finally {
       setProcessingRequest(null);
-      setConfirmDialog({ open: false, type: 'approve', requestId: null });
     }
   };
 
@@ -287,7 +317,7 @@ const BusinessDashboard = () => {
                         <div className="flex gap-2">
                           <Button
                             size="sm"
-                            onClick={() => setConfirmDialog({ open: true, type: 'approve', requestId: request.id })}
+                            onClick={() => setApproveDialog({ open: true, requestId: request.id })}
                             disabled={processingRequest === request.id}
                           >
                             <CheckCircle className="h-4 w-4 mr-1" />
@@ -360,17 +390,81 @@ const BusinessDashboard = () => {
         </Card>
       </div>
 
-      {/* Confirmation Dialog */}
+      {/* Approval Dialog with Commission Configuration */}
+      <Dialog open={approveDialog.open} onOpenChange={(open) => setApproveDialog({ ...approveDialog, open })}>
+        <DialogContent className="sm:max-w-[500px]">
+          <DialogHeader>
+            <DialogTitle>Approve Affiliate Request</DialogTitle>
+            <DialogDescription>
+              Configure commission rate and payment terms for this affiliate partnership.
+            </DialogDescription>
+          </DialogHeader>
+          <div className="space-y-4 py-4">
+            <div className="space-y-2">
+              <Label htmlFor="commission">Commission Rate (%)</Label>
+              <Input
+                id="commission"
+                type="number"
+                min="0"
+                max="100"
+                step="0.1"
+                value={commissionRate}
+                onChange={(e) => setCommissionRate(e.target.value)}
+                placeholder="10"
+              />
+              <p className="text-sm text-muted-foreground">
+                Percentage of earnings the affiliate will receive
+              </p>
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="payment-terms">Payment Terms</Label>
+              <Textarea
+                id="payment-terms"
+                value={paymentTerms}
+                onChange={(e) => setPaymentTerms(e.target.value)}
+                placeholder="Monthly payment based on affiliate performance"
+                rows={3}
+              />
+              <p className="text-sm text-muted-foreground">
+                Describe how and when affiliates will be paid
+              </p>
+            </div>
+          </div>
+          <DialogFooter>
+            <Button
+              variant="outline"
+              onClick={() => setApproveDialog({ open: false, requestId: null })}
+              disabled={processingRequest !== null}
+            >
+              Cancel
+            </Button>
+            <Button
+              onClick={handleApproveRequest}
+              disabled={processingRequest !== null}
+            >
+              {processingRequest ? (
+                <>
+                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                  Approving...
+                </>
+              ) : (
+                <>
+                  <CheckCircle className="mr-2 h-4 w-4" />
+                  Approve
+                </>
+              )}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* Rejection Confirmation Dialog */}
       <AlertDialog open={confirmDialog.open} onOpenChange={(open) => setConfirmDialog({ ...confirmDialog, open })}>
         <AlertDialogContent>
           <AlertDialogHeader>
-            <AlertDialogTitle>
-              {confirmDialog.type === 'approve' ? 'Approve Affiliate Request' : 'Reject Affiliate Request'}
-            </AlertDialogTitle>
+            <AlertDialogTitle>Reject Affiliate Request</AlertDialogTitle>
             <AlertDialogDescription>
-              {confirmDialog.type === 'approve'
-                ? 'Are you sure you want to approve this affiliate request? The user will be able to represent your business.'
-                : 'Are you sure you want to reject this affiliate request? This action cannot be undone.'}
+              Are you sure you want to reject this affiliate request? This action cannot be undone.
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
@@ -378,15 +472,11 @@ const BusinessDashboard = () => {
             <AlertDialogAction
               onClick={() => {
                 if (confirmDialog.requestId) {
-                  if (confirmDialog.type === 'approve') {
-                    handleApproveRequest(confirmDialog.requestId);
-                  } else {
-                    handleRejectRequest(confirmDialog.requestId);
-                  }
+                  handleRejectRequest(confirmDialog.requestId);
                 }
               }}
             >
-              {confirmDialog.type === 'approve' ? 'Approve' : 'Reject'}
+              Reject
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>

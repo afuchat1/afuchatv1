@@ -28,6 +28,7 @@ interface AffiliateInfo {
   businessWebsite: string | null;
   affiliatedDate: string;
   commission_rate: number | null;
+  payment_terms: string | null;
   total_earnings: number;
 }
 
@@ -73,10 +74,10 @@ const AffiliateDashboard = () => {
 
       if (businessError) throw businessError;
 
-      // Fetch affiliate request for date
+      // Fetch affiliate request for commission details and date
       const { data: request, error: requestError } = await supabase
         .from('affiliate_requests')
-        .select('requested_at, reviewed_at')
+        .select('requested_at, reviewed_at, commission_rate, payment_terms')
         .eq('user_id', user.id)
         .eq('business_profile_id', profile.affiliated_business_id)
         .eq('status', 'approved')
@@ -90,7 +91,8 @@ const AffiliateDashboard = () => {
         businessLogo: business.avatar_url,
         businessWebsite: business.website_url,
         affiliatedDate: request.reviewed_at || request.requested_at,
-        commission_rate: null, // Will be implemented later
+        commission_rate: request.commission_rate,
+        payment_terms: request.payment_terms,
         total_earnings: 0 // Will be implemented later
       });
     } catch (error) {
@@ -235,6 +237,21 @@ const AffiliateDashboard = () => {
               </p>
             </Card>
           </div>
+
+          {/* Payment Terms Card */}
+          {affiliateInfo.payment_terms && (
+            <Card className="p-6">
+              <div className="space-y-2">
+                <h3 className="font-semibold flex items-center gap-2">
+                  <DollarSign className="h-5 w-5 text-primary" />
+                  Payment Terms
+                </h3>
+                <p className="text-sm text-muted-foreground whitespace-pre-wrap">
+                  {affiliateInfo.payment_terms}
+                </p>
+              </div>
+            </Card>
+          )}
 
           {/* Info Card */}
           <Card className="p-6 bg-muted/50">

@@ -1278,10 +1278,16 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
-      approve_affiliate_by_business: {
-        Args: { p_request_id: string }
-        Returns: Json
-      }
+      approve_affiliate_by_business:
+        | {
+            Args: {
+              p_commission_rate?: number
+              p_payment_terms?: string
+              p_request_id: string
+            }
+            Returns: Json
+          }
+        | { Args: { p_request_id: string }; Returns: Json }
       award_xp: {
         Args: {
           p_action_type: string
