@@ -18,6 +18,57 @@ serve(async (req) => {
     );
 
     const { userId, title, body, url } = await req.json();
+    
+    // Input validation
+    if (!userId || typeof userId !== 'string') {
+      return new Response(
+        JSON.stringify({ error: 'User ID is required and must be a string' }),
+        { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      );
+    }
+    
+    if (!title || typeof title !== 'string') {
+      return new Response(
+        JSON.stringify({ error: 'Title is required and must be a string' }),
+        { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      );
+    }
+    
+    if (title.trim().length === 0 || title.length > 100) {
+      return new Response(
+        JSON.stringify({ error: 'Title must be between 1 and 100 characters' }),
+        { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      );
+    }
+    
+    if (!body || typeof body !== 'string') {
+      return new Response(
+        JSON.stringify({ error: 'Body is required and must be a string' }),
+        { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      );
+    }
+    
+    if (body.trim().length === 0 || body.length > 200) {
+      return new Response(
+        JSON.stringify({ error: 'Body must be between 1 and 200 characters' }),
+        { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      );
+    }
+    
+    // URL validation - must be a relative path for security
+    if (url && typeof url !== 'string') {
+      return new Response(
+        JSON.stringify({ error: 'URL must be a string' }),
+        { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      );
+    }
+    
+    if (url && (!url.startsWith('/') || url.includes('..') || url.includes('//') || url.includes('http'))) {
+      return new Response(
+        JSON.stringify({ error: 'URL must be a valid relative path starting with /' }),
+        { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      );
+    }
 
     // Get user's push subscriptions
     const { data: subscriptions, error: subError } = await supabaseClient
