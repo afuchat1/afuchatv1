@@ -87,7 +87,7 @@ export const MessageBubble = ({
             <span className={`text-xs font-medium truncate ${
               isOwn ? 'text-primary-foreground' : 'text-primary'
             }`}>
-              {repliedMessage.profiles.display_name}
+              {repliedMessage.profiles?.display_name || 'User'}
             </span>
             <span className={`text-xs truncate ${
               isOwn ? 'text-primary-foreground/70' : 'text-muted-foreground'
@@ -215,7 +215,7 @@ export const MessageBubble = ({
             <div className="w-8 flex-shrink-0" />
           ) : (
             <div className="mb-0.5">
-              <Avatar name={message.profiles.display_name} userId={message.sender_id} />
+              <Avatar name={message.profiles?.display_name || 'User'} userId={message.sender_id} />
             </div>
           )
         )}
@@ -225,7 +225,7 @@ export const MessageBubble = ({
           {/* --- Name (for incoming, non-grouped) --- */}
           {!isOwn && !isGrouped && (
             <span className="text-xs font-medium text-primary mb-1 px-1">
-              {message.profiles.display_name}
+              {message.profiles?.display_name || 'User'}
             </span>
           )}
           
