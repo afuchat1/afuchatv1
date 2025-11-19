@@ -869,47 +869,42 @@ const Profile = () => {
 									<BusinessBadge />
 								)}
 							</div>
-						) : (profile.is_verified || profile.is_organization_verified || profile.is_business_mode) ? (
-							<Popover>
-								<PopoverTrigger asChild>
-									<div className="flex items-center gap-1 cursor-pointer w-fit">
-										<h1 className="text-xl font-extrabold leading-tight">{profile.display_name}</h1>
-									<VerifiedBadge
-										isVerified={profile.is_verified}
-										isOrgVerified={profile.is_organization_verified}
-										isAffiliate={profile.is_affiliate}
-										affiliateBusinessLogo={profile.affiliated_business?.avatar_url}
-										affiliateBusinessName={profile.affiliated_business?.display_name}
-									/>
-									{profile.is_business_mode && (
-										<BusinessBadge />
-									)}
-									</div>
-								</PopoverTrigger>
-								<PopoverContent className="w-auto p-0 border-none shadow-xl rounded-2xl" onClick={(e) => e.stopPropagation()}>
-
-									{profile.is_organization_verified ? (
-										<div className="p-4 max-w-sm">
-											<VerifiedBadge isOrgVerified={true} size="lg" />
-											<h3 className="font-bold text-lg mt-2 text-foreground">Verified Organization</h3>
-											<p className="text-sm text-muted-foreground mt-1">
-												This account is verified because it's a notable organization on AfuChat.
-												<span className="block mt-2 font-bold text-foreground">@{profile.handle}</span>
-											</p>
-										</div>
-									) : (
-										<div className="p-4 max-w-sm">
-											<VerifiedBadge isVerified={true} size="lg" />
-											<h3 className="font-bold text-lg mt-2 text-foreground">Verified Account</h3>
-											<p className="text-sm text-muted-foreground mt-1">
-												This account is verified because it’s notable in government, news, entertainment, or another designated category.
-												<span className="block mt-2 font-bold text-foreground">@{profile.handle}</span>
-											</p>
-										</div>
-									)}
-
-								</PopoverContent>
-							</Popover>
+					) : (profile.is_verified || profile.is_organization_verified || profile.is_business_mode) ? (
+						<div className="flex items-center gap-1">
+							<button 
+								className="text-xl font-extrabold leading-tight hover:underline"
+								onClick={() => setSelectedVerified({
+									userName: profile.display_name,
+									isVerified: profile.is_verified || false,
+									isOrgVerified: profile.is_organization_verified || false,
+									createdAt: profile.created_at
+								})}
+							>
+								{profile.display_name}
+							</button>
+							
+							<div 
+								onClick={() => setSelectedVerified({
+									userName: profile.display_name,
+									isVerified: profile.is_verified || false,
+									isOrgVerified: profile.is_organization_verified || false,
+									createdAt: profile.created_at
+								})}
+								className="cursor-pointer"
+							>
+								<VerifiedBadge
+									isVerified={profile.is_verified}
+									isOrgVerified={profile.is_organization_verified}
+									isAffiliate={profile.is_affiliate}
+									affiliateBusinessLogo={profile.affiliated_business?.avatar_url}
+									affiliateBusinessName={profile.affiliated_business?.display_name}
+								/>
+							</div>
+							
+							{profile.is_business_mode && (
+								<BusinessBadge />
+							)}
+						</div>
 						) : (
 							<div className="flex items-center gap-1">
 								<h1 className="text-xl font-extrabold leading-tight">{profile.display_name}</h1>
