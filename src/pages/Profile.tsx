@@ -803,38 +803,60 @@ const Profile = () => {
 
 					<div className="mt-3">
 
-						{profile.is_affiliate ? (
+					{profile.is_affiliate ? (
 							<div className="flex items-center gap-1">
 								<button 
 									className="text-xl font-extrabold leading-tight hover:underline"
-									onClick={() => profile.affiliated_business && profile.affiliation_date && setSelectedAffiliate({
-										userName: profile.display_name,
-										businessName: profile.affiliated_business.display_name,
-										affiliatedDate: profile.affiliation_date,
-										businessLogo: profile.affiliated_business.avatar_url || undefined
-									})}
+									onClick={() => {
+										if (profile.affiliated_business && profile.affiliation_date) {
+											setSelectedAffiliate({
+												userName: profile.display_name,
+												businessName: profile.affiliated_business.display_name,
+												affiliatedDate: profile.affiliation_date,
+												businessLogo: profile.affiliated_business.avatar_url || undefined
+											});
+										} else {
+											console.log('Missing affiliate data:', {
+												affiliated_business: profile.affiliated_business,
+												affiliation_date: profile.affiliation_date
+											});
+											toast.error('Affiliate information is not available');
+										}
+									}}
 								>
 									{profile.display_name}
 								</button>
 								
 								{profile.is_business_mode && (
 									<AffiliatedBadge 
-										onClick={() => profile.affiliated_business && profile.affiliation_date && setSelectedAffiliate({
-											userName: profile.display_name,
-											businessName: profile.affiliated_business.display_name,
-											affiliatedDate: profile.affiliation_date,
-											businessLogo: profile.affiliated_business.avatar_url || undefined
-										})}
+										onClick={() => {
+											if (profile.affiliated_business && profile.affiliation_date) {
+												setSelectedAffiliate({
+													userName: profile.display_name,
+													businessName: profile.affiliated_business.display_name,
+													affiliatedDate: profile.affiliation_date,
+													businessLogo: profile.affiliated_business.avatar_url || undefined
+												});
+											} else {
+												toast.error('Affiliate information is not available');
+											}
+										}}
 									/>
 								)}
 								
 								<div 
-									onClick={() => profile.affiliated_business && profile.affiliation_date && setSelectedAffiliate({
-										userName: profile.display_name,
-										businessName: profile.affiliated_business.display_name,
-										affiliatedDate: profile.affiliation_date,
-										businessLogo: profile.affiliated_business.avatar_url || undefined
-									})}
+									onClick={() => {
+										if (profile.affiliated_business && profile.affiliation_date) {
+											setSelectedAffiliate({
+												userName: profile.display_name,
+												businessName: profile.affiliated_business.display_name,
+												affiliatedDate: profile.affiliation_date,
+												businessLogo: profile.affiliated_business.avatar_url || undefined
+											});
+										} else {
+											toast.error('Affiliate information is not available');
+										}
+									}}
 									className="cursor-pointer"
 								>
 									<VerifiedBadge
