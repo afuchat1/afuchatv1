@@ -82,12 +82,12 @@ const BusinessDashboard = () => {
   const [paymentTerms, setPaymentTerms] = useState<string>('Monthly payment based on affiliate performance');
 
   useEffect(() => {
-    if (!canUseBusiness) {
-      navigate('/');
+    if (!user) {
+      navigate('/auth');
       return;
     }
     fetchDashboardData();
-  }, [user, canUseBusiness]);
+  }, [user]);
 
   const fetchDashboardData = async () => {
     if (!user) return;
