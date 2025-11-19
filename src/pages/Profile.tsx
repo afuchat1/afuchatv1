@@ -811,20 +811,13 @@ const Profile = () => {
 								<button 
 									className="text-xl font-extrabold leading-tight hover:underline"
 									onClick={() => {
-										if (profile.affiliated_business && profile.affiliation_date) {
-											setSelectedAffiliate({
-												userName: profile.display_name,
-												businessName: profile.affiliated_business.display_name,
-												affiliatedDate: profile.affiliation_date,
-												businessLogo: profile.affiliated_business.avatar_url || undefined
-											});
-										} else {
-											console.log('Missing affiliate data:', {
-												affiliated_business: profile.affiliated_business,
-												affiliation_date: profile.affiliation_date
-											});
-											toast.error('Affiliate information is not available');
-										}
+										const fallbackDate = profile.affiliation_date || profile.created_at || new Date().toISOString();
+										setSelectedAffiliate({
+											userName: profile.display_name,
+											businessName: profile.affiliated_business?.display_name || 'Business',
+											affiliatedDate: fallbackDate,
+											businessLogo: profile.affiliated_business?.avatar_url || undefined
+										});
 									}}
 								>
 									{profile.display_name}
@@ -833,32 +826,26 @@ const Profile = () => {
 								{profile.is_business_mode && (
 									<AffiliatedBadge 
 										onClick={() => {
-											if (profile.affiliated_business && profile.affiliation_date) {
-												setSelectedAffiliate({
-													userName: profile.display_name,
-													businessName: profile.affiliated_business.display_name,
-													affiliatedDate: profile.affiliation_date,
-													businessLogo: profile.affiliated_business.avatar_url || undefined
-												});
-											} else {
-												toast.error('Affiliate information is not available');
-											}
+											const fallbackDate = profile.affiliation_date || profile.created_at || new Date().toISOString();
+											setSelectedAffiliate({
+												userName: profile.display_name,
+												businessName: profile.affiliated_business?.display_name || 'Business',
+												affiliatedDate: fallbackDate,
+												businessLogo: profile.affiliated_business?.avatar_url || undefined
+											});
 										}}
 									/>
 								)}
 								
 								<div 
 									onClick={() => {
-										if (profile.affiliated_business && profile.affiliation_date) {
-											setSelectedAffiliate({
-												userName: profile.display_name,
-												businessName: profile.affiliated_business.display_name,
-												affiliatedDate: profile.affiliation_date,
-												businessLogo: profile.affiliated_business.avatar_url || undefined
-											});
-										} else {
-											toast.error('Affiliate information is not available');
-										}
+										const fallbackDate = profile.affiliation_date || profile.created_at || new Date().toISOString();
+										setSelectedAffiliate({
+											userName: profile.display_name,
+											businessName: profile.affiliated_business?.display_name || 'Business',
+											affiliatedDate: fallbackDate,
+											businessLogo: profile.affiliated_business?.avatar_url || undefined
+										});
 									}}
 									className="cursor-pointer"
 								>
