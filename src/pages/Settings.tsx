@@ -295,33 +295,37 @@ const Settings = () => {
                 <h2 className="text-lg font-semibold">Business & Affiliate</h2>
               </div>
               <Separator />
-              {isAffiliate ? (
-                <Link to="/affiliate-dashboard">
-                  <button className="w-full flex items-center justify-between py-3 px-2 rounded-lg hover:bg-muted transition-colors text-left">
-                    <div className="flex items-center gap-2">
-                      <UserPlus className="h-4 w-4" />
-                      <span>Affiliate Dashboard</span>
+              {!businessMode && (
+                <>
+                  {isAffiliate ? (
+                    <Link to="/affiliate-dashboard">
+                      <button className="w-full flex items-center justify-between py-3 px-2 rounded-lg hover:bg-muted transition-colors text-left">
+                        <div className="flex items-center gap-2">
+                          <UserPlus className="h-4 w-4" />
+                          <span>Affiliate Dashboard</span>
+                        </div>
+                        <span className="text-muted-foreground">›</span>
+                      </button>
+                    </Link>
+                  ) : hasPendingRequest ? (
+                    <div className="w-full flex items-center justify-between py-3 px-2 rounded-lg bg-muted/50 opacity-60">
+                      <div className="flex items-center gap-2">
+                        <UserPlus className="h-4 w-4" />
+                        <span>Affiliate Request Pending</span>
+                      </div>
                     </div>
-                    <span className="text-muted-foreground">›</span>
-                  </button>
-                </Link>
-              ) : hasPendingRequest ? (
-                <div className="w-full flex items-center justify-between py-3 px-2 rounded-lg bg-muted/50 opacity-60">
-                  <div className="flex items-center gap-2">
-                    <UserPlus className="h-4 w-4" />
-                    <span>Affiliate Request Pending</span>
-                  </div>
-                </div>
-              ) : (
-                <Link to="/affiliate-request">
-                  <button className="w-full flex items-center justify-between py-3 px-2 rounded-lg hover:bg-muted transition-colors text-left">
-                    <div className="flex items-center gap-2">
-                      <UserPlus className="h-4 w-4" />
-                      <span>Apply for Affiliate Status</span>
-                    </div>
-                    <span className="text-muted-foreground">›</span>
-                  </button>
-                </Link>
+                  ) : (
+                    <Link to="/affiliate-request">
+                      <button className="w-full flex items-center justify-between py-3 px-2 rounded-lg hover:bg-muted transition-colors text-left">
+                        <div className="flex items-center gap-2">
+                          <UserPlus className="h-4 w-4" />
+                          <span>Apply for Affiliate Status</span>
+                        </div>
+                        <span className="text-muted-foreground">›</span>
+                      </button>
+                    </Link>
+                  )}
+                </>
               )}
             </div>
           </Card>

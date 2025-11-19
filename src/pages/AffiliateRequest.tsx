@@ -35,11 +35,31 @@ const AffiliateRequest = () => {
   const [fetchingProfiles, setFetchingProfiles] = useState(true);
   const [existingRequest, setExistingRequest] = useState(false);
   const [isAlreadyAffiliated, setIsAlreadyAffiliated] = useState(false);
+  const [isBusinessAccount, setIsBusinessAccount] = useState(false);
 
   useEffect(() => {
+    checkBusinessMode();
     fetchBusinessProfiles();
     checkExistingRequest();
   }, [user]);
+
+  const checkBusinessMode = async () => {
+    if (!user) return;
+    
+    try {
+      const { data, error } = await supabase
+        .from('profiles')
+        .select('is_business_mode')
+        .eq('id', user.id)
+        .single();
+
+      if (!error && data?.is_business_mode) {
+        setIsBusinessAccount(true);
+      }
+    } catch (error) {
+      console.error('Error checking business mode:', error);
+    }
+  };
 
   const fetchBusinessProfiles = async () => {
     try {
@@ -122,6 +142,37 @@ const AffiliateRequest = () => {
       setLoading(false);
     }
   };
+
+  if (isBusinessAccount) {
+    return (
+      <div className="min-h-screen bg-background">
+        <div className="max-w-2xl mx-auto px-4 py-8">
+          <div className="mb-8">
+            <Logo />
+          </div>
+
+          <Card className="p-8 text-center">
+            <Building2 className="h-12 w-12 mx-auto mb-4 text-primary" />
+            <h2 className="text-2xl font-bold mb-2">Business Account</h2>
+            <p className="text-muted-foreground mb-6">
+              Business accounts cannot apply for affiliate programs. Manage your business and affiliates from your business dashboard.
+            </p>
+            <div className="flex gap-3 justify-center">
+              <Button
+                variant="outline"
+                onClick={() => navigate('/settings')}
+              >
+                Back to Settings
+              </Button>
+              <Button onClick={() => navigate('/business-dashboard')}>
+                Go to Business Dashboard
+              </Button>
+            </div>
+          </Card>
+        </div>
+      </div>
+    );
+  }
 
   if (isAlreadyAffiliated) {
     return (
