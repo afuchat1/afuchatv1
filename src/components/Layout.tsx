@@ -83,7 +83,7 @@ const Layout = ({ children }: LayoutProps) => {
     { path: '/search', icon: Search, label: 'Explore' },
     { path: '/notifications', icon: Bell, label: 'Notifications', badge: true },
     { path: '/chats', icon: MessageSquare, label: 'Messages' },
-    { path: '/shop', icon: ShoppingBag, label: 'Shop' },
+    { path: '/services', icon: ShoppingBag, label: 'Services' },
     { path: '/leaderboard', icon: Trophy, label: 'Leaderboard' },
   ];
 
@@ -182,7 +182,7 @@ const Layout = ({ children }: LayoutProps) => {
           {[
             { path: '/', icon: Home },
             { path: '/search', icon: Search },
-            { path: '/shop', icon: ShoppingBag },
+            { path: '/services', icon: ShoppingBag },
             { path: '/chats', icon: MessageSquare },
             { path: user ? `/${user.id}` : '/auth', icon: User }
           ].map((item) => (
