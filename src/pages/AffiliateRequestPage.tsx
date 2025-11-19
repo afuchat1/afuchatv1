@@ -12,10 +12,10 @@ import { Skeleton } from '@/components/ui/skeleton';
 
 interface BusinessAccount {
   id: string;
-  name: string;
-  logo_url: string | null;
-  description: string | null;
-  website_url: string | null;
+  business_name: string;
+  business_logo_url: string | null;
+  business_description: string | null;
+  business_website_url: string | null;
 }
 
 export default function AffiliateRequestPage() {
@@ -35,7 +35,7 @@ export default function AffiliateRequestPage() {
     if (searchQuery.trim()) {
       setFilteredBusinesses(
         businesses.filter(b => 
-          b.name.toLowerCase().includes(searchQuery.toLowerCase())
+          b.business_name.toLowerCase().includes(searchQuery.toLowerCase())
         )
       );
     } else {
@@ -46,10 +46,11 @@ export default function AffiliateRequestPage() {
   const fetchBusinesses = async () => {
     try {
       const { data, error } = await supabase
-        .from('business_accounts')
-        .select('*')
-        .eq('is_verified', true)
-        .order('name');
+        .from('profiles')
+        .select('id, business_name, business_logo_url, business_description, business_website_url')
+        .eq('is_organization_verified', true)
+        .not('business_name', 'is', null)
+        .order('business_name');
 
       if (error) throw error;
       setBusinesses(data || []);
@@ -71,7 +72,7 @@ export default function AffiliateRequestPage() {
         .from('affiliate_requests')
         .insert({
           user_id: user.id,
-          business_id: businessId,
+          business_profile_id: businessId,
           status: 'pending'
         });
 
@@ -166,10 +167,10 @@ export default function AffiliateRequestPage() {
             {filteredBusinesses.map(business => (
               <Card key={business.id} className="p-4 hover:bg-accent/50 transition-colors">
                 <div className="flex items-center gap-4">
-                  {business.logo_url ? (
+                  {business.business_logo_url ? (
                     <img
-                      src={business.logo_url}
-                      alt={business.name}
+                      src={business.business_logo_url}
+                      alt={business.business_name}
                       className="h-16 w-16 rounded-full object-cover border-2 border-border"
                     />
                   ) : (
@@ -179,20 +180,20 @@ export default function AffiliateRequestPage() {
                   )}
                   
                   <div className="flex-1 min-w-0">
-                    <h3 className="font-semibold text-lg">{business.name}</h3>
-                    {business.description && (
+                    <h3 className="font-semibold text-lg">{business.business_name}</h3>
+                    {business.business_description && (
                       <p className="text-sm text-muted-foreground line-clamp-1">
-                        {business.description}
+                        {business.business_description}
                       </p>
                     )}
-                    {business.website_url && (
+                    {business.business_website_url && (
                       <a
-                        href={business.website_url}
+                        href={business.business_website_url}
                         target="_blank"
                         rel="noopener noreferrer"
                         className="text-xs text-primary hover:underline"
                       >
-                        {business.website_url}
+                        {business.business_website_url}
                       </a>
                     )}
                   </div>

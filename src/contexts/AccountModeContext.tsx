@@ -5,9 +5,9 @@ import { toast } from 'sonner';
 
 interface BusinessAccount {
   id: string;
-  name: string;
-  logo_url: string | null;
-  description: string | null;
+  business_name: string;
+  business_logo_url: string | null;
+  business_description: string | null;
 }
 
 interface AccountModeContextType {
@@ -53,14 +53,18 @@ export function AccountModeProvider({ children }: { children: React.ReactNode })
           setIsBusinessModeState(profile.is_business_mode || false);
         }
 
-        // Check if user owns a business account
-        const { data: business } = await supabase
-          .from('business_accounts')
-          .select('id, name, logo_url, description')
-          .eq('owner_id', user.id)
+        // Check if user has business profile set up
+        const { data: businessProfile } = await supabase
+          .from('profiles')
+          .select('id, business_name, business_logo_url, business_description')
+          .eq('id', user.id)
           .single();
 
-        setBusinessAccount(business);
+        if (businessProfile?.business_name) {
+          setBusinessAccount(businessProfile);
+        } else {
+          setBusinessAccount(null);
+        }
       } catch (error) {
         console.error('Error loading account data:', error);
       } finally {
@@ -75,7 +79,7 @@ export function AccountModeProvider({ children }: { children: React.ReactNode })
     if (!user) return;
 
     if (mode && !businessAccount) {
-      toast.error('You need to create a business account first');
+      toast.error('You need to set up your business profile first');
       return;
     }
 

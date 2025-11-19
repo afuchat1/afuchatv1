@@ -40,20 +40,20 @@ const BusinessAffiliateRequests = () => {
 
   const loadData = async () => {
     try {
-      // Get business ID
-      const { data: business, error: businessError } = await supabase
-        .from('business_accounts')
-        .select('id')
-        .eq('owner_id', user?.id)
+      // Check if user has business profile
+      const { data: profile, error: profileError } = await supabase
+        .from('profiles')
+        .select('id, business_name')
+        .eq('id', user?.id)
         .single();
 
-      if (businessError) {
-        toast.error('Business account not found');
-        navigate('/business/settings');
+      if (profileError || !profile?.business_name) {
+        toast.error('Business profile not found. Please set up your business profile first.');
+        navigate('/settings');
         return;
       }
 
-      setBusinessId(business.id);
+      setBusinessId(profile.id);
 
       // Load affiliate requests
       const { data, error } = await supabase
@@ -66,7 +66,7 @@ const BusinessAffiliateRequests = () => {
             avatar_url
           )
         `)
-        .eq('business_id', business.id)
+        .eq('business_profile_id', profile.id)
         .order('requested_at', { ascending: false });
 
       if (error) throw error;

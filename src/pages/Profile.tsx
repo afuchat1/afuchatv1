@@ -701,22 +701,24 @@ const Profile = () => {
 
 					<div className="mt-3">
 
-						{(profile.is_verified || profile.is_organization_verified) ? (
+						{(profile.is_verified || profile.is_organization_verified || profile.is_affiliate) ? (
 							<Popover>
 								<PopoverTrigger asChild>
 									<div className="flex items-center gap-1 cursor-pointer w-fit">
 										<h1 className="text-xl font-extrabold leading-tight">{profile.display_name}</h1>
-										<VerifiedBadgeIcon
-											isVerified={profile.is_verified}
-											isOrgVerified={profile.is_organization_verified}
-										/>
+									<VerifiedBadge
+										isVerified={profile.is_verified}
+										isOrgVerified={profile.is_organization_verified}
+										isAffiliate={profile.is_affiliate}
+										affiliateBusinessLogo={profile.affiliate_business_logo}
+									/>
 									</div>
 								</PopoverTrigger>
 								<PopoverContent className="w-auto p-0 border-none shadow-xl rounded-2xl" onClick={(e) => e.stopPropagation()}>
 
 									{profile.is_organization_verified ? (
 										<div className="p-4 max-w-sm">
-											<GoldVerifiedBadge size="w-6 h-6" />
+											<VerifiedBadge isOrgVerified={true} size="lg" />
 											<h3 className="font-bold text-lg mt-2 text-foreground">Verified Organization</h3>
 											<p className="text-sm text-muted-foreground mt-1">
 												This account is verified because it's a notable organization on AfuChat.
@@ -725,7 +727,7 @@ const Profile = () => {
 										</div>
 									) : (
 										<div className="p-4 max-w-sm">
-											<TwitterVerifiedBadge size="w-6 h-6" />
+											<VerifiedBadge isVerified={true} size="lg" />
 											<h3 className="font-bold text-lg mt-2 text-foreground">Verified Account</h3>
 											<p className="text-sm text-muted-foreground mt-1">
 												This account is verified because it’s notable in government, news, entertainment, or another designated category.

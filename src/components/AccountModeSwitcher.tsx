@@ -38,13 +38,13 @@ export function AccountModeSwitcher() {
         {isBusinessMode && businessAccount && (
           <div className="flex items-center gap-2 p-2 rounded-lg bg-muted">
             <Avatar className="h-8 w-8">
-              <AvatarImage src={businessAccount.logo_url || undefined} />
+              <AvatarImage src={businessAccount.business_logo_url || undefined} />
               <AvatarFallback>
                 <Building2 className="h-4 w-4" />
               </AvatarFallback>
             </Avatar>
             <div className="flex-1 min-w-0">
-              <p className="text-sm font-medium truncate">{businessAccount.name}</p>
+              <p className="text-sm font-medium truncate">{businessAccount.business_name}</p>
               <p className="text-xs text-muted-foreground">Business Account</p>
             </div>
           </div>
