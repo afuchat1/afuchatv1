@@ -11,11 +11,6 @@ import { toast } from 'sonner';
 import { StoryViewer } from '@/components/moments/StoryViewer';
 import { CreateStoryDialog } from '@/components/moments/CreateStoryDialog';
 
-const Moments = () => {
-  const navigate = useNavigate();
-  const { user } = useAuth();
-  const { t } = useTranslation();
-
 interface Story {
   id: string;
   user_id: string;
@@ -35,6 +30,7 @@ interface Story {
 const Moments = () => {
   const navigate = useNavigate();
   const { user } = useAuth();
+  const { t } = useTranslation();
   const [stories, setStories] = useState<Story[]>([]);
   const [myStories, setMyStories] = useState<Story[]>([]);
   const [loading, setLoading] = useState(true);
