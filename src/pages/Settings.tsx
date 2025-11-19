@@ -13,7 +13,6 @@ import Logo from '@/components/Logo';
 import { useTranslation } from 'react-i18next';
 import { useTheme } from '@/contexts/ThemeContext';
 import EnableNotificationsButton from '@/components/EnableNotificationsButton';
-import { AccountModeSwitcher } from '@/components/AccountModeSwitcher';
 import {
   Select,
   SelectContent,
@@ -190,34 +189,6 @@ const Settings = () => {
                 className="w-full flex items-center justify-between py-3 px-2 rounded-lg hover:bg-muted transition-colors text-left"
               >
                 <span>Gift Leaderboard</span>
-                <span className="text-muted-foreground">›</span>
-              </button>
-            </div>
-          </Card>
-
-          {/* Account Mode Switcher */}
-          <AccountModeSwitcher />
-
-          {/* Business Account Management */}
-          <Card className="p-4 sm:p-6">
-            <div className="space-y-4">
-              <div className="flex items-center gap-3">
-                <Building2 className="h-5 w-5 text-muted-foreground" />
-                <h2 className="text-lg font-semibold">Business Account</h2>
-              </div>
-              <Separator />
-              <button
-                onClick={() => navigate('/business/settings')}
-                className="w-full flex items-center justify-between py-3 px-2 rounded-lg hover:bg-muted transition-colors text-left"
-              >
-                <span>Manage Business Account</span>
-                <span className="text-muted-foreground">›</span>
-              </button>
-              <button
-                onClick={() => navigate('/affiliate/request')}
-                className="w-full flex items-center justify-between py-3 px-2 rounded-lg hover:bg-muted transition-colors text-left"
-              >
-                <span>Become an Affiliate</span>
                 <span className="text-muted-foreground">›</span>
               </button>
             </div>
