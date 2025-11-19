@@ -31,6 +31,8 @@ interface Message {
   attachment_size?: number;
   sender_id: string;
   sent_at: string;
+  delivered_at?: string | null;
+  read_at?: string | null;
   edited_at?: string | null;
   reply_to_message_id?: string | null;
   message_reactions?: Array<{
@@ -48,6 +50,11 @@ interface Message {
     display_name: string;
     handle: string;
   };
+  message_status?: Array<{
+    read_at: string | null;
+    delivered_at: string | null;
+    user_id: string;
+  }>;
 }
 
 interface RedEnvelope {
@@ -197,23 +204,38 @@ const ChatRoom = () => {
             .select('display_name, handle')
             .eq('id', payload.new.sender_id)
             .single()
-            .then(({ data: profile, error }) => {
+            .then(async ({ data: profile, error }) => {
               if (error) {
                 console.error('Error fetching sender profile:', error);
                 return;
               }
               if (profile) {
-                setMessages((prev) => [
-                  ...prev,
-                  {
-                    id: payload.new.id,
-                    encrypted_content: payload.new.encrypted_content,
-                    audio_url: payload.new.audio_url,
-                    sender_id: payload.new.sender_id,
-                    sent_at: payload.new.sent_at,
-                    profiles: profile,
-                  } as Message,
-                ]);
+                const newMsg = {
+                  id: payload.new.id,
+                  encrypted_content: payload.new.encrypted_content,
+                  audio_url: payload.new.audio_url,
+                  attachment_url: payload.new.attachment_url,
+                  attachment_type: payload.new.attachment_type,
+                  attachment_name: payload.new.attachment_name,
+                  attachment_size: payload.new.attachment_size,
+                  sender_id: payload.new.sender_id,
+                  sent_at: payload.new.sent_at,
+                  profiles: profile,
+                } as Message;
+                
+                setMessages((prev) => [...prev, newMsg]);
+                
+                // Mark as delivered and read if we're the recipient
+                if (user && payload.new.sender_id !== user.id) {
+                  await supabase
+                    .from('message_status')
+                    .upsert({
+                      message_id: payload.new.id,
+                      user_id: user.id,
+                      delivered_at: new Date().toISOString(),
+                      read_at: new Date().toISOString(),
+                    });
+                }
               }
             });
         }
@@ -296,6 +318,22 @@ const ChatRoom = () => {
       )
       .subscribe();
 
+    // Subscribe to message status changes (read receipts)
+    const statusChannel = supabase
+      .channel(`message-status-${chatId}`)
+      .on(
+        'postgres_changes',
+        {
+          event: '*',
+          schema: 'public',
+          table: 'message_status',
+        },
+        () => {
+          fetchMessages();
+        }
+      )
+      .subscribe();
+
     // Subscribe to message reactions
     const reactionsChannel = supabase
       .channel(`reactions-${chatId}`)
@@ -316,6 +354,7 @@ const ChatRoom = () => {
       supabase.removeChannel(channel);
       supabase.removeChannel(envelopeChannel);
       supabase.removeChannel(typingChannel);
+      supabase.removeChannel(statusChannel);
       supabase.removeChannel(reactionsChannel);
       stopRecording();
       if (typingTimeoutRef.current) {
@@ -376,6 +415,7 @@ const ChatRoom = () => {
         *,
         profiles(display_name, handle),
         message_reactions(reaction, user_id),
+        message_status(read_at, delivered_at, user_id),
         reply_to_message:messages!reply_to_message_id(
           encrypted_content,
           audio_url,
@@ -393,8 +433,33 @@ const ChatRoom = () => {
     }
     if (data) {
       setMessages(data as any);
+      // Mark messages as delivered and read
+      if (user) {
+        const messageIds = data
+          .filter((msg: any) => msg.sender_id !== user.id)
+          .map((msg: any) => msg.id);
+        
+        if (messageIds.length > 0) {
+          await markMessagesAsRead(messageIds);
+        }
+      }
     }
     setLoading(false);
+  };
+
+  const markMessagesAsRead = async (messageIds: string[]) => {
+    if (!user) return;
+
+    for (const messageId of messageIds) {
+      await supabase
+        .from('message_status')
+        .upsert({
+          message_id: messageId,
+          user_id: user.id,
+          delivered_at: new Date().toISOString(),
+          read_at: new Date().toISOString(),
+        });
+    }
   };
 
   const fetchRedEnvelopes = async () => {
@@ -543,20 +608,43 @@ const ChatRoom = () => {
         setUploadingFile(false);
       }
 
-      const { error } = await supabase.from('messages').insert({
-        chat_id: chatId,
-        sender_id: user.id,
-        encrypted_content: newMessage || '',
-        reply_to_message_id: replyToMessage?.id || null,
-        attachment_url: attachmentUrl,
-        attachment_type: attachmentType,
-        attachment_name: attachmentName,
-        attachment_size: attachmentSize,
-      });
+      const { data: inserted, error } = await supabase
+        .from('messages')
+        .insert({
+          chat_id: chatId,
+          sender_id: user.id,
+          encrypted_content: newMessage || '',
+          reply_to_message_id: replyToMessage?.id || null,
+          attachment_url: attachmentUrl,
+          attachment_type: attachmentType,
+          attachment_name: attachmentName,
+          attachment_size: attachmentSize,
+        })
+        .select()
+        .single();
 
       if (error) {
         toast.error('Failed to send message');
       } else {
+        // Create message_status entries for other chat members
+        const { data: members } = await supabase
+          .from('chat_members')
+          .select('user_id')
+          .eq('chat_id', chatId)
+          .neq('user_id', user.id);
+
+        if (members && members.length > 0) {
+          const statusEntries = members.map(member => ({
+            message_id: inserted.id,
+            user_id: member.user_id,
+            delivered_at: new Date().toISOString(),
+          }));
+
+          await supabase
+            .from('message_status')
+            .insert(statusEntries);
+        }
+
         setNewMessage('');
         setSelectedFile(null);
         setReplyToMessage(null);

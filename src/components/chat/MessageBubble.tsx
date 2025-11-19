@@ -36,6 +36,11 @@ export interface Message {
     display_name: string;
     handle: string;
   };
+  message_status?: Array<{
+    read_at: string | null;
+    delivered_at: string | null;
+    user_id: string;
+  }>;
 }
 
 // --- Helper to aggregate reactions ---
@@ -75,6 +80,10 @@ export const MessageBubble = ({
   const time = new Date(message.sent_at).toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' });
   const isVoice = !!message.audio_url;
   const hasAttachment = !!message.attachment_url;
+  
+  // Check read status for own messages
+  const allRead = isOwn && message.message_status && message.message_status.every(s => s.read_at);
+  const anyDelivered = isOwn && message.message_status && message.message_status.some(s => s.delivered_at);
   
   // Check if message can be edited (within 15 minutes)
   const canEdit = isOwn && !isVoice && !hasAttachment && message.sent_at && 
@@ -247,9 +256,12 @@ export const MessageBubble = ({
   };
   
   const ReadStatus = () => {
-    const isRead = isOnline;
-    if (isRead) {
-      return <CheckCheck className="h-3.5 w-3.5" />;
+    if (!isOwn) return null;
+    
+    if (allRead) {
+      return <CheckCheck className="h-3.5 w-3.5 text-blue-500" />;
+    } else if (anyDelivered) {
+      return <CheckCheck className="h-3.5 w-3.5 opacity-60" />;
     }
     return <Check className="h-3.5 w-3.5 opacity-60" />;
   };

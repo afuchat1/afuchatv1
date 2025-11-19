@@ -98,8 +98,29 @@ const Chats = () => {
             
             let chatData: Chat = {
               ...member.chats,
-              last_message_content: member.chats.id.startsWith('group') ? t('chat.lastGroupMessage') : t('chat.lastOneOnOneMessage')
+              last_message_content: ''
             };
+            
+            // Fetch the last message for this chat
+            const { data: lastMessage } = await supabase
+              .from('messages')
+              .select('encrypted_content, attachment_type, audio_url, sent_at')
+              .eq('chat_id', member.chats.id)
+              .order('sent_at', { ascending: false })
+              .limit(1)
+              .single();
+            
+            if (lastMessage) {
+              if (lastMessage.audio_url) {
+                chatData.last_message_content = '🎤 Voice message';
+              } else if (lastMessage.attachment_type?.startsWith('image/')) {
+                chatData.last_message_content = '📷 Photo';
+              } else if (lastMessage.attachment_type) {
+                chatData.last_message_content = '📎 Attachment';
+              } else {
+                chatData.last_message_content = lastMessage.encrypted_content || 'Message';
+              }
+            }
             
             // For 1-on-1 chats, fetch the other user's profile
             if (!member.chats.is_group) {
@@ -261,12 +282,7 @@ const Chats = () => {
               )}
             </div>
             <p className="text-sm text-muted-foreground truncate leading-relaxed">
-              {chat.is_online 
-                ? '🟢 Online'
-                : chat.other_user?.last_seen && chat.other_user?.show_online_status
-                  ? `Last seen ${formatDistanceToNow(new Date(chat.other_user.last_seen), { addSuffix: true })}`
-                  : lastMessagePreview
-              }
+              {chat.last_message_content || t('chat.startChatting')}
             </p>
           </div>
 
