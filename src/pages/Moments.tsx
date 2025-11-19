@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { useTranslation } from 'react-i18next';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/contexts/AuthContext';
 import { Button } from '@/components/ui/button';
@@ -9,6 +10,11 @@ import { Plus, ArrowLeft, Eye } from 'lucide-react';
 import { toast } from 'sonner';
 import { StoryViewer } from '@/components/moments/StoryViewer';
 import { CreateStoryDialog } from '@/components/moments/CreateStoryDialog';
+
+const Moments = () => {
+  const navigate = useNavigate();
+  const { user } = useAuth();
+  const { t } = useTranslation();
 
 interface Story {
   id: string;

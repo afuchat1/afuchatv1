@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { useTranslation } from 'react-i18next';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/contexts/AuthContext';
 import { Button } from '@/components/ui/button';
@@ -25,23 +26,24 @@ interface MiniProgram {
   };
 }
 
-const categories = [
-  { id: 'all', name: 'All', icon: Zap },
-  { id: 'games', name: 'Games', icon: Gamepad2 },
-  { id: 'shopping', name: 'Shopping', icon: ShoppingBag },
-  { id: 'entertainment', name: 'Entertainment', icon: Music },
-  { id: 'media', name: 'Media', icon: Video },
-  { id: 'education', name: 'Education', icon: Book },
-];
-
 const MiniPrograms = () => {
   const navigate = useNavigate();
   const { user } = useAuth();
+  const { t } = useTranslation();
   const [miniPrograms, setMiniPrograms] = useState<MiniProgram[]>([]);
   const [installedApps, setInstalledApps] = useState<Set<string>>(new Set());
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedCategory, setSelectedCategory] = useState('all');
   const [loading, setLoading] = useState(true);
+
+  const categories = [
+    { id: 'all', name: t('miniPrograms.all'), icon: Zap },
+    { id: 'games', name: t('miniPrograms.games'), icon: Gamepad2 },
+    { id: 'shopping', name: t('miniPrograms.shopping'), icon: ShoppingBag },
+    { id: 'entertainment', name: t('miniPrograms.entertainment'), icon: Music },
+    { id: 'media', name: t('miniPrograms.media'), icon: Video },
+    { id: 'education', name: t('miniPrograms.education'), icon: Book },
+  ];
 
   useEffect(() => {
     fetchMiniPrograms();
@@ -249,13 +251,13 @@ const MiniPrograms = () => {
                             className="flex-1"
                             onClick={() => handleLaunch(program.url)}
                           >
-                            Launch
+                            {t('miniPrograms.open')}
                           </Button>
                           <Button 
                             variant="outline"
                             onClick={() => handleUninstall(program.id)}
                           >
-                            Uninstall
+                            {t('miniPrograms.installed')}
                           </Button>
                         </>
                       ) : (

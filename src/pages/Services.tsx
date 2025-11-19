@@ -1,4 +1,5 @@
 import { useNavigate } from 'react-router-dom';
+import { useTranslation } from 'react-i18next';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { ArrowLeft, Wallet, QrCode, Trophy, Users, ShoppingBag, Bot, TrendingUp, Gift, Heart, Building2, UserPlus, HelpCircle, FileText, Shield, Image as ImageIcon, MessageSquare, Send, Zap, Mail, Code } from 'lucide-react';
@@ -6,72 +7,71 @@ import Logo from '@/components/Logo';
 
 const Services = () => {
   const navigate = useNavigate();
+  const { t } = useTranslation();
 
   const services = [
     {
-      category: 'Social & Content',
+      category: t('services.socialContent'),
       items: [
-        { icon: ImageIcon, title: 'Moments', description: 'Share temporary photo & video stories', route: '/moments', color: 'text-pink-500' },
-        { icon: MessageSquare, title: 'Chats', description: 'Private & group conversations', route: '/chats', color: 'text-green-500' },
-        { icon: Users, title: 'Discover', description: 'Find and follow interesting people', route: '/search', color: 'text-purple-500' },
-        { icon: TrendingUp, title: 'Trending', description: 'Explore trending topics', route: '/trending', color: 'text-orange-500' },
+        { icon: ImageIcon, title: t('services.moments'), description: t('services.momentsDesc'), route: '/moments', color: 'text-pink-500' },
+        { icon: MessageSquare, title: t('services.chats'), description: t('services.chatsDesc'), route: '/chats', color: 'text-green-500' },
+        { icon: Users, title: t('services.discover'), description: t('services.discoverDesc'), route: '/search', color: 'text-purple-500' },
+        { icon: TrendingUp, title: t('services.trending'), description: t('services.trendingDesc'), route: '/trending', color: 'text-orange-500' },
       ]
     },
     {
-      category: 'Financial',
+      category: t('services.financial'),
       items: [
-        { icon: Wallet, title: 'Wallet', description: 'Manage your XP balance', route: '/wallet', color: 'text-blue-500' },
-        { icon: Send, title: 'Transfer XP', description: 'Send XP to other users', route: '/transfer', color: 'text-indigo-500' },
-        { icon: Mail, title: 'Red Envelopes', description: 'Group XP sharing with random splits', route: '/red-envelope', color: 'text-red-500' },
-        { icon: Gift, title: 'Gifts', description: 'Send virtual gifts', route: '/gifts', color: 'text-pink-500' },
-        { icon: Heart, title: 'Tips', description: 'Support creators', route: '/tips', color: 'text-red-500' },
+        { icon: Wallet, title: t('services.wallet'), description: t('services.walletDesc'), route: '/wallet', color: 'text-blue-500' },
+        { icon: Send, title: t('services.transfer'), description: t('services.transferDesc'), route: '/transfer', color: 'text-indigo-500' },
+        { icon: Mail, title: t('services.redEnvelopes'), description: t('services.redEnvelopesDesc'), route: '/red-envelope', color: 'text-red-500' },
       ]
     },
     {
-      category: 'Mini Programs',
+      category: t('services.miniPrograms'),
       items: [
-        { icon: Zap, title: 'App Store', description: 'Discover mini apps and games', route: '/mini-programs', color: 'text-yellow-500' },
-        { icon: Code, title: 'Developer SDK', description: 'Build your own mini programs', route: '/developer-sdk', color: 'text-purple-600' },
+        { icon: Zap, title: t('services.appStore'), description: t('services.appStoreDesc'), route: '/mini-programs', color: 'text-yellow-500' },
+        { icon: Code, title: t('services.developerSDK'), description: t('services.developerSDKDesc'), route: '/developer-sdk', color: 'text-purple-600' },
       ]
     },
     {
-      category: 'Gamification',
+      category: t('services.gamification'),
       items: [
-        { icon: Trophy, title: 'Leaderboard', description: 'Top contributors', route: '/leaderboard', color: 'text-yellow-600' },
-        { icon: QrCode, title: 'My QR Code', description: 'Share your profile', route: '/qr-code', color: 'text-blue-500' },
+        { icon: Trophy, title: t('services.leaderboard'), description: t('services.leaderboardDesc'), route: '/leaderboard', color: 'text-yellow-600' },
+        { icon: QrCode, title: t('services.qrCode'), description: t('services.qrCodeDesc'), route: '/qr-code', color: 'text-blue-500' },
       ]
     },
     {
-      category: 'Shopping',
+      category: t('services.shopping'),
       items: [
-        { icon: ShoppingBag, title: 'Shop', description: 'Buy accessories', route: '/shop', color: 'text-purple-500' },
+        { icon: ShoppingBag, title: t('services.shop'), description: t('services.shopDesc'), route: '/shop', color: 'text-purple-500' },
       ]
     },
     {
-      category: 'Business',
+      category: t('services.business'),
       items: [
-        { icon: Building2, title: 'Business', description: 'Business dashboard', route: '/business/dashboard', color: 'text-blue-600' },
-        { icon: UserPlus, title: 'Affiliates', description: 'Affiliate program', route: '/affiliate-request', color: 'text-indigo-500' },
+        { icon: Building2, title: t('services.businessDashboard'), description: t('services.businessDashboardDesc'), route: '/business/dashboard', color: 'text-blue-600' },
+        { icon: UserPlus, title: t('services.affiliates'), description: t('services.affiliatesDesc'), route: '/affiliate-request', color: 'text-indigo-500' },
       ]
     },
     {
-      category: 'AI & Tools',
+      category: t('services.aiTools'),
       items: [
-        { icon: Bot, title: 'AfuAI', description: 'AI assistant', route: '/ai-chat', color: 'text-cyan-500' },
+        { icon: Bot, title: t('services.afuAI'), description: t('services.afuAIDesc'), route: '/ai-chat', color: 'text-cyan-500' },
       ]
     },
     {
-      category: 'Support',
+      category: t('services.support'),
       items: [
-        { icon: HelpCircle, title: 'Support', description: 'Get help', route: '/support', color: 'text-gray-500' },
-        { icon: FileText, title: 'Terms', description: 'Terms of use', route: '/terms', color: 'text-gray-500' },
-        { icon: Shield, title: 'Privacy', description: 'Privacy policy', route: '/privacy', color: 'text-gray-500' },
+        { icon: HelpCircle, title: t('services.supportCenter'), description: t('services.supportCenterDesc'), route: '/support', color: 'text-gray-500' },
+        { icon: FileText, title: t('services.terms'), description: t('services.termsDesc'), route: '/terms', color: 'text-gray-500' },
+        { icon: Shield, title: t('services.privacy'), description: t('services.privacyDesc'), route: '/privacy', color: 'text-gray-500' },
       ]
     }
   ];
 
   return (
-    <div className="min-h-screen bg-background">
+    <div className="min-h-screen bg-background pb-20">
       <header className="sticky top-0 z-50 w-full border-b border-border bg-background/95 backdrop-blur">
         <div className="container max-w-4xl mx-auto px-4">
           <div className="flex h-16 items-center justify-between">
@@ -84,37 +84,41 @@ const Services = () => {
         </div>
       </header>
 
-      <main className="container max-w-4xl mx-auto px-4 py-8 pb-24">
-        <div className="space-y-8">
-          <div className="text-center space-y-2">
-            <h1 className="text-3xl font-bold">All Services</h1>
-            <p className="text-muted-foreground">Everything AfuChat has to offer</p>
-          </div>
+      <main className="container max-w-4xl mx-auto px-4 py-6">
+        <div className="mb-6">
+          <h1 className="text-2xl sm:text-3xl font-bold text-foreground mb-2">{t('services.title')}</h1>
+          <p className="text-sm sm:text-base text-muted-foreground">{t('services.subtitle')}</p>
+        </div>
 
+        <div className="space-y-6">
           {services.map((category, idx) => (
-            <section key={idx} className="space-y-4">
-              <h2 className="text-xl font-semibold">{category.category}</h2>
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                {category.items.map((service, i) => {
-                  const Icon = service.icon;
+            <div key={idx}>
+              <h2 className="text-base sm:text-lg font-semibold text-foreground mb-3 px-1">{category.category}</h2>
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4">
+                {category.items.map((item, itemIdx) => {
+                  const Icon = item.icon;
                   return (
-                    <Card key={i} className="cursor-pointer hover:shadow-lg transition-shadow" onClick={() => navigate(service.route)}>
+                    <Card 
+                      key={itemIdx} 
+                      className="cursor-pointer hover:border-primary/50 transition-all hover:shadow-lg group overflow-hidden"
+                      onClick={() => navigate(item.route)}
+                    >
                       <CardHeader className="pb-3">
-                        <div className="flex items-center gap-3">
-                          <div className={`p-2 rounded-lg bg-muted ${service.color}`}>
-                            <Icon className="h-6 w-6" />
+                        <div className="flex items-start gap-3">
+                          <div className={`p-2 rounded-lg bg-background/50 ${item.color} group-hover:scale-110 transition-transform`}>
+                            <Icon className="h-5 w-5 sm:h-6 sm:w-6" />
                           </div>
-                          <CardTitle className="text-lg">{service.title}</CardTitle>
+                          <div className="flex-1 min-w-0">
+                            <CardTitle className="text-base sm:text-lg mb-1 truncate">{item.title}</CardTitle>
+                            <CardDescription className="text-xs sm:text-sm line-clamp-2">{item.description}</CardDescription>
+                          </div>
                         </div>
                       </CardHeader>
-                      <CardContent>
-                        <CardDescription>{service.description}</CardDescription>
-                      </CardContent>
                     </Card>
                   );
                 })}
               </div>
-            </section>
+            </div>
           ))}
         </div>
       </main>
