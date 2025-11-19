@@ -6,7 +6,7 @@ import { Button } from '@/components/ui/button';
 import { Separator } from '@/components/ui/separator';
 import { Switch } from '@/components/ui/switch';
 import { Badge } from '@/components/ui/badge';
-import { ArrowLeft, User, Bell, Lock, Shield, FileText, LogOut, Languages, Sun, Moon, Monitor, Link2, Github } from 'lucide-react';
+import { ArrowLeft, User, Bell, Lock, Shield, FileText, LogOut, Languages, Sun, Moon, Monitor, Link2, Github, Building2 } from 'lucide-react';
 import { toast } from 'sonner';
 import { supabase } from '@/integrations/supabase/client';
 import Logo from '@/components/Logo';
@@ -197,6 +197,31 @@ const Settings = () => {
 
           {/* Account Mode Switcher */}
           <AccountModeSwitcher />
+
+          {/* Business Account Management */}
+          <Card className="p-4 sm:p-6">
+            <div className="space-y-4">
+              <div className="flex items-center gap-3">
+                <Building2 className="h-5 w-5 text-muted-foreground" />
+                <h2 className="text-lg font-semibold">Business Account</h2>
+              </div>
+              <Separator />
+              <button
+                onClick={() => navigate('/business/settings')}
+                className="w-full flex items-center justify-between py-3 px-2 rounded-lg hover:bg-muted transition-colors text-left"
+              >
+                <span>Manage Business Account</span>
+                <span className="text-muted-foreground">›</span>
+              </button>
+              <button
+                onClick={() => navigate('/affiliate/request')}
+                className="w-full flex items-center justify-between py-3 px-2 rounded-lg hover:bg-muted transition-colors text-left"
+              >
+                <span>Become an Affiliate</span>
+                <span className="text-muted-foreground">›</span>
+              </button>
+            </div>
+          </Card>
 
           {/* Account Settings */}
           <Card className="p-4 sm:p-6">
