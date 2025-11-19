@@ -206,8 +206,12 @@ const BusinessDashboard = () => {
     }
   };
 
-  if (!canUseBusiness || mode !== 'business') {
-    return null;
+  if (!canUseBusiness) {
+    return (
+      <div className="min-h-screen bg-background flex items-center justify-center">
+        <p className="text-muted-foreground">Business features are not enabled for your account.</p>
+      </div>
+    );
   }
 
   return (
