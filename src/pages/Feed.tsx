@@ -221,8 +221,8 @@ const parsePostContent = (content: string, postId: string, navigate: ReturnType<
 const UserAvatarSmall = ({ 
   userId, 
   name, 
-  avatarUrl,
-  lastSeen,
+  avatarUrl, 
+  lastSeen, 
   showOnlineStatus 
 }: { 
   userId: string; 
@@ -231,25 +231,12 @@ const UserAvatarSmall = ({
   lastSeen?: string | null;
   showOnlineStatus?: boolean;
 }) => {
-  const { avatarConfig, loading } = useUserAvatar(userId);
-
-  if (loading) {
-    return (
-      <div className="h-6 w-6 sm:h-7 sm:w-7 rounded-full bg-muted animate-pulse flex-shrink-0" />
-    );
-  }
-
   return (
     <div className="relative">
-      {avatarUrl ? (
-        <img
-          src={avatarUrl}
-          alt={name}
-          className="h-6 w-6 sm:h-7 sm:w-7 rounded-full object-cover flex-shrink-0"
-        />
-      ) : (
-        <DefaultAvatar name={name} size={28} className="flex-shrink-0" />
-      )}
+      <Avatar className="h-6 w-6 sm:h-7 sm:w-7 flex-shrink-0">
+        <AvatarImage src={avatarUrl || undefined} alt={name} />
+        <AvatarFallback className="text-xs">{name?.substring(0, 2).toUpperCase()}</AvatarFallback>
+      </Avatar>
       <OnlineStatus 
         lastSeen={lastSeen} 
         showOnlineStatus={showOnlineStatus}
@@ -272,27 +259,14 @@ const UserAvatarMedium = ({
   lastSeen?: string | null;
   showOnlineStatus?: boolean;
 }) => {
-  const { avatarConfig, loading } = useUserAvatar(userId);
-
-  if (loading) {
-    return (
-      <div className="h-8 w-8 sm:h-10 sm:w-10 rounded-full bg-muted animate-pulse flex-shrink-0" />
-    );
-  }
-
   return (
     <div className="relative">
-      {avatarUrl ? (
-        <img
-          src={avatarUrl}
-          alt={name}
-          className="h-8 w-8 sm:h-10 sm:w-10 rounded-full object-cover flex-shrink-0"
-        />
-      ) : (
-        <DefaultAvatar name={name} size={40} className="flex-shrink-0" />
-      )}
+      <Avatar className="h-8 w-8 sm:h-10 sm:w-10 flex-shrink-0">
+        <AvatarImage src={avatarUrl || undefined} alt={name} />
+        <AvatarFallback className="text-sm">{name?.substring(0, 2).toUpperCase()}</AvatarFallback>
+      </Avatar>
       <OnlineStatus 
-        lastSeen={lastSeen} 
+        lastSeen={lastSeen}
         showOnlineStatus={showOnlineStatus}
         className="w-2.5 h-2.5"
       />

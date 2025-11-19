@@ -794,34 +794,38 @@ const Profile = () => {
 					) : null}
 					
 					{user && user.id === profileId && (
-						<>
+						<label className="absolute top-4 right-4 p-2 rounded-full bg-background/80 hover:bg-background cursor-pointer transition-colors backdrop-blur-sm">
+							<input
+								type="file"
+								accept="image/*"
+								onChange={handleBannerUpload}
+								disabled={isUploadingBanner}
+								className="hidden"
+							/>
+							{isUploadingBanner ? (
+								<div className="h-5 w-5 animate-spin rounded-full border-2 border-primary border-t-transparent" />
+							) : (
+								<Camera className="h-5 w-5 text-foreground" />
+							)}
+						</label>
+					)}
+				</div>
+
+				<div className="p-4">
+					{/* Edit Profile Button - Overlaying between banner and content */}
+					{user && user.id === profileId && (
+						<div className="flex justify-center -mt-6 mb-4">
 							<Button 
 								variant="outline" 
-								className="absolute top-4 right-4 rounded-full px-4 font-bold bg-background/80 hover:bg-background backdrop-blur-sm"
+								className="rounded-full px-6 font-bold bg-background hover:bg-muted shadow-lg border-2"
 								onClick={() => navigate(`/${urlParam}/edit`)}
 							>
 								<Pencil className="h-4 w-4 mr-2" />
 								{t('profile.editProfile')}
 							</Button>
-							<label className="absolute top-4 right-36 p-2 rounded-full bg-background/80 hover:bg-background cursor-pointer transition-colors backdrop-blur-sm">
-								<input
-									type="file"
-									accept="image/*"
-									onChange={handleBannerUpload}
-									disabled={isUploadingBanner}
-									className="hidden"
-								/>
-								{isUploadingBanner ? (
-									<div className="h-5 w-5 animate-spin rounded-full border-2 border-primary border-t-transparent" />
-								) : (
-									<Camera className="h-5 w-5 text-foreground" />
-								)}
-							</label>
-						</>
+						</div>
 					)}
-				</div>
-
-				<div className="p-4">
+					
 					<div className="flex justify-between items-end -mt-20 sm:-mt-16">
 						<div className="relative h-24 w-24 sm:h-32 sm:w-32 rounded-full overflow-hidden bg-background">
 							<ProfileAvatarDisplay profileId={profileId} profile={profile} />
@@ -1106,17 +1110,10 @@ const Profile = () => {
 											className="p-4 hover:bg-muted/10 cursor-pointer transition-colors flex items-center gap-3"
 											onClick={() => navigate(`/${affiliatedUser.handle}`)}
 										>
-											<div className="w-12 h-12 rounded-full overflow-hidden flex-shrink-0">
-												{affiliatedUser.avatar_url ? (
-													<img 
-														src={affiliatedUser.avatar_url} 
-														alt={affiliatedUser.display_name}
-														className="w-full h-full object-cover"
-													/>
-												) : (
-													<DefaultAvatar name={affiliatedUser.display_name} size={48} />
-												)}
-											</div>
+											<Avatar className="w-12 h-12 flex-shrink-0">
+												<AvatarImage src={affiliatedUser.avatar_url || undefined} alt={affiliatedUser.display_name} />
+												<AvatarFallback>{affiliatedUser.display_name?.substring(0, 2).toUpperCase()}</AvatarFallback>
+											</Avatar>
 											<div className="flex-1 min-w-0">
 												<div className="flex items-center gap-1">
 													<span className="font-bold truncate">{affiliatedUser.display_name}</span>
