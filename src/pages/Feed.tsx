@@ -488,13 +488,17 @@ const PostCard = ({ post, addReply, user, navigate, onAcknowledge, onDeletePost,
     }
 
     const trimmedReplyText = replyText.trim();
+    // Append mention at the end if it exists
+    const mention = post.profiles.handle ? `@${post.profiles.handle}` : '';
+    const finalContent = mention ? `${trimmedReplyText} ${mention}` : trimmedReplyText;
+    
     setReplyText(''); 
 
     const optimisticReply: Reply = {
       id: new Date().getTime().toString(),
       post_id: post.id,
       author_id: user.id,
-      content: trimmedReplyText,
+      content: finalContent,
       created_at: new Date().toISOString(),
       parent_reply_id: null,
       nested_replies: [],
@@ -513,7 +517,7 @@ const PostCard = ({ post, addReply, user, navigate, onAcknowledge, onDeletePost,
     const { error } = await supabase.from('post_replies').insert({
       post_id: post.id,
       author_id: user.id,
-      content: trimmedReplyText,
+      content: finalContent,
       parent_reply_id: null,
     });
 

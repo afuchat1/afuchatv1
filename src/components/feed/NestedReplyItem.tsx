@@ -85,7 +85,10 @@ export const NestedReplyItem = ({
 
   const handleReplySubmit = () => {
     if (replyText.trim()) {
-      onReplyToReply(reply.id, replyText);
+      // Append mention at the end
+      const mention = `@${reply.profiles.handle}`;
+      const finalContent = `${replyText.trim()} ${mention}`;
+      onReplyToReply(reply.id, finalContent);
       setReplyText('');
       setShowReplyInput(false);
     }
