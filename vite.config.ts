@@ -16,14 +16,15 @@ export default defineConfig(({ mode }) => ({
     VitePWA({
       registerType: 'autoUpdate',
       
-      // --- THIS IS THE KEY CHANGE ---
-      // We are switching to a custom service worker to handle push notifications
       strategies: 'injectManifest',
       srcDir: 'src',
-      filename: 'sw.ts', // We will create this file next
-      // ---------------------------------
+      filename: 'sw.ts',
+      
+      injectManifest: {
+        maximumFileSizeToCacheInBytes: 4 * 1024 * 1024, // 4 MB limit
+        globPatterns: ['**/*.{js,css,html,ico,png,jpg,jpeg,svg,woff,woff2}']
+      },
 
-      // Your existing manifest is perfect
       manifest: {
         name: 'AfuChat',
         short_name: 'AfuChat',

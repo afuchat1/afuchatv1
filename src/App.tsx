@@ -1,4 +1,4 @@
-import React from "react";
+import React, { Suspense, lazy } from "react";
 import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
@@ -11,43 +11,48 @@ import { useDailyLogin } from "./hooks/useDailyLogin";
 import { useLanguageSync } from "./hooks/useLanguageSync";
 import { useScrollRestoration } from "./hooks/useScrollRestoration";
 import { usePushNotifications } from "./hooks/usePushNotifications";
+import { Loader2 } from "lucide-react";
+
+// Eager load critical pages
 import Home from "./pages/Home";
 import Welcome from "./pages/auth/Welcome";
 import SignIn from "./pages/auth/SignIn";
 import SignUp from "./pages/auth/SignUp";
-import ForgotPassword from "./pages/auth/ForgotPassword";
-import ResetPassword from "./pages/auth/ResetPassword";
-import ChatsPage from "./pages/Chats";
-import ChatRoom from "./pages/ChatRoom";
-import SearchPage from "./pages/Search";
-import ShopPage from "./pages/Shop";
-import Profile from "./pages/Profile";
-import EditProfile from "./pages/EditProfile";
 import NotFound from "./pages/NotFound";
-import Notifications from "./pages/Notifications";
-import PostDetail from "./pages/PostDetail";
-import AdminDashboard from "./pages/AdminDashboard";
-import AIChat from "./pages/AIChat";
-import Install from "./pages/Install";
-import Support from "./pages/Support";
-import Services from "./pages/Services";
-import UnifiedLeaderboard from "./pages/UnifiedLeaderboard";
-import Wallet from "./pages/Wallet";
-import QRCode from "./pages/QRCode";
-import Settings from "./pages/Settings";
-import TermsOfUse from "./pages/TermsOfUse";
-import PrivacyPolicy from "./pages/PrivacyPolicy";
-import AvatarEditor from "@/pages/AvatarEditor";
-import TrendingHashtags from "./pages/TrendingHashtags";
-import AdminAffiliateRequests from "./pages/AdminAffiliateRequests";
-import AffiliateRequest from "./pages/AffiliateRequest";
-import AffiliateDashboard from "./pages/AffiliateDashboard";
-import BusinessDashboard from "./pages/BusinessDashboard";
-import Moments from "./pages/Moments";
-import MiniPrograms from "./pages/MiniPrograms";
-import Transfer from "./pages/Transfer";
-import RedEnvelope from "./pages/RedEnvelope";
-import DeveloperSDK from "./pages/DeveloperSDK";
+
+// Lazy load other pages
+const ForgotPassword = lazy(() => import("./pages/auth/ForgotPassword"));
+const ResetPassword = lazy(() => import("./pages/auth/ResetPassword"));
+const ChatsPage = lazy(() => import("./pages/Chats"));
+const ChatRoom = lazy(() => import("./pages/ChatRoom"));
+const SearchPage = lazy(() => import("./pages/Search"));
+const ShopPage = lazy(() => import("./pages/Shop"));
+const Profile = lazy(() => import("./pages/Profile"));
+const EditProfile = lazy(() => import("./pages/EditProfile"));
+const Notifications = lazy(() => import("./pages/Notifications"));
+const PostDetail = lazy(() => import("./pages/PostDetail"));
+const AdminDashboard = lazy(() => import("./pages/AdminDashboard"));
+const AIChat = lazy(() => import("./pages/AIChat"));
+const Install = lazy(() => import("./pages/Install"));
+const Support = lazy(() => import("./pages/Support"));
+const Services = lazy(() => import("./pages/Services"));
+const UnifiedLeaderboard = lazy(() => import("./pages/UnifiedLeaderboard"));
+const Wallet = lazy(() => import("./pages/Wallet"));
+const QRCode = lazy(() => import("./pages/QRCode"));
+const Settings = lazy(() => import("./pages/Settings"));
+const TermsOfUse = lazy(() => import("./pages/TermsOfUse"));
+const PrivacyPolicy = lazy(() => import("./pages/PrivacyPolicy"));
+const AvatarEditor = lazy(() => import("@/pages/AvatarEditor"));
+const TrendingHashtags = lazy(() => import("./pages/TrendingHashtags"));
+const AdminAffiliateRequests = lazy(() => import("./pages/AdminAffiliateRequests"));
+const AffiliateRequest = lazy(() => import("./pages/AffiliateRequest"));
+const AffiliateDashboard = lazy(() => import("./pages/AffiliateDashboard"));
+const BusinessDashboard = lazy(() => import("./pages/BusinessDashboard"));
+const Moments = lazy(() => import("./pages/Moments"));
+const MiniPrograms = lazy(() => import("./pages/MiniPrograms"));
+const Transfer = lazy(() => import("./pages/Transfer"));
+const RedEnvelope = lazy(() => import("./pages/RedEnvelope"));
+const DeveloperSDK = lazy(() => import("./pages/DeveloperSDK"));
 import Layout from "./components/Layout";
 
 const queryClient = new QueryClient();
@@ -68,7 +73,12 @@ const AppRoutes = () => {
   usePushNotifications();
 
   return (
-    <Routes>
+    <Suspense fallback={
+      <div className="flex items-center justify-center min-h-screen">
+        <Loader2 className="h-8 w-8 animate-spin text-primary" />
+      </div>
+    }>
+      <Routes>
       <Route path="/" element={<Layout><Home /></Layout>} />
       <Route path="/auth" element={<Welcome />} />
       <Route path="/auth/signin" element={<SignIn />} />
@@ -113,6 +123,7 @@ const AppRoutes = () => {
 
       <Route path="*" element={<NotFound />} />
     </Routes>
+    </Suspense>
   );
 };
 
