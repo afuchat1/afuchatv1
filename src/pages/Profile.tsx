@@ -263,6 +263,15 @@ const Profile = () => {
 		affiliatedDate: string;
 		businessLogo?: string;
 	} | null>(null);
+	const [affiliatedUsers, setAffiliatedUsers] = useState<Array<{
+		id: string;
+		display_name: string;
+		handle: string;
+		avatar_url: string | null;
+		is_verified: boolean;
+		is_organization_verified: boolean;
+		affiliation_date: string;
+	}>>([]);
 
 	const [profileId, setProfileId] = useState<string | null>(null);
 	const [isAdmin, setIsAdmin] = useState(false);
@@ -302,6 +311,45 @@ const Profile = () => {
 			.maybeSingle(); 
 
 		setIsAdmin(!!data); 
+	}, []);
+
+	const fetchAffiliatedUsers = useCallback(async (businessId: string) => {
+		const { data: affiliateRequests, error: requestsError } = await supabase
+			.from('affiliate_requests')
+			.select('user_id, requested_at')
+			.eq('business_profile_id', businessId)
+			.eq('status', 'approved');
+
+		if (requestsError || !affiliateRequests) {
+			console.error('Error fetching affiliate requests:', requestsError);
+			return;
+		}
+
+		const userIds = affiliateRequests.map(req => req.user_id);
+		if (userIds.length === 0) {
+			setAffiliatedUsers([]);
+			return;
+		}
+
+		const { data: users, error: usersError } = await supabase
+			.from('profiles')
+			.select('id, display_name, handle, avatar_url, is_verified, is_organization_verified')
+			.in('id', userIds);
+
+		if (usersError || !users) {
+			console.error('Error fetching affiliated users:', usersError);
+			return;
+		}
+
+		const usersWithDates = users.map(user => {
+			const request = affiliateRequests.find(req => req.user_id === user.id);
+			return {
+				...user,
+				affiliation_date: request?.requested_at || ''
+			};
+		});
+
+		setAffiliatedUsers(usersWithDates);
 	}, []);
 
 	const fetchProfile = useCallback(async () => {
@@ -376,9 +424,16 @@ const Profile = () => {
 
 		setProfile(profileData);
 		setProfileId(data.id);
+		await fetchFollowCounts(data.id);
+		
+		// Fetch affiliated users if this is a business profile
+		if (profileData.is_business_mode) {
+			await fetchAffiliatedUsers(data.id);
+		}
+		
 		setLoading(false);
 
-	}, [urlParam, navigate]);
+	}, [urlParam, navigate, fetchFollowCounts, fetchAffiliatedUsers]);
 
 	const checkFollowStatus = useCallback(async (id: string) => {
 		if (!user || !id) return;
@@ -894,7 +949,7 @@ const Profile = () => {
 
 				<Separator className="mt-4" />
 				<Tabs defaultValue="posts" className="w-full">
-					<TabsList className="grid grid-cols-5 w-full h-12 rounded-none bg-background">
+					<TabsList className={`grid ${profile.is_business_mode ? 'grid-cols-5' : 'grid-cols-4'} w-full h-12 rounded-none bg-background`}>
 						<TabsTrigger value="posts" className="data-[state=active]:bg-transparent data-[state=active]:text-primary border-b-2 data-[state=active]:border-primary data-[state=inactive]:border-transparent rounded-none font-bold text-muted-foreground text-xs sm:text-sm">
 							{t('profile.posts')}
 						</TabsTrigger>
@@ -904,6 +959,11 @@ const Profile = () => {
 						<TabsTrigger value="gifts" className="data-[state=active]:bg-transparent data-[state=active]:text-primary border-b-2 data-[state=active]:border-primary data-[state=inactive]:border-transparent rounded-none font-bold text-muted-foreground text-xs sm:text-sm">
 							Gifts
 						</TabsTrigger>
+						{profile.is_business_mode && (
+							<TabsTrigger value="affiliates" className="data-[state=active]:bg-transparent data-[state=active]:text-primary border-b-2 data-[state=active]:border-primary data-[state=inactive]:border-transparent rounded-none font-bold text-muted-foreground text-xs sm:text-sm">
+								Affiliates
+							</TabsTrigger>
+						)}
 						{user?.id === profileId && (
 							<TabsTrigger value="referrals" className="data-[state=active]:bg-transparent data-[state=active]:text-primary border-b-2 data-[state=active]:border-primary data-[state=inactive]:border-transparent rounded-none font-bold text-muted-foreground text-xs sm:text-sm">
 								Referrals
@@ -956,6 +1016,56 @@ const Profile = () => {
 						<ReceivedGifts userId={profileId!} />
 					</div>
 				</TabsContent>
+
+					{profile.is_business_mode && (
+						<TabsContent value="affiliates">
+							{affiliatedUsers.length === 0 ? (
+								<div className="text-center text-muted-foreground py-12">
+									<p className="font-semibold">No affiliates yet</p>
+									<p className="text-sm">This business doesn't have any affiliated users.</p>
+								</div>
+							) : (
+								<div className="space-y-0 divide-y divide-border">
+									{affiliatedUsers.map((affiliatedUser) => (
+										<div 
+											key={affiliatedUser.id}
+											className="p-4 hover:bg-muted/10 cursor-pointer transition-colors flex items-center gap-3"
+											onClick={() => navigate(`/${affiliatedUser.handle}`)}
+										>
+											<div className="w-12 h-12 rounded-full overflow-hidden flex-shrink-0">
+												{affiliatedUser.avatar_url ? (
+													<img 
+														src={affiliatedUser.avatar_url} 
+														alt={affiliatedUser.display_name}
+														className="w-full h-full object-cover"
+													/>
+												) : (
+													<DefaultAvatar name={affiliatedUser.display_name} size={48} />
+												)}
+											</div>
+											<div className="flex-1 min-w-0">
+												<div className="flex items-center gap-1">
+													<span className="font-bold truncate">{affiliatedUser.display_name}</span>
+													<VerifiedBadge
+														isVerified={affiliatedUser.is_verified}
+														isOrgVerified={affiliatedUser.is_organization_verified}
+														isAffiliate={true}
+														affiliateBusinessLogo={profile.avatar_url}
+														affiliateBusinessName={profile.display_name}
+													/>
+												</div>
+												<p className="text-sm text-muted-foreground">@{affiliatedUser.handle}</p>
+												<p className="text-xs text-muted-foreground mt-1">
+													Affiliated since {new Date(affiliatedUser.affiliation_date).toLocaleDateString('en-US', { month: 'long', year: 'numeric' })}
+												</p>
+											</div>
+										</div>
+									))}
+								</div>
+							)}
+						</TabsContent>
+					)}
+
 					{user?.id === profileId && (
 						<TabsContent value="referrals">
 							<div className="p-4">
