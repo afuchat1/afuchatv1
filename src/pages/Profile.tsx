@@ -35,8 +35,6 @@ interface Profile {
 	is_verified?: boolean;
 	is_organization_verified?: boolean;
 	is_affiliate?: boolean;
-	affiliate_business_name?: string | null;
-	affiliate_business_logo?: string | null;
 	is_private?: boolean;
 	created_at?: string;
 	xp: number;
@@ -710,7 +708,6 @@ const Profile = () => {
 										isVerified={profile.is_verified}
 										isOrgVerified={profile.is_organization_verified}
 										isAffiliate={profile.is_affiliate}
-										affiliateBusinessLogo={profile.affiliate_business_logo}
 									/>
 									</div>
 								</PopoverTrigger>

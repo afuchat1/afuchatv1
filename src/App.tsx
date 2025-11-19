@@ -79,9 +79,7 @@ const AppRoutes = () => {
       <Route path="/gift-leaderboard" element={<Layout><GiftLeaderboard /></Layout>} />
       <Route path="/avatar/edit" element={<AvatarEditor />} />
       <Route path="/trending" element={<Layout><TrendingHashtags /></Layout>} />
-      <Route path="/affiliate/request" element={<Layout><AffiliateRequestPage /></Layout>} />
       <Route path="/admin/affiliate-requests" element={<Layout><AdminAffiliateRequests /></Layout>} />
-      <Route path="/business/affiliates" element={<Layout><BusinessAffiliateRequests /></Layout>} />
 
       <Route path="/profile/:userId" element={<ProfileRedirect />} />
 
@@ -97,15 +95,13 @@ const App = () => (
   <QueryClientProvider client={queryClient}>
     <ThemeProvider>
       <AuthProvider>
-        <AccountModeProvider>
-          <TooltipProvider>
-            <Toaster />
-            <Sonner />
-            <BrowserRouter future={{ v7_startTransition: true }}>
-              <AppRoutes />
-            </BrowserRouter>
-          </TooltipProvider>
-        </AccountModeProvider>
+        <TooltipProvider>
+          <Toaster />
+          <Sonner />
+          <BrowserRouter future={{ v7_startTransition: true }}>
+            <AppRoutes />
+          </BrowserRouter>
+        </TooltipProvider>
       </AuthProvider>
     </ThemeProvider>
   </QueryClientProvider>

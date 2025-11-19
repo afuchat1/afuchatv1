@@ -60,8 +60,6 @@ interface Post {
     is_verified: boolean;
     is_organization_verified: boolean;
     is_affiliate: boolean;
-    affiliate_business_name: string | null;
-    affiliate_business_logo: string | null;
     avatar_url?: string | null;
   };
   replies: Reply[];
@@ -87,8 +85,6 @@ interface Reply {
     is_verified: boolean;
     is_organization_verified: boolean;
     is_affiliate: boolean;
-    affiliate_business_name: string | null;
-    affiliate_business_logo: string | null;
     avatar_url?: string | null;
   };
 }
@@ -296,7 +292,6 @@ const ReplyItem = ({ reply, navigate, handleViewProfile }: { reply: Reply; navig
               isVerified={reply.profiles.is_verified}
               isOrgVerified={reply.profiles.is_organization_verified}
               isAffiliate={reply.profiles.is_affiliate}
-              affiliateBusinessLogo={reply.profiles.affiliate_business_logo}
             />
 
                     <span
@@ -479,8 +474,6 @@ const PostCard = ({ post, addReply, user, navigate, onAcknowledge, onDeletePost,
         is_verified: user?.user_metadata?.is_verified || false,
         is_organization_verified: user?.user_metadata?.is_organization_verified || false,
         is_affiliate: false,
-        affiliate_business_name: null,
-        affiliate_business_logo: null,
         avatar_url: userProfile?.avatar_url || null,
       },
     };
@@ -611,7 +604,6 @@ const PostCard = ({ post, addReply, user, navigate, onAcknowledge, onDeletePost,
               isVerified={post.profiles.is_verified}
               isOrgVerified={post.profiles.is_organization_verified}
               isAffiliate={post.profiles.is_affiliate}
-              affiliateBusinessLogo={post.profiles.affiliate_business_logo}
             />
 
             <span
@@ -1151,7 +1143,7 @@ const Feed = () => {
         .from('posts')
         .select(`
           *,
-          profiles(display_name, handle, is_verified, is_organization_verified, is_affiliate, affiliate_business_name, affiliate_business_logo, avatar_url),
+          profiles(display_name, handle, is_verified, is_organization_verified, is_affiliate, avatar_url),
           post_images(image_url, display_order, alt_text),
           post_link_previews(url, title, description, image_url, site_name)
         `)
@@ -1175,7 +1167,7 @@ const Feed = () => {
             .from('posts')
             .select(`
               *,
-              profiles(display_name, handle, is_verified, is_organization_verified, is_affiliate, affiliate_business_name, affiliate_business_logo, avatar_url),
+              profiles(display_name, handle, is_verified, is_organization_verified, is_affiliate, avatar_url),
               post_images(image_url, display_order, alt_text),
               post_link_previews(url, title, description, image_url, site_name)
             `)
@@ -1191,7 +1183,7 @@ const Feed = () => {
 
       const { data: repliesData, error: repliesError } = await supabase
         .from('post_replies')
-        .select('*, profiles(display_name, handle, is_verified, is_organization_verified, is_affiliate, affiliate_business_name, affiliate_business_logo, avatar_url)')
+        .select('*, profiles(display_name, handle, is_verified, is_organization_verified, is_affiliate, avatar_url)')
         .in('post_id', postIds)
         .order('created_at', { ascending: true });
 
@@ -1282,7 +1274,7 @@ const Feed = () => {
         async (payload) => {
           const { data: profile } = await supabase
             .from('profiles')
-            .select('display_name, handle, is_verified, is_organization_verified, is_affiliate, affiliate_business_name, affiliate_business_logo')
+            .select('display_name, handle, is_verified, is_organization_verified, is_affiliate')
             .eq('id', payload.new.author_id)
             .single();
 
