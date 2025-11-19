@@ -10,6 +10,8 @@ import NewChatDialog from '@/components/ui/NewChatDialog';
 import { useTranslation } from 'react-i18next';
 import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
+import { UserAvatar } from '@/components/avatar/UserAvatar';
+import { formatDistanceToNow } from 'date-fns';
 
 interface Chat {
   id: string;
@@ -18,10 +20,14 @@ interface Chat {
   updated_at: string;
   last_message_content?: string;
   other_user?: {
+    id: string;
     display_name: string;
     handle: string;
     avatar_url: string | null;
+    last_seen: string | null;
+    show_online_status: boolean | null;
   };
+  is_online?: boolean;
 }
 
 const formatTime = (isoString: string) => {
@@ -101,12 +107,18 @@ const Chats = () => {
               if (otherUserId) {
                 const { data: profile } = await supabase
                   .from('profiles')
-                  .select('display_name, handle, avatar_url')
+                  .select('id, display_name, handle, avatar_url, last_seen, show_online_status')
                   .eq('id', otherUserId)
                   .single();
                 
                 if (profile) {
                   chatData.other_user = profile;
+                  // Check if user is online (last seen within 5 minutes)
+                  if (profile.last_seen && profile.show_online_status) {
+                    const lastSeenTime = new Date(profile.last_seen).getTime();
+                    const now = new Date().getTime();
+                    chatData.is_online = now - lastSeenTime < 5 * 60 * 1000;
+                  }
                 }
               }
             }
@@ -203,19 +215,38 @@ const Chats = () => {
         onClick={() => navigate(`/chat/${chat.id}`)}
       >
         <div className="flex items-center gap-4">
-          <div className={`relative h-14 w-14 rounded-full flex items-center justify-center flex-shrink-0 shadow-lg transition-transform duration-300 group-hover:scale-110 ${
-            chat.is_group 
-              ? 'bg-gradient-to-br from-indigo-500 to-purple-600' 
-              : 'bg-gradient-to-br from-primary to-primary/80'
-          }`}>
+          <div 
+            className="relative flex-shrink-0 cursor-pointer transition-transform duration-300 group-hover:scale-110"
+            onClick={(e) => {
+              if (!chat.is_group && chat.other_user) {
+                e.stopPropagation();
+                navigate(`/profile/${chat.other_user.handle}`);
+              }
+            }}
+          >
             {chat.is_group ? (
-              <Icon className="h-6 w-6 text-white" />
+              <div className="h-14 w-14 rounded-full bg-gradient-to-br from-indigo-500 to-purple-600 flex items-center justify-center shadow-lg">
+                <Icon className="h-6 w-6 text-white" />
+              </div>
+            ) : chat.other_user ? (
+              <>
+                <UserAvatar
+                  userId={chat.other_user.id}
+                  name={chat.other_user.display_name}
+                  avatarUrl={chat.other_user.avatar_url}
+                  size={56}
+                  showOwlFallback={true}
+                  className="shadow-lg"
+                />
+                {chat.is_online && (
+                  <div className="absolute -bottom-0.5 -right-0.5 h-4 w-4 rounded-full bg-green-500 border-2 border-card" />
+                )}
+              </>
             ) : (
-              <span className="text-lg font-semibold text-white">
-                {chat.other_user?.display_name?.charAt(0).toUpperCase() || 'U'}
-              </span>
+              <div className="h-14 w-14 rounded-full bg-gradient-to-br from-primary to-primary/80 flex items-center justify-center shadow-lg">
+                <User className="h-6 w-6 text-white" />
+              </div>
             )}
-            <div className="absolute -bottom-0.5 -right-0.5 h-4 w-4 rounded-full bg-green-500" />
           </div>
 
           <div className="flex-1 min-w-0">
@@ -230,7 +261,12 @@ const Chats = () => {
               )}
             </div>
             <p className="text-sm text-muted-foreground truncate leading-relaxed">
-              {lastMessagePreview}
+              {chat.is_online 
+                ? '🟢 Online'
+                : chat.other_user?.last_seen && chat.other_user?.show_online_status
+                  ? `Last seen ${formatDistanceToNow(new Date(chat.other_user.last_seen), { addSuffix: true })}`
+                  : lastMessagePreview
+              }
             </p>
           </div>
 
