@@ -280,7 +280,17 @@
     "recording": "Recording...",
     "stopRecording": "Stop Recording",
     "playAudio": "Play Audio",
-    "pauseAudio": "Pause Audio"
+    "pauseAudio": "Pause Audio",
+    "oneOnOne": "1:1 Chat",
+    "lastGroupMessage": "Last group message...",
+    "lastOneOnOneMessage": "Last 1:1 message...",
+    "searchChats": "Search conversations...",
+    "conversation": "conversation",
+    "conversations": "conversations",
+    "group": "Group",
+    "noChatsFound": "No chats found",
+    "tryDifferentSearch": "Try a different search term",
+    "startNewChat": "Start New Chat"
   },
   "chatRoom": {
     "sendMessage": "Send message",

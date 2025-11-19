@@ -110,6 +110,9 @@ const Layout = ({ children }: LayoutProps) => {
     return location.pathname.startsWith(path);
   };
 
+  // Hide bottom navigation in chat rooms
+  const isChatRoom = location.pathname.startsWith('/chat/');
+
   return (
     <div className="min-h-screen bg-background">
       <InstallPromptBanner />
@@ -175,35 +178,37 @@ const Layout = ({ children }: LayoutProps) => {
         </div>
       </main>
 
-      {/* Mobile Bottom Navigation */}
-      <nav className={cn(
-        "lg:hidden fixed bottom-0 left-0 right-0 bg-background border-t border-border z-50 transition-transform duration-300",
-        isScrollingDown ? "translate-y-full" : "translate-y-0"
-      )}>
-        <div className="flex justify-around items-center h-16 px-2">
-          {[
-            { path: '/', icon: Home },
-            { path: '/search', icon: Search },
-            { path: '/services', icon: ShoppingBag },
-            { path: '/chats', icon: MessageSquare },
-            { path: user ? `/${user.id}` : '/auth', icon: User }
-          ].map((item) => (
-            <Link
-              key={item.path}
-              to={item.path}
-              className={cn(
-                "flex flex-col items-center justify-center flex-1 h-full transition-colors",
-                isActive(item.path) ? "text-primary" : "text-muted-foreground"
-              )}
-            >
-              <item.icon className={cn(
-                "h-6 w-6",
-                isActive(item.path) && "fill-current"
-              )} />
-            </Link>
-          ))}
-        </div>
-      </nav>
+      {/* Mobile Bottom Navigation - Hidden in chat rooms */}
+      {!isChatRoom && (
+        <nav className={cn(
+          "lg:hidden fixed bottom-0 left-0 right-0 bg-background border-t border-border z-50 transition-transform duration-300",
+          isScrollingDown ? "translate-y-full" : "translate-y-0"
+        )}>
+          <div className="flex justify-around items-center h-16 px-2">
+            {[
+              { path: '/', icon: Home },
+              { path: '/search', icon: Search },
+              { path: '/services', icon: ShoppingBag },
+              { path: '/chats', icon: MessageSquare },
+              { path: user ? `/${user.id}` : '/auth', icon: User }
+            ].map((item) => (
+              <Link
+                key={item.path}
+                to={item.path}
+                className={cn(
+                  "flex flex-col items-center justify-center flex-1 h-full transition-colors",
+                  isActive(item.path) ? "text-primary" : "text-muted-foreground"
+                )}
+              >
+                <item.icon className={cn(
+                  "h-6 w-6",
+                  isActive(item.path) && "fill-current"
+                )} />
+              </Link>
+            ))}
+          </div>
+        </nav>
+      )}
     </div>
   );
 };
