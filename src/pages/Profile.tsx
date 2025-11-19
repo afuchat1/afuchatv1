@@ -27,6 +27,8 @@ import { LinkPreviewCard } from '@/components/ui/LinkPreviewCard';
 import { DefaultAvatar } from '@/components/avatar/DefaultAvatar';
 import { VerifiedBadge } from '@/components/VerifiedBadge';
 import { BusinessBadge } from '@/components/BusinessBadge';
+import { AffiliatedBadge } from '@/components/AffiliatedBadge';
+import { AffiliateDetailsSheet } from '@/components/AffiliateDetailsSheet';
 
 interface Profile {
 	id: string;
@@ -48,6 +50,7 @@ interface Profile {
 		avatar_url: string | null;
 		display_name: string;
 	} | null;
+	affiliation_date?: string;
 }
 
 interface Post {
@@ -254,6 +257,12 @@ const Profile = () => {
 	const [isFollowing, setIsFollowing] = useState(false);
 	const [followCount, setFollowCount] = useState({ followers: 0, following: 0 });
 	const [loading, setLoading] = useState(true);
+	const [selectedAffiliate, setSelectedAffiliate] = useState<{
+		userName: string;
+		businessName: string;
+		affiliatedDate: string;
+		businessLogo?: string;
+	} | null>(null);
 
 	const [profileId, setProfileId] = useState<string | null>(null);
 	const [isAdmin, setIsAdmin] = useState(false);
@@ -348,6 +357,20 @@ const Profile = () => {
 					avatar_url: businessData.avatar_url,
 					display_name: businessData.display_name
 				};
+			}
+
+			// Fetch affiliation date
+			if (profileData.is_affiliate) {
+				const { data: affiliationData } = await supabase
+					.from('affiliate_requests')
+					.select('reviewed_at')
+					.eq('user_id', data.id)
+					.eq('status', 'approved')
+					.single();
+
+				if (affiliationData) {
+					profileData.affiliation_date = affiliationData.reviewed_at;
+				}
 			}
 		}
 
@@ -725,7 +748,54 @@ const Profile = () => {
 
 					<div className="mt-3">
 
-						{(profile.is_verified || profile.is_organization_verified || profile.is_affiliate || profile.is_business_mode) ? (
+						{profile.is_affiliate ? (
+							<div className="flex items-center gap-1">
+								<button 
+									className="text-xl font-extrabold leading-tight hover:underline"
+									onClick={() => profile.affiliated_business && profile.affiliation_date && setSelectedAffiliate({
+										userName: profile.display_name,
+										businessName: profile.affiliated_business.display_name,
+										affiliatedDate: profile.affiliation_date,
+										businessLogo: profile.affiliated_business.avatar_url || undefined
+									})}
+								>
+									{profile.display_name}
+								</button>
+								
+								{profile.is_business_mode && (
+									<AffiliatedBadge 
+										onClick={() => profile.affiliated_business && profile.affiliation_date && setSelectedAffiliate({
+											userName: profile.display_name,
+											businessName: profile.affiliated_business.display_name,
+											affiliatedDate: profile.affiliation_date,
+											businessLogo: profile.affiliated_business.avatar_url || undefined
+										})}
+									/>
+								)}
+								
+								<div 
+									onClick={() => profile.affiliated_business && profile.affiliation_date && setSelectedAffiliate({
+										userName: profile.display_name,
+										businessName: profile.affiliated_business.display_name,
+										affiliatedDate: profile.affiliation_date,
+										businessLogo: profile.affiliated_business.avatar_url || undefined
+									})}
+									className="cursor-pointer"
+								>
+									<VerifiedBadge
+										isVerified={profile.is_verified}
+										isOrgVerified={profile.is_organization_verified}
+										isAffiliate={profile.is_affiliate}
+										affiliateBusinessLogo={profile.affiliated_business?.avatar_url}
+										affiliateBusinessName={profile.affiliated_business?.display_name}
+									/>
+								</div>
+								
+								{profile.is_business_mode && (
+									<BusinessBadge />
+								)}
+							</div>
+						) : (profile.is_verified || profile.is_organization_verified || profile.is_business_mode) ? (
 							<Popover>
 								<PopoverTrigger asChild>
 									<div className="flex items-center gap-1 cursor-pointer w-fit">
@@ -903,6 +973,18 @@ const Profile = () => {
 				onLogout={handleLogout}
 				onEditProfile={handleEditProfile}
 			/>
+
+			{/* Affiliate Details Sheet */}
+			{selectedAffiliate && (
+				<AffiliateDetailsSheet
+					open={!!selectedAffiliate}
+					onOpenChange={(open) => !open && setSelectedAffiliate(null)}
+					userName={selectedAffiliate.userName}
+					businessName={selectedAffiliate.businessName}
+					affiliatedDate={selectedAffiliate.affiliatedDate}
+					businessLogo={selectedAffiliate.businessLogo}
+				/>
+			)}
 		</div>
 	);
 };

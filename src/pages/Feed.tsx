@@ -27,7 +27,6 @@ import { MentionInput } from '@/components/MentionInput';
 import { VerifiedBadge } from '@/components/VerifiedBadge';
 import { BusinessBadge } from '@/components/BusinessBadge';
 import { AffiliatedBadge } from '@/components/AffiliatedBadge';
-import { AffiliateDetailsSheet } from '@/components/AffiliateDetailsSheet';
 
 // --- INTERFACES ---
 
@@ -263,11 +262,10 @@ const UserAvatarMedium = ({ userId, name, avatarUrl }: { userId: string; name: s
 
 // --- REPLY ITEM (Updated with auto-translation) ---
 
-const ReplyItem = ({ reply, navigate, handleViewProfile, setSelectedAffiliate }: { 
+const ReplyItem = ({ reply, navigate, handleViewProfile }: { 
   reply: Reply; 
   navigate: any; 
   handleViewProfile: (id: string) => void;
-  setSelectedAffiliate: (data: { userName: string; businessName: string; affiliatedDate: string; businessLogo?: string } | null) => void;
 }) => {
     const { i18n, t } = useTranslation();
     const { translateText } = useAITranslation();
@@ -304,60 +302,24 @@ const ReplyItem = ({ reply, navigate, handleViewProfile, setSelectedAffiliate }:
 
             <div className="flex-1 min-w-0">
                 <div className="flex items-center gap-x-1 min-w-0">
-                    {reply.profiles.is_affiliate ? (
-                      <button
-                        className="font-bold text-foreground text-[10px] sm:text-xs hover:underline whitespace-nowrap"
-                        onClick={() => reply.profiles.affiliated_business && reply.affiliation_date && setSelectedAffiliate({
-                          userName: reply.profiles.display_name,
-                          businessName: reply.profiles.affiliated_business.display_name,
-                          affiliatedDate: reply.affiliation_date,
-                          businessLogo: reply.profiles.affiliated_business.avatar_url || undefined
-                        })}
-                      >
-                        {reply.profiles.display_name}
-                      </button>
-                    ) : (
-                      <span
+                    <span
                         className="font-bold text-foreground text-[10px] sm:text-xs cursor-pointer hover:underline whitespace-nowrap"
                         onClick={() => handleViewProfile(reply.author_id)}
-                      >
-                        {reply.profiles.display_name}
-                      </span>
-                    )}
-                    
-                    {reply.profiles.is_affiliate && reply.profiles.is_business_mode && reply.profiles.affiliated_business && reply.affiliation_date && (
-                      <AffiliatedBadge 
-                        size="sm"
-                        onClick={() => setSelectedAffiliate({
-                          userName: reply.profiles.display_name,
-                          businessName: reply.profiles.affiliated_business!.display_name,
-                          affiliatedDate: reply.affiliation_date!,
-                          businessLogo: reply.profiles.affiliated_business!.avatar_url || undefined
-                        })}
-                      />
-                    )}
-                    
-                    <div 
-                      onClick={() => {
-                        if (reply.profiles.is_affiliate && reply.profiles.affiliated_business && reply.affiliation_date) {
-                          setSelectedAffiliate({
-                            userName: reply.profiles.display_name,
-                            businessName: reply.profiles.affiliated_business.display_name,
-                            affiliatedDate: reply.affiliation_date,
-                            businessLogo: reply.profiles.affiliated_business.avatar_url || undefined
-                          });
-                        }
-                      }}
-                      className={reply.profiles.is_affiliate ? "cursor-pointer" : ""}
                     >
-                      <VerifiedBadge 
-                        isVerified={reply.profiles.is_verified}
-                        isOrgVerified={reply.profiles.is_organization_verified}
-                        isAffiliate={reply.profiles.is_affiliate}
-                        affiliateBusinessLogo={reply.profiles.affiliated_business?.avatar_url}
-                        affiliateBusinessName={reply.profiles.affiliated_business?.display_name}
-                      />
-                    </div>
+                        {reply.profiles.display_name}
+                    </span>
+                    
+                    {reply.profiles.is_affiliate && reply.profiles.is_business_mode && (
+                      <AffiliatedBadge size="sm" />
+                    )}
+                    
+                    <VerifiedBadge 
+                      isVerified={reply.profiles.is_verified}
+                      isOrgVerified={reply.profiles.is_organization_verified}
+                      isAffiliate={reply.profiles.is_affiliate}
+                      affiliateBusinessLogo={reply.profiles.affiliated_business?.avatar_url}
+                      affiliateBusinessName={reply.profiles.affiliated_business?.display_name}
+                    />
                     {reply.profiles.is_business_mode && !reply.profiles.is_affiliate && (
                       <BusinessBadge size="sm" />
                     )}
@@ -396,7 +358,7 @@ const ReplyItem = ({ reply, navigate, handleViewProfile, setSelectedAffiliate }:
 
 // --- POST CARD (Updated to accept and pass through new props) ---
 
-const PostCard = ({ post, addReply, user, navigate, onAcknowledge, onDeletePost, onReportPost, onEditPost, userProfile, expandedPosts, setExpandedPosts, setSelectedAffiliate }:
+const PostCard = ({ post, addReply, user, navigate, onAcknowledge, onDeletePost, onReportPost, onEditPost, userProfile, expandedPosts, setExpandedPosts }:
   { 
     post: Post;
     addReply: (postId: string, newReply: Reply) => void;
@@ -409,7 +371,6 @@ const PostCard = ({ post, addReply, user, navigate, onAcknowledge, onDeletePost,
     userProfile: { display_name: string; avatar_url: string | null } | null;
     expandedPosts: Set<string>;
     setExpandedPosts: React.Dispatch<React.SetStateAction<Set<string>>>;
-    setSelectedAffiliate: (data: { userName: string; businessName: string; affiliatedDate: string; businessLogo?: string } | null) => void;
   }) => {
 
   const { t, i18n } = useTranslation();
@@ -663,60 +624,24 @@ const PostCard = ({ post, addReply, user, navigate, onAcknowledge, onDeletePost,
       <div className="flex-1 min-w-0">
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-x-1 min-w-0">
-            {post.profiles.is_affiliate ? (
-              <button
-                className="font-bold text-foreground text-xs sm:text-sm hover:underline whitespace-nowrap"
-                onClick={() => post.profiles.affiliated_business && post.affiliation_date && setSelectedAffiliate({
-                  userName: post.profiles.display_name,
-                  businessName: post.profiles.affiliated_business.display_name,
-                  affiliatedDate: post.affiliation_date,
-                  businessLogo: post.profiles.affiliated_business.avatar_url || undefined
-                })}
-              >
-                {post.profiles.display_name}
-              </button>
-            ) : (
-              <span
-                className="font-bold text-foreground text-xs sm:text-sm cursor-pointer hover:underline whitespace-nowrap"
-                onClick={() => handleViewProfile(post.author_id)}
-              >
-                {post.profiles.display_name}
-              </span>
-            )}
-            
-            {post.profiles.is_affiliate && post.profiles.is_business_mode && post.profiles.affiliated_business && post.affiliation_date && (
-              <AffiliatedBadge 
-                size="sm"
-                onClick={() => setSelectedAffiliate({
-                  userName: post.profiles.display_name,
-                  businessName: post.profiles.affiliated_business!.display_name,
-                  affiliatedDate: post.affiliation_date!,
-                  businessLogo: post.profiles.affiliated_business!.avatar_url || undefined
-                })}
-              />
-            )}
-            
-            <div 
-              onClick={() => {
-                if (post.profiles.is_affiliate && post.profiles.affiliated_business && post.affiliation_date) {
-                  setSelectedAffiliate({
-                    userName: post.profiles.display_name,
-                    businessName: post.profiles.affiliated_business.display_name,
-                    affiliatedDate: post.affiliation_date,
-                    businessLogo: post.profiles.affiliated_business.avatar_url || undefined
-                  });
-                }
-              }}
-              className={post.profiles.is_affiliate ? "cursor-pointer" : ""}
+            <span
+              className="font-bold text-foreground text-xs sm:text-sm cursor-pointer hover:underline whitespace-nowrap"
+              onClick={() => handleViewProfile(post.author_id)}
             >
-              <VerifiedBadge 
-                isVerified={post.profiles.is_verified}
-                isOrgVerified={post.profiles.is_organization_verified}
-                isAffiliate={post.profiles.is_affiliate}
-                affiliateBusinessLogo={post.profiles.affiliated_business?.avatar_url}
-                affiliateBusinessName={post.profiles.affiliated_business?.display_name}
-              />
-            </div>
+              {post.profiles.display_name}
+            </span>
+            
+            {post.profiles.is_affiliate && post.profiles.is_business_mode && (
+              <AffiliatedBadge size="sm" />
+            )}
+            
+            <VerifiedBadge 
+              isVerified={post.profiles.is_verified}
+              isOrgVerified={post.profiles.is_organization_verified}
+              isAffiliate={post.profiles.is_affiliate}
+              affiliateBusinessLogo={post.profiles.affiliated_business?.avatar_url}
+              affiliateBusinessName={post.profiles.affiliated_business?.display_name}
+            />
             {post.profiles.is_business_mode && !post.profiles.is_affiliate && (
               <BusinessBadge size="sm" />
             )}
@@ -983,12 +908,6 @@ const Feed = () => {
   const [expandedPosts, setExpandedPosts] = useState<Set<string>>(new Set());
   const navigate = useNavigate();
   const feedRef = useRef<HTMLDivElement>(null);
-  const [selectedAffiliate, setSelectedAffiliate] = useState<{
-    userName: string;
-    businessName: string;
-    affiliatedDate: string;
-    businessLogo?: string;
-  } | null>(null);
   
   const [deletePostId, setDeletePostId] = useState<string | null>(null);
   const [reportPostId, setReportPostId] = useState<string | null>(null);
@@ -1634,7 +1553,6 @@ const Feed = () => {
                 userProfile={userProfile}
                 expandedPosts={expandedPosts}
                 setExpandedPosts={setExpandedPosts}
-                setSelectedAffiliate={setSelectedAffiliate}
               />
             ))
           )}
@@ -1663,18 +1581,6 @@ const Feed = () => {
           onClose={() => setEditPost(null)}
           post={editPost}
           onPostUpdated={handlePostUpdated}
-        />
-      )}
-
-      {/* Affiliate Details Sheet */}
-      {selectedAffiliate && (
-        <AffiliateDetailsSheet
-          open={!!selectedAffiliate}
-          onOpenChange={(open) => !open && setSelectedAffiliate(null)}
-          userName={selectedAffiliate.userName}
-          businessName={selectedAffiliate.businessName}
-          affiliatedDate={selectedAffiliate.affiliatedDate}
-          businessLogo={selectedAffiliate.businessLogo}
         />
       )}
     </div>
