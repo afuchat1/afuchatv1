@@ -30,12 +30,14 @@ import AdminDashboard from "./pages/AdminDashboard";
 import AIChat from "./pages/AIChat";
 import Install from "./pages/Install";
 import Support from "./pages/Support";
+import Services from "./pages/Services";
+import UnifiedLeaderboard from "./pages/UnifiedLeaderboard";
+import Wallet from "./pages/Wallet";
+import QRCode from "./pages/QRCode";
 import Settings from "./pages/Settings";
 import TermsOfUse from "./pages/TermsOfUse";
 import PrivacyPolicy from "./pages/PrivacyPolicy";
-import Leaderboard from "./pages/Leaderboard";
 import AvatarEditor from "./pages/AvatarEditor";
-import GiftLeaderboard from "./pages/GiftLeaderboard";
 import TrendingHashtags from "./pages/TrendingHashtags";
 import AdminAffiliateRequests from "./pages/AdminAffiliateRequests";
 import AffiliateRequest from "./pages/AffiliateRequest";
@@ -78,11 +80,15 @@ const AppRoutes = () => {
       <Route path="/ai-chat" element={<AIChat />} />
       <Route path="/install" element={<Install />} />
       <Route path="/support" element={<Support />} />
+      <Route path="/services" element={<Layout><Services /></Layout>} />
+      <Route path="/leaderboard" element={<Layout><UnifiedLeaderboard /></Layout>} />
+      <Route path="/wallet" element={<Layout><Wallet /></Layout>} />
+      <Route path="/qr-code" element={<Layout><QRCode /></Layout>} />
+      <Route path="/gifts" element={<Layout><Services /></Layout>} />
+      <Route path="/tips" element={<Layout><Services /></Layout>} />
       <Route path="/settings" element={<Layout><Settings /></Layout>} />
       <Route path="/terms" element={<TermsOfUse />} />
       <Route path="/privacy" element={<PrivacyPolicy />} />
-      <Route path="/leaderboard" element={<Layout><Leaderboard /></Layout>} />
-      <Route path="/gift-leaderboard" element={<Layout><GiftLeaderboard /></Layout>} />
       <Route path="/avatar/edit" element={<AvatarEditor />} />
       <Route path="/trending" element={<Layout><TrendingHashtags /></Layout>} />
       <Route path="/admin/affiliate-requests" element={<Layout><AdminAffiliateRequests /></Layout>} />
