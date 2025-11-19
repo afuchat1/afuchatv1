@@ -407,17 +407,20 @@ const Profile = () => {
 				};
 			}
 
-			// Fetch affiliation date
+			// Fetch affiliation date - use reviewed_at (approval date) or fallback to requested_at
 			if (profileData.is_affiliate) {
-				const { data: affiliationData } = await supabase
+				const { data: affiliationData, error: affiliationError } = await supabase
 					.from('affiliate_requests')
-					.select('reviewed_at')
+					.select('reviewed_at, requested_at')
 					.eq('user_id', data.id)
 					.eq('status', 'approved')
-					.single();
+					.maybeSingle();
+
+				console.log('Affiliation data:', affiliationData, 'Error:', affiliationError);
 
 				if (affiliationData) {
-					profileData.affiliation_date = affiliationData.reviewed_at;
+					// Use reviewed_at (when approved) or fallback to requested_at
+					profileData.affiliation_date = affiliationData.reviewed_at || affiliationData.requested_at;
 				}
 			}
 		}
