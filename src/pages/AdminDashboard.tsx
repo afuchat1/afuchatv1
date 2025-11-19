@@ -6,7 +6,7 @@ import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/contexts/AuthContext';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Skeleton } from '@/components/ui/skeleton';
-import { Users, MessageSquare, TrendingUp, Activity, ArrowLeft, UserCheck, Shield, Trash2, Edit, BarChart3, Users as UsersIcon, AlertTriangle, Lock } from 'lucide-react';
+import { Users, MessageSquare, TrendingUp, Activity, ArrowLeft, UserCheck, Shield, Trash2, Edit, BarChart3, Users as UsersIcon, AlertTriangle, Lock, Building2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Badge } from '@/components/ui/badge';
@@ -368,20 +368,31 @@ const AdminDashboard = () => {
   return (
     <div className="min-h-screen bg-background">
       <div className="container mx-auto px-2 py-4 sm:px-4 sm:py-6 max-w-6xl">
-        <div className="flex items-center gap-2 sm:gap-4 mb-4 sm:mb-6">
-          <Button
-            variant="ghost"
-            size="icon"
-            // 🚨 MODIFICATION 2: Changed navigate('/') to navigate(-1) for main header
-            onClick={() => navigate(-1)}
-            className="rounded-full h-8 w-8 sm:h-10 sm:w-10"
-          >
-            <ArrowLeft className="h-4 w-4 sm:h-5 sm:w-5" />
-          </Button>
-          <div>
-            <h1 className="text-xl sm:text-2xl font-bold text-foreground">Admin Dashboard</h1>
-            <p className="text-xs sm:text-sm text-muted-foreground">Monitor platform performance and manage users/posts</p>
+        <div className="flex items-center justify-between mb-4 sm:mb-6">
+          <div className="flex items-center gap-2 sm:gap-4">
+            <Button
+              variant="ghost"
+              size="icon"
+              onClick={() => navigate(-1)}
+              className="rounded-full h-8 w-8 sm:h-10 sm:w-10"
+            >
+              <ArrowLeft className="h-4 w-4 sm:h-5 sm:w-5" />
+            </Button>
+            <div>
+              <h1 className="text-xl sm:text-2xl font-bold text-foreground">Admin Dashboard</h1>
+              <p className="text-xs sm:text-sm text-muted-foreground">Monitor platform performance and manage users/posts</p>
+            </div>
           </div>
+          
+          <Button 
+            variant="outline" 
+            size="sm"
+            onClick={() => navigate('/admin/affiliate-requests')}
+            className="gap-2"
+          >
+            <Building2 className="h-4 w-4" />
+            <span className="hidden sm:inline">Affiliate Requests</span>
+          </Button>
         </div>
 
         {/* Main Tabs (Only visible to admin) */}
