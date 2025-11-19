@@ -67,12 +67,12 @@ All colors MUST be HSL.
   }
 
   .dark {
-    /* Telegram-style colors */
-    --primary: 263 70% 65%; /* Purple for outgoing messages */
+    /* Blue/Cyan brand colors */
+    --primary: 191 75% 50%; /* Cyan for outgoing messages */
     --primary-foreground: 0 0% 100%;
     
     /* Accent */
-    --accent: 263 70% 60%;
+    --accent: 191 75% 45%;
     --accent-foreground: 0 0% 100%;
     
     /* Dark Telegram backgrounds */
@@ -93,7 +93,7 @@ All colors MUST be HSL.
     /* Borders - subtle */
     --border: 210 20% 18%;
     --input: 210 20% 18%;
-    --ring: 263 70% 60%;
+    --ring: 191 75% 50%;
     
     /* Secondary */
     --secondary: 210 15% 22%;
@@ -106,12 +106,12 @@ All colors MUST be HSL.
     /* Sidebar */
     --sidebar-background: 210 25% 15%;
     --sidebar-foreground: 0 0% 90%;
-    --sidebar-primary: 263 70% 65%;
+    --sidebar-primary: 191 75% 50%;
     --sidebar-primary-foreground: 0 0% 100%;
-    --sidebar-accent: 263 70% 60%;
+    --sidebar-accent: 191 75% 45%;
     --sidebar-accent-foreground: 0 0% 100%;
     --sidebar-border: 210 20% 18%;
-    --sidebar-ring: 263 70% 60%;
+    --sidebar-ring: 191 75% 50%;
   }
 }
 
