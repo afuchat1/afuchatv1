@@ -1,5 +1,5 @@
 import { motion } from 'framer-motion';
-import { User, Check, CheckCheck, Play, Pause, Volume2, Smile, ArrowDownLeft, Pencil } from 'lucide-react';
+import { Check, CheckCheck, Play, Pause, Volume2, Smile, Reply, Pencil } from 'lucide-react';
 import { Avatar } from './Avatar';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
@@ -76,17 +76,23 @@ export const MessageBubble = ({
   const repliedMessage = message.reply_to_message;
 
   const MessageContent = () => (
-    <>
+    <div className="flex flex-col">
       {/* --- Reply Preview --- */}
       {repliedMessage && (
-        <div className="flex items-center gap-2 p-2 rounded-t-lg bg-black/10 dark:bg-white/10 pl-2">
-          <ArrowDownLeft className="h-4 w-4 text-primary flex-shrink-0" />
-          <div className="flex flex-col min-w-0">
-            <span className="text-xs font-semibold text-primary truncate">
+        <div className={`flex items-start gap-2 px-3 py-2 mb-1 border-l-2 ${
+          isOwn ? 'border-primary-foreground/30 bg-primary/10' : 'border-primary bg-muted/50'
+        }`}>
+          <Reply className="h-3 w-3 mt-0.5 flex-shrink-0 opacity-60" />
+          <div className="flex flex-col min-w-0 flex-1">
+            <span className={`text-xs font-medium truncate ${
+              isOwn ? 'text-primary-foreground' : 'text-primary'
+            }`}>
               {repliedMessage.profiles.display_name}
             </span>
-            <span className="text-xs text-foreground/80 truncate">
-              {repliedMessage.audio_url ? '[Voice Message]' : repliedMessage.encrypted_content}
+            <span className={`text-xs truncate ${
+              isOwn ? 'text-primary-foreground/70' : 'text-muted-foreground'
+            }`}>
+              {repliedMessage.audio_url ? '🎤 Voice message' : repliedMessage.encrypted_content}
             </span>
           </div>
         </div>
@@ -94,29 +100,45 @@ export const MessageBubble = ({
       
       {/* --- Main Content (Text or Voice) --- */}
       {isVoice ? (
-        <div className="flex items-center gap-2 p-2">
+        <div className="flex items-center gap-3 px-3 py-2">
           <Button
             variant="ghost"
             size="icon"
-            className="h-8 w-8 flex-shrink-0"
+            className={`h-9 w-9 rounded-full flex-shrink-0 ${
+              isOwn ? 'hover:bg-primary-foreground/20' : 'hover:bg-primary/10'
+            }`}
             onClick={onToggleAudio}
           >
-            {audioPlayerState?.isPlaying ? <Pause className="h-4 w-4" /> : <Play className="h-4 w-4" />}
+            {audioPlayerState?.isPlaying ? (
+              <Pause className="h-4 w-4" />
+            ) : (
+              <Play className="h-4 w-4 ml-0.5" />
+            )}
           </Button>
-          <Volume2 className="h-4 w-4" />
-          <span className="text-sm text-muted-foreground">Voice message</span>
+          <div className="flex items-center gap-2 flex-1">
+            <div className="h-1 flex-1 bg-current opacity-20 rounded-full">
+              <div className="h-full w-1/3 bg-current opacity-60 rounded-full" />
+            </div>
+            <span className="text-xs opacity-60">0:42</span>
+          </div>
         </div>
       ) : (
-        <div>
-          <p className="text-sm whitespace-pre-wrap break-words p-2.5">
+        <div className="px-3 py-2">
+          <p className="text-[15px] leading-relaxed whitespace-pre-wrap break-words">
             {message.encrypted_content}
           </p>
-          {message.edited_at && (
-            <p className="text-xs text-muted-foreground px-2.5 pb-1">(edited)</p>
-          )}
         </div>
       )}
-    </>
+      
+      {/* --- Timestamp & Status --- */}
+      <div className={`flex items-center justify-end gap-1 px-3 pb-1.5 ${isVoice ? 'mt-0' : '-mt-1'}`}>
+        {message.edited_at && (
+          <span className="text-[11px] opacity-50">edited</span>
+        )}
+        <span className="text-[11px] opacity-60">{time}</span>
+        {isOwn && <ReadStatus />}
+      </div>
+    </div>
   );
 
   const ReactionButton = () => (
@@ -125,19 +147,19 @@ export const MessageBubble = ({
         <Button
           variant="ghost"
           size="icon"
-          className="h-6 w-6 p-0 rounded-full text-muted-foreground opacity-0 group-hover:opacity-100 transition-opacity"
+          className="h-7 w-7 p-0 rounded-full opacity-0 group-hover:opacity-100 transition-all hover:bg-muted"
         >
           <Smile className="h-4 w-4" />
         </Button>
       </PopoverTrigger>
-      <PopoverContent className="w-auto p-1">
+      <PopoverContent className="w-auto p-2 border-border/50 shadow-lg">
         <div className="flex gap-1">
           {['👍', '❤️', '😂', '😮', '😢', '🔥'].map(emoji => (
             <Button
               key={emoji}
               variant="ghost"
               size="icon"
-              className="h-8 w-8 text-xl p-0 hover:bg-accent"
+              className="h-10 w-10 text-xl p-0 hover:bg-muted rounded-lg transition-colors"
               onClick={() => onReaction(message.id, emoji)}
             >
               {emoji}
@@ -152,25 +174,26 @@ export const MessageBubble = ({
     const aggregated = aggregateReactions(message.message_reactions || []);
     if (aggregated.length === 0) return null;
     return (
-      <div className={`flex gap-1 ${isOwn ? 'justify-end' : ''} -mt-1`}>
+      <div className={`flex gap-1 mt-1 ${isOwn ? 'justify-end' : 'justify-start'}`}>
         {aggregated.map(({ emoji, count }) => (
-          <Badge key={emoji} variant="secondary">
-            {emoji} {typeof count === 'number' && count > 1 && <span className="text-xs ml-1">{count}</span>}
+          <Badge 
+            key={emoji} 
+            variant="secondary" 
+            className="rounded-full px-2 py-0.5 text-xs border border-border/50 shadow-sm"
+          >
+            {emoji} {typeof count === 'number' && count > 1 && <span className="ml-1 opacity-70">{count}</span>}
           </Badge>
         ))}
       </div>
     );
   };
   
-  // --- Read Status ---
-  // This is a simulation. A real implementation would subscribe
-  // to a `message_status` table to see `read_at` timestamps.
   const ReadStatus = () => {
-    const isRead = isOnline; // Simulate: if user is online, they've read it
+    const isRead = isOnline;
     if (isRead) {
-      return <CheckCheck className="h-4 w-4 text-blue-500" />;
+      return <CheckCheck className="h-3.5 w-3.5" />;
     }
-    return <Check className="h-4 w-4 text-muted-foreground/70" />;
+    return <Check className="h-3.5 w-3.5 opacity-60" />;
   };
 
   return (
@@ -182,57 +205,57 @@ export const MessageBubble = ({
         if (!isOwn && info.offset.x > 50) onReply(message);
         if (isOwn && info.offset.x < -50) onReply(message);
       }}
-      className={`flex w-full py-0.5 group ${isOwn ? 'justify-end' : 'justify-start'}`}
+      className={`flex w-full mb-1 group ${isOwn ? 'justify-end' : 'justify-start'}`}
     >
-      <div className={`flex items-end gap-2 max-w-[85%] ${isOwn ? 'flex-row-reverse' : 'flex-row'}`}>
+      <div className={`flex items-end gap-1.5 max-w-[75%] sm:max-w-[65%] ${isOwn ? 'flex-row-reverse' : 'flex-row'}`}>
         
         {/* --- Avatar --- */}
         {!isOwn && (
           isGrouped ? (
-            <div className="w-8 flex-shrink-0" /> // Spacer
+            <div className="w-8 flex-shrink-0" />
           ) : (
-            <Avatar name={message.profiles.display_name} userId={message.sender_id} />
+            <div className="mb-0.5">
+              <Avatar name={message.profiles.display_name} userId={message.sender_id} />
+            </div>
           )
         )}
         
-        {/* --- Bubble & Reactions --- */}
-        <div className="flex flex-col">
-          <div className={`flex items-end gap-1 ${isOwn ? 'flex-row-reverse' : 'flex-row'}`}>
-            
-            {/* --- Bubble --- */}
+        {/* --- Message Container --- */}
+        <div className="flex flex-col min-w-0">
+          {/* --- Name (for incoming, non-grouped) --- */}
+          {!isOwn && !isGrouped && (
+            <span className="text-xs font-medium text-primary mb-1 px-1">
+              {message.profiles.display_name}
+            </span>
+          )}
+          
+          <div className={`flex items-end gap-2 ${isOwn ? 'flex-row-reverse' : 'flex-row'}`}>
+            {/* --- Message Bubble --- */}
             <div
-              className={`relative ${
+              className={`relative shadow-sm ${
                 isOwn
                   ? 'bg-primary text-primary-foreground'
-                  : 'bg-card'
-              } max-w-full overflow-hidden
-              ${isGrouped
-                ? isOwn ? 'rounded-lg' : 'rounded-lg'
-                : isOwn ? 'rounded-2xl rounded-br-md' : 'rounded-2xl rounded-bl-md'
+                  : 'bg-card border border-border/30'
+              } ${
+                isGrouped
+                  ? 'rounded-xl'
+                  : isOwn 
+                    ? 'rounded-2xl rounded-br-md' 
+                    : 'rounded-2xl rounded-bl-md'
               }`}
             >
-              {!isOwn && !isGrouped && (
-                <span className="text-xs font-semibold text-primary px-2.5 pt-2">
-                  {message.profiles.display_name}
-                </span>
-              )}
               <MessageContent />
-              {/* --- Timestamp & Read Status (inside bubble for own) --- */}
-              {isOwn && (
-                <div className="flex items-center justify-end gap-1.5 px-2.5 pb-1.5 -mt-1">
-                  <span className="text-xs text-primary-foreground/70">{time}</span>
-                  <ReadStatus />
-                </div>
-              )}
             </div>
             
-            {/* --- Edit & Reaction Buttons --- */}
-            <div className="flex items-center gap-0.5">
+            {/* --- Action Buttons --- */}
+            <div className={`flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity ${
+              isOwn ? 'flex-row-reverse' : 'flex-row'
+            }`}>
               {canEdit && onEdit && (
                 <Button
                   variant="ghost"
                   size="icon"
-                  className="h-6 w-6 p-0 rounded-full text-muted-foreground opacity-0 group-hover:opacity-100 transition-opacity"
+                  className="h-7 w-7 p-0 rounded-full hover:bg-muted"
                   onClick={() => {
                     const newContent = prompt('Edit message:', message.encrypted_content);
                     if (newContent && newContent.trim() && newContent !== message.encrypted_content) {
@@ -240,19 +263,14 @@ export const MessageBubble = ({
                     }
                   }}
                 >
-                  <Pencil className="h-3 w-3" />
+                  <Pencil className="h-3.5 w-3.5" />
                 </Button>
               )}
               <ReactionButton />
             </div>
           </div>
 
-          {/* --- Timestamp (outside bubble for other) --- */}
-          {!isOwn && (
-             <span className="text-xs text-muted-foreground mt-1 px-1">{time}</span>
-          )}
-
-          {/* --- Reaction Display --- */}
+          {/* --- Reactions --- */}
           <ReactionDisplay />
         </div>
       </div>

@@ -530,28 +530,32 @@ const ChatRoom = () => {
     <TooltipProvider delayDuration={200}>
       <div className="h-dvh flex flex-col bg-background overflow-hidden">
         {/* Header */}
-        <div className="bg-card sticky top-0 z-10 flex items-center px-4 py-3 gap-3 min-h-[60px]">
+        <div className="bg-background/95 backdrop-blur-sm sticky top-0 z-10 flex items-center px-3 py-2.5 gap-3 border-b border-border/50 shadow-sm">
           <Tooltip>
             <TooltipTrigger asChild>
               <Button
                 variant="ghost"
                 size="icon"
-                className="h-12 w-12 p-0 hover:bg-muted flex-shrink-0"
+                className="h-9 w-9 p-0 hover:bg-muted rounded-full flex-shrink-0"
                 onClick={handleBack}
               >
                 <ArrowLeft className="h-5 w-5" />
               </Button>
             </TooltipTrigger>
-            <TooltipContent side="bottom" className="max-w-xs">
-              <p>Go back to your chats</p>
+            <TooltipContent side="bottom">
+              <p>Back to chats</p>
             </TooltipContent>
           </Tooltip>
-          <div className="flex-1 min-w-0 overflow-hidden">
-            <h1 className="text-base font-semibold text-foreground truncate">
+          <div className="flex-1 min-w-0">
+            <h1 className="text-base font-semibold truncate">
               {chatInfo?.name || (chatInfo?.is_group ? 'Group Chat' : 'Direct Message')}
             </h1>
-            {chatInfo && !chatInfo.is_group && (
-              <p className={`text-xs ${online ? 'text-green-600' : 'text-muted-foreground'}`}>
+            {typingUsers.length > 0 ? (
+              <p className="text-xs text-primary">
+                {typingUsers.length === 1 ? `${typingUsers[0]} is typing...` : `${typingUsers.length} people are typing...`}
+              </p>
+            ) : chatInfo && !chatInfo.is_group && (
+              <p className={`text-xs ${online ? 'text-primary' : 'text-muted-foreground'}`}>
                 {online ? 'online' : 'last seen recently'}
               </p>
             )}
@@ -559,44 +563,40 @@ const ChatRoom = () => {
           <div className="flex items-center gap-1 flex-shrink-0">
             <Tooltip>
               <TooltipTrigger asChild>
-                <Button variant="ghost" size="icon" className="h-10 w-10 p-0 hover:bg-muted">
-                  <Video className="h-4 w-4" />
+                <Button variant="ghost" size="icon" className="h-9 w-9 p-0 hover:bg-muted rounded-full">
+                  <Phone className="h-5 w-5" />
                 </Button>
               </TooltipTrigger>
-              <TooltipContent side="bottom">
-                <p>Start video call</p>
-              </TooltipContent>
+              <TooltipContent>Voice call</TooltipContent>
             </Tooltip>
             <Tooltip>
               <TooltipTrigger asChild>
-                <Button variant="ghost" size="icon" className="h-10 w-10 p-0 hover:bg-muted">
-                  <Phone className="h-4 w-4" />
+                <Button variant="ghost" size="icon" className="h-9 w-9 p-0 hover:bg-muted rounded-full">
+                  <Video className="h-5 w-5" />
                 </Button>
               </TooltipTrigger>
-              <TooltipContent side="bottom">
-                <p>Start voice call</p>
-              </TooltipContent>
+              <TooltipContent>Video call</TooltipContent>
             </Tooltip>
             <Tooltip>
               <TooltipTrigger asChild>
-                <Button variant="ghost" size="icon" className="h-10 w-10 p-0 hover:bg-muted">
-                  <MoreVertical className="h-4 w-4" />
+                <Button variant="ghost" size="icon" className="h-9 w-9 p-0 hover:bg-muted rounded-full">
+                  <MoreVertical className="h-5 w-5" />
                 </Button>
               </TooltipTrigger>
-              <TooltipContent side="bottom">
-                <p>More options</p>
-              </TooltipContent>
+              <TooltipContent>More</TooltipContent>
             </Tooltip>
           </div>
         </div>
 
         {/* Messages */}
-        <div className="flex-1 overflow-y-auto p-3 space-y-3" style={{ paddingBottom: '120px' }}>
+        <div className="flex-1 overflow-y-auto px-3 py-4 bg-muted/20" style={{ paddingBottom: '120px' }}>
           {messages.length === 0 && redEnvelopes.length === 0 ? (
-            <div className="flex flex-col items-center justify-center h-full text-center text-muted-foreground space-y-2 px-4">
-              <MessageSquare className="h-12 w-12 opacity-50" />
-              <p className="text-sm">No messages yet. Start the conversation!</p>
-              <p className="text-xs text-muted-foreground">Messages are encrypted end-to-end</p>
+            <div className="flex flex-col items-center justify-center h-full text-center space-y-3 px-4">
+              <MessageSquare className="h-14 w-14 text-muted-foreground/40" />
+              <div>
+                <p className="text-sm font-medium text-foreground/80">No messages yet</p>
+                <p className="text-xs text-muted-foreground mt-1">Start the conversation!</p>
+              </div>
             </div>
           ) : (
             <>
@@ -670,17 +670,6 @@ const ChatRoom = () => {
                 });
               })()}
               
-              {/* Typing indicator */}
-              {typingUsers.length > 0 && (
-                <div className="flex items-center gap-2 px-4 py-2 text-sm text-muted-foreground">
-                  <div className="flex gap-1">
-                    <span className="inline-block w-2 h-2 rounded-full bg-muted-foreground animate-bounce" style={{ animationDelay: '0ms' }} />
-                    <span className="inline-block w-2 h-2 rounded-full bg-muted-foreground animate-bounce" style={{ animationDelay: '150ms' }} />
-                    <span className="inline-block w-2 h-2 rounded-full bg-muted-foreground animate-bounce" style={{ animationDelay: '300ms' }} />
-                  </div>
-                  <span>{typingUsers.join(', ')} {typingUsers.length === 1 ? 'is' : 'are'} typing...</span>
-                </div>
-              )}
             </>
           )}
           <div ref={messagesEndRef} />
@@ -727,34 +716,73 @@ const ChatRoom = () => {
           </div>
         )}
 
+        {/* Reply Preview */}
+        {replyToMessage && (
+          <div className="fixed bottom-[72px] left-0 right-0 z-20 bg-background/95 backdrop-blur-sm border-t border-border/50 px-4 py-3">
+            <div className="flex items-center gap-3">
+              <div className="w-1 h-10 bg-primary rounded-full" />
+              <div className="flex-1 min-w-0">
+                <p className="text-xs font-semibold text-primary">
+                  {replyToMessage.profiles.display_name}
+                </p>
+                <p className="text-sm text-foreground truncate mt-0.5">
+                  {replyToMessage.audio_url ? '🎤 Voice message' : replyToMessage.encrypted_content}
+                </p>
+              </div>
+              <Button
+                variant="ghost"
+                size="icon"
+                className="h-8 w-8"
+                onClick={() => setReplyToMessage(null)}
+              >
+                <X className="h-4 w-4" />
+              </Button>
+            </div>
+          </div>
+        )}
+
         {/* Input: Fixed bottom, with voice recording */}
-        <div className="fixed bottom-0 left-0 right-0 z-20 bg-card px-4 py-3 pb-[env(safe-area-inset-bottom)]">
-          <div className="flex items-end gap-2">
+        <div className="fixed bottom-0 left-0 right-0 z-20 bg-background/95 backdrop-blur-sm border-t border-border/50 px-3 py-2.5 pb-[env(safe-area-inset-bottom)] shadow-lg">
+          <form onSubmit={(e) => { e.preventDefault(); handleSend(); }} className="flex items-end gap-2">
             {recording ? (
-              <Button
-                variant="ghost"
-                size="icon"
-                className="h-12 w-12 p-0 bg-destructive/10 text-destructive hover:bg-destructive/20"
-                onClick={stopRecording}
-              >
-                <MicOff className="h-5 w-5" />
-              </Button>
+              <div className="flex-1 flex items-center gap-3 px-4 py-3 bg-destructive/10 rounded-3xl border border-destructive/20">
+                <div className="flex items-center gap-2 flex-1">
+                  <div className="w-2 h-2 bg-destructive rounded-full animate-pulse" />
+                  <span className="text-sm text-destructive font-medium">Recording...</span>
+                </div>
+                <Button
+                  type="button"
+                  variant="ghost"
+                  size="icon"
+                  className="h-9 w-9 rounded-full"
+                  onClick={stopRecording}
+                  disabled={uploading}
+                >
+                  {uploading ? <Loader2 className="h-5 w-5 animate-spin" /> : <MicOff className="h-5 w-5" />}
+                </Button>
+              </div>
             ) : audioBlob ? (
-              <Button
-                variant="ghost"
-                size="icon"
-                className="h-12 w-12 p-0 bg-primary/10 text-primary hover:bg-primary/20"
-                onClick={sendVoiceMessage}
-                disabled={uploading}
-              >
-                {uploading ? <Loader2 className="h-5 w-5 animate-spin" /> : <Send className="h-5 w-5" />}
-              </Button>
+              <div className="flex-1 flex items-center gap-3 px-4 py-3 bg-primary/10 rounded-3xl border border-primary/20">
+                <Volume2 className="h-5 w-5 text-primary" />
+                <span className="text-sm text-primary font-medium flex-1">Voice message ready</span>
+                <Button
+                  type="button"
+                  variant="ghost"
+                  size="icon"
+                  className="h-9 w-9 rounded-full text-primary"
+                  onClick={sendVoiceMessage}
+                  disabled={uploading}
+                >
+                  {uploading ? <Loader2 className="h-5 w-5 animate-spin" /> : <Send className="h-5 w-5" />}
+                </Button>
+              </div>
             ) : (
               <>
                 <Button
+                  type="button"
                   variant="ghost"
                   size="icon"
-                  className="h-12 w-12 p-0 text-muted-foreground hover:text-foreground hover:bg-muted"
+                  className="h-10 w-10 rounded-full hover:bg-muted"
                   onClick={startRecording}
                 >
                   <Mic className="h-5 w-5" />
@@ -765,53 +793,25 @@ const ChatRoom = () => {
                     onSuccess={fetchRedEnvelopes}
                   />
                 )}
+                <Input
+                  value={newMessage}
+                  onChange={(e) => handleInputChange(e.target.value)}
+                  onKeyDown={(e) => e.key === 'Enter' && !e.shiftKey && (e.preventDefault(), handleSend())}
+                  placeholder={t('chatRoom.typeHere')}
+                  disabled={sending}
+                  className="flex-1 rounded-3xl bg-muted/50 border-border/50 px-4 py-2.5 h-auto min-h-[42px]"
+                />
+                <Button
+                  type="submit"
+                  disabled={!newMessage.trim() || sending}
+                  size="icon"
+                  className="h-10 w-10 rounded-full"
+                >
+                  {sending ? <Loader2 className="h-5 w-5 animate-spin" /> : <Send className="h-5 w-5" />}
+                </Button>
               </>
             )}
-            <div className="flex-1 relative min-w-0">
-              {replyToMessage && (
-                <div className="absolute bottom-full left-0 right-0 mb-2 px-3 py-2 bg-muted/50 rounded-lg flex items-center justify-between">
-                  <div className="flex-1 min-w-0">
-                    <p className="text-xs font-semibold text-primary truncate">
-                      Replying to {replyToMessage.profiles.display_name}
-                    </p>
-                    <p className="text-xs text-muted-foreground truncate">
-                      {replyToMessage.audio_url ? '[Voice Message]' : replyToMessage.encrypted_content}
-                    </p>
-                  </div>
-                  <Button
-                    variant="ghost"
-                    size="icon"
-                    className="h-6 w-6 flex-shrink-0"
-                    onClick={() => setReplyToMessage(null)}
-                  >
-                    <X className="h-4 w-4" />
-                  </Button>
-                </div>
-              )}
-              <Input
-                placeholder={t('chatRoom.typeHere')}
-                value={newMessage}
-                onChange={(e) => handleInputChange(e.target.value)}
-                onKeyDown={(e) => e.key === 'Enter' && !e.shiftKey && handleSend()}
-                className="h-12 pr-12 min-h-[44px]"
-                disabled={sending || uploading}
-              />
-              <Button
-                size="icon"
-                variant="ghost"
-                className="absolute right-2 bottom-2 h-8 w-8 p-0 text-muted-foreground hover:text-foreground"
-              >
-                <MessageSquare className="h-4 w-4" />
-              </Button>
-            </div>
-            <Button
-              onClick={handleSend}
-              disabled={!newMessage.trim() || sending || uploading}
-              className="h-12 w-12 min-h-[44px] flex-shrink-0"
-            >
-              {sending ? <Loader2 className="h-4 w-4 animate-spin" /> : <Send className="h-4 w-4" />}
-            </Button>
-          </div>
+          </form>
         </div>
       </div>
     </TooltipProvider>
