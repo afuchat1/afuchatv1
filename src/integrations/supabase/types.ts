@@ -523,6 +523,59 @@ export type Database = {
           },
         ]
       }
+      mini_programs: {
+        Row: {
+          category: string
+          created_at: string
+          description: string | null
+          developer_id: string
+          icon_url: string | null
+          id: string
+          install_count: number
+          is_published: boolean
+          name: string
+          rating: number | null
+          updated_at: string
+          url: string
+        }
+        Insert: {
+          category: string
+          created_at?: string
+          description?: string | null
+          developer_id: string
+          icon_url?: string | null
+          id?: string
+          install_count?: number
+          is_published?: boolean
+          name: string
+          rating?: number | null
+          updated_at?: string
+          url: string
+        }
+        Update: {
+          category?: string
+          created_at?: string
+          description?: string | null
+          developer_id?: string
+          icon_url?: string | null
+          id?: string
+          install_count?: number
+          is_published?: boolean
+          name?: string
+          rating?: number | null
+          updated_at?: string
+          url?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "mini_programs_developer_id_fkey"
+            columns: ["developer_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       notifications: {
         Row: {
           actor_id: string | null
@@ -1021,6 +1074,83 @@ export type Database = {
         }
         Relationships: []
       }
+      stories: {
+        Row: {
+          caption: string | null
+          created_at: string
+          expires_at: string
+          id: string
+          media_type: string
+          media_url: string
+          user_id: string
+          view_count: number
+        }
+        Insert: {
+          caption?: string | null
+          created_at?: string
+          expires_at: string
+          id?: string
+          media_type: string
+          media_url: string
+          user_id: string
+          view_count?: number
+        }
+        Update: {
+          caption?: string | null
+          created_at?: string
+          expires_at?: string
+          id?: string
+          media_type?: string
+          media_url?: string
+          user_id?: string
+          view_count?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "stories_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      story_views: {
+        Row: {
+          id: string
+          story_id: string
+          viewed_at: string
+          viewer_id: string
+        }
+        Insert: {
+          id?: string
+          story_id: string
+          viewed_at?: string
+          viewer_id: string
+        }
+        Update: {
+          id?: string
+          story_id?: string
+          viewed_at?: string
+          viewer_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "story_views_story_id_fkey"
+            columns: ["story_id"]
+            isOneToOne: false
+            referencedRelation: "stories"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "story_views_viewer_id_fkey"
+            columns: ["viewer_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       supported_languages: {
         Row: {
           code: string
@@ -1220,6 +1350,42 @@ export type Database = {
           },
         ]
       }
+      user_mini_programs: {
+        Row: {
+          id: string
+          installed_at: string
+          mini_program_id: string
+          user_id: string
+        }
+        Insert: {
+          id?: string
+          installed_at?: string
+          mini_program_id: string
+          user_id: string
+        }
+        Update: {
+          id?: string
+          installed_at?: string
+          mini_program_id?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "user_mini_programs_mini_program_id_fkey"
+            columns: ["mini_program_id"]
+            isOneToOne: false
+            referencedRelation: "mini_programs"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "user_mini_programs_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       user_roles: {
         Row: {
           created_at: string | null
@@ -1269,6 +1435,51 @@ export type Database = {
             columns: ["shop_item_id"]
             isOneToOne: false
             referencedRelation: "shop_items"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      xp_transfers: {
+        Row: {
+          amount: number
+          created_at: string
+          id: string
+          message: string | null
+          receiver_id: string
+          sender_id: string
+          status: string
+        }
+        Insert: {
+          amount: number
+          created_at?: string
+          id?: string
+          message?: string | null
+          receiver_id: string
+          sender_id: string
+          status?: string
+        }
+        Update: {
+          amount?: number
+          created_at?: string
+          id?: string
+          message?: string | null
+          receiver_id?: string
+          sender_id?: string
+          status?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "xp_transfers_receiver_id_fkey"
+            columns: ["receiver_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "xp_transfers_sender_id_fkey"
+            columns: ["sender_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
             referencedColumns: ["id"]
           },
         ]
@@ -1350,6 +1561,10 @@ export type Database = {
             }
             Returns: boolean
           }
+      increment_mini_program_installs: {
+        Args: { program_id: string }
+        Returns: undefined
+      }
       is_chat_admin: {
         Args: { _chat_id: string; _user_id: string }
         Returns: boolean
@@ -1382,6 +1597,10 @@ export type Database = {
               success: boolean
             }[]
           }
+      process_xp_transfer: {
+        Args: { p_amount: number; p_message?: string; p_receiver_id: string }
+        Returns: Json
+      }
       purchase_marketplace_item: {
         Args: { p_listing_id: string }
         Returns: {

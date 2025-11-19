@@ -43,6 +43,9 @@ import AdminAffiliateRequests from "./pages/AdminAffiliateRequests";
 import AffiliateRequest from "./pages/AffiliateRequest";
 import AffiliateDashboard from "./pages/AffiliateDashboard";
 import BusinessDashboard from "./pages/BusinessDashboard";
+import Moments from "./pages/Moments";
+import MiniPrograms from "./pages/MiniPrograms";
+import Transfer from "./pages/Transfer";
 import Layout from "./components/Layout";
 
 const queryClient = new QueryClient();
@@ -95,6 +98,9 @@ const AppRoutes = () => {
       <Route path="/affiliate-request" element={<Layout><AffiliateRequest /></Layout>} />
       <Route path="/affiliate-dashboard" element={<Layout><AffiliateDashboard /></Layout>} />
       <Route path="/business/dashboard" element={<Layout><BusinessDashboard /></Layout>} />
+      <Route path="/moments" element={<Layout><Moments /></Layout>} />
+      <Route path="/mini-programs" element={<Layout><MiniPrograms /></Layout>} />
+      <Route path="/transfer" element={<Layout><Transfer /></Layout>} />
 
       <Route path="/profile/:userId" element={<ProfileRedirect />} />
 
