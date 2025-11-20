@@ -121,6 +121,22 @@ const Layout = ({ children }: LayoutProps) => {
       <InstallPromptBanner />
       <OfflineIndicator />
       
+      {/* Mobile Header with Services Button */}
+      <header className="lg:hidden sticky top-0 z-40 bg-background/95 backdrop-blur border-b border-border">
+        <div className="flex items-center justify-between px-4 h-14">
+          <Logo />
+          <Button
+            variant="ghost"
+            size="sm"
+            onClick={() => navigate('/hub')}
+            className="gap-2"
+          >
+            <Grid3x3 className="h-5 w-5" />
+            <span className="font-semibold">Services</span>
+          </Button>
+        </div>
+      </header>
+      
       {/* Desktop Sidebar */}
       <aside className="hidden lg:flex fixed left-0 top-0 bottom-0 w-64 xl:w-72 border-r border-border flex-col p-4">
         <div className="mb-6">
