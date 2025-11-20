@@ -23,21 +23,57 @@ interface UserProfile {
 }
 
 export default function Followers() {
-  const { userId } = useParams<{ userId: string }>();
+  const { userId: handleOrId } = useParams<{ userId: string }>();
   const { user } = useAuth();
   const navigate = useNavigate();
   const [users, setUsers] = useState<UserProfile[]>([]);
   const [loading, setLoading] = useState(true);
   const [followingIds, setFollowingIds] = useState<Set<string>>(new Set());
+  const [profileId, setProfileId] = useState<string | null>(null);
 
   useEffect(() => {
-    fetchFollowers();
-    if (user) {
-      fetchFollowingStatus();
+    resolveProfile();
+  }, [handleOrId]);
+
+  useEffect(() => {
+    if (profileId) {
+      fetchFollowers();
+      if (user) {
+        fetchFollowingStatus();
+      }
     }
-  }, [userId, user]);
+  }, [profileId, user]);
+
+  const resolveProfile = async () => {
+    if (!handleOrId) return;
+
+    try {
+      // Check if it's a UUID or handle
+      const isUUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(handleOrId);
+      
+      if (isUUID) {
+        setProfileId(handleOrId);
+      } else {
+        // Resolve handle to ID
+        const { data, error } = await supabase
+          .from("profiles")
+          .select("id")
+          .eq("handle", handleOrId)
+          .single();
+
+        if (error) throw error;
+        setProfileId(data.id);
+      }
+    } catch (error) {
+      console.error("Error resolving profile:", error);
+      toast.error("User not found");
+      navigate(-1);
+    }
+  };
 
   const fetchFollowers = async () => {
+    if (!profileId) return;
+    
     setLoading(true);
     try {
       const { data, error } = await supabase
@@ -56,7 +92,7 @@ export default function Followers() {
             bio
           )
         `)
-        .eq("following_id", userId)
+        .eq("following_id", profileId)
         .order("created_at", { ascending: false });
 
       if (error) throw error;
