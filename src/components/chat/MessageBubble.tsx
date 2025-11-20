@@ -35,6 +35,7 @@ export interface Message {
   profiles: {
     display_name: string;
     handle: string;
+    is_verified: boolean | null;
   };
   message_status?: Array<{
     read_at: string | null;
@@ -300,9 +301,20 @@ export const MessageBubble = ({
         <div className="flex flex-col min-w-0">
           {/* --- Name (for incoming, non-grouped) --- */}
           {!isOwn && !isGrouped && (
-            <span className="text-xs font-medium text-primary mb-1 px-1">
-              {message.profiles?.display_name || 'User'}
-            </span>
+            <div className="flex items-center gap-1 mb-1 px-1">
+              <span className="text-xs font-medium text-primary">
+                {message.profiles?.display_name || 'User'}
+              </span>
+              {message.profiles?.is_verified && (
+                <svg
+                  className="h-3 w-3 text-primary flex-shrink-0"
+                  viewBox="0 0 24 24"
+                  fill="currentColor"
+                >
+                  <path d="M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41z" />
+                </svg>
+              )}
+            </div>
           )}
           
           <div className={`flex items-end gap-2 ${isOwn ? 'flex-row-reverse' : 'flex-row'}`}>
