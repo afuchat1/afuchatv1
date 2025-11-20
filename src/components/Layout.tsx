@@ -2,7 +2,7 @@ import { ReactNode, useEffect, useState } from 'react';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { useAuth } from '@/contexts/AuthContext';
 import { useAccountMode } from '@/contexts/AccountModeContext';
-import { Home, MessageSquare, Search, Bell, User, Settings, Shield, BarChart3, Grid3x3 } from 'lucide-react';
+import { Home, MessageSquare, Search, Bell, User, Settings, Shield, BarChart3, Grid3x3, Gamepad2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import Logo from '@/components/Logo';
 import NotificationIcon from '@/components/nav/NotificationIcon';
@@ -191,6 +191,7 @@ const Layout = ({ children }: LayoutProps) => {
             {[
               { path: '/', icon: Home },
               { path: '/search', icon: Search },
+              { path: '/games', icon: Gamepad2 },
               { path: '/chats', icon: MessageSquare },
               { path: user ? `/${user.id}` : '/auth', icon: User }
             ].map((item) => (
