@@ -9,6 +9,7 @@ import NotificationIcon from '@/components/nav/NotificationIcon';
 import InstallPromptBanner from '@/components/InstallPromptBanner';
 import { OfflineIndicator } from '@/components/OfflineIndicator';
 import { AccountModeSwitcher } from '@/components/AccountModeSwitcher';
+import FloatingActionButton from '@/components/ui/FloatingActionButton';
 import { supabase } from '@/integrations/supabase/client';
 import { cn } from '@/lib/utils';
 import { useTranslation } from 'react-i18next';
@@ -209,6 +210,9 @@ const Layout = ({ children }: LayoutProps) => {
           </div>
         </nav>
       )}
+
+      {/* Floating Action Button - Hidden in chat rooms */}
+      {!isChatRoom && <FloatingActionButton />}
     </div>
   );
 };

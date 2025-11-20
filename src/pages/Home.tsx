@@ -78,6 +78,7 @@ const Home = () => {
           size="lg"
           onClick={handleNewPost}
           aria-label="Create new post"
+          data-new-post
           className="fixed bottom-20 lg:bottom-6 right-4 sm:right-6 rounded-full shadow-2xl h-12 w-12 sm:h-14 sm:w-14 z-50"
         >
           <Send className="h-5 w-5 sm:h-6 sm:w-6" />
