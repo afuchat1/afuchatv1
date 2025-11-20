@@ -159,7 +159,7 @@ export function AffiliateDetailsSheet({
                 className="w-full mt-4"
                 size="lg"
               >
-                Apply for Verification
+                Get Verified
               </Button>
 
               <p className="text-xs text-center text-muted-foreground">

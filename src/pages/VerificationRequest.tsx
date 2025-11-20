@@ -154,7 +154,7 @@ export default function VerificationRequest() {
   return (
     <div className="min-h-screen bg-background pb-20">
       {/* Header */}
-      <div className="sticky top-0 z-10 bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60 border-b">
+      <div className="sticky top-0 z-10 bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
         <div className="flex items-center gap-4 p-4">
           <Button
             variant="ghost"
@@ -165,7 +165,7 @@ export default function VerificationRequest() {
             <ArrowLeft className="h-5 w-5" />
           </Button>
           <div>
-            <h1 className="text-xl font-bold">Verification Request</h1>
+            <h1 className="text-xl font-bold">Get Verified</h1>
             <p className="text-sm text-muted-foreground">Apply to get your account verified</p>
           </div>
         </div>
@@ -173,9 +173,9 @@ export default function VerificationRequest() {
 
       {/* Form Content */}
       <div className="max-w-2xl mx-auto p-4 space-y-6">
-        <Card>
+        <Card className="border-0 shadow-none">
           <CardHeader>
-            <CardTitle>Account Verification</CardTitle>
+            <CardTitle>Get Verified</CardTitle>
             <CardDescription>
               Fill out this form to apply for account verification. Our team will review your application within 3-5 business days.
             </CardDescription>
@@ -191,7 +191,7 @@ export default function VerificationRequest() {
                     setFormData({ ...formData, accountType: value })
                   }
                 >
-                  <div className="flex items-center space-x-2 border rounded-lg p-4 cursor-pointer hover:bg-accent">
+                  <div className="flex items-center space-x-2 rounded-lg p-4 cursor-pointer hover:bg-accent bg-muted/30">
                     <RadioGroupItem value="business" id="business" />
                     <Label htmlFor="business" className="flex-1 cursor-pointer">
                       <div className="font-semibold">Business / Organization</div>
@@ -200,7 +200,7 @@ export default function VerificationRequest() {
                       </div>
                     </Label>
                   </div>
-                  <div className="flex items-center space-x-2 border rounded-lg p-4 cursor-pointer hover:bg-accent">
+                  <div className="flex items-center space-x-2 rounded-lg p-4 cursor-pointer hover:bg-accent bg-muted/30">
                     <RadioGroupItem value="influencer" id="influencer" />
                     <Label htmlFor="influencer" className="flex-1 cursor-pointer">
                       <div className="font-semibold">Influencer / Creator</div>
@@ -390,7 +390,7 @@ Example: https://instagram.com/yourprofile, https://youtube.com/@yourchannel, ht
               <div className="space-y-3">
                 <Label>Supporting Documents *</Label>
                 <div className="space-y-3">
-                  <div className="border-2 border-dashed rounded-lg p-6 text-center space-y-3 hover:border-primary/50 transition-colors">
+                  <div className="rounded-lg p-6 text-center space-y-3 bg-muted/30 hover:bg-muted/50 transition-colors">
                     <div className="flex justify-center">
                       <div className="w-12 h-12 rounded-full bg-primary/10 flex items-center justify-center">
                         <Upload className="w-6 h-6 text-primary" />
@@ -439,7 +439,7 @@ Example: https://instagram.com/yourprofile, https://youtube.com/@yourchannel, ht
                         {uploadedFiles.map((file, index) => (
                           <div
                             key={index}
-                            className="flex items-center gap-3 p-3 bg-muted/50 rounded-lg border"
+                            className="flex items-center gap-3 p-3 bg-muted/30 rounded-lg"
                           >
                             <div className="w-10 h-10 rounded bg-primary/10 flex items-center justify-center flex-shrink-0">
                               {file.type.startsWith('image/') ? (
@@ -469,7 +469,7 @@ Example: https://instagram.com/yourprofile, https://youtube.com/@yourchannel, ht
                     </div>
                   )}
 
-                  <div className="bg-blue-50 dark:bg-blue-950/20 border border-blue-200 dark:border-blue-900 rounded-lg p-4">
+                  <div className="bg-blue-50 dark:bg-blue-950/20 rounded-lg p-4">
                     <p className="text-xs font-medium text-blue-900 dark:text-blue-100 mb-2">
                       {formData.accountType === "business" ? "Accepted Business Documents:" : "Accepted Influencer Documents:"}
                     </p>
@@ -517,7 +517,7 @@ Example: https://instagram.com/yourprofile, https://youtube.com/@yourchannel, ht
                     Submitting...
                   </>
                 ) : (
-                  "Submit Verification Request"
+                  "Get Verified"
                 )}
               </Button>
 
