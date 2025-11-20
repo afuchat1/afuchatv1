@@ -1,7 +1,6 @@
 import { useNavigate } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import { Button } from '@/components/ui/button';
-import { Card, CardHeader, CardTitle } from '@/components/ui/card';
 import { ArrowLeft, Wallet, QrCode, Trophy, Users, ShoppingBag, Bot, TrendingUp, Building2, UserPlus, HelpCircle, FileText, Shield, Image as ImageIcon, MessageSquare, Send, Zap, Mail, Code } from 'lucide-react';
 import Logo from '@/components/Logo';
 import { ScrollArea, ScrollBar } from '@/components/ui/scroll-area';
@@ -96,27 +95,27 @@ const Services = () => {
             <div key={idx}>
               <h2 className="text-base sm:text-lg font-semibold text-foreground mb-3 px-4">{category.category}</h2>
               <ScrollArea className="w-full whitespace-nowrap">
-                <div className="flex gap-3 px-4 pb-4">
+                <div className="flex gap-4 px-4 pb-4">
                   {category.items.map((item, itemIdx) => {
                     const Icon = item.icon;
                     return (
-                      <Card 
+                      <div 
                         key={itemIdx} 
-                        className="cursor-pointer hover:border-primary/50 transition-all hover:shadow-lg group flex-shrink-0 w-[280px]"
+                        className="cursor-pointer hover:opacity-80 transition-opacity group flex-shrink-0 w-[280px]"
                         onClick={() => navigate(item.route)}
                       >
-                        <CardHeader className="p-4">
+                        <div className="p-4">
                           <div className="flex items-start gap-3">
                             <div className={`p-2 rounded-lg bg-muted/50 ${item.color} group-hover:scale-110 transition-transform`}>
                               <Icon className="h-5 w-5" />
                             </div>
                             <div className="flex-1 min-w-0">
-                              <CardTitle className="text-base mb-1">{item.title}</CardTitle>
+                              <h3 className="text-base font-semibold mb-1 text-foreground">{item.title}</h3>
                               <p className="text-xs text-muted-foreground">{item.description}</p>
                             </div>
                           </div>
-                        </CardHeader>
-                      </Card>
+                        </div>
+                      </div>
                     );
                   })}
                 </div>
