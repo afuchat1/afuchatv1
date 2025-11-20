@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { Plus, MessageCircle, Gamepad2, Send, X } from 'lucide-react';
+import { Plus, MessageCircle, Gamepad2, Send } from 'lucide-react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { Button } from './button';
 import { cn } from '@/lib/utils';
@@ -26,16 +26,24 @@ const FloatingActionButton = () => {
     setTimeout(action, 50);
   };
 
+  const handleNewPost = () => {
+    if (location.pathname === '/') {
+      // Already on home, just trigger the event
+      window.dispatchEvent(new Event('open-new-post'));
+    } else {
+      // Navigate to home first, then trigger after a delay
+      navigate('/');
+      setTimeout(() => {
+        window.dispatchEvent(new Event('open-new-post'));
+      }, 300);
+    }
+  };
+
   const actions: FabAction[] = [
     {
       icon: <MessageCircle className="h-6 w-6" />,
       label: 'New Post',
-      onClick: () => handleActionClick(() => {
-        navigate('/');
-        setTimeout(() => {
-          window.dispatchEvent(new Event('open-new-post'));
-        }, 100);
-      }),
+      onClick: () => handleActionClick(handleNewPost),
       color: 'bg-blue-500'
     },
     {

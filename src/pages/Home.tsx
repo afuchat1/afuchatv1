@@ -16,15 +16,23 @@ const Home = () => {
   useEffect(() => {
     // Check if user has followed anyone (or allow visitors)
     checkUserFollows();
-    
+  }, [user]);
+
+  useEffect(() => {
     // Listen for new post events from FAB
     const handleNewPostEvent = () => {
-      if (user) setIsPostModalOpen(true);
+      console.log('New post event received, user:', user?.id);
+      if (user) {
+        setIsPostModalOpen(true);
+      } else {
+        navigate('/auth');
+      }
     };
+    
     window.addEventListener('open-new-post', handleNewPostEvent);
     
     return () => window.removeEventListener('open-new-post', handleNewPostEvent);
-  }, [user]);
+  }, [user, navigate]);
 
   useEffect(() => {
     // Handle app shortcut for new post
