@@ -26,8 +26,9 @@ interface Service {
 
 const services: Service[] = [
   // Social
-  { id: 'social', name: 'Social Hub', description: 'Posts, Stories & Connect', icon: Users, route: '/social', category: 'Social', color: 'bg-blue-500' },
+  { id: 'feed', name: 'Feed', description: 'Posts & Updates', icon: Users, route: '/', category: 'Social', color: 'bg-blue-500' },
   { id: 'chat', name: 'Messages', description: 'Chat with friends', icon: MessageSquare, route: '/chats', category: 'Social', color: 'bg-green-500' },
+  { id: 'social', name: 'Social Hub', description: 'Stories & Connect', icon: Users, route: '/social', category: 'Social', color: 'bg-cyan-500' },
   
   // Commerce
   { id: 'shop', name: 'Shop', description: 'Buy exclusive items', icon: ShoppingBag, route: '/shop', category: 'Commerce', color: 'bg-purple-500' },

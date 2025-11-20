@@ -98,8 +98,8 @@ const AppRoutes = () => {
       </div>
     }>
       <Routes>
-      <Route path="/" element={<Layout><SuperAppHub /></Layout>} />
-      <Route path="/home" element={<Layout><Home /></Layout>} />
+      <Route path="/" element={<Home />} />
+      <Route path="/hub" element={<Layout><SuperAppHub /></Layout>} />
       <Route path="/auth" element={<Welcome />} />
       <Route path="/auth/signin" element={<SignIn />} />
       <Route path="/auth/signup" element={<SignUp />} />
