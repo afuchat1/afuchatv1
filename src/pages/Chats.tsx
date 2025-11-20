@@ -12,6 +12,7 @@ import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
 import { UserAvatar } from '@/components/avatar/UserAvatar';
 import { formatDistanceToNow } from 'date-fns';
+import { VerifiedBadge } from '@/components/VerifiedBadge';
 
 interface Chat {
   id: string;
@@ -27,6 +28,10 @@ interface Chat {
     avatar_url: string | null;
     last_seen: string | null;
     show_online_status: boolean | null;
+    is_verified: boolean | null;
+    is_organization_verified: boolean | null;
+    is_affiliate: boolean | null;
+    affiliated_business_id: string | null;
   };
   is_online?: boolean;
 }
@@ -129,7 +134,7 @@ const Chats = () => {
               if (otherUserId) {
                 const { data: profile, error: profileError } = await supabase
                   .from('profiles')
-                  .select('id, display_name, handle, avatar_url, last_seen, show_online_status')
+                  .select('id, display_name, handle, avatar_url, last_seen, show_online_status, is_verified, is_organization_verified, is_affiliate, affiliated_business_id')
                   .eq('id', otherUserId)
                   .single();
                 
@@ -293,10 +298,18 @@ const Chats = () => {
           </div>
 
           <div className="flex-1 min-w-0">
-            <div className="flex items-center gap-2 mb-1">
+            <div className="flex items-center gap-1 mb-1">
               <h3 className="font-semibold text-base truncate text-foreground group-hover:text-primary transition-colors">
                 {chatName}
               </h3>
+              {!chat.is_group && chat.other_user && (
+                <VerifiedBadge
+                  isVerified={chat.other_user.is_verified || false}
+                  isOrgVerified={chat.other_user.is_organization_verified || false}
+                  isAffiliate={chat.other_user.is_affiliate || false}
+                  size="sm"
+                />
+              )}
               {chat.is_group && (
                 <Badge variant="secondary" className="text-xs px-2 py-0 h-5">
                   {t('chat.group')}

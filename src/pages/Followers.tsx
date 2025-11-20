@@ -29,6 +29,7 @@ export default function Followers() {
   const [users, setUsers] = useState<UserProfile[]>([]);
   const [loading, setLoading] = useState(true);
   const [followingIds, setFollowingIds] = useState<Set<string>>(new Set());
+  const [followerIds, setFollowerIds] = useState<Set<string>>(new Set());
   const [profileId, setProfileId] = useState<string | null>(null);
 
   useEffect(() => {
@@ -117,15 +118,27 @@ export default function Followers() {
     if (!user) return;
 
     try {
-      const { data, error } = await supabase
+      // Get who the current user is following
+      const { data: followingData, error: followingError } = await supabase
         .from("follows")
         .select("following_id")
         .eq("follower_id", user.id);
 
-      if (error) throw error;
+      if (followingError) throw followingError;
 
-      const ids = new Set(data?.map((f) => f.following_id) || []);
+      const ids = new Set(followingData?.map((f) => f.following_id) || []);
       setFollowingIds(ids);
+
+      // Get who is following the current user (to determine "Follow Back")
+      const { data: followerData, error: followerError } = await supabase
+        .from("follows")
+        .select("follower_id")
+        .eq("following_id", user.id);
+
+      if (followerError) throw followerError;
+
+      const followerIdsSet = new Set(followerData?.map((f) => f.follower_id) || []);
+      setFollowerIds(followerIdsSet);
     } catch (error) {
       console.error("Error fetching following status:", error);
     }
@@ -280,7 +293,9 @@ export default function Followers() {
                   >
                     {followingIds.has(profile.id) 
                       ? "Following" 
-                      : "Follow Back"}
+                      : followerIds.has(profile.id) 
+                        ? "Follow Back"
+                        : "Follow"}
                   </Button>
                 )}
               </div>

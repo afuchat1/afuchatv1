@@ -7,6 +7,7 @@ import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover
 import { AttachmentPreview } from './AttachmentPreview';
 import { useState } from 'react';
 import { ImageLightbox } from '@/components/ui/ImageLightbox';
+import { VerifiedBadge } from '@/components/VerifiedBadge';
 
 export interface Reaction {
   reaction: string;
@@ -36,6 +37,9 @@ export interface Message {
     display_name: string;
     handle: string;
     is_verified: boolean | null;
+    is_organization_verified: boolean | null;
+    is_affiliate: boolean | null;
+    affiliated_business_id: string | null;
   };
   message_status?: Array<{
     read_at: string | null;
@@ -301,19 +305,16 @@ export const MessageBubble = ({
         <div className="flex flex-col min-w-0">
           {/* --- Name (for incoming, non-grouped) --- */}
           {!isOwn && !isGrouped && (
-            <div className="flex items-center gap-1 mb-1 px-1">
+            <div className="flex items-center gap-0.5 mb-1 px-1">
               <span className="text-xs font-medium text-primary">
                 {message.profiles?.display_name || 'User'}
               </span>
-              {message.profiles?.is_verified && (
-                <svg
-                  className="h-3 w-3 text-primary flex-shrink-0"
-                  viewBox="0 0 24 24"
-                  fill="currentColor"
-                >
-                  <path d="M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41z" />
-                </svg>
-              )}
+              <VerifiedBadge
+                isVerified={message.profiles?.is_verified || false}
+                isOrgVerified={message.profiles?.is_organization_verified || false}
+                isAffiliate={message.profiles?.is_affiliate || false}
+                size="sm"
+              />
             </div>
           )}
           

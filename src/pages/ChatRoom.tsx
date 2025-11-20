@@ -20,6 +20,7 @@ import { FileUploadPreview } from '@/components/chat/FileUploadPreview';
 import EmojiPicker, { EmojiClickData } from 'emoji-picker-react';
 import { Dialog, DialogContent, DialogTrigger } from '@/components/ui/dialog';
 import { UserAvatar } from '@/components/avatar/UserAvatar';
+import { VerifiedBadge } from '@/components/VerifiedBadge';
 
 interface Message {
   id: string;
@@ -50,6 +51,9 @@ interface Message {
     display_name: string;
     handle: string;
     is_verified: boolean | null;
+    is_organization_verified: boolean | null;
+    is_affiliate: boolean | null;
+    affiliated_business_id: string | null;
   };
   message_status?: Array<{
     read_at: string | null;
@@ -85,6 +89,9 @@ interface OtherUserProfile {
   last_seen: string | null;
   show_online_status: boolean | null;
   is_verified: boolean | null;
+  is_organization_verified: boolean | null;
+  is_affiliate: boolean | null;
+  affiliated_business_id: string | null;
 }
 
 const ChatRoom = () => {
@@ -391,7 +398,7 @@ const ChatRoom = () => {
         if (members && members.length > 0) {
           const { data: profile } = await supabase
             .from('profiles')
-            .select('id, display_name, handle, avatar_url, last_seen, show_online_status, is_verified')
+            .select('id, display_name, handle, avatar_url, last_seen, show_online_status, is_verified, is_organization_verified, is_affiliate, affiliated_business_id')
             .eq('id', members[0].user_id)
             .single();
           
@@ -532,7 +539,7 @@ const ChatRoom = () => {
           encrypted_content: '[Voice Message]', // Placeholder text
           audio_url: supabase.storage.from('voice-messages').getPublicUrl(data.path).data.publicUrl,
         })
-        .select('*, profiles(display_name, handle, is_verified)')
+        .select('*, profiles(display_name, handle, is_verified, is_organization_verified, is_affiliate, affiliated_business_id)')
         .single();
 
       if (insertError) throw insertError;
@@ -853,19 +860,18 @@ const ChatRoom = () => {
           </div>
           
           <div className="flex-1 min-w-0">
-            <h1 className="text-base font-medium truncate flex items-center gap-1">
+            <h1 className="text-base font-medium truncate flex items-center gap-0.5">
               {chatInfo?.is_group 
                 ? (chatInfo?.name || 'Group Chat')
                 : (otherUser?.display_name || otherUser?.handle || 'Chat')
               }
-              {!chatInfo?.is_group && otherUser?.is_verified && (
-                <svg
-                  className="h-4 w-4 text-primary flex-shrink-0"
-                  viewBox="0 0 24 24"
-                  fill="currentColor"
-                >
-                  <path d="M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41z" />
-                </svg>
+              {!chatInfo?.is_group && otherUser && (
+                <VerifiedBadge
+                  isVerified={otherUser.is_verified || false}
+                  isOrgVerified={otherUser.is_organization_verified || false}
+                  isAffiliate={otherUser.is_affiliate || false}
+                  size="sm"
+                />
               )}
             </h1>
             {typingUsers.length > 0 ? (

@@ -7,6 +7,7 @@ import { Card } from '@/components/ui/card';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { toast } from 'sonner';
 import { Loader2 } from 'lucide-react';
+import { VerifiedBadge } from '@/components/VerifiedBadge';
 
 interface SuggestedUser {
   id: string;
@@ -15,6 +16,15 @@ interface SuggestedUser {
   avatar_url: string | null;
   bio: string | null;
   is_verified: boolean | null;
+  is_organization_verified: boolean | null;
+  is_affiliate: boolean | null;
+  affiliated_business_id: string | null;
+  following_me?: boolean;
+}
+
+interface BusinessProfile {
+  avatar_url: string | null;
+  display_name: string;
 }
 
 export default function SuggestedUsers() {
@@ -59,7 +69,7 @@ export default function SuggestedUsers() {
       // Fetch pinned users first
       const { data: pinnedUsers, error: pinnedError } = await supabase
         .from('profiles')
-        .select('id, handle, display_name, avatar_url, bio, is_verified')
+        .select('id, handle, display_name, avatar_url, bio, is_verified, is_organization_verified, is_affiliate, affiliated_business_id')
         .in('handle', ['afuchat', 'amkaweesi']);
 
       if (pinnedError) throw pinnedError;
@@ -67,7 +77,7 @@ export default function SuggestedUsers() {
       // Fetch other suggested users (excluding pinned ones and current user)
       const { data: otherUsers, error: otherError } = await supabase
         .from('profiles')
-        .select('id, handle, display_name, avatar_url, bio, is_verified')
+        .select('id, handle, display_name, avatar_url, bio, is_verified, is_organization_verified, is_affiliate, affiliated_business_id')
         .not('handle', 'in', '(afuchat,amkaweesi)')
         .neq('id', user?.id || '')
         .limit(8);
@@ -83,8 +93,44 @@ export default function SuggestedUsers() {
         return 0;
       });
 
-      // Combine pinned and other users
-      setUsers([...sortedPinned, ...(otherUsers || [])]);
+      const allUsers = [...sortedPinned, ...(otherUsers || [])];
+
+      // Check which users are following the current user
+      if (user) {
+        const { data: followData } = await supabase
+          .from('follows')
+          .select('follower_id')
+          .eq('following_id', user.id)
+          .in('follower_id', allUsers.map(u => u.id));
+
+        const followerIds = new Set(followData?.map(f => f.follower_id) || []);
+
+        // Fetch business profiles for affiliates
+        const affiliateUsers = allUsers.filter(u => u.is_affiliate && u.affiliated_business_id);
+        const businessProfiles: Record<string, BusinessProfile> = {};
+        
+        if (affiliateUsers.length > 0) {
+          const { data: businesses } = await supabase
+            .from('profiles')
+            .select('id, avatar_url, display_name')
+            .in('id', affiliateUsers.map(u => u.affiliated_business_id!));
+
+          businesses?.forEach(b => {
+            businessProfiles[b.id] = b;
+          });
+        }
+
+        // Add following_me flag and business info
+        const usersWithFollowInfo = allUsers.map(u => ({
+          ...u,
+          following_me: followerIds.has(u.id),
+          business_profile: u.affiliated_business_id ? businessProfiles[u.affiliated_business_id] : null
+        }));
+
+        setUsers(usersWithFollowInfo);
+      } else {
+        setUsers(allUsers);
+      }
     } catch (error) {
       console.error('Error fetching suggested users:', error);
       toast.error('Failed to load suggested users');
@@ -164,24 +210,23 @@ export default function SuggestedUsers() {
                 </Avatar>
 
                 <div className="flex-1 min-w-0">
-                  <div className="flex items-center gap-2">
+                  <div className="flex items-center gap-1">
                     <h3
                       className="font-semibold truncate cursor-pointer hover:underline"
                       onClick={() => navigate(`/${suggestedUser.handle}`)}
                     >
                       {suggestedUser.display_name}
                     </h3>
-                    {suggestedUser.is_verified && (
-                      <svg
-                        className="h-4 w-4 text-primary flex-shrink-0"
-                        viewBox="0 0 24 24"
-                        fill="currentColor"
-                      >
-                        <path d="M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41z" />
-                      </svg>
-                    )}
+                    <VerifiedBadge
+                      isVerified={suggestedUser.is_verified || false}
+                      isOrgVerified={suggestedUser.is_organization_verified || false}
+                      isAffiliate={suggestedUser.is_affiliate || false}
+                      affiliateBusinessLogo={(suggestedUser as any).business_profile?.avatar_url}
+                      affiliateBusinessName={(suggestedUser as any).business_profile?.display_name}
+                      size="sm"
+                    />
                     {isPinned(suggestedUser.handle) && (
-                      <span className="text-xs bg-primary/10 text-primary px-2 py-0.5 rounded-full">
+                      <span className="text-xs bg-primary/10 text-primary px-2 py-0.5 rounded-full ml-1">
                         Recommended
                       </span>
                     )}
@@ -203,6 +248,8 @@ export default function SuggestedUsers() {
                     <Loader2 className="h-4 w-4 animate-spin" />
                   ) : followingIds.has(suggestedUser.id) ? (
                     'Following'
+                  ) : suggestedUser.following_me ? (
+                    'Follow Back'
                   ) : (
                     'Follow'
                   )}
