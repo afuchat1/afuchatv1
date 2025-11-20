@@ -267,6 +267,7 @@ const Profile = () => {
 	const [isAdmin, setIsAdmin] = useState(false);
 	const [isActionsSheetOpen, setIsActionsSheetOpen] = useState(false);
 	const [isUploadingBanner, setIsUploadingBanner] = useState(false);
+	const [currentUserIsVerified, setCurrentUserIsVerified] = useState(false);
 
 	const handleBannerUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
 		if (!e.target.files || e.target.files.length === 0 || !user || !profileId) return;
@@ -566,6 +567,28 @@ const Profile = () => {
 			setIsAdmin(false);
 		}
 	}, [user, fetchAdminStatus]);
+
+	// Fetch current user's verification status
+	useEffect(() => {
+		const fetchCurrentUserVerification = async () => {
+			if (!user) {
+				setCurrentUserIsVerified(false);
+				return;
+			}
+
+			const { data, error } = await supabase
+				.from('profiles')
+				.select('is_verified, is_organization_verified')
+				.eq('id', user.id)
+				.single();
+
+			if (!error && data) {
+				setCurrentUserIsVerified(data.is_verified || data.is_organization_verified || false);
+			}
+		};
+
+		fetchCurrentUserVerification();
+	}, [user]);
 
 	// Listen for XP updates from gift sending
 	useEffect(() => {
@@ -1163,6 +1186,7 @@ const Profile = () => {
 					businessName={selectedAffiliate.businessName}
 					affiliatedDate={selectedAffiliate.affiliatedDate}
 					businessLogo={selectedAffiliate.businessLogo}
+					viewerIsVerified={currentUserIsVerified}
 				/>
 			)}
 
@@ -1175,6 +1199,7 @@ const Profile = () => {
 					isVerified={selectedVerified.isVerified}
 					isOrgVerified={selectedVerified.isOrgVerified}
 					createdAt={selectedVerified.createdAt}
+					viewerIsVerified={currentUserIsVerified}
 				/>
 			)}
 		</div>

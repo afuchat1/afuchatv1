@@ -14,6 +14,7 @@ interface VerifiedDetailsSheetProps {
   isVerified: boolean;
   isOrgVerified: boolean;
   createdAt?: string;
+  viewerIsVerified?: boolean;
 }
 
 export function VerifiedDetailsSheet({
@@ -23,6 +24,7 @@ export function VerifiedDetailsSheet({
   isVerified,
   isOrgVerified,
   createdAt,
+  viewerIsVerified = false,
 }: VerifiedDetailsSheetProps) {
   const navigate = useNavigate();
 
@@ -131,41 +133,43 @@ export function VerifiedDetailsSheet({
               </div>
             )}
 
-            {/* How to get verified section */}
-            <div className="border-t pt-6 space-y-4">
-              <h3 className="text-lg font-semibold">Want to get verified?</h3>
-              
-              <div className="space-y-3 text-sm text-muted-foreground">
-                <div className="flex gap-3">
-                  <CheckCircle2 className="w-5 h-5 flex-shrink-0 text-primary mt-0.5" />
-                  <p>Be an active and notable member of the AfuChat community</p>
+            {/* How to get verified section - Only show if viewer is not verified */}
+            {!viewerIsVerified && (
+              <div className="border-t pt-6 space-y-4">
+                <h3 className="text-lg font-semibold">Want to get verified?</h3>
+                
+                <div className="space-y-3 text-sm text-muted-foreground">
+                  <div className="flex gap-3">
+                    <CheckCircle2 className="w-5 h-5 flex-shrink-0 text-primary mt-0.5" />
+                    <p>Be an active and notable member of the AfuChat community</p>
+                  </div>
+                  <div className="flex gap-3">
+                    <CheckCircle2 className="w-5 h-5 flex-shrink-0 text-primary mt-0.5" />
+                    <p>Have a complete profile with authentic information</p>
+                  </div>
+                  <div className="flex gap-3">
+                    <CheckCircle2 className="w-5 h-5 flex-shrink-0 text-primary mt-0.5" />
+                    <p>Businesses and influencers with established presence can apply</p>
+                  </div>
+                  <div className="flex gap-3">
+                    <CheckCircle2 className="w-5 h-5 flex-shrink-0 text-primary mt-0.5" />
+                    <p>Provide supporting documents (business registration, social media links, etc.)</p>
+                  </div>
                 </div>
-                <div className="flex gap-3">
-                  <CheckCircle2 className="w-5 h-5 flex-shrink-0 text-primary mt-0.5" />
-                  <p>Have a complete profile with authentic information</p>
-                </div>
-                <div className="flex gap-3">
-                  <CheckCircle2 className="w-5 h-5 flex-shrink-0 text-primary mt-0.5" />
-                  <p>Businesses and influencers with established presence can apply</p>
-                </div>
-                <div className="flex gap-3">
-                  <CheckCircle2 className="w-5 h-5 flex-shrink-0 text-primary mt-0.5" />
-                  <p>Provide supporting documents (business registration, social media links, etc.)</p>
-                </div>
+
+                <Button 
+                  onClick={handleGetVerified}
+                  className="w-full mt-4"
+                  size="lg"
+                >
+                  Apply for Verification
+                </Button>
+
+                <p className="text-xs text-center text-muted-foreground">
+                  Applications are reviewed by our team. Processing may take 3-5 business days.
+                </p>
               </div>
-
-              <Button 
-                onClick={handleGetVerified}
-                className="w-full mt-4"
-                size="lg"
-              >
-                Apply for Verification
-              </Button>
-
-              <p className="text-xs text-center text-muted-foreground">
-                Applications are reviewed by our team. Processing may take 3-5 business days.
-              </p>
-            </div>
+            )}
           </div>
         </div>
       </SheetContent>
