@@ -1,6 +1,6 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Plus, MessageCircle, Zap, Gamepad2, Send, X } from 'lucide-react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useLocation } from 'react-router-dom';
 import { Button } from './button';
 import { cn } from '@/lib/utils';
 
@@ -14,45 +14,47 @@ interface FabAction {
 const FloatingActionButton = () => {
   const [isOpen, setIsOpen] = useState(false);
   const navigate = useNavigate();
+  const location = useLocation();
+
+  // Close FAB when route changes
+  useEffect(() => {
+    setIsOpen(false);
+  }, [location.pathname]);
+
+  const handleActionClick = (action: () => void) => {
+    setIsOpen(false);
+    // Small delay to ensure state updates before navigation
+    setTimeout(action, 50);
+  };
 
   const actions: FabAction[] = [
     {
       icon: <MessageCircle className="h-5 w-5" />,
       label: 'New Post',
-      onClick: () => {
+      onClick: () => handleActionClick(() => {
         navigate('/');
         setTimeout(() => {
           window.dispatchEvent(new Event('open-new-post'));
         }, 100);
-        setIsOpen(false);
-      },
+      }),
       color: 'bg-blue-500 hover:bg-blue-600'
     },
     {
       icon: <Send className="h-5 w-5" />,
       label: 'Transfer XP',
-      onClick: () => {
-        navigate('/transfer');
-        setIsOpen(false);
-      },
+      onClick: () => handleActionClick(() => navigate('/transfer')),
       color: 'bg-green-500 hover:bg-green-600'
     },
     {
       icon: <Gamepad2 className="h-5 w-5" />,
       label: 'Play Games',
-      onClick: () => {
-        navigate('/services');
-        setIsOpen(false);
-      },
+      onClick: () => handleActionClick(() => navigate('/services')),
       color: 'bg-purple-500 hover:bg-purple-600'
     },
     {
       icon: <Zap className="h-5 w-5" />,
       label: 'Quick Chat',
-      onClick: () => {
-        navigate('/chats');
-        setIsOpen(false);
-      },
+      onClick: () => handleActionClick(() => navigate('/chats')),
       color: 'bg-orange-500 hover:bg-orange-600'
     }
   ];
