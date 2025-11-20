@@ -1,7 +1,7 @@
 import { useNavigate } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import { Button } from '@/components/ui/button';
-import { ArrowLeft, Wallet, QrCode, Trophy, Users, ShoppingBag, Bot, TrendingUp, Building2, UserPlus, HelpCircle, FileText, Shield, Image as ImageIcon, MessageSquare, Send, Zap, Mail, Code } from 'lucide-react';
+import { ArrowLeft, Wallet, QrCode, Trophy, Users, ShoppingBag, Bot, TrendingUp, Building2, UserPlus, HelpCircle, FileText, Shield, Image as ImageIcon, MessageSquare, Send, Zap, Mail, Code, ChevronRight, Brain, Puzzle } from 'lucide-react';
 import Logo from '@/components/Logo';
 import { ScrollArea, ScrollBar } from '@/components/ui/scroll-area';
 
@@ -38,12 +38,15 @@ const Services = () => {
       ]
     },
     {
-      category: 'Gamification',
+      category: 'Games & Challenges',
       gradient: 'bg-gradient-to-r from-yellow-500/10 via-green-500/10 to-emerald-500/10',
       items: [
         { icon: Trophy, title: 'Leaderboard', description: 'View top users and rankings', route: '/leaderboard', color: 'text-yellow-600' },
         { icon: QrCode, title: 'QR Code', description: 'Share your profile easily', route: '/qr-code', color: 'text-blue-500' },
-        { icon: Zap, title: 'XP Collector', description: 'Play and earn XP rewards', route: '/game', color: 'text-orange-500' },
+        { icon: Zap, title: 'XP Collector', description: 'Click orbs to earn XP', route: '/game', color: 'text-orange-500' },
+        { icon: Brain, title: 'Memory Match', description: 'Match pairs to win', route: '/memory-game', color: 'text-purple-500' },
+        { icon: Puzzle, title: '15 Puzzle', description: 'Solve the sliding puzzle', route: '/puzzle-game', color: 'text-blue-600' },
+        { icon: Brain, title: 'Trivia Challenge', description: 'Test your knowledge', route: '/trivia-game', color: 'text-indigo-500' },
       ]
     },
     {
@@ -101,8 +104,11 @@ const Services = () => {
 
         <div className="space-y-6">
           {services.map((category, idx) => (
-            <div key={idx} className={`rounded-lg p-4 ${category.gradient}`}>
-              <h2 className="text-base sm:text-lg font-semibold text-foreground mb-3">{category.category}</h2>
+            <div key={idx} className={`rounded-lg p-4 ${category.gradient} relative`}>
+              <div className="flex items-center justify-between mb-3">
+                <h2 className="text-base sm:text-lg font-semibold text-foreground">{category.category}</h2>
+                <ChevronRight className="h-5 w-5 text-muted-foreground animate-pulse" />
+              </div>
               <ScrollArea className="w-full whitespace-nowrap">
                 <div className="flex gap-4 pb-4">
                   {category.items.map((item, itemIdx) => {
@@ -110,7 +116,7 @@ const Services = () => {
                     return (
                       <div 
                         key={itemIdx} 
-                        className="cursor-pointer hover:opacity-80 transition-opacity group flex-shrink-0 w-[280px]"
+                        className="cursor-pointer hover:opacity-80 transition-all group flex-shrink-0 w-[280px] bg-background/50 backdrop-blur rounded-lg border border-border/50 hover:border-border hover:shadow-lg"
                         onClick={() => navigate(item.route)}
                       >
                         <div className="p-4">
@@ -128,7 +134,7 @@ const Services = () => {
                     );
                   })}
                 </div>
-                <ScrollBar orientation="horizontal" />
+                <ScrollBar orientation="horizontal" className="h-2" />
               </ScrollArea>
             </div>
           ))}

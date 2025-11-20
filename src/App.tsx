@@ -58,6 +58,9 @@ const Followers = lazy(() => import("./pages/Followers"));
 const Following = lazy(() => import("./pages/Following"));
 const SuggestedUsers = lazy(() => import("./pages/SuggestedUsers"));
 const SimpleGame = lazy(() => import("./pages/SimpleGame"));
+const MemoryGame = lazy(() => import("./pages/MemoryGame"));
+const PuzzleGame = lazy(() => import("./pages/PuzzleGame"));
+const TriviaGame = lazy(() => import("./pages/TriviaGame"));
 import Layout from "./components/Layout";
 
 const queryClient = new QueryClient();
@@ -123,6 +126,9 @@ const AppRoutes = () => {
       <Route path="/developer-sdk" element={<Layout><DeveloperSDK /></Layout>} />
       <Route path="/verification-request" element={<Layout><VerificationRequest /></Layout>} />
       <Route path="/game" element={<Layout><SimpleGame /></Layout>} />
+      <Route path="/memory-game" element={<Layout><MemoryGame /></Layout>} />
+      <Route path="/puzzle-game" element={<Layout><PuzzleGame /></Layout>} />
+      <Route path="/trivia-game" element={<Layout><TriviaGame /></Layout>} />
 
       <Route path="/profile/:userId" element={<ProfileRedirect />} />
 
