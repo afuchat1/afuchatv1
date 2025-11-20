@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '@/contexts/AuthContext';
 import { supabase } from '@/integrations/supabase/client';
@@ -35,10 +35,107 @@ const FinancialHub = () => {
   useEffect(() => {
     if (user) {
       fetchFinancialData();
+      setupRealtimeSubscriptions();
     }
+
+    return () => {
+      // Cleanup realtime subscriptions
+      supabase.removeAllChannels();
+    };
   }, [user]);
 
-  const fetchFinancialData = async () => {
+  const setupRealtimeSubscriptions = () => {
+    if (!user) return;
+
+    // Subscribe to XP transfers
+    const transfersChannel = supabase
+      .channel('xp-transfers-changes')
+      .on(
+        'postgres_changes',
+        {
+          event: '*',
+          schema: 'public',
+          table: 'xp_transfers',
+          filter: `sender_id=eq.${user.id},receiver_id=eq.${user.id}`
+        },
+        () => {
+          fetchFinancialData();
+        }
+      )
+      .subscribe();
+
+    // Subscribe to tips
+    const tipsChannel = supabase
+      .channel('tips-changes')
+      .on(
+        'postgres_changes',
+        {
+          event: '*',
+          schema: 'public',
+          table: 'tips',
+          filter: `sender_id=eq.${user.id},receiver_id=eq.${user.id}`
+        },
+        () => {
+          fetchFinancialData();
+        }
+      )
+      .subscribe();
+
+    // Subscribe to red envelope claims
+    const redEnvelopeChannel = supabase
+      .channel('red-envelope-changes')
+      .on(
+        'postgres_changes',
+        {
+          event: 'INSERT',
+          schema: 'public',
+          table: 'red_envelope_claims',
+          filter: `claimer_id=eq.${user.id}`
+        },
+        () => {
+          fetchFinancialData();
+        }
+      )
+      .subscribe();
+
+    // Subscribe to gift transactions
+    const giftsChannel = supabase
+      .channel('gifts-changes')
+      .on(
+        'postgres_changes',
+        {
+          event: 'INSERT',
+          schema: 'public',
+          table: 'gift_transactions',
+          filter: `receiver_id=eq.${user.id}`
+        },
+        () => {
+          fetchFinancialData();
+        }
+      )
+      .subscribe();
+
+    // Subscribe to profile changes for balance updates
+    const profileChannel = supabase
+      .channel('profile-changes')
+      .on(
+        'postgres_changes',
+        {
+          event: 'UPDATE',
+          schema: 'public',
+          table: 'profiles',
+          filter: `id=eq.${user.id}`
+        },
+        (payload) => {
+          if (payload.new && 'xp' in payload.new) {
+            setBalance(payload.new.xp);
+          }
+        }
+      )
+      .subscribe();
+  };
+
+  const fetchFinancialData = useCallback(async () => {
     if (!user) return;
 
     try {
@@ -80,7 +177,7 @@ const FinancialHub = () => {
     } finally {
       setLoading(false);
     }
-  };
+  }, [user]);
 
   const fetchTransfers = async (): Promise<Transaction[]> => {
     const { data: sent } = await supabase
