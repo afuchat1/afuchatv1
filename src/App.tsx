@@ -44,6 +44,7 @@ const TermsOfUse = lazy(() => import("./pages/TermsOfUse"));
 const PrivacyPolicy = lazy(() => import("./pages/PrivacyPolicy"));
 const TrendingHashtags = lazy(() => import("./pages/TrendingHashtags"));
 const AdminAffiliateRequests = lazy(() => import("./pages/AdminAffiliateRequests"));
+const AdminVerificationRequests = lazy(() => import("./pages/AdminVerificationRequests"));
 const AffiliateRequest = lazy(() => import("./pages/AffiliateRequest"));
 const AffiliateDashboard = lazy(() => import("./pages/AffiliateDashboard"));
 const BusinessDashboard = lazy(() => import("./pages/BusinessDashboard"));
@@ -106,6 +107,7 @@ const AppRoutes = () => {
       <Route path="/privacy" element={<PrivacyPolicy />} />
       <Route path="/trending" element={<Layout><TrendingHashtags /></Layout>} />
       <Route path="/admin/affiliate-requests" element={<Layout><AdminAffiliateRequests /></Layout>} />
+      <Route path="/admin/verification-requests" element={<Layout><AdminVerificationRequests /></Layout>} />
       <Route path="/affiliate-request" element={<Layout><AffiliateRequest /></Layout>} />
       <Route path="/affiliate-dashboard" element={<Layout><AffiliateDashboard /></Layout>} />
       <Route path="/business/dashboard" element={<Layout><BusinessDashboard /></Layout>} />

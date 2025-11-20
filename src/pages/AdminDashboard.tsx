@@ -384,15 +384,26 @@ const AdminDashboard = () => {
             </div>
           </div>
           
-          <Button 
-            variant="outline" 
-            size="sm"
-            onClick={() => navigate('/admin/affiliate-requests')}
-            className="gap-2"
-          >
-            <Building2 className="h-4 w-4" />
-            <span className="hidden sm:inline">Affiliate Requests</span>
-          </Button>
+          <div className="flex gap-2">
+            <Button 
+              variant="outline" 
+              size="sm"
+              onClick={() => navigate('/admin/affiliate-requests')}
+              className="gap-2"
+            >
+              <Building2 className="h-4 w-4" />
+              <span className="hidden sm:inline">Affiliates</span>
+            </Button>
+            <Button 
+              variant="outline" 
+              size="sm"
+              onClick={() => navigate('/admin/verification-requests')}
+              className="gap-2"
+            >
+              <Shield className="h-4 w-4" />
+              <span className="hidden sm:inline">Verifications</span>
+            </Button>
+          </div>
         </div>
 
         {/* Main Tabs (Only visible to admin) */}
