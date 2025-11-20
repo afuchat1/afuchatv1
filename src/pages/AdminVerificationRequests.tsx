@@ -532,6 +532,9 @@ export default function AdminVerificationRequests() {
         <DialogContent className="max-w-4xl max-h-[90vh]">
           <DialogHeader>
             <DialogTitle>Document Preview</DialogTitle>
+            <DialogDescription>
+              View the uploaded verification document
+            </DialogDescription>
           </DialogHeader>
           {previewDocument && (
             <div className="space-y-4">
