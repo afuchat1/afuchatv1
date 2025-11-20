@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { Plus, MessageCircle, Zap, Gamepad2, Send, X } from 'lucide-react';
+import { Plus, MessageCircle, Gamepad2, Send, X } from 'lucide-react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { Button } from './button';
 import { cn } from '@/lib/utils';
@@ -23,13 +23,12 @@ const FloatingActionButton = () => {
 
   const handleActionClick = (action: () => void) => {
     setIsOpen(false);
-    // Small delay to ensure state updates before navigation
     setTimeout(action, 50);
   };
 
   const actions: FabAction[] = [
     {
-      icon: <MessageCircle className="h-5 w-5" />,
+      icon: <MessageCircle className="h-6 w-6" />,
       label: 'New Post',
       onClick: () => handleActionClick(() => {
         navigate('/');
@@ -37,19 +36,19 @@ const FloatingActionButton = () => {
           window.dispatchEvent(new Event('open-new-post'));
         }, 100);
       }),
-      color: 'bg-blue-500 hover:bg-blue-600'
+      color: 'bg-blue-500'
     },
     {
-      icon: <Send className="h-5 w-5" />,
+      icon: <Send className="h-6 w-6" />,
       label: 'Transfer XP',
       onClick: () => handleActionClick(() => navigate('/transfer')),
-      color: 'bg-green-500 hover:bg-green-600'
+      color: 'bg-green-500'
     },
     {
-      icon: <Gamepad2 className="h-5 w-5" />,
+      icon: <Gamepad2 className="h-6 w-6" />,
       label: 'Play Games',
       onClick: () => handleActionClick(() => navigate('/services')),
-      color: 'bg-purple-500 hover:bg-purple-600'
+      color: 'bg-purple-500'
     }
   ];
 
@@ -58,50 +57,45 @@ const FloatingActionButton = () => {
       {/* Backdrop */}
       {isOpen && (
         <div
-          className="fixed inset-0 bg-background/80 backdrop-blur-sm z-40 animate-fade-in"
+          className="fixed inset-0 bg-black/60 z-40 animate-fade-in"
           onClick={() => setIsOpen(false)}
         />
       )}
 
       {/* FAB Container */}
-      <div className="fixed bottom-20 right-6 z-50 flex flex-col-reverse items-end gap-3">
+      <div className="fixed bottom-20 right-6 z-50 flex flex-col-reverse items-end gap-4">
         {/* Action Buttons */}
         {isOpen && actions.map((action, index) => (
-          <div
+          <button
             key={action.label}
-            className="flex items-center gap-3 animate-scale-in"
+            onClick={action.onClick}
+            className="flex items-center gap-4 animate-scale-in group"
             style={{ animationDelay: `${index * 50}ms` }}
           >
-            <span className="bg-background text-foreground px-3 py-1.5 rounded-lg shadow-lg text-sm font-medium whitespace-nowrap border border-border">
+            <span className="text-white text-lg font-semibold whitespace-nowrap">
               {action.label}
             </span>
-            <Button
-              size="icon"
-              className={cn(
-                "h-12 w-12 rounded-full shadow-lg transition-all hover:scale-110",
-                action.color
-              )}
-              onClick={action.onClick}
-            >
+            <div className={cn(
+              "h-14 w-14 rounded-full shadow-xl flex items-center justify-center text-white transition-transform group-hover:scale-110",
+              action.color
+            )}>
               {action.icon}
-            </Button>
-          </div>
+            </div>
+          </button>
         ))}
 
         {/* Main FAB Button */}
         <Button
           size="icon"
           className={cn(
-            "h-14 w-14 rounded-full shadow-2xl transition-all hover:scale-110",
-            isOpen ? "bg-destructive hover:bg-destructive/90 rotate-45" : "bg-primary hover:bg-primary/90"
+            "h-16 w-16 rounded-full shadow-2xl transition-all",
+            isOpen 
+              ? "bg-primary hover:bg-primary/90 rotate-45" 
+              : "bg-primary hover:bg-primary/90 hover:scale-110"
           )}
           onClick={() => setIsOpen(!isOpen)}
         >
-          {isOpen ? (
-            <X className="h-6 w-6" />
-          ) : (
-            <Plus className="h-6 w-6" />
-          )}
+          <Plus className="h-7 w-7" />
         </Button>
       </div>
     </>
