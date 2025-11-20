@@ -176,17 +176,12 @@ const Settings = () => {
                   description="Update your name, bio, and other profile details"
                   onClick={() => user && navigate(`/${user.id}/edit`)}
                 />
-                <Separator />
-                <SettingItem
-                  label="Customize Avatar"
-                  description="Personalize your owl avatar appearance"
-                  onClick={() => navigate('/avatar/edit')}
-                />
               </div>
             </Card>
           </div>
         );
 
+      case 'security':
         return (
           <div className="space-y-6">
             <div>
