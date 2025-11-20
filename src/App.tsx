@@ -57,6 +57,7 @@ const VerificationRequest = lazy(() => import("./pages/VerificationRequest"));
 const Followers = lazy(() => import("./pages/Followers"));
 const Following = lazy(() => import("./pages/Following"));
 const SuggestedUsers = lazy(() => import("./pages/SuggestedUsers"));
+const SimpleGame = lazy(() => import("./pages/SimpleGame"));
 import Layout from "./components/Layout";
 
 const queryClient = new QueryClient();
@@ -121,6 +122,7 @@ const AppRoutes = () => {
       <Route path="/red-envelope" element={<Layout><RedEnvelope /></Layout>} />
       <Route path="/developer-sdk" element={<Layout><DeveloperSDK /></Layout>} />
       <Route path="/verification-request" element={<Layout><VerificationRequest /></Layout>} />
+      <Route path="/game" element={<Layout><SimpleGame /></Layout>} />
 
       <Route path="/profile/:userId" element={<ProfileRedirect />} />
 

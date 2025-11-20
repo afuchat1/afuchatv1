@@ -12,6 +12,7 @@ const Services = () => {
   const services = [
     {
       category: 'Social & Content',
+      gradient: 'bg-gradient-to-r from-pink-500/10 via-purple-500/10 to-blue-500/10',
       items: [
         { icon: ImageIcon, title: 'Moments', description: 'Share photos and stories', route: '/moments', color: 'text-pink-500' },
         { icon: MessageSquare, title: 'Chats', description: 'Message friends privately', route: '/chats', color: 'text-green-500' },
@@ -21,6 +22,7 @@ const Services = () => {
     },
     {
       category: 'Financial',
+      gradient: 'bg-gradient-to-r from-blue-500/10 via-indigo-500/10 to-purple-500/10',
       items: [
         { icon: Wallet, title: 'Wallet', description: 'Manage your XP balance', route: '/wallet', color: 'text-blue-500' },
         { icon: Send, title: 'Transfer XP', description: 'Send XP to other users', route: '/transfer', color: 'text-indigo-500' },
@@ -29,6 +31,7 @@ const Services = () => {
     },
     {
       category: 'Mini Programs',
+      gradient: 'bg-gradient-to-r from-yellow-500/10 via-orange-500/10 to-red-500/10',
       items: [
         { icon: Zap, title: 'App Store', description: 'Discover mini apps', route: '/mini-programs', color: 'text-yellow-500' },
         { icon: Code, title: 'Developer SDK', description: 'Build your own apps', route: '/developer-sdk', color: 'text-purple-600' },
@@ -36,19 +39,23 @@ const Services = () => {
     },
     {
       category: 'Gamification',
+      gradient: 'bg-gradient-to-r from-yellow-500/10 via-green-500/10 to-emerald-500/10',
       items: [
         { icon: Trophy, title: 'Leaderboard', description: 'View top users and rankings', route: '/leaderboard', color: 'text-yellow-600' },
         { icon: QrCode, title: 'QR Code', description: 'Share your profile easily', route: '/qr-code', color: 'text-blue-500' },
+        { icon: Zap, title: 'XP Collector', description: 'Play and earn XP rewards', route: '/game', color: 'text-orange-500' },
       ]
     },
     {
       category: 'Shopping',
+      gradient: 'bg-gradient-to-r from-purple-500/10 via-pink-500/10 to-rose-500/10',
       items: [
         { icon: ShoppingBag, title: 'Shop', description: 'Browse and purchase items', route: '/shop', color: 'text-purple-500' },
       ]
     },
     {
       category: 'Business',
+      gradient: 'bg-gradient-to-r from-blue-600/10 via-cyan-500/10 to-teal-500/10',
       items: [
         { icon: Building2, title: 'Business Dashboard', description: 'Manage your business', route: '/business/dashboard', color: 'text-blue-600' },
         { icon: UserPlus, title: 'Affiliates', description: 'Join affiliate program', route: '/affiliate-request', color: 'text-indigo-500' },
@@ -56,12 +63,14 @@ const Services = () => {
     },
     {
       category: 'AI Tools',
+      gradient: 'bg-gradient-to-r from-cyan-500/10 via-blue-500/10 to-indigo-500/10',
       items: [
         { icon: Bot, title: 'AfuAI', description: 'Chat with AI assistant', route: '/ai-chat', color: 'text-cyan-500' },
       ]
     },
     {
       category: 'Support',
+      gradient: 'bg-gradient-to-r from-gray-500/10 via-slate-500/10 to-zinc-500/10',
       items: [
         { icon: HelpCircle, title: 'Support Center', description: 'Get help and support', route: '/support', color: 'text-gray-500' },
         { icon: FileText, title: 'Terms', description: 'Terms of service', route: '/terms', color: 'text-gray-500' },
@@ -92,10 +101,10 @@ const Services = () => {
 
         <div className="space-y-6">
           {services.map((category, idx) => (
-            <div key={idx}>
-              <h2 className="text-base sm:text-lg font-semibold text-foreground mb-3 px-4">{category.category}</h2>
+            <div key={idx} className={`rounded-lg p-4 ${category.gradient}`}>
+              <h2 className="text-base sm:text-lg font-semibold text-foreground mb-3">{category.category}</h2>
               <ScrollArea className="w-full whitespace-nowrap">
-                <div className="flex gap-4 px-4 pb-4">
+                <div className="flex gap-4 pb-4">
                   {category.items.map((item, itemIdx) => {
                     const Icon = item.icon;
                     return (
