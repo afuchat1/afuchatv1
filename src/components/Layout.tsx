@@ -123,7 +123,10 @@ const Layout = ({ children }: LayoutProps) => {
       
       {/* Mobile Header with Services Button - Hidden on home page */}
       {location.pathname !== '/' && (
-        <header className="lg:hidden sticky top-0 z-40 bg-background/95 backdrop-blur border-b border-border">
+        <header className={cn(
+          "lg:hidden sticky top-0 z-40 bg-background/95 backdrop-blur border-b border-border transition-transform duration-300",
+          isScrollingDown ? "-translate-y-full" : "translate-y-0"
+        )}>
           <div className="flex items-center justify-between px-4 h-14">
             <Logo />
             <Button
