@@ -29,7 +29,6 @@ import { AffiliatedBadge } from '@/components/AffiliatedBadge';
 import { AffiliateDetailsSheet } from '@/components/AffiliateDetailsSheet';
 import { VerifiedDetailsSheet } from '@/components/VerifiedDetailsSheet';
 import { OnlineStatus } from '@/components/OnlineStatus';
-import { FollowersDialog } from '@/components/FollowersDialog';
 
 interface Profile {
 	id: string;
@@ -269,8 +268,6 @@ const Profile = () => {
 	const [isActionsSheetOpen, setIsActionsSheetOpen] = useState(false);
 	const [isUploadingBanner, setIsUploadingBanner] = useState(false);
 	const [currentUserIsVerified, setCurrentUserIsVerified] = useState(false);
-	const [followersDialogOpen, setFollowersDialogOpen] = useState(false);
-	const [followingDialogOpen, setFollowingDialogOpen] = useState(false);
 
 	const handleBannerUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
 		if (!e.target.files || e.target.files.length === 0 || !user || !profileId) return;
@@ -1041,14 +1038,14 @@ const Profile = () => {
 					<div className="flex gap-4 mt-3">
 						<div 
 							className="flex items-center cursor-pointer hover:underline"
-							onClick={() => setFollowingDialogOpen(true)}
+							onClick={() => navigate(`/${profile.handle}/following`)}
 						>
 							<span className="font-bold text-sm">{formatCount(followCount.following)}</span>
 							<span className="text-muted-foreground text-sm ml-1">{t('profile.following')}</span>
 						</div>
 						<div 
 							className="flex items-center cursor-pointer hover:underline"
-							onClick={() => setFollowersDialogOpen(true)}
+							onClick={() => navigate(`/${profile.handle}/followers`)}
 						>
 							<span className="font-bold text-sm">{formatCount(followCount.followers)}</span>
 							<span className="text-muted-foreground text-sm ml-1">{t('profile.followers')}</span>
@@ -1211,20 +1208,6 @@ const Profile = () => {
 					viewerIsVerified={currentUserIsVerified}
 				/>
 			)}
-
-			<FollowersDialog
-				open={followersDialogOpen}
-				onOpenChange={setFollowersDialogOpen}
-				userId={profileId || ""}
-				type="followers"
-			/>
-
-			<FollowersDialog
-				open={followingDialogOpen}
-				onOpenChange={setFollowingDialogOpen}
-				userId={profileId || ""}
-				type="following"
-			/>
 		</div>
 	);
 };

@@ -54,6 +54,8 @@ const Transfer = lazy(() => import("./pages/Transfer"));
 const RedEnvelope = lazy(() => import("./pages/RedEnvelope"));
 const DeveloperSDK = lazy(() => import("./pages/DeveloperSDK"));
 const VerificationRequest = lazy(() => import("./pages/VerificationRequest"));
+const Followers = lazy(() => import("./pages/Followers"));
+const Following = lazy(() => import("./pages/Following"));
 import Layout from "./components/Layout";
 
 const queryClient = new QueryClient();
@@ -122,6 +124,8 @@ const AppRoutes = () => {
 
       <Route path="/:userId" element={<Layout><Profile /></Layout>} />
       <Route path="/:userId/edit" element={<Layout><EditProfile /></Layout>} />
+      <Route path="/:userId/followers" element={<Layout><Followers /></Layout>} />
+      <Route path="/:userId/following" element={<Layout><Following /></Layout>} />
 
       <Route path="*" element={<NotFound />} />
     </Routes>
