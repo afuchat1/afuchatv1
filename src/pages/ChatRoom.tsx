@@ -49,6 +49,7 @@ interface Message {
   profiles: {
     display_name: string;
     handle: string;
+    is_verified: boolean | null;
   };
   message_status?: Array<{
     read_at: string | null;
@@ -83,6 +84,7 @@ interface OtherUserProfile {
   avatar_url: string | null;
   last_seen: string | null;
   show_online_status: boolean | null;
+  is_verified: boolean | null;
 }
 
 const ChatRoom = () => {
@@ -201,7 +203,7 @@ const ChatRoom = () => {
         (payload) => {
           supabase
             .from('profiles')
-            .select('display_name, handle')
+            .select('display_name, handle, is_verified')
             .eq('id', payload.new.sender_id)
             .single()
             .then(async ({ data: profile, error }) => {
@@ -389,7 +391,7 @@ const ChatRoom = () => {
         if (members && members.length > 0) {
           const { data: profile } = await supabase
             .from('profiles')
-            .select('id, display_name, handle, avatar_url, last_seen, show_online_status')
+            .select('id, display_name, handle, avatar_url, last_seen, show_online_status, is_verified')
             .eq('id', members[0].user_id)
             .single();
           
@@ -413,7 +415,7 @@ const ChatRoom = () => {
       .from('messages')
       .select(`
         *,
-        profiles(display_name, handle),
+        profiles(display_name, handle, is_verified),
         message_reactions(reaction, user_id),
         message_status(read_at, delivered_at, user_id),
         reply_to_message:messages!reply_to_message_id(
@@ -530,7 +532,7 @@ const ChatRoom = () => {
           encrypted_content: '[Voice Message]', // Placeholder text
           audio_url: supabase.storage.from('voice-messages').getPublicUrl(data.path).data.publicUrl,
         })
-        .select('*, profiles(display_name, handle)')
+        .select('*, profiles(display_name, handle, is_verified)')
         .single();
 
       if (insertError) throw insertError;
@@ -851,11 +853,20 @@ const ChatRoom = () => {
           </div>
           
           <div className="flex-1 min-w-0">
-            <h1 className="text-base font-medium truncate">
+            <h1 className="text-base font-medium truncate flex items-center gap-1">
               {chatInfo?.is_group 
                 ? (chatInfo?.name || 'Group Chat')
                 : (otherUser?.display_name || otherUser?.handle || 'Chat')
               }
+              {!chatInfo?.is_group && otherUser?.is_verified && (
+                <svg
+                  className="h-4 w-4 text-primary flex-shrink-0"
+                  viewBox="0 0 24 24"
+                  fill="currentColor"
+                >
+                  <path d="M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41z" />
+                </svg>
+              )}
             </h1>
             {typingUsers.length > 0 ? (
               <p className="text-xs text-primary">

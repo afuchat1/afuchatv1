@@ -252,13 +252,6 @@ const Settings = () => {
                 <span>Cosmetic Shop</span>
                 <span className="text-muted-foreground">›</span>
               </button>
-              <button
-                onClick={() => navigate('/gift-leaderboard')}
-                className="w-full flex items-center justify-between py-3 px-2 rounded-lg hover:bg-muted transition-colors text-left"
-              >
-                <span>Gift Leaderboard</span>
-                <span className="text-muted-foreground">›</span>
-              </button>
             </div>
           </Card>
 
