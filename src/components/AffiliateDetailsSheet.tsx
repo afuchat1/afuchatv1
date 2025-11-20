@@ -2,8 +2,10 @@ import {
   Sheet,
   SheetContent,
 } from "@/components/ui/sheet";
-import { Building2, Calendar, ShieldCheck, BadgeCheck } from "lucide-react";
+import { Button } from "@/components/ui/button";
+import { Building2, Calendar, ShieldCheck, BadgeCheck, CheckCircle2 } from "lucide-react";
 import { format } from "date-fns";
+import { useNavigate } from "react-router-dom";
 
 interface AffiliateDetailsSheetProps {
   open: boolean;
@@ -22,6 +24,13 @@ export function AffiliateDetailsSheet({
   affiliatedDate,
   businessLogo,
 }: AffiliateDetailsSheetProps) {
+  const navigate = useNavigate();
+
+  const handleGetVerified = () => {
+    onOpenChange(false);
+    navigate('/verification-request');
+  };
+
   return (
     <Sheet open={open} onOpenChange={onOpenChange}>
       <SheetContent 
@@ -120,6 +129,42 @@ export function AffiliateDetailsSheet({
                   Verified since {format(new Date(affiliatedDate), "MMMM yyyy")}.
                 </p>
               </div>
+            </div>
+
+            {/* How to get verified section */}
+            <div className="border-t pt-6 space-y-4">
+              <h3 className="text-lg font-semibold">Want to get verified?</h3>
+              
+              <div className="space-y-3 text-sm text-muted-foreground">
+                <div className="flex gap-3">
+                  <CheckCircle2 className="w-5 h-5 flex-shrink-0 text-primary mt-0.5" />
+                  <p>Be an active and notable member of the AfuChat community</p>
+                </div>
+                <div className="flex gap-3">
+                  <CheckCircle2 className="w-5 h-5 flex-shrink-0 text-primary mt-0.5" />
+                  <p>Have a complete profile with authentic information</p>
+                </div>
+                <div className="flex gap-3">
+                  <CheckCircle2 className="w-5 h-5 flex-shrink-0 text-primary mt-0.5" />
+                  <p>Businesses and influencers with established presence can apply</p>
+                </div>
+                <div className="flex gap-3">
+                  <CheckCircle2 className="w-5 h-5 flex-shrink-0 text-primary mt-0.5" />
+                  <p>Provide supporting documents (business registration, social media links, etc.)</p>
+                </div>
+              </div>
+
+              <Button 
+                onClick={handleGetVerified}
+                className="w-full mt-4"
+                size="lg"
+              >
+                Apply for Verification
+              </Button>
+
+              <p className="text-xs text-center text-muted-foreground">
+                Applications are reviewed by our team. Processing may take 3-5 business days.
+              </p>
             </div>
           </div>
         </div>
