@@ -9,6 +9,7 @@ import { supabase } from '@/integrations/supabase/client';
 import Logo from '@/components/Logo';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Badge } from '@/components/ui/badge';
+import { cn } from '@/lib/utils';
 
 const UnifiedLeaderboard = () => {
   const navigate = useNavigate();
@@ -125,23 +126,32 @@ const UnifiedLeaderboard = () => {
               xpLeaderboard?.map((user, index) => (
                 <Card 
                   key={user.id}
-                  className="p-4 cursor-pointer hover:shadow-md transition-shadow"
+                  className={cn(
+                    "p-4 cursor-pointer hover:shadow-md transition-all",
+                    index < 3 && "border-2",
+                    index === 0 && "border-yellow-500/50 bg-yellow-500/5",
+                    index === 1 && "border-gray-400/50 bg-gray-400/5",
+                    index === 2 && "border-amber-600/50 bg-amber-600/5"
+                  )}
                   onClick={() => navigate(`/${user.handle}`)}
                 >
                   <div className="flex items-center gap-4">
-                    <div className="w-8 flex justify-center">
+                    <div className="w-12 flex flex-col items-center">
                       {getRankIcon(index)}
+                      <span className="text-xs text-muted-foreground mt-1">
+                        Rank {index + 1}
+                      </span>
                     </div>
-                    <Avatar className="h-12 w-12">
+                    <Avatar className="h-14 w-14 ring-2 ring-primary/20">
                       <AvatarImage src={user.avatar_url} />
                       <AvatarFallback>{user.display_name[0]}</AvatarFallback>
                     </Avatar>
                     <div className="flex-1">
-                      <p className="font-semibold">{user.display_name}</p>
+                      <p className="font-semibold text-base">{user.display_name}</p>
                       <p className="text-sm text-muted-foreground">@{user.handle}</p>
                     </div>
                     <div className="text-right">
-                      <Badge variant="secondary" className="mb-1">
+                      <Badge variant="secondary" className="mb-2">
                         {user.current_grade || 'Rookie'}
                       </Badge>
                       <p className="text-lg font-bold text-primary">{user.xp.toLocaleString()} XP</p>
@@ -159,25 +169,35 @@ const UnifiedLeaderboard = () => {
               giftLeaderboard?.map((user: any, index) => (
                 <Card 
                   key={user.id}
-                  className="p-4 cursor-pointer hover:shadow-md transition-shadow"
+                  className={cn(
+                    "p-4 cursor-pointer hover:shadow-md transition-all",
+                    index < 3 && "border-2",
+                    index === 0 && "border-yellow-500/50 bg-yellow-500/5",
+                    index === 1 && "border-gray-400/50 bg-gray-400/5",
+                    index === 2 && "border-amber-600/50 bg-amber-600/5"
+                  )}
                   onClick={() => navigate(`/${user.handle}`)}
                 >
                   <div className="flex items-center gap-4">
-                    <div className="w-8 flex justify-center">
+                    <div className="w-12 flex flex-col items-center">
                       {getRankIcon(index)}
+                      <span className="text-xs text-muted-foreground mt-1">
+                        Rank {index + 1}
+                      </span>
                     </div>
-                    <Avatar className="h-12 w-12">
+                    <Avatar className="h-14 w-14 ring-2 ring-primary/20">
                       <AvatarImage src={user.avatar_url} />
                       <AvatarFallback>{user.display_name[0]}</AvatarFallback>
                     </Avatar>
                     <div className="flex-1">
-                      <p className="font-semibold">{user.display_name}</p>
+                      <p className="font-semibold text-base">{user.display_name}</p>
                       <p className="text-sm text-muted-foreground">@{user.handle}</p>
                     </div>
                     <div className="text-right">
-                      <p className="text-sm text-muted-foreground mb-1">
+                      <Badge variant="outline" className="mb-2 gap-1">
+                        <Gift className="h-3 w-3" />
                         {user.gift_count} {user.gift_count === 1 ? 'gift' : 'gifts'}
-                      </p>
+                      </Badge>
                       <p className="text-lg font-bold text-pink-500">
                         {user.total_xp.toLocaleString()} XP
                       </p>

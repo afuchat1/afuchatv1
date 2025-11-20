@@ -6,9 +6,9 @@ import { Button } from '@/components/ui/button';
 import { Separator } from '@/components/ui/separator';
 import { Switch } from '@/components/ui/switch';
 import { 
-  ArrowLeft, User, Bell, Lock, Shield, FileText, LogOut, Languages, 
-  Sun, Moon, Monitor, Link2, Github, Building2, UserPlus, Mail, 
-  HelpCircle, Palette, Database, ChevronRight, Settings as SettingsIcon
+  ArrowLeft, User, Bell, Lock, Shield, LogOut, Languages, 
+  Sun, Moon, Monitor, Mail, HelpCircle, Palette, 
+  ChevronRight, Settings as SettingsIcon
 } from 'lucide-react';
 import { toast } from 'sonner';
 import { supabase } from '@/integrations/supabase/client';
@@ -56,12 +56,6 @@ const Settings = () => {
   const [privateAccount, setPrivateAccount] = useState(false);
   const [showOnlineStatus, setShowOnlineStatus] = useState(true);
   const [showReadReceipts, setShowReadReceipts] = useState(true);
-  const [businessMode, setBusinessMode] = useState(false);
-  const [showBusinessConfirm, setShowBusinessConfirm] = useState(false);
-  const [connectedProviders, setConnectedProviders] = useState<string[]>([]);
-  const [loadingProvider, setLoadingProvider] = useState<string | null>(null);
-  const [isAffiliate, setIsAffiliate] = useState(false);
-  const [hasPendingRequest, setHasPendingRequest] = useState(false);
 
   const languages = [
     { code: 'en', name: t('languages.en'), flag: '🇬🇧' },
@@ -73,10 +67,9 @@ const Settings = () => {
 
   const sidebarItems = [
     { id: 'general' as const, label: 'General', icon: User },
-    { id: 'security' as const, label: 'Security & Privacy', icon: Lock },
+    { id: 'security' as const, label: 'Privacy', icon: Lock },
     { id: 'notifications' as const, label: 'Notifications', icon: Bell },
     { id: 'appearance' as const, label: 'Appearance', icon: Palette },
-    { id: 'business' as const, label: 'Business', icon: Building2 },
     { id: 'help' as const, label: 'Help & Support', icon: HelpCircle },
     { id: 'about' as const, label: 'About', icon: Shield },
   ];
@@ -90,52 +83,24 @@ const Settings = () => {
 
   useEffect(() => {
     if (user) {
-      fetchConnectedProviders();
       fetchProfileSettings();
     }
   }, [user]);
-
-  const fetchConnectedProviders = async () => {
-    if (!user) return;
-    
-    try {
-      const { data, error } = await supabase.auth.getUserIdentities();
-      if (error) throw error;
-      
-      if (data?.identities) {
-        const providers = data.identities.map(identity => identity.provider);
-        setConnectedProviders(providers);
-      }
-    } catch (error) {
-      console.error('Error fetching identities:', error);
-    }
-  };
 
   const fetchProfileSettings = async () => {
     if (!user) return;
 
     const { data } = await supabase
       .from('profiles')
-      .select('is_business_mode, is_affiliate, is_private, show_online_status, show_read_receipts')
+      .select('is_private, show_online_status, show_read_receipts')
       .eq('id', user.id)
       .single();
 
     if (data) {
-      setBusinessMode(data.is_business_mode || false);
-      setIsAffiliate(data.is_affiliate || false);
       setPrivateAccount(data.is_private || false);
       setShowOnlineStatus(data.show_online_status ?? true);
       setShowReadReceipts(data.show_read_receipts ?? true);
     }
-
-    const { data: pendingRequest } = await supabase
-      .from('affiliate_requests')
-      .select('id')
-      .eq('user_id', user.id)
-      .eq('status', 'pending')
-      .maybeSingle();
-
-    setHasPendingRequest(!!pendingRequest);
   };
 
   const handleSectionChange = (section: SettingsSection) => {
@@ -182,77 +147,6 @@ const Settings = () => {
     }
   };
 
-  const handleConnectProvider = async (provider: 'google' | 'github') => {
-    setLoadingProvider(provider);
-    try {
-      const { error } = await supabase.auth.linkIdentity({
-        provider: provider,
-        options: {
-          redirectTo: `${window.location.origin}/settings?section=security`,
-        },
-      });
-      
-      if (error) throw error;
-      toast.success('Account linked successfully');
-    } catch (error: any) {
-      toast.error(error.message || t('common.error'));
-      setLoadingProvider(null);
-    }
-  };
-
-  const handleDisconnectProvider = async (provider: string) => {
-    try {
-      const { data: identities } = await supabase.auth.getUserIdentities();
-      const identity = identities?.identities?.find(id => id.provider === provider);
-      
-      if (!identity) {
-        toast.error(t('common.error'));
-        return;
-      }
-
-      if (identities?.identities && identities.identities.length <= 1) {
-        toast.error('You must have at least one sign-in method');
-        return;
-      }
-
-      const { error } = await supabase.auth.unlinkIdentity(identity);
-      if (error) throw error;
-
-      setConnectedProviders(prev => prev.filter(p => p !== provider));
-      toast.success(t('common.success'));
-    } catch (error: any) {
-      toast.error(error.message || t('common.error'));
-    }
-  };
-
-  const handleBusinessModeToggle = (checked: boolean) => {
-    if (checked) {
-      setShowBusinessConfirm(true);
-    } else {
-      updateBusinessMode(false);
-    }
-  };
-
-  const updateBusinessMode = async (enabled: boolean) => {
-    if (!user) return;
-
-    try {
-      const { error } = await supabase
-        .from('profiles')
-        .update({ is_business_mode: enabled })
-        .eq('id', user.id);
-
-      if (error) throw error;
-
-      setBusinessMode(enabled);
-      toast.success(enabled ? 'Business mode enabled' : 'Business mode disabled');
-      setShowBusinessConfirm(false);
-    } catch (error) {
-      console.error('Error updating business mode:', error);
-      toast.error(t('common.error'));
-    }
-  };
-
   const handleLogout = async () => {
     try {
       const { error } = await supabase.auth.signOut();
@@ -290,106 +184,15 @@ const Settings = () => {
                 />
               </div>
             </Card>
-
-            <Card className="p-6">
-              <h3 className="text-lg font-semibold mb-4">Shop & Rewards</h3>
-              <SettingItem
-                label="Cosmetic Shop"
-                description="Browse and purchase items with XP"
-                onClick={() => navigate('/shop')}
-              />
-            </Card>
           </div>
         );
 
-      case 'security':
         return (
           <div className="space-y-6">
             <div>
-              <h2 className="text-2xl font-bold mb-2">Security & Privacy</h2>
-              <p className="text-muted-foreground">Manage your security settings and privacy preferences</p>
+              <h2 className="text-2xl font-bold mb-2">Privacy</h2>
+              <p className="text-muted-foreground">Manage your privacy preferences</p>
             </div>
-
-            <Card className="p-6">
-              <h3 className="text-lg font-semibold mb-4">Connected Accounts</h3>
-              <p className="text-sm text-muted-foreground mb-4">
-                Manage your sign-in methods and connect multiple providers
-              </p>
-              <div className="space-y-4">
-                {/* Google */}
-                <div className="flex items-center justify-between py-2">
-                  <div className="flex items-center gap-3">
-                    <div className="h-10 w-10 rounded-full bg-background border flex items-center justify-center">
-                      <svg className="h-5 w-5" viewBox="0 0 24 24">
-                        <path fill="currentColor" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"/>
-                        <path fill="currentColor" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"/>
-                        <path fill="currentColor" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z"/>
-                        <path fill="currentColor" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z"/>
-                      </svg>
-                    </div>
-                    <div>
-                      <p className="font-medium">Google</p>
-                      <p className="text-sm text-muted-foreground">
-                        {connectedProviders.includes('google') ? 'Connected' : 'Not connected'}
-                      </p>
-                    </div>
-                  </div>
-                  {connectedProviders.includes('google') ? (
-                    <Button variant="outline" size="sm" onClick={() => handleDisconnectProvider('google')} disabled={connectedProviders.length <= 1}>
-                      Disconnect
-                    </Button>
-                  ) : (
-                    <Button variant="default" size="sm" onClick={() => handleConnectProvider('google')} disabled={loadingProvider === 'google'}>
-                      {loadingProvider === 'google' ? 'Connecting...' : 'Connect'}
-                    </Button>
-                  )}
-                </div>
-
-                <Separator />
-
-                {/* GitHub */}
-                <div className="flex items-center justify-between py-2">
-                  <div className="flex items-center gap-3">
-                    <div className="h-10 w-10 rounded-full bg-background border flex items-center justify-center">
-                      <Github className="h-5 w-5" />
-                    </div>
-                    <div>
-                      <p className="font-medium">GitHub</p>
-                      <p className="text-sm text-muted-foreground">
-                        {connectedProviders.includes('github') ? 'Connected' : 'Not connected'}
-                      </p>
-                    </div>
-                  </div>
-                  {connectedProviders.includes('github') ? (
-                    <Button variant="outline" size="sm" onClick={() => handleDisconnectProvider('github')} disabled={connectedProviders.length <= 1}>
-                      Disconnect
-                    </Button>
-                  ) : (
-                    <Button variant="default" size="sm" onClick={() => handleConnectProvider('github')} disabled={loadingProvider === 'github'}>
-                      {loadingProvider === 'github' ? 'Connecting...' : 'Connect'}
-                    </Button>
-                  )}
-                </div>
-
-                <Separator />
-
-                {/* Email/Password */}
-                <div className="flex items-center justify-between py-2">
-                  <div className="flex items-center gap-3">
-                    <div className="h-10 w-10 rounded-full bg-background border flex items-center justify-center">
-                      <Lock className="h-5 w-5" />
-                    </div>
-                    <div>
-                      <p className="font-medium">Email & Password</p>
-                      <p className="text-sm text-muted-foreground">{user?.email || 'Not set'}</p>
-                    </div>
-                  </div>
-                  <Button variant="outline" size="sm" onClick={() => navigate('/auth/forgot-password')}>
-                    Change Password
-                  </Button>
-                </div>
-              </div>
-            </Card>
 
             <Card className="p-6">
               <h3 className="text-lg font-semibold mb-4">Privacy Settings</h3>
@@ -547,75 +350,6 @@ const Settings = () => {
           </div>
         );
 
-      case 'business':
-        return (
-          <div className="space-y-6">
-            <div>
-              <h2 className="text-2xl font-bold mb-2">Business</h2>
-              <p className="text-muted-foreground">Manage business features and affiliate program</p>
-            </div>
-
-            <Card className="p-6">
-              <div className="space-y-4">
-                <div className="flex items-center justify-between">
-                  <div className="flex items-center gap-3">
-                    <Building2 className="h-5 w-5 text-primary" />
-                    <div>
-                      <p className="font-medium">Business Mode</p>
-                      <p className="text-sm text-muted-foreground">
-                        Enable business features like website URL display
-                      </p>
-                    </div>
-                  </div>
-                  <Switch checked={businessMode} onCheckedChange={handleBusinessModeToggle} />
-                </div>
-              </div>
-            </Card>
-
-            {businessMode && (
-              <Card className="p-6">
-                <SettingItem
-                  label="Business Dashboard"
-                  description="View analytics and manage your business profile"
-                  icon={<Building2 className="h-5 w-5" />}
-                  onClick={() => navigate('/business/dashboard')}
-                />
-              </Card>
-            )}
-
-            <Card className="p-6">
-              <h3 className="text-lg font-semibold mb-4">Affiliate Program</h3>
-              <div className="space-y-3">
-                {isAffiliate ? (
-                  <SettingItem
-                    label="Affiliate Dashboard"
-                    description="Track your earnings and referrals"
-                    icon={<UserPlus className="h-5 w-5" />}
-                    onClick={() => navigate('/affiliate-dashboard')}
-                  />
-                ) : hasPendingRequest ? (
-                  <div className="p-4 rounded-lg bg-muted/50 border border-border">
-                    <div className="flex items-center gap-3">
-                      <UserPlus className="h-5 w-5 text-muted-foreground" />
-                      <div>
-                        <p className="font-medium">Request Pending</p>
-                        <p className="text-sm text-muted-foreground">Your affiliate request is under review</p>
-                      </div>
-                    </div>
-                  </div>
-                ) : (
-                  <SettingItem
-                    label="Apply for Affiliate Status"
-                    description="Join our affiliate program and earn rewards"
-                    icon={<UserPlus className="h-5 w-5" />}
-                    onClick={() => navigate('/affiliate-request')}
-                  />
-                )}
-              </div>
-            </Card>
-          </div>
-        );
-
       case 'help':
         return (
           <div className="space-y-6">
@@ -769,29 +503,6 @@ const Settings = () => {
         </main>
       </div>
 
-      {/* Business Mode Confirmation Dialog */}
-      <AlertDialog open={showBusinessConfirm} onOpenChange={setShowBusinessConfirm}>
-        <AlertDialogContent>
-          <AlertDialogHeader>
-            <AlertDialogTitle>Enable Business Mode?</AlertDialogTitle>
-            <AlertDialogDescription>
-              Business mode will allow you to:
-              <ul className="list-disc list-inside mt-2 space-y-1">
-                <li>Display your business website URL on your profile</li>
-                <li>Show a business badge next to your name</li>
-                <li>Access business-specific features</li>
-              </ul>
-              <p className="mt-3 text-sm">You can disable business mode at any time from settings.</p>
-            </AlertDialogDescription>
-          </AlertDialogHeader>
-          <AlertDialogFooter>
-            <AlertDialogCancel>Cancel</AlertDialogCancel>
-            <AlertDialogAction onClick={() => updateBusinessMode(true)}>
-              Enable Business Mode
-            </AlertDialogAction>
-          </AlertDialogFooter>
-        </AlertDialogContent>
-      </AlertDialog>
     </div>
   );
 };
