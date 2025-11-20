@@ -1510,6 +1510,63 @@ export type Database = {
           },
         ]
       }
+      verification_requests: {
+        Row: {
+          account_type: string
+          created_at: string | null
+          email: string
+          full_name: string
+          id: string
+          phone: string | null
+          rejection_reason: string | null
+          reviewed_at: string | null
+          reviewed_by: string | null
+          social_links: Json | null
+          status: string
+          supporting_documents: string[] | null
+          updated_at: string | null
+          user_id: string
+          verification_reason: string
+          website_url: string | null
+        }
+        Insert: {
+          account_type: string
+          created_at?: string | null
+          email: string
+          full_name: string
+          id?: string
+          phone?: string | null
+          rejection_reason?: string | null
+          reviewed_at?: string | null
+          reviewed_by?: string | null
+          social_links?: Json | null
+          status?: string
+          supporting_documents?: string[] | null
+          updated_at?: string | null
+          user_id: string
+          verification_reason: string
+          website_url?: string | null
+        }
+        Update: {
+          account_type?: string
+          created_at?: string | null
+          email?: string
+          full_name?: string
+          id?: string
+          phone?: string | null
+          rejection_reason?: string | null
+          reviewed_at?: string | null
+          reviewed_by?: string | null
+          social_links?: Json | null
+          status?: string
+          supporting_documents?: string[] | null
+          updated_at?: string | null
+          user_id?: string
+          verification_reason?: string
+          website_url?: string | null
+        }
+        Relationships: []
+      }
       xp_transfers: {
         Row: {
           amount: number

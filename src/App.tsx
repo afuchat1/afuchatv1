@@ -52,6 +52,7 @@ const MiniPrograms = lazy(() => import("./pages/MiniPrograms"));
 const Transfer = lazy(() => import("./pages/Transfer"));
 const RedEnvelope = lazy(() => import("./pages/RedEnvelope"));
 const DeveloperSDK = lazy(() => import("./pages/DeveloperSDK"));
+const VerificationRequest = lazy(() => import("./pages/VerificationRequest"));
 import Layout from "./components/Layout";
 
 const queryClient = new QueryClient();
@@ -113,6 +114,7 @@ const AppRoutes = () => {
       <Route path="/transfer" element={<Layout><Transfer /></Layout>} />
       <Route path="/red-envelope" element={<Layout><RedEnvelope /></Layout>} />
       <Route path="/developer-sdk" element={<Layout><DeveloperSDK /></Layout>} />
+      <Route path="/verification-request" element={<Layout><VerificationRequest /></Layout>} />
 
       <Route path="/profile/:userId" element={<ProfileRedirect />} />
 
