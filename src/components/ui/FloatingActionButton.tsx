@@ -55,7 +55,7 @@ const FloatingActionButton = () => {
     {
       icon: <Gamepad2 className="h-6 w-6" />,
       label: 'Play Games',
-      onClick: () => handleActionClick(() => navigate('/services')),
+      onClick: () => handleActionClick(() => navigate('/games')),
       color: 'bg-purple-500'
     }
   ];
