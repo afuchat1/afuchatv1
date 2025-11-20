@@ -46,6 +46,7 @@ export const ReadMoreText = ({ text, maxLines = 4, className = '' }: ReadMoreTex
           variant="ghost"
           size="sm"
           onClick={(e) => {
+            e.preventDefault();
             e.stopPropagation();
             setIsExpanded(!isExpanded);
           }}

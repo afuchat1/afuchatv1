@@ -37,7 +37,9 @@ export const ImageCarousel = ({ images, className }: ImageCarouselProps) => {
     ? 'grid-cols-2'
     : 'grid-cols-2';
 
-  const handleImageClick = (index: number) => {
+  const handleImageClick = (e: React.MouseEvent, index: number) => {
+    e.preventDefault();
+    e.stopPropagation();
     setLightboxIndex(index);
     setLightboxOpen(true);
   };
@@ -49,13 +51,13 @@ export const ImageCarousel = ({ images, className }: ImageCarouselProps) => {
       <div className={cn('relative group', className)}>
         {imageUrls.length === 1 ? (
           <div 
-            className="relative rounded-2xl overflow-hidden border border-border cursor-pointer"
-            onClick={() => handleImageClick(0)}
+            className="relative rounded-2xl overflow-hidden border border-border cursor-pointer hover:shadow-lg transition-shadow"
+            onClick={(e) => handleImageClick(e, 0)}
           >
             <img
               src={imageUrls[0]}
               alt={imageAlts[0]}
-              className="w-full max-h-[500px] object-cover hover:opacity-90 transition-opacity"
+              className="w-full max-h-[500px] object-cover hover:opacity-95 transition-opacity"
             />
           </div>
         ) : (
@@ -64,10 +66,10 @@ export const ImageCarousel = ({ images, className }: ImageCarouselProps) => {
               <div
                 key={index}
                 className={cn(
-                  'relative aspect-square overflow-hidden cursor-pointer',
+                  'relative aspect-square overflow-hidden cursor-pointer hover:opacity-95 transition-opacity',
                   imageUrls.length === 3 && index === 0 && 'row-span-2'
                 )}
-                onClick={() => handleImageClick(index)}
+                onClick={(e) => handleImageClick(e, index)}
               >
                 <img
                   src={image}

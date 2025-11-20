@@ -719,6 +719,7 @@ const PostCard = ({ post, addReply, user, navigate, onAcknowledge, onDeletePost,
                   variant="ghost"
                   size="sm"
                   onClick={(e) => {
+                    e.preventDefault();
                     e.stopPropagation();
                     setExpandedPosts(prev => {
                       const newSet = new Set(prev);
@@ -740,6 +741,7 @@ const PostCard = ({ post, addReply, user, navigate, onAcknowledge, onDeletePost,
                   variant="ghost"
                   size="sm"
                   onClick={(e) => {
+                    e.preventDefault();
                     e.stopPropagation();
                     setExpandedPosts(prev => new Set(prev).add(post.id));
                   }}
