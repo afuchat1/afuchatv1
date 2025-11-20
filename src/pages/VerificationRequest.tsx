@@ -1,6 +1,6 @@
-import { useState } from "react";
+import { useState, useRef } from "react";
 import { useNavigate } from "react-router-dom";
-import { ArrowLeft, Upload, Loader2 } from "lucide-react";
+import { ArrowLeft, Upload, Loader2, X, FileText, Image as ImageIcon, CheckCircle2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -10,11 +10,16 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { useAuth } from "@/contexts/AuthContext";
+import { Progress } from "@/components/ui/progress";
 
 export default function VerificationRequest() {
   const navigate = useNavigate();
   const { user } = useAuth();
   const [loading, setLoading] = useState(false);
+  const [uploadProgress, setUploadProgress] = useState(0);
+  const [uploadedFiles, setUploadedFiles] = useState<Array<{ name: string; url: string; type: string }>>([]);
+  const fileInputRef = useRef<HTMLInputElement>(null);
+  
   const [formData, setFormData] = useState({
     accountType: "business" as "business" | "influencer",
     fullName: "",
@@ -25,11 +30,74 @@ export default function VerificationRequest() {
     verificationReason: "",
   });
 
+  const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const files = e.target.files;
+    if (!files || files.length === 0) return;
+
+    setLoading(true);
+    setUploadProgress(0);
+
+    try {
+      const uploadedUrls: Array<{ name: string; url: string; type: string }> = [];
+
+      for (let i = 0; i < files.length; i++) {
+        const file = files[i];
+        const fileExt = file.name.split('.').pop();
+        const fileName = `${user?.id}/${Date.now()}_${Math.random().toString(36).substring(7)}.${fileExt}`;
+
+        // Upload to Supabase Storage
+        const { data, error } = await supabase.storage
+          .from('verification-documents')
+          .upload(fileName, file, {
+            cacheControl: '3600',
+            upsert: false
+          });
+
+        if (error) throw error;
+
+        // Get public URL
+        const { data: { publicUrl } } = supabase.storage
+          .from('verification-documents')
+          .getPublicUrl(fileName);
+
+        uploadedUrls.push({
+          name: file.name,
+          url: publicUrl,
+          type: file.type
+        });
+
+        setUploadProgress(((i + 1) / files.length) * 100);
+      }
+
+      setUploadedFiles([...uploadedFiles, ...uploadedUrls]);
+      toast.success(`${files.length} file(s) uploaded successfully`);
+      
+      if (fileInputRef.current) {
+        fileInputRef.current.value = '';
+      }
+    } catch (error: any) {
+      console.error("Error uploading files:", error);
+      toast.error(error.message || "Failed to upload files");
+    } finally {
+      setLoading(false);
+      setUploadProgress(0);
+    }
+  };
+
+  const handleRemoveFile = (index: number) => {
+    setUploadedFiles(uploadedFiles.filter((_, i) => i !== index));
+  };
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     
     if (!user) {
       toast.error("You must be logged in to apply for verification");
+      return;
+    }
+
+    if (uploadedFiles.length === 0) {
+      toast.error("Please upload at least one supporting document");
       return;
     }
 
@@ -53,12 +121,13 @@ export default function VerificationRequest() {
           website_url: formData.websiteUrl || null,
           social_links: socialLinksArray,
           verification_reason: formData.verificationReason,
+          supporting_documents: uploadedFiles.map(f => f.url),
           status: "pending",
         });
 
       if (error) throw error;
 
-      toast.success("Verification request submitted successfully!");
+      toast.success("Verification request submitted successfully! Our team will review your application.");
       navigate(-1);
     } catch (error: any) {
       console.error("Error submitting verification request:", error);
@@ -210,20 +279,99 @@ Example: https://twitter.com/yourprofile, https://instagram.com/yourprofile"
                 </p>
               </div>
 
-              {/* Supporting Documents Note */}
-              <div className="bg-muted/50 border rounded-lg p-4 space-y-2">
-                <div className="flex gap-2 items-start">
-                  <Upload className="w-5 h-5 text-primary mt-0.5" />
-                  <div>
-                    <p className="font-semibold text-sm">Supporting Documents</p>
-                    <p className="text-xs text-muted-foreground mt-1">
-                      After submitting this form, our team may contact you to request additional documents such as:
+              {/* Supporting Documents */}
+              <div className="space-y-3">
+                <Label>Supporting Documents *</Label>
+                <div className="space-y-3">
+                  <div className="border-2 border-dashed rounded-lg p-6 text-center space-y-3 hover:border-primary/50 transition-colors">
+                    <div className="flex justify-center">
+                      <div className="w-12 h-12 rounded-full bg-primary/10 flex items-center justify-center">
+                        <Upload className="w-6 h-6 text-primary" />
+                      </div>
+                    </div>
+                    <div>
+                      <p className="text-sm font-medium">Upload Supporting Documents</p>
+                      <p className="text-xs text-muted-foreground mt-1">
+                        PDF, JPG, PNG up to 10MB each
+                      </p>
+                    </div>
+                    <Input
+                      ref={fileInputRef}
+                      type="file"
+                      multiple
+                      accept=".pdf,.jpg,.jpeg,.png"
+                      onChange={handleFileUpload}
+                      className="hidden"
+                      id="file-upload"
+                      disabled={loading}
+                    />
+                    <Button
+                      type="button"
+                      variant="outline"
+                      onClick={() => fileInputRef.current?.click()}
+                      disabled={loading}
+                    >
+                      {loading && uploadProgress > 0 ? "Uploading..." : "Choose Files"}
+                    </Button>
+                  </div>
+
+                  {uploadProgress > 0 && (
+                    <div className="space-y-2">
+                      <Progress value={uploadProgress} className="h-2" />
+                      <p className="text-xs text-center text-muted-foreground">
+                        Uploading... {Math.round(uploadProgress)}%
+                      </p>
+                    </div>
+                  )}
+
+                  {/* Uploaded Files List */}
+                  {uploadedFiles.length > 0 && (
+                    <div className="space-y-2">
+                      <p className="text-sm font-medium">Uploaded Documents ({uploadedFiles.length})</p>
+                      <div className="space-y-2">
+                        {uploadedFiles.map((file, index) => (
+                          <div
+                            key={index}
+                            className="flex items-center gap-3 p-3 bg-muted/50 rounded-lg border"
+                          >
+                            <div className="w-10 h-10 rounded bg-primary/10 flex items-center justify-center flex-shrink-0">
+                              {file.type.startsWith('image/') ? (
+                                <ImageIcon className="w-5 h-5 text-primary" />
+                              ) : (
+                                <FileText className="w-5 h-5 text-primary" />
+                              )}
+                            </div>
+                            <div className="flex-1 min-w-0">
+                              <p className="text-sm font-medium truncate">{file.name}</p>
+                              <p className="text-xs text-muted-foreground">Uploaded</p>
+                            </div>
+                            <CheckCircle2 className="w-5 h-5 text-green-500 flex-shrink-0" />
+                            <Button
+                              type="button"
+                              variant="ghost"
+                              size="icon"
+                              className="flex-shrink-0"
+                              onClick={() => handleRemoveFile(index)}
+                              disabled={loading}
+                            >
+                              <X className="w-4 h-4" />
+                            </Button>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+
+                  <div className="bg-blue-50 dark:bg-blue-950/20 border border-blue-200 dark:border-blue-900 rounded-lg p-4">
+                    <p className="text-xs font-medium text-blue-900 dark:text-blue-100 mb-2">
+                      Accepted Documents:
                     </p>
-                    <ul className="text-xs text-muted-foreground mt-2 space-y-1 ml-4">
-                      <li>• Business registration documents</li>
-                      <li>• Government-issued ID</li>
-                      <li>• Proof of social media following</li>
-                      <li>• Media coverage or press mentions</li>
+                    <ul className="text-xs text-blue-800 dark:text-blue-200 space-y-1 ml-4">
+                      <li>• Business registration or incorporation documents</li>
+                      <li>• Government-issued ID (passport, driver's license)</li>
+                      <li>• Screenshots of social media following/engagement</li>
+                      <li>• Media coverage, press mentions, or publications</li>
+                      <li>• Professional certifications or awards</li>
                     </ul>
                   </div>
                 </div>
@@ -234,7 +382,14 @@ Example: https://twitter.com/yourprofile, https://instagram.com/yourprofile"
                 type="submit"
                 className="w-full"
                 size="lg"
-                disabled={loading || !formData.fullName || !formData.email || !formData.verificationReason || formData.verificationReason.length < 50}
+                disabled={
+                  loading || 
+                  !formData.fullName || 
+                  !formData.email || 
+                  !formData.verificationReason || 
+                  formData.verificationReason.length < 50 ||
+                  uploadedFiles.length === 0
+                }
               >
                 {loading ? (
                   <>
@@ -245,6 +400,12 @@ Example: https://twitter.com/yourprofile, https://instagram.com/yourprofile"
                   "Submit Verification Request"
                 )}
               </Button>
+
+              {uploadedFiles.length === 0 && (
+                <p className="text-xs text-center text-destructive">
+                  Please upload at least one supporting document to continue
+                </p>
+              )}
             </form>
           </CardContent>
         </Card>
