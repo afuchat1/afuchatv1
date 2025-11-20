@@ -72,39 +72,36 @@ const FloatingActionButton = () => {
 
       {/* FAB Container */}
       <div className="fixed bottom-20 right-6 z-50 flex flex-col-reverse items-end gap-4">
-        {/* Action Buttons */}
-        {isOpen && actions.map((action, index) => (
-          <button
-            key={action.label}
-            onClick={action.onClick}
-            className="flex items-center gap-4 animate-scale-in group"
-            style={{ animationDelay: `${index * 50}ms` }}
+        {isOpen ? (
+          /* Action Buttons */
+          actions.map((action, index) => (
+            <button
+              key={action.label}
+              onClick={action.onClick}
+              className="flex items-center gap-4 animate-scale-in group"
+              style={{ animationDelay: `${index * 50}ms` }}
+            >
+              <span className="text-white text-lg font-semibold whitespace-nowrap">
+                {action.label}
+              </span>
+              <div className={cn(
+                "h-14 w-14 rounded-full shadow-xl flex items-center justify-center text-white transition-transform group-hover:scale-110",
+                action.color
+              )}>
+                {action.icon}
+              </div>
+            </button>
+          ))
+        ) : (
+          /* Main FAB Button */
+          <Button
+            size="icon"
+            className="h-16 w-16 rounded-full shadow-2xl transition-all bg-primary hover:bg-primary/90 hover:scale-110"
+            onClick={() => setIsOpen(true)}
           >
-            <span className="text-white text-lg font-semibold whitespace-nowrap">
-              {action.label}
-            </span>
-            <div className={cn(
-              "h-14 w-14 rounded-full shadow-xl flex items-center justify-center text-white transition-transform group-hover:scale-110",
-              action.color
-            )}>
-              {action.icon}
-            </div>
-          </button>
-        ))}
-
-        {/* Main FAB Button */}
-        <Button
-          size="icon"
-          className={cn(
-            "h-16 w-16 rounded-full shadow-2xl transition-all",
-            isOpen 
-              ? "bg-primary hover:bg-primary/90 rotate-45" 
-              : "bg-primary hover:bg-primary/90 hover:scale-110"
-          )}
-          onClick={() => setIsOpen(!isOpen)}
-        >
-          <Plus className="h-7 w-7" />
-        </Button>
+            <Plus className="h-7 w-7" />
+          </Button>
+        )}
       </div>
     </>
   );
