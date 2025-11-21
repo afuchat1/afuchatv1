@@ -15,7 +15,7 @@ const services = [
     category: 'Beauty', 
     rating: 4.9, 
     price: '50', 
-    image: '💇', 
+    image: 'https://images.unsplash.com/photo-1560066984-138dadb4c035?w=600&h=400&fit=crop', 
     slots: 8,
     duration: '45 min',
     featured: true,
@@ -27,7 +27,7 @@ const services = [
     category: 'Wellness', 
     rating: 4.8, 
     price: '80', 
-    image: '💆', 
+    image: 'https://images.unsplash.com/photo-1544161515-4ab6ce6db874?w=600&h=400&fit=crop', 
     slots: 5,
     duration: '60 min',
     featured: true,
@@ -39,7 +39,7 @@ const services = [
     category: 'Fitness', 
     rating: 4.7, 
     price: '45', 
-    image: '💪', 
+    image: 'https://images.unsplash.com/photo-1571019614242-c5c5dee9f50b?w=600&h=400&fit=crop', 
     slots: 12,
     duration: '50 min',
     featured: false,
@@ -51,7 +51,7 @@ const services = [
     category: 'Healthcare', 
     rating: 4.9, 
     price: '100', 
-    image: '🦷', 
+    image: 'https://images.unsplash.com/photo-1606811971618-4486d14f3f99?w=600&h=400&fit=crop', 
     slots: 6,
     duration: '30 min',
     featured: true,
@@ -63,7 +63,7 @@ const services = [
     category: 'Auto', 
     rating: 4.6, 
     price: '30', 
-    image: '🚗', 
+    image: 'https://images.unsplash.com/photo-1601362840469-51e4d8d58785?w=600&h=400&fit=crop', 
     slots: 15,
     duration: '20 min',
     featured: false,
@@ -75,7 +75,7 @@ const services = [
     category: 'Pets', 
     rating: 4.8, 
     price: '40', 
-    image: '🐕', 
+    image: 'https://images.unsplash.com/photo-1583337130417-3346a1be7dee?w=600&h=400&fit=crop', 
     slots: 10,
     duration: '40 min',
     featured: false,
@@ -159,8 +159,12 @@ const Bookings = () => {
                     <Card key={service.id} className="cursor-pointer hover:shadow-xl transition-all duration-300 overflow-hidden group">
                       <CardContent className="p-5">
                         <div className="flex gap-4">
-                          <div className="w-20 h-20 rounded-xl bg-gradient-to-br from-purple-500/20 to-pink-500/10 flex items-center justify-center border flex-shrink-0">
-                            <CalendarCheck className="w-10 h-10 text-purple-600" />
+                          <div className="w-20 h-20 rounded-xl overflow-hidden flex-shrink-0 border">
+                            <img 
+                              src={service.image} 
+                              alt={service.name}
+                              className="w-full h-full object-cover"
+                            />
                           </div>
                           <div className="flex-1">
                             <div className="flex items-start justify-between mb-2">
@@ -208,8 +212,12 @@ const Bookings = () => {
                     <Card key={service.id} className="cursor-pointer hover:shadow-lg transition-all">
                       <CardContent className="p-4">
                         <div className="flex gap-4">
-                          <div className="w-16 h-16 rounded-lg bg-gradient-to-br from-muted to-muted/50 flex items-center justify-center border flex-shrink-0">
-                            <CalendarIcon className="w-8 h-8 text-muted-foreground" />
+                          <div className="w-16 h-16 rounded-lg overflow-hidden flex-shrink-0 border">
+                            <img 
+                              src={service.image} 
+                              alt={service.name}
+                              className="w-full h-full object-cover"
+                            />
                           </div>
                           <div className="flex-1">
                             <div className="flex items-start justify-between mb-2">

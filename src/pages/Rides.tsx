@@ -14,7 +14,7 @@ const rideOptions = [
     description: 'Affordable everyday rides', 
     capacity: '4 passengers', 
     price: '50', 
-    icon: '🚗', 
+    image: 'https://images.unsplash.com/photo-1549317661-bd32c8ce0db2?w=400&h=300&fit=crop', 
     time: '3 min',
     features: ['Standard seating', 'AC', 'Music']
   },
@@ -24,7 +24,7 @@ const rideOptions = [
     description: 'Extra space and comfort', 
     capacity: '4 passengers', 
     price: '75', 
-    icon: '🚙', 
+    image: 'https://images.unsplash.com/photo-1619767886558-efdc259cde1a?w=400&h=300&fit=crop', 
     time: '5 min',
     features: ['Spacious seats', 'Premium AC', 'USB charging']
   },
@@ -34,7 +34,7 @@ const rideOptions = [
     description: 'Extra room for groups', 
     capacity: '6 passengers', 
     price: '100', 
-    icon: '🚐', 
+    image: 'https://images.unsplash.com/photo-1527786356703-4b100091cd2c?w=400&h=300&fit=crop', 
     time: '6 min',
     features: ['Large vehicle', 'Group travel', 'Extra luggage']
   },
@@ -44,7 +44,7 @@ const rideOptions = [
     description: 'Luxury experience', 
     capacity: '4 passengers', 
     price: '150', 
-    icon: '🏎️', 
+    image: 'https://images.unsplash.com/photo-1563720360172-67b8f3dce741?w=400&h=300&fit=crop', 
     time: '8 min',
     features: ['Luxury sedan', 'Professional driver', 'Premium service']
   },
@@ -158,8 +158,12 @@ const Rides = () => {
               >
                 <CardContent className="p-4">
                   <div className="flex items-start gap-4">
-                    <div className="w-20 h-20 rounded-xl bg-gradient-to-br from-green-500/20 to-emerald-500/10 flex items-center justify-center border flex-shrink-0">
-                      <Car className="w-10 h-10 text-green-600" />
+                    <div className="w-20 h-20 rounded-xl overflow-hidden flex-shrink-0 border">
+                      <img 
+                        src={ride.image} 
+                        alt={ride.name}
+                        className="w-full h-full object-cover"
+                      />
                     </div>
                     <div className="flex-1">
                       <div className="flex items-center justify-between mb-1">

@@ -22,7 +22,7 @@ const hotels = [
     location: 'New York', 
     price: '300', 
     rating: 4.8, 
-    image: '🏨', 
+    image: 'https://images.unsplash.com/photo-1566073771259-6a8506099945?w=600&h=400&fit=crop', 
     amenities: [{ name: 'WiFi', icon: Wifi }, { name: 'Pool', icon: Coffee }, { name: 'Restaurant', icon: UtensilsCrossed }],
     rooms: 'Deluxe Room',
     featured: true
@@ -33,7 +33,7 @@ const hotels = [
     location: 'Miami', 
     price: '250', 
     rating: 4.7, 
-    image: '🏖️', 
+    image: 'https://images.unsplash.com/photo-1520250497591-112f2f40a3f4?w=600&h=400&fit=crop', 
     amenities: [{ name: 'Beach', icon: Coffee }, { name: 'Spa', icon: Coffee }, { name: 'Restaurant', icon: UtensilsCrossed }],
     rooms: 'Ocean View',
     featured: true
@@ -44,7 +44,7 @@ const hotels = [
     location: 'Denver', 
     price: '200', 
     rating: 4.6, 
-    image: '🏔️', 
+    image: 'https://images.unsplash.com/photo-1542314831-068cd1dbfeeb?w=600&h=400&fit=crop', 
     amenities: [{ name: 'Hiking', icon: Coffee }, { name: 'Fireplace', icon: Coffee }, { name: 'View', icon: Coffee }],
     rooms: 'Suite',
     featured: false
@@ -55,7 +55,7 @@ const hotels = [
     location: 'Chicago', 
     price: '180', 
     rating: 4.5, 
-    image: '🏙️', 
+    image: 'https://images.unsplash.com/photo-1551882547-ff40c63fe5fa?w=600&h=400&fit=crop', 
     amenities: [{ name: 'WiFi', icon: Wifi }, { name: 'Gym', icon: Coffee }, { name: 'Parking', icon: Coffee }],
     rooms: 'Standard Room',
     featured: false
@@ -201,11 +201,12 @@ const Travel = () => {
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
                 {hotels.filter(h => h.featured).map((hotel) => (
                   <Card key={hotel.id} className="overflow-hidden hover:shadow-xl transition-all duration-300 group">
-                    <div className="aspect-video bg-gradient-to-br from-blue-500/20 via-cyan-500/10 to-teal-500/5 flex items-center justify-center relative overflow-hidden">
-                      <div className="absolute inset-0 opacity-30">
-                        <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_top,rgba(59,130,246,0.4),transparent_60%)]" />
-                      </div>
-                      <Hotel className="w-24 h-24 text-blue-600/40" />
+                    <div className="aspect-video relative overflow-hidden">
+                      <img 
+                        src={hotel.image} 
+                        alt={hotel.name}
+                        className="w-full h-full object-cover"
+                      />
                       <div className="absolute inset-0 bg-gradient-to-t from-background/80 to-transparent opacity-0 group-hover:opacity-100 transition-opacity" />
                     </div>
                     <CardContent className="p-4">
@@ -255,9 +256,12 @@ const Travel = () => {
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
                 {hotels.filter(h => !h.featured).map((hotel) => (
                   <Card key={hotel.id} className="overflow-hidden hover:shadow-lg transition-all">
-                    <div className="aspect-video bg-gradient-to-br from-muted via-muted/80 to-muted/50 flex items-center justify-center relative overflow-hidden">
-                      <div className="absolute inset-0 opacity-20 bg-[radial-gradient(circle_at_40%_60%,rgba(59,130,246,0.3),transparent)]" />
-                      <Hotel className="w-20 h-20 text-muted-foreground/40" />
+                    <div className="aspect-video relative overflow-hidden">
+                      <img 
+                        src={hotel.image} 
+                        alt={hotel.name}
+                        className="w-full h-full object-cover"
+                      />
                     </div>
                     <CardContent className="p-4">
                       <div className="flex items-start justify-between mb-2">

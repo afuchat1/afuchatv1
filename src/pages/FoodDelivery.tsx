@@ -28,7 +28,7 @@ const restaurants = [
     cuisine: 'Italian', 
     rating: 4.8, 
     deliveryTime: '25-35', 
-    image: '🍕', 
+    image: 'https://images.unsplash.com/photo-1513104890138-7c749659a591?w=600&h=400&fit=crop', 
     category: 'pizza', 
     featured: true,
     minOrder: '50',
@@ -40,7 +40,7 @@ const restaurants = [
     cuisine: 'Cafe', 
     rating: 4.7, 
     deliveryTime: '15-20', 
-    image: '☕', 
+    image: 'https://images.unsplash.com/photo-1495474472287-4d71bcdd2085?w=600&h=400&fit=crop', 
     category: 'coffee', 
     featured: true,
     minOrder: '20',
@@ -52,7 +52,7 @@ const restaurants = [
     cuisine: 'Desserts', 
     rating: 4.9, 
     deliveryTime: '20-30', 
-    image: '🍰', 
+    image: 'https://images.unsplash.com/photo-1578985545062-69928b1d9587?w=600&h=400&fit=crop', 
     category: 'dessert', 
     featured: false,
     minOrder: '30',
@@ -64,7 +64,7 @@ const restaurants = [
     cuisine: 'American', 
     rating: 4.6, 
     deliveryTime: '30-40', 
-    image: '🍔', 
+    image: 'https://images.unsplash.com/photo-1568901346375-23c9450c58cd?w=600&h=400&fit=crop', 
     category: 'fast', 
     featured: true,
     minOrder: '40',
@@ -76,7 +76,7 @@ const restaurants = [
     cuisine: 'Seafood', 
     rating: 4.8, 
     deliveryTime: '35-45', 
-    image: '🦞', 
+    image: 'https://images.unsplash.com/photo-1615141982883-c7ad0e69fd62?w=600&h=400&fit=crop', 
     category: 'seafood', 
     featured: false,
     minOrder: '80',
@@ -88,7 +88,7 @@ const restaurants = [
     cuisine: 'Healthy', 
     rating: 4.7, 
     deliveryTime: '20-25', 
-    image: '🥗', 
+    image: 'https://images.unsplash.com/photo-1512621776951-a57141f2eefd?w=600&h=400&fit=crop', 
     category: 'healthy', 
     featured: false,
     minOrder: '35',
@@ -173,11 +173,12 @@ const FoodDelivery = () => {
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
                   {filteredRestaurants.filter(r => r.featured).map((restaurant) => (
                     <Card key={restaurant.id} className="overflow-hidden cursor-pointer hover:shadow-xl transition-all duration-300 group">
-                      <div className="aspect-video bg-gradient-to-br from-orange-500/20 via-red-500/10 to-yellow-500/5 flex items-center justify-center relative overflow-hidden">
-                        <div className="absolute inset-0 opacity-30">
-                          <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_center,rgba(249,115,22,0.4),transparent_60%)]" />
-                        </div>
-                        <Utensils className="w-24 h-24 text-orange-600/40" />
+                      <div className="aspect-video relative overflow-hidden">
+                        <img 
+                          src={restaurant.image} 
+                          alt={restaurant.name}
+                          className="w-full h-full object-cover"
+                        />
                         <div className="absolute inset-0 bg-gradient-to-t from-background/80 to-transparent opacity-0 group-hover:opacity-100 transition-opacity" />
                         <Button
                           size="icon"
@@ -225,9 +226,12 @@ const FoodDelivery = () => {
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
                 {filteredRestaurants.filter(r => !r.featured).map((restaurant) => (
                   <Card key={restaurant.id} className="overflow-hidden cursor-pointer hover:shadow-lg transition-all">
-                    <div className="aspect-video bg-gradient-to-br from-muted via-muted/80 to-muted/50 flex items-center justify-center relative overflow-hidden">
-                      <div className="absolute inset-0 opacity-20 bg-[radial-gradient(circle_at_50%_50%,rgba(249,115,22,0.3),transparent)]" />
-                      <Utensils className="w-20 h-20 text-muted-foreground/40" />
+                    <div className="aspect-video relative overflow-hidden">
+                      <img 
+                        src={restaurant.image} 
+                        alt={restaurant.name}
+                        className="w-full h-full object-cover"
+                      />
                       {restaurant.deliveryFee === '0' && (
                         <Badge className="absolute top-2 left-2 bg-green-600 text-xs">Free Delivery</Badge>
                       )}
