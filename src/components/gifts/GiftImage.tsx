@@ -29,27 +29,27 @@ export const GiftImage = ({
 
   const sizeClass = sizeClasses[size];
 
-  if (isLoading) {
-    return <div className={`${sizeClass} ${className}`} />;
-  }
-
-  if (error || !imageUrl) {
-    // Fallback to emoji without background
-    return (
-      <div className={`${sizeClass} ${className} flex items-center justify-center`}>
-        <span className="text-5xl drop-shadow-lg">{emoji}</span>
-      </div>
-    );
-  }
-
+  // Always show emoji first, then overlay the image when loaded
   return (
-    <div className={`${sizeClass} ${className} relative`}>
-      <img 
-        src={imageUrl}
-        alt={giftName}
-        className="w-full h-full object-contain animate-fade-in"
-        loading="lazy"
-      />
+    <div className={`${sizeClass} ${className} relative flex items-center justify-center`}>
+      {/* Emoji - always visible as fallback */}
+      <span 
+        className={`text-5xl drop-shadow-lg transition-opacity duration-300 ${
+          imageUrl && !error ? 'opacity-0' : 'opacity-100'
+        }`}
+      >
+        {emoji}
+      </span>
+      
+      {/* Generated image - fades in when loaded */}
+      {imageUrl && !error && (
+        <img 
+          src={imageUrl}
+          alt={giftName}
+          className="absolute inset-0 w-full h-full object-contain animate-fade-in"
+          loading="lazy"
+        />
+      )}
     </div>
   );
 };
