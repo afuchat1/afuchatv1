@@ -219,7 +219,7 @@ const Gifts = () => {
                       <div className="text-center space-y-1">
                         <div className="flex items-center justify-center gap-1">
                           <span className="text-xs font-bold text-primary">
-                            {gift.current_price.toLocaleString()}
+                            {gift.current_price.toLocaleString()} XP
                           </span>
                           {gift.price_multiplier !== 1 && (
                             <div className="flex items-center gap-0.5 text-[10px] text-green-500">
