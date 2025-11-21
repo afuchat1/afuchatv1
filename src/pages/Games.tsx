@@ -3,10 +3,33 @@ import { useTranslation } from 'react-i18next';
 import { Button } from '@/components/ui/button';
 import { ArrowLeft, Trophy, Zap, Brain, Puzzle, Gamepad2 } from 'lucide-react';
 import Logo from '@/components/Logo';
+import { useState, useEffect } from 'react';
+import { cn } from '@/lib/utils';
 
 const Games = () => {
   const navigate = useNavigate();
   const { t } = useTranslation();
+  const [isScrollingDown, setIsScrollingDown] = useState(false);
+
+  useEffect(() => {
+    let lastScrollY = window.scrollY;
+    let ticking = false;
+
+    const handleScroll = () => {
+      if (!ticking) {
+        window.requestAnimationFrame(() => {
+          const currentScrollY = window.scrollY;
+          setIsScrollingDown(currentScrollY > lastScrollY && currentScrollY > 50);
+          lastScrollY = currentScrollY;
+          ticking = false;
+        });
+        ticking = true;
+      }
+    };
+
+    window.addEventListener('scroll', handleScroll, { passive: true });
+    return () => window.removeEventListener('scroll', handleScroll);
+  }, []);
 
   const games = [
     { 
@@ -45,7 +68,10 @@ const Games = () => {
 
   return (
     <div className="min-h-screen bg-background pb-20">
-      <header className="sticky top-0 z-50 w-full border-b border-border bg-background/95 backdrop-blur">
+      <header className={cn(
+        "sticky top-0 z-50 w-full border-b border-border bg-background/95 backdrop-blur transition-transform duration-300",
+        isScrollingDown ? "-translate-y-full" : "translate-y-0"
+      )}>
         <div className="container max-w-4xl mx-auto px-4">
           <div className="flex h-16 items-center justify-between">
             <Button variant="ghost" size="icon" onClick={() => navigate(-1)} className="hidden lg:inline-flex">
