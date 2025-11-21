@@ -16,7 +16,7 @@ const events = [
     location: 'Central Park',
     price: '150',
     category: 'Music',
-    image: '🎵',
+    image: 'https://images.unsplash.com/photo-1459749411175-04bf5292ceea?w=600&h=400&fit=crop',
     rating: 4.9,
     attendees: '5K+',
     featured: true,
@@ -29,7 +29,7 @@ const events = [
     location: 'Convention Center',
     price: '300',
     category: 'Tech',
-    image: '💻',
+    image: 'https://images.unsplash.com/photo-1540575467063-178a50c2df87?w=600&h=400&fit=crop',
     rating: 4.8,
     attendees: '2K+',
     featured: true,
@@ -42,7 +42,7 @@ const events = [
     location: 'Downtown Arena',
     price: '80',
     category: 'Food',
-    image: '🍷',
+    image: 'https://images.unsplash.com/photo-1510812431401-41d2bd2722f3?w=600&h=400&fit=crop',
     rating: 4.7,
     attendees: '3K+',
     featured: false,
@@ -55,7 +55,7 @@ const events = [
     location: 'Metropolitan Museum',
     price: '50',
     category: 'Art',
-    image: '🎨',
+    image: 'https://images.unsplash.com/photo-1541961017774-22349e4a1262?w=600&h=400&fit=crop',
     rating: 4.6,
     attendees: '500+',
     featured: false,
@@ -68,7 +68,7 @@ const events = [
     location: 'Stadium',
     price: '200',
     category: 'Sports',
-    image: '⚽',
+    image: 'https://images.unsplash.com/photo-1508098682722-e99c43a406b2?w=600&h=400&fit=crop',
     rating: 4.9,
     attendees: '10K+',
     featured: true,
@@ -81,7 +81,7 @@ const events = [
     location: 'Comedy Club',
     price: '40',
     category: 'Comedy',
-    image: '😂',
+    image: 'https://images.unsplash.com/photo-1527224857830-43a7acc85260?w=600&h=400&fit=crop',
     rating: 4.7,
     attendees: '300+',
     featured: false,
@@ -171,11 +171,12 @@ const Events = () => {
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
                   {featuredEvents.map((event) => (
                     <Card key={event.id} className="overflow-hidden hover:shadow-xl transition-all duration-300 group">
-                      <div className="aspect-video bg-gradient-to-br from-violet-500/20 via-purple-500/10 to-pink-500/5 flex items-center justify-center relative overflow-hidden">
-                        <div className="absolute inset-0 opacity-30">
-                          <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_center,rgba(120,119,198,0.4),transparent_50%)]" />
-                        </div>
-                        <Ticket className="w-24 h-24 text-primary/40" />
+                      <div className="aspect-video relative overflow-hidden">
+                        <img 
+                          src={event.image} 
+                          alt={event.title}
+                          className="w-full h-full object-cover"
+                        />
                         <div className="absolute inset-0 bg-gradient-to-t from-background/80 to-transparent opacity-0 group-hover:opacity-100 transition-opacity" />
                         <Button
                           size="icon"
@@ -236,9 +237,12 @@ const Events = () => {
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
                   {regularEvents.map((event) => (
                     <Card key={event.id} className="overflow-hidden hover:shadow-lg transition-all duration-300">
-                      <div className="aspect-video bg-gradient-to-br from-muted via-muted/80 to-muted/50 flex items-center justify-center relative overflow-hidden">
-                        <div className="absolute inset-0 opacity-20 bg-[radial-gradient(circle_at_30%_50%,rgba(120,119,198,0.3),transparent)]" />
-                        <Calendar className="w-20 h-20 text-muted-foreground/40" />
+                      <div className="aspect-video relative overflow-hidden">
+                        <img 
+                          src={event.image} 
+                          alt={event.title}
+                          className="w-full h-full object-cover"
+                        />
                       </div>
                       <CardContent className="p-4">
                         <div className="flex items-start justify-between mb-2">
