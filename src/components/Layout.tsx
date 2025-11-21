@@ -83,7 +83,6 @@ const Layout = ({ children }: LayoutProps) => {
 
   const navItems = [
     { path: '/', icon: Home, label: t('common.home') },
-    { path: '/hub', icon: Grid3x3, label: 'Services' },
     { path: '/search', icon: Search, label: t('search.title') },
     { path: '/notifications', icon: Bell, label: t('common.notifications'), badge: true },
     { path: '/chats', icon: MessageSquare, label: t('common.messages') },
@@ -132,11 +131,11 @@ const Layout = ({ children }: LayoutProps) => {
             <Button
               variant="ghost"
               size="sm"
-              onClick={() => navigate('/hub')}
+              onClick={() => navigate('/games')}
               className="gap-2"
             >
-              <Grid3x3 className="h-5 w-5" />
-              <span className="font-semibold">Services</span>
+              <Gamepad2 className="h-5 w-5" />
+              <span className="font-semibold">Games</span>
             </Button>
           </div>
         </header>
