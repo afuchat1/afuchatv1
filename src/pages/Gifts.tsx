@@ -176,44 +176,42 @@ const Gifts = () => {
           </TabsList>
 
           <TabsContent value="all" className="space-y-6">
-            <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
+            <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
               {allGifts.map(gift => (
-                <Card
+                <div
                   key={gift.id}
-                  className="p-4 cursor-pointer hover:shadow-lg transition-all duration-300 hover:scale-105 relative overflow-hidden group"
+                  className="cursor-pointer transition-all duration-300 hover:scale-110 group relative"
                   onClick={() => handleGiftClick(gift.id)}
                 >
-                  <div className="absolute inset-0 bg-gradient-to-br from-primary/5 to-transparent opacity-0 group-hover:opacity-100 transition-opacity" />
-                  
-                  <div className="relative space-y-3">
-                    <div className="flex items-start justify-between">
+                  <div className="relative space-y-2">
+                    <div className="relative">
                       <GiftImage
                         giftId={gift.id}
                         giftName={gift.name}
                         emoji={gift.emoji}
                         rarity={gift.rarity}
                         size="lg"
-                        className="mx-auto"
+                        className="mx-auto drop-shadow-2xl group-hover:drop-shadow-[0_0_20px_rgba(var(--primary),0.5)]"
                       />
-                      <Badge className={getRarityColor(gift.rarity)}>
+                      <Badge className={`absolute top-0 right-0 ${getRarityColor(gift.rarity)} text-[10px]`}>
                         {gift.rarity}
                       </Badge>
                     </div>
 
-                    <div>
-                      <h3 className="font-semibold text-lg truncate">{gift.name}</h3>
-                      <p className="text-xs text-muted-foreground line-clamp-2 mt-1">
+                    <div className="text-center">
+                      <h3 className="font-semibold text-sm truncate">{gift.name}</h3>
+                      <p className="text-xs text-muted-foreground line-clamp-1">
                         {gift.description || 'A special gift'}
                       </p>
                     </div>
 
-                    <div className="space-y-2">
-                      <div className="flex items-center justify-between">
-                        <span className="text-sm font-medium text-primary">
+                    <div className="text-center space-y-1">
+                      <div className="flex items-center justify-center gap-2">
+                        <span className="text-sm font-bold text-primary">
                           {gift.current_price.toLocaleString()} XP
                         </span>
                         {gift.price_multiplier !== 1 && (
-                          <div className="flex items-center gap-1 text-xs">
+                          <div className="flex items-center gap-1 text-xs text-green-500">
                             <TrendingUp className="h-3 w-3" />
                             <span>{(gift.price_multiplier * 100 - 100).toFixed(0)}%</span>
                           </div>
@@ -221,20 +219,14 @@ const Gifts = () => {
                       </div>
 
                       {gift.total_sent > 0 && (
-                        <div className="flex items-center gap-1 text-xs text-muted-foreground">
+                        <div className="flex items-center justify-center gap-1 text-xs text-muted-foreground">
                           <Sparkles className="h-3 w-3" />
-                          <span>Sent {gift.total_sent.toLocaleString()} times</span>
+                          <span>{gift.total_sent.toLocaleString()}</span>
                         </div>
-                      )}
-
-                      {gift.season && (
-                        <Badge variant="outline" className="text-xs">
-                          {gift.season}
-                        </Badge>
                       )}
                     </div>
                   </div>
-                </Card>
+                </div>
               ))}
             </div>
           </TabsContent>
@@ -257,36 +249,36 @@ const Gifts = () => {
                 </p>
               </Card>
             ) : (
-              <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
+              <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
                 {ownedGifts.map(({ gift, received_count, last_received }) => (
-                  <Card
+                  <div
                     key={gift.id}
-                    className="p-4 cursor-pointer hover:shadow-lg transition-all duration-300 hover:scale-105"
+                    className="cursor-pointer transition-all duration-300 hover:scale-110 group relative"
                     onClick={() => handleGiftClick(gift.id)}
                   >
-                    <div className="space-y-3">
-                      <div className="flex items-start justify-between">
+                    <div className="space-y-2">
+                      <div className="relative">
                         <GiftImage
                           giftId={gift.id}
                           giftName={gift.name}
                           emoji={gift.emoji}
                           rarity={gift.rarity}
                           size="lg"
-                          className="mx-auto"
+                          className="mx-auto drop-shadow-2xl group-hover:drop-shadow-[0_0_20px_rgba(var(--primary),0.5)]"
                         />
-                        <Badge variant="secondary" className="text-xs">
+                        <Badge variant="secondary" className="absolute top-0 right-0 text-xs font-bold">
                           x{received_count}
                         </Badge>
                       </div>
 
-                      <div>
-                        <h3 className="font-semibold text-lg truncate">{gift.name}</h3>
-                        <p className="text-xs text-muted-foreground mt-1">
-                          Last received: {new Date(last_received).toLocaleDateString()}
+                      <div className="text-center">
+                        <h3 className="font-semibold text-sm truncate">{gift.name}</h3>
+                        <p className="text-xs text-muted-foreground">
+                          {new Date(last_received).toLocaleDateString()}
                         </p>
                       </div>
                     </div>
-                  </Card>
+                  </div>
                 ))}
               </div>
             )}

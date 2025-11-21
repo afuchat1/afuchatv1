@@ -34,12 +34,10 @@ export const GiftImage = ({
   }
 
   if (error || !imageUrl) {
-    // Fallback to emoji with styled background
+    // Fallback to emoji without background
     return (
-      <div 
-        className={`${sizeClass} ${className} flex items-center justify-center bg-gradient-to-br from-primary/10 to-accent/10 rounded-lg border border-border/50`}
-      >
-        <span className="text-4xl">{emoji}</span>
+      <div className={`${sizeClass} ${className} flex items-center justify-center`}>
+        <span className="text-5xl drop-shadow-lg">{emoji}</span>
       </div>
     );
   }
@@ -49,7 +47,7 @@ export const GiftImage = ({
       <img 
         src={imageUrl}
         alt={giftName}
-        className="w-full h-full object-contain drop-shadow-lg animate-fade-in"
+        className="w-full h-full object-contain animate-fade-in"
         loading="lazy"
       />
     </div>
