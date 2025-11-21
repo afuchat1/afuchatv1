@@ -10,7 +10,6 @@ import { Plus, ArrowLeft, Eye } from 'lucide-react';
 import { toast } from 'sonner';
 import { StoryViewer } from '@/components/moments/StoryViewer';
 import { CreateStoryDialog } from '@/components/moments/CreateStoryDialog';
-import { cn } from '@/lib/utils';
 
 interface Story {
   id: string;
@@ -37,27 +36,6 @@ const Moments = () => {
   const [loading, setLoading] = useState(true);
   const [selectedStory, setSelectedStory] = useState<Story | null>(null);
   const [createDialogOpen, setCreateDialogOpen] = useState(false);
-  const [isScrollingDown, setIsScrollingDown] = useState(false);
-
-  useEffect(() => {
-    let lastScrollY = window.scrollY;
-    let ticking = false;
-
-    const handleScroll = () => {
-      if (!ticking) {
-        window.requestAnimationFrame(() => {
-          const currentScrollY = window.scrollY;
-          setIsScrollingDown(currentScrollY > lastScrollY && currentScrollY > 50);
-          lastScrollY = currentScrollY;
-          ticking = false;
-        });
-        ticking = true;
-      }
-    };
-
-    window.addEventListener('scroll', handleScroll, { passive: true });
-    return () => window.removeEventListener('scroll', handleScroll);
-  }, []);
 
   useEffect(() => {
     fetchStories();
@@ -141,10 +119,7 @@ const Moments = () => {
     <div className="min-h-screen bg-background pb-20 md:pb-0">
       <div className="max-w-4xl mx-auto">
         {/* Header */}
-        <div className={cn(
-          "sticky top-0 z-10 bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60 border-b border-border transition-transform duration-300",
-          isScrollingDown ? "-translate-y-full" : "translate-y-0"
-        )}>
+        <div className="sticky top-0 z-10 bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60 border-b border-border">
           <div className="flex items-center justify-between p-4">
             <div className="flex items-center gap-4">
               <Button
