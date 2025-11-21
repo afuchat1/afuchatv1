@@ -50,6 +50,12 @@ interface SelectedGift {
   baseCost: number;
 }
 
+interface PreviewGift extends GiftItem {
+  current_price: number;
+  total_sent: number;
+  price_multiplier: number;
+}
+
 export const SendGiftDialog = ({ receiverId, receiverName, trigger }: SendGiftDialogProps) => {
   const { user } = useAuth();
   const { t } = useTranslation();
@@ -63,6 +69,8 @@ export const SendGiftDialog = ({ receiverId, receiverName, trigger }: SendGiftDi
   const [showConfetti, setShowConfetti] = useState(false);
   const [showComboConfetti, setShowComboConfetti] = useState(false);
   const [sentGiftEmojis, setSentGiftEmojis] = useState<string[]>([]);
+  const [previewGift, setPreviewGift] = useState<PreviewGift | null>(null);
+  const [showPreview, setShowPreview] = useState(false);
 
   const getRarityColor = (rarity: string) => {
     switch (rarity.toLowerCase()) {
@@ -163,6 +171,20 @@ export const SendGiftDialog = ({ receiverId, receiverName, trigger }: SendGiftDi
         count: newCount,
       });
     }
+  };
+
+  const handlePreviewGift = (gift: GiftItem, e: React.MouseEvent) => {
+    e.stopPropagation();
+    const currentPrice = calculatePrice(gift.id, gift.base_xp_cost);
+    const stats = giftStats[gift.id];
+    
+    setPreviewGift({
+      ...gift,
+      current_price: currentPrice,
+      total_sent: stats?.total_sent || 0,
+      price_multiplier: stats?.price_multiplier || 1,
+    });
+    setShowPreview(true);
   };
 
   const calculateComboDiscount = (giftCount: number) => {
@@ -356,7 +378,7 @@ export const SendGiftDialog = ({ receiverId, receiverName, trigger }: SendGiftDi
           {t('gifts.tapToCombo')}
         </div>
 
-        <div className="grid grid-cols-3 sm:grid-cols-4 md:grid-cols-5 lg:grid-cols-6 gap-2 sm:gap-3 md:gap-4">
+        <div className="grid grid-cols-4 sm:grid-cols-5 md:grid-cols-6 lg:grid-cols-7 gap-2">
           {gifts.map((gift) => {
             const currentPrice = calculatePrice(gift.id, gift.base_xp_cost);
             const isSelected = selectedGift?.id === gift.id;
@@ -367,66 +389,150 @@ export const SendGiftDialog = ({ receiverId, receiverName, trigger }: SendGiftDi
             return (
               <div
                 key={gift.id}
-                onClick={() => !loading && handleGiftTap(gift)}
-                className={`cursor-pointer transition-all duration-300 hover:scale-105 hover:-translate-y-1 group relative p-2 sm:p-3 rounded-lg ${
-                  isSelected
-                    ? 'ring-2 ring-primary shadow-lg bg-primary/10 scale-105'
-                    : 'hover:shadow-md hover:ring-1 hover:ring-primary/30 bg-card'
-                }`}
+                className="relative"
               >
-                {isSelected && selectedGift && (
-                  <div className="absolute -top-2 -right-2 z-10 bg-primary text-primary-foreground rounded-full h-5 w-5 flex items-center justify-center font-bold text-xs shadow-lg animate-[scale-in_0.2s_ease-out]">
-                    {selectedGift.count}
-                  </div>
-                )}
-                
-                <div className="relative space-y-1.5 sm:space-y-2">
-                  <div className="relative">
-                    <GiftImage
-                      giftId={gift.id}
-                      giftName={gift.name}
-                      emoji={gift.emoji}
-                      rarity={gift.rarity}
-                      size="lg"
-                      className="mx-auto"
-                    />
-                    <Badge className={`absolute -top-2 -right-2 ${getRarityColor(gift.rarity)} text-[10px] px-1.5 py-0.5`}>
-                      {gift.rarity}
-                    </Badge>
-                  </div>
-
-                  <div className="text-center">
-                    <h3 className="font-semibold text-xs truncate">{gift.name}</h3>
-                    <p className="text-xs text-muted-foreground font-medium">{gift.base_xp_cost} XP</p>
-                  </div>
-
-                  <div className="text-center space-y-1">
-                    <div className="flex items-center justify-center gap-1">
-                      <span className="text-xs font-bold text-primary">
-                        {currentPrice.toLocaleString()} XP
-                      </span>
-                      {priceMultiplier !== 1 && (
-                        <div className="flex items-center gap-0.5 text-[10px] text-green-500">
-                          <TrendingUp className="h-2.5 w-2.5" />
-                          <span>{((priceMultiplier * 100) - 100).toFixed(0)}%</span>
-                        </div>
-                      )}
+                <div
+                  onClick={() => !loading && handleGiftTap(gift)}
+                  className={`cursor-pointer transition-all duration-300 hover:scale-105 hover:-translate-y-1 group relative p-1.5 sm:p-2 rounded-lg ${
+                    isSelected
+                      ? 'ring-2 ring-primary shadow-lg bg-primary/10 scale-105'
+                      : 'hover:shadow-md hover:ring-1 hover:ring-primary/30 bg-card'
+                  }`}
+                >
+                  {isSelected && selectedGift && (
+                    <div className="absolute -top-1 -right-1 z-10 bg-primary text-primary-foreground rounded-full h-4 w-4 flex items-center justify-center font-bold text-[10px] shadow-lg animate-[scale-in_0.2s_ease-out]">
+                      {selectedGift.count}
+                    </div>
+                  )}
+                  
+                  <div className="relative space-y-1">
+                    <div className="relative">
+                      <GiftImage
+                        giftId={gift.id}
+                        giftName={gift.name}
+                        emoji={gift.emoji}
+                        rarity={gift.rarity}
+                        size="md"
+                        className="mx-auto"
+                      />
+                      <Badge className={`absolute -top-1 -right-1 ${getRarityColor(gift.rarity)} text-[8px] px-1 py-0`}>
+                        {gift.rarity.slice(0, 1)}
+                      </Badge>
                     </div>
 
-                    {totalSent > 0 && (
-                      <div className="flex items-center justify-center gap-1 text-[10px] text-muted-foreground">
-                        <Sparkles className="h-2.5 w-2.5" />
-                        <span>{totalSent.toLocaleString()}</span>
+                    <div className="text-center">
+                      <h3 className="font-semibold text-[10px] truncate">{gift.name}</h3>
+                      <div className="flex items-center justify-center gap-0.5">
+                        <span className="text-[10px] font-bold text-primary">
+                          {currentPrice.toLocaleString()}
+                        </span>
+                        {priceMultiplier !== 1 && (
+                          <TrendingUp className="h-2 w-2 text-green-500" />
+                        )}
                       </div>
-                    )}
+                    </div>
                   </div>
                 </div>
+                
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  className="absolute -top-1 -left-1 h-5 w-5 p-0 rounded-full bg-background/80 backdrop-blur-sm hover:bg-background z-20"
+                  onClick={(e) => handlePreviewGift(gift, e)}
+                >
+                  <span className="text-[10px]">👁️</span>
+                </Button>
               </div>
             );
           })}
         </div>
       </DialogContent>
       </Dialog>
+
+      {/* Preview Dialog */}
+      {previewGift && (
+        <Dialog open={showPreview} onOpenChange={setShowPreview}>
+          <DialogContent className="max-w-md">
+            <DialogHeader>
+              <DialogTitle className="flex items-center gap-2">
+                <GiftImage
+                  giftId={previewGift.id}
+                  giftName={previewGift.name}
+                  emoji={previewGift.emoji}
+                  rarity={previewGift.rarity}
+                  size="sm"
+                />
+                {previewGift.name}
+              </DialogTitle>
+            </DialogHeader>
+            
+            <div className="space-y-4">
+              <div className="flex items-center justify-center">
+                <GiftImage
+                  giftId={previewGift.id}
+                  giftName={previewGift.name}
+                  emoji={previewGift.emoji}
+                  rarity={previewGift.rarity}
+                  size="lg"
+                />
+              </div>
+              
+              <div className="space-y-2">
+                <Badge className={getRarityColor(previewGift.rarity)}>
+                  {previewGift.rarity}
+                </Badge>
+                
+                {previewGift.description && (
+                  <p className="text-sm text-muted-foreground">{previewGift.description}</p>
+                )}
+                
+                <div className="grid grid-cols-2 gap-2 text-sm">
+                  <div className="bg-muted/50 rounded-lg p-2">
+                    <div className="text-xs text-muted-foreground">Base Cost</div>
+                    <div className="font-bold">{previewGift.base_xp_cost} XP</div>
+                  </div>
+                  
+                  <div className="bg-muted/50 rounded-lg p-2">
+                    <div className="text-xs text-muted-foreground">Current Price</div>
+                    <div className="font-bold text-primary">{previewGift.current_price} XP</div>
+                  </div>
+                  
+                  {previewGift.price_multiplier !== 1 && (
+                    <div className="bg-muted/50 rounded-lg p-2">
+                      <div className="text-xs text-muted-foreground">Multiplier</div>
+                      <div className="font-bold flex items-center gap-1">
+                        <TrendingUp className="h-3 w-3 text-green-500" />
+                        {(previewGift.price_multiplier * 100).toFixed(0)}%
+                      </div>
+                    </div>
+                  )}
+                  
+                  {previewGift.total_sent > 0 && (
+                    <div className="bg-muted/50 rounded-lg p-2">
+                      <div className="text-xs text-muted-foreground">Total Sent</div>
+                      <div className="font-bold flex items-center gap-1">
+                        <Sparkles className="h-3 w-3" />
+                        {previewGift.total_sent.toLocaleString()}
+                      </div>
+                    </div>
+                  )}
+                </div>
+              </div>
+              
+              <Button 
+                className="w-full"
+                onClick={() => {
+                  setShowPreview(false);
+                  handleGiftTap(previewGift);
+                }}
+              >
+                <Gift className="h-4 w-4 mr-2" />
+                Select Gift
+              </Button>
+            </div>
+          </DialogContent>
+        </Dialog>
+      )}
     </>
   );
 };
