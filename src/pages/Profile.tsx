@@ -273,6 +273,20 @@ const Profile = () => {
 	const [isUploadingBanner, setIsUploadingBanner] = useState(false);
 	const [currentUserIsVerified, setCurrentUserIsVerified] = useState(false);
 
+	// Keyboard shortcut for settings
+	useEffect(() => {
+		const handleKeyDown = (e: KeyboardEvent) => {
+			// Ctrl+, or Cmd+, for settings
+			if ((e.ctrlKey || e.metaKey) && e.key === ',') {
+				e.preventDefault();
+				navigate('/settings');
+			}
+		};
+
+		window.addEventListener('keydown', handleKeyDown);
+		return () => window.removeEventListener('keydown', handleKeyDown);
+	}, [navigate]);
+
 	const handleBannerUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
 		if (!e.target.files || e.target.files.length === 0 || !user || !profileId) return;
 
@@ -440,8 +454,8 @@ const Profile = () => {
 		}
 
 		if (!data) {
-			toast.error(t('profile.notFound'));
-			setLoading(false);
+			// User not found - redirect to user not found page
+			navigate('/user-not-found', { replace: true, state: { username: urlParam } });
 			return;
 		}
 
@@ -761,11 +775,7 @@ const Profile = () => {
 	}
 
 	if (!profile) {
-		return (
-			<div className="flex items-center justify-center h-full">
-				<div className="text-muted-foreground">{t('profile.notFound')}</div>
-			</div>
-		);
+		return null; // Will redirect in useEffect
 	}
 
 	const formatCount = (count: number) => {
@@ -815,24 +825,46 @@ const Profile = () => {
 									variant="outline" 
 									size="icon"
 									className="rounded-full bg-background hover:bg-muted border-2"
+									aria-label="Settings menu (Ctrl+,)"
+									title="Settings (Ctrl+,)"
 								>
 									<Settings className="h-5 w-5" />
 								</Button>
 							</DropdownMenuTrigger>
-							<DropdownMenuContent align="end" className="w-56 bg-background">
-								<DropdownMenuItem onClick={() => navigate('/settings')} className="cursor-pointer">
+							<DropdownMenuContent 
+								align="end" 
+								className="w-56 bg-background"
+								aria-label="Settings options"
+							>
+								<DropdownMenuItem 
+									onClick={() => navigate('/settings')} 
+									className="cursor-pointer"
+									aria-label="Go to account settings"
+								>
 									<User className="mr-2 h-4 w-4" />
 									<span>Account Settings</span>
 								</DropdownMenuItem>
-								<DropdownMenuItem onClick={() => navigate('/settings')} className="cursor-pointer">
+								<DropdownMenuItem 
+									onClick={() => navigate('/settings')} 
+									className="cursor-pointer"
+									aria-label="Manage privacy settings"
+								>
 									<Lock className="mr-2 h-4 w-4" />
 									<span>Privacy</span>
 								</DropdownMenuItem>
-								<DropdownMenuItem onClick={() => navigate('/settings')} className="cursor-pointer">
+								<DropdownMenuItem 
+									onClick={() => navigate('/settings')} 
+									className="cursor-pointer"
+									aria-label="Configure notifications"
+								>
 									<Bell className="mr-2 h-4 w-4" />
 									<span>Notifications</span>
 								</DropdownMenuItem>
-								<DropdownMenuItem onClick={() => navigate('/settings')} className="cursor-pointer">
+								<DropdownMenuItem 
+									onClick={() => navigate('/settings')} 
+									className="cursor-pointer"
+									aria-label="View security settings"
+								>
 									<Shield className="mr-2 h-4 w-4" />
 									<span>Security</span>
 								</DropdownMenuItem>
@@ -842,6 +874,7 @@ const Profile = () => {
 							variant="outline" 
 							className="rounded-full px-6 py-2 font-bold bg-background hover:bg-muted border-2 h-auto"
 							onClick={() => navigate(`/${urlParam}/edit`)}
+							aria-label="Edit your profile"
 						>
 							{t('profile.editProfile')}
 						</Button>
