@@ -22,7 +22,8 @@ import {
   Image as ImageIcon,
   Hash,
   Bell,
-  TrendingUp
+  TrendingUp,
+  Settings
 } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 import { supabase } from '@/integrations/supabase/client';
@@ -79,6 +80,7 @@ export function MobileMenuSheet() {
     { icon: Hash, label: 'Trending', path: '/trending' },
     { icon: Grid3x3, label: 'Mini Programs', path: '/mini-programs' },
     { icon: Bell, label: 'Notifications', path: '/notifications', requiresAuth: true },
+    { icon: Settings, label: 'Settings', path: '/settings', requiresAuth: true },
   ];
 
   // Add business mode item
