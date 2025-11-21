@@ -775,6 +775,7 @@ export type Database = {
           developer_id: string
           icon_url: string | null
           id: string
+          image_url: string | null
           install_count: number
           is_published: boolean
           name: string
@@ -789,6 +790,7 @@ export type Database = {
           developer_id: string
           icon_url?: string | null
           id?: string
+          image_url?: string | null
           install_count?: number
           is_published?: boolean
           name: string
@@ -803,6 +805,7 @@ export type Database = {
           developer_id?: string
           icon_url?: string | null
           id?: string
+          image_url?: string | null
           install_count?: number
           is_published?: boolean
           name?: string
@@ -1391,6 +1394,7 @@ export type Database = {
           featured_end_date: string | null
           featured_start_date: string | null
           id: string
+          image_url: string | null
           is_auction: boolean | null
           is_available: boolean | null
           is_featured: boolean | null
@@ -1412,6 +1416,7 @@ export type Database = {
           featured_end_date?: string | null
           featured_start_date?: string | null
           id?: string
+          image_url?: string | null
           is_auction?: boolean | null
           is_available?: boolean | null
           is_featured?: boolean | null
@@ -1433,6 +1438,7 @@ export type Database = {
           featured_end_date?: string | null
           featured_start_date?: string | null
           id?: string
+          image_url?: string | null
           is_auction?: boolean | null
           is_available?: boolean | null
           is_featured?: boolean | null

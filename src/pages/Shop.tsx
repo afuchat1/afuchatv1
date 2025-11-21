@@ -7,7 +7,7 @@ import { Card, CardHeader, CardTitle, CardDescription, CardFooter } from '@/comp
 import { Badge } from '@/components/ui/badge';
 import { Input } from '@/components/ui/input';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from '@/components/ui/dialog';
-import { Loader2, ShoppingBag, Check, Sparkles, Zap, Clock, Hammer, TrendingUp, Users } from 'lucide-react';
+import { Loader2, Check, Sparkles, Zap, Clock, Hammer, TrendingUp, Users } from 'lucide-react';
 import { toast } from 'sonner';
 
 interface ShopItem {
@@ -17,6 +17,7 @@ interface ShopItem {
   item_type: 'accessory' | 'theme' | 'effect' | 'badge';
   xp_cost: number;
   emoji: string;
+  image_url?: string;
   config: any;
   is_featured?: boolean;
   discount_percentage?: number;
@@ -53,6 +54,7 @@ interface MarketplaceListing {
     description: string;
     emoji: string;
     item_type: string;
+    image_url?: string;
   };
   profiles?: {
     display_name: string;
@@ -198,7 +200,7 @@ export default function Shop() {
         .from('marketplace_listings')
         .select(`
           *,
-          shop_items (name, description, emoji, item_type),
+          shop_items (name, description, emoji, item_type, image_url),
           profiles (display_name, handle)
         `)
         .eq('is_active', true)
@@ -436,6 +438,20 @@ export default function Shop() {
     return bids[itemId]?.length || 0;
   };
 
+  const getItemImage = (item: ShopItem) => {
+    if (item.image_url) return item.image_url;
+    
+    // Default placeholder images based on item type
+    const placeholders = {
+      'accessory': 'https://images.unsplash.com/photo-1618004912476-29818d81ae2e?w=400&h=300&fit=crop',
+      'theme': 'https://images.unsplash.com/photo-1557683316-973673baf926?w=400&h=300&fit=crop',
+      'effect': 'https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?w=400&h=300&fit=crop',
+      'badge': 'https://images.unsplash.com/photo-1614680376593-902f74cf0d41?w=400&h=300&fit=crop'
+    };
+    
+    return placeholders[item.item_type] || placeholders.badge;
+  };
+
   const renderCompactCard = (item: ShopItem) => {
     const owned = isOwned(item.id);
     const discountedPrice = getDiscountedPrice(item);
@@ -469,18 +485,19 @@ export default function Shop() {
           )}
           {isAuction && (
             <Badge className="gap-1 bg-purple-500 hover:bg-purple-600 text-white text-xs">
-              <Hammer className="w-3 h-3" />
+              <Hammer className="w-3 w-3" />
               Auction
             </Badge>
           )}
         </div>
 
         {/* Product Image */}
-        <div className="h-32 flex items-center justify-center bg-gradient-to-br from-primary/20 via-primary/10 to-accent/5 relative overflow-hidden">
-          <div className="absolute inset-0 opacity-20">
-            <div className="absolute inset-0 bg-[radial-gradient(circle_at_50%_120%,rgba(120,119,198,0.3),rgba(255,255,255,0))]" />
-          </div>
-          <ShoppingBag className="w-12 h-12 text-primary/60" />
+        <div className="h-32 relative overflow-hidden">
+          <img 
+            src={getItemImage(item)} 
+            alt={item.name}
+            className="w-full h-full object-cover"
+          />
           {isAuction && item.auction_end_time && (
             <div className="absolute bottom-1 left-1 right-1 bg-black/70 backdrop-blur-sm rounded-md px-1.5 py-0.5">
               <div className="flex items-center justify-center gap-1 text-xs text-white">
@@ -498,13 +515,12 @@ export default function Shop() {
             <p className="text-xs text-muted-foreground line-clamp-2">{item.description}</p>
           </div>
 
-          {/* Auction Info */}
           {isAuction ? (
-            <div className="space-y-1.5">
-              <div className="flex items-center justify-between">
-                <span className="text-xs text-muted-foreground">Current Bid</span>
-                <span className="font-bold text-purple-500 text-xs">
-                  {item.current_bid || item.starting_bid} XP
+            <div className="space-y-1">
+              <div className="flex items-center justify-between text-xs">
+                <span className="text-muted-foreground">Current Bid:</span>
+                <span className="font-bold text-purple-600">
+                  {item.current_bid || item.starting_bid || 0} XP
                 </span>
               </div>
               {bidCount > 0 && (
@@ -516,53 +532,48 @@ export default function Shop() {
               <Button
                 onClick={() => openBidDialog(item)}
                 disabled={owned}
+                size="sm"
                 className="w-full h-7 text-xs"
-                variant={owned ? 'outline' : 'default'}
+                variant={owned ? "secondary" : "default"}
               >
-                {owned ? 'Owned' : 'Place Bid'}
+                {owned ? 'Already Owned' : 'Place Bid'}
               </Button>
             </div>
           ) : (
-            <div className="space-y-1.5">
-              {/* Price */}
+            <div className="space-y-1">
               <div className="flex items-center justify-between">
-                {isFeatured ? (
-                  <div className="flex flex-col">
-                    <span className="font-bold text-primary text-xs">
-                      {discountedPrice} XP
-                    </span>
+                {isFeatured && item.discount_percentage ? (
+                  <div className="flex items-center gap-1">
                     <span className="text-xs text-muted-foreground line-through">
                       {item.xp_cost} XP
                     </span>
+                    <span className="text-sm font-bold text-yellow-600">
+                      {discountedPrice} XP
+                    </span>
                   </div>
                 ) : (
-                  <span className="font-bold text-primary text-xs">
-                    {item.xp_cost} XP
-                  </span>
+                  <span className="text-sm font-bold">{item.xp_cost} XP</span>
                 )}
               </div>
-
-              {/* Featured countdown */}
-              {isFeatured && item.featured_end_date && (
-                <div className="flex items-center gap-1 text-xs text-yellow-600 dark:text-yellow-400">
-                  <Clock className="w-3 h-3" />
-                  {getTimeRemaining(item.featured_end_date)}
-                </div>
-              )}
-
-              {/* Purchase button */}
               <Button
                 onClick={() => handlePurchase(item.id, item.name)}
                 disabled={owned || !canAfford || purchasing === item.id}
-                variant={owned ? 'outline' : 'default'}
+                size="sm"
                 className="w-full h-7 text-xs"
+                variant={owned ? "secondary" : canAfford ? "default" : "outline"}
               >
                 {purchasing === item.id ? (
-                  <Loader2 className="w-3 h-3 animate-spin" />
+                  <>
+                    <Loader2 className="w-3 h-3 mr-1 animate-spin" />
+                    Purchasing...
+                  </>
                 ) : owned ? (
-                  'Owned'
+                  <>
+                    <Check className="w-3 h-3 mr-1" />
+                    Owned
+                  </>
                 ) : !canAfford ? (
-                  'Need More XP'
+                  'Not Enough XP'
                 ) : (
                   'Purchase'
                 )}
@@ -573,374 +584,263 @@ export default function Shop() {
       </Card>
     );
   };
-
-  const renderSection = (title: string, icon: React.ReactNode, items: ShopItem[], gradient?: string) => {
-    if (items.length === 0) return null;
-
+  
+  if (loading) {
     return (
-      <div className="mb-8">
-        <div className="flex items-center gap-2 mb-4">
-          {icon}
-          <h2 className="text-2xl font-bold">{title}</h2>
-          <Badge variant="outline" className="ml-auto">{items.length} items</Badge>
-        </div>
-        <div className={`${gradient ? `bg-gradient-to-r ${gradient} p-4 rounded-xl` : ''}`}>
-          <div className="overflow-x-auto pb-4 -mx-4 px-4">
-            <div className="flex gap-4">
-              {items.map(item => renderCompactCard(item))}
-            </div>
-          </div>
-        </div>
-      </div>
-    );
-  };
-
-  const renderMarketplaceCard = (listing: MarketplaceListing) => {
-    const itemData = listing.shop_items;
-    const sellerData = listing.profiles;
-    const owned = isOwned(listing.shop_item_id);
-    const canAfford = userXP >= listing.asking_price;
-
-    if (!itemData) return null;
-
-    return (
-      <Card 
-        key={listing.id}
-        className="relative overflow-hidden w-48 flex-shrink-0 hover:shadow-xl transition-all duration-300 hover:-translate-y-1 rounded-xl border-blue-500/50 bg-gradient-to-br from-blue-500/5 to-cyan-500/5"
-      >
-        <Badge className="absolute top-2 left-2 z-10 gap-1 bg-blue-500 hover:bg-blue-600 text-white text-xs">
-          <Users className="w-3 h-3" />
-          Resale
-        </Badge>
-
-        {owned && (
-          <Badge variant="secondary" className="absolute top-2 right-2 z-10 gap-1 text-xs">
-            <Check className="w-3 h-3" />
-            Owned
-          </Badge>
-        )}
-
-        <div className="h-24 flex items-center justify-center bg-gradient-to-br from-muted/30 to-muted/10">
-          <div className="text-5xl">{itemData.emoji}</div>
-        </div>
-
-        <div className="p-2 space-y-1.5">
-          <div>
-            <h3 className="font-bold text-xs line-clamp-1">{itemData.name}</h3>
-            <p className="text-xs text-muted-foreground line-clamp-2">{itemData.description}</p>
-          </div>
-
-          <div className="flex items-center gap-1 text-xs text-muted-foreground">
-            <Users className="w-3 h-3" />
-            Sold by @{sellerData?.handle || 'Unknown'}
-          </div>
-
-          <div className="space-y-1.5">
-            <div className="flex items-center justify-between">
-              <span className="font-bold text-blue-500 text-xs">
-                {listing.asking_price} XP
-              </span>
-            </div>
-
-            <Button
-              onClick={() => handlePurchaseMarketplaceItem(listing.id, itemData.name)}
-              disabled={owned || !canAfford || purchasing === listing.id}
-              variant={owned ? 'outline' : 'default'}
-              className="w-full h-7 text-xs"
-            >
-              {purchasing === listing.id ? (
-                <Loader2 className="w-3 h-3 animate-spin" />
-              ) : owned ? (
-                'Owned'
-              ) : !canAfford ? (
-                'Need More XP'
-              ) : (
-                'Buy Now'
-              )}
-            </Button>
-          </div>
-        </div>
-      </Card>
-    );
-  };
-
-  const renderUserInventory = () => {
-    const ownedItems = purchases
-      .map(purchase => {
-        const item = [...items, ...auctionItems, ...featuredItems].find(i => i.id === purchase.shop_item_id);
-        return item ? { ...purchase, item } : null;
-      })
-      .filter(Boolean) as Array<UserPurchase & { item: ShopItem }>;
-
-    if (ownedItems.length === 0) {
-      return (
-        <div className="text-center py-12 text-muted-foreground">
-          <ShoppingBag className="w-12 h-12 mx-auto mb-3 opacity-50" />
-          <p>You don't own any items yet</p>
-        </div>
-      );
-    }
-
-    return (
-      <div className="overflow-x-auto pb-4 -mx-4 px-4">
-        <div className="flex gap-4">
-          {ownedItems.map((ownedItem) => (
-            <Card 
-              key={ownedItem.id}
-              className="relative overflow-hidden w-48 flex-shrink-0 rounded-xl"
-            >
-              <div className="h-24 flex items-center justify-center bg-gradient-to-br from-muted/30 to-muted/10">
-                <div className="text-5xl">{ownedItem.item.emoji}</div>
-              </div>
-
-              <div className="p-2 space-y-1.5">
-                <div>
-                  <h3 className="font-bold text-xs line-clamp-1">{ownedItem.item.name}</h3>
-                  <p className="text-xs text-muted-foreground line-clamp-2">{ownedItem.item.description}</p>
-                </div>
-
-                <Button
-                  onClick={() => openListDialog(ownedItem, ownedItem.item)}
-                  variant="outline"
-                  className="w-full h-7 text-xs"
-                >
-                  List on Marketplace
-                </Button>
-              </div>
-            </Card>
-          ))}
-        </div>
-      </div>
-    );
-  };
-
-  if (!user) {
-    return (
-      <div className="min-h-screen bg-background flex items-center justify-center">
-        <Card className="max-w-md w-full mx-4 rounded-xl">
-          <CardHeader>
-            <CardTitle>Sign In Required</CardTitle>
-            <CardDescription>Please sign in to access the shop</CardDescription>
-          </CardHeader>
-          <CardFooter>
-            <Button onClick={() => navigate('/auth')} className="w-full">
-              Sign In
-            </Button>
-          </CardFooter>
-        </Card>
+      <div className="flex items-center justify-center min-h-screen">
+        <Loader2 className="h-8 w-8 animate-spin" />
       </div>
     );
   }
 
   return (
     <div className="min-h-screen bg-background">
-      <div className="container mx-auto px-4 py-8 max-w-6xl">
-        <div className="mb-6 flex justify-end">
-          <Badge variant="outline" className="gap-2 py-2 px-4">
-            <Sparkles className="w-4 h-4 text-primary" />
-            <span className="font-bold">{userXP} XP</span>
-          </Badge>
+      <div className="container mx-auto px-4 py-8">
+        <div className="flex items-center justify-between mb-6">
+          <div>
+            <h1 className="text-3xl font-bold">Shop</h1>
+            <p className="text-muted-foreground">Upload your own images via Supabase Storage</p>
+          </div>
+          <div className="flex items-center gap-2">
+            <Sparkles className="w-5 h-5 text-primary" />
+            <span className="text-2xl font-bold">{userXP.toLocaleString()} XP</span>
+          </div>
         </div>
 
-        {/* Tabs */}
         <div className="mb-6 flex gap-2">
           <Button
             variant={activeTab === 'shop' ? 'default' : 'outline'}
             onClick={() => setActiveTab('shop')}
-            className="flex-1"
           >
-            <ShoppingBag className="w-4 h-4 mr-2" />
             Shop
           </Button>
           <Button
             variant={activeTab === 'marketplace' ? 'default' : 'outline'}
             onClick={() => setActiveTab('marketplace')}
-            className="flex-1"
           >
-            <Users className="w-4 h-4 mr-2" />
             Marketplace
           </Button>
         </div>
 
-        {loading ? (
-          <div className="flex justify-center py-12">
-            <Loader2 className="w-8 h-8 animate-spin" />
-          </div>
-        ) : activeTab === 'shop' ? (
+        {activeTab === 'shop' ? (
           <div className="space-y-8">
-            {/* Live Auctions */}
-            {renderSection(
-              'Live Auctions',
-              <Hammer className="w-6 h-6 text-purple-500" />,
-              auctionItems,
-              'from-purple-500/10 via-pink-500/10 to-purple-500/10 border border-purple-500/20 rounded-xl'
+            {auctionItems.length > 0 && (
+              <div>
+                <div className="flex items-center gap-2 mb-4">
+                  <Hammer className="w-5 h-5 text-purple-500" />
+                  <h2 className="text-2xl font-bold">Live Auctions</h2>
+                </div>
+                <div className="flex gap-4 overflow-x-auto pb-4">
+                  {auctionItems.map(item => renderCompactCard(item))}
+                </div>
+              </div>
             )}
 
-            {/* Featured Items */}
-            {renderSection(
-              'Limited Edition',
-              <Zap className="w-6 h-6 text-yellow-500" />,
-              featuredItems,
-              'from-yellow-500/10 via-orange-500/10 to-red-500/10 border border-yellow-500/20 rounded-xl'
+            {featuredItems.length > 0 && (
+              <div>
+                <div className="flex items-center gap-2 mb-4">
+                  <Zap className="w-5 h-5 text-yellow-500" />
+                  <h2 className="text-2xl font-bold">Featured Deals</h2>
+                </div>
+                <div className="flex gap-4 overflow-x-auto pb-4">
+                  {featuredItems.map(item => renderCompactCard(item))}
+                </div>
+              </div>
             )}
 
-            {/* All Items */}
-            {renderSection(
-              'All Items',
-              <ShoppingBag className="w-6 h-6" />,
-              items
-            )}
+            <div>
+              <h2 className="text-2xl font-bold mb-4">All Items</h2>
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+                {items.map(item => renderCompactCard(item))}
+              </div>
+            </div>
 
-            {/* Accessories */}
-            {renderSection(
-              'Accessories',
-              <Sparkles className="w-6 h-6" />,
-              getItemsByType('accessory')
-            )}
-
-            {/* Themes */}
-            {renderSection(
-              'Themes',
-              <TrendingUp className="w-6 h-6" />,
-              getItemsByType('theme')
-            )}
-
-            {/* Effects */}
-            {renderSection(
-              'Effects',
-              <Zap className="w-6 h-6" />,
-              getItemsByType('effect')
-            )}
-
-            {/* Badges */}
-            {renderSection(
-              'Badges',
-              <Check className="w-6 h-6" />,
-              getItemsByType('badge')
+            {purchases.length > 0 && (
+              <div>
+                <h2 className="text-2xl font-bold mb-4">Your Items</h2>
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+                  {purchases.map(purchase => {
+                    const item = items.find(i => i.id === purchase.shop_item_id);
+                    if (!item) return null;
+                    return (
+                      <Card key={purchase.id}>
+                        <CardHeader>
+                          <div className="flex items-center justify-between">
+                            <div className="text-4xl">{item.emoji}</div>
+                            <Badge variant="secondary">
+                              <Check className="w-3 h-3 mr-1" />
+                              Owned
+                            </Badge>
+                          </div>
+                          <CardTitle className="text-lg">{item.name}</CardTitle>
+                          <CardDescription className="text-sm">{item.description}</CardDescription>
+                        </CardHeader>
+                        <CardFooter>
+                          <Button
+                            onClick={() => openListDialog(purchase, item)}
+                            variant="outline"
+                            size="sm"
+                            className="w-full"
+                          >
+                            <TrendingUp className="w-4 h-4 mr-2" />
+                            List on Marketplace
+                          </Button>
+                        </CardFooter>
+                      </Card>
+                    );
+                  })}
+                </div>
+              </div>
             )}
           </div>
         ) : (
-          <div className="space-y-8">
-            {/* My Inventory */}
-            <div className="mb-8">
-              <div className="flex items-center gap-2 mb-4">
-                <ShoppingBag className="w-6 h-6" />
-                <h2 className="text-2xl font-bold">My Inventory</h2>
+          <div>
+            <h2 className="text-2xl font-bold mb-4">Marketplace</h2>
+            {marketplaceListings.length === 0 ? (
+              <div className="text-center py-12 text-muted-foreground">
+                No items listed on the marketplace yet
               </div>
-              {renderUserInventory()}
-            </div>
-
-            {/* Marketplace Listings */}
-            <div className="mb-8">
-              <div className="flex items-center gap-2 mb-4">
-                <Users className="w-6 h-6 text-blue-500" />
-                <h2 className="text-2xl font-bold">Community Marketplace</h2>
-                <Badge variant="outline" className="ml-auto">
-                  {marketplaceListings.length} listings
-                </Badge>
+            ) : (
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+                {marketplaceListings.map(listing => (
+                  <Card key={listing.id}>
+                    <CardHeader>
+                      <div className="flex items-center justify-between">
+                        <div className="text-4xl">{listing.shop_items?.emoji}</div>
+                        <Badge variant="outline">
+                          <Users className="w-3 h-3 mr-1" />
+                          Resale
+                        </Badge>
+                      </div>
+                      <CardTitle className="text-lg">{listing.shop_items?.name}</CardTitle>
+                      <CardDescription className="text-sm">
+                        {listing.shop_items?.description}
+                      </CardDescription>
+                      <div className="text-xs text-muted-foreground">
+                        Seller: @{listing.profiles?.handle}
+                      </div>
+                    </CardHeader>
+                    <CardFooter className="flex flex-col gap-2">
+                      <div className="flex items-center justify-between w-full">
+                        <span className="text-sm text-muted-foreground">Price:</span>
+                        <span className="text-lg font-bold">{listing.asking_price} XP</span>
+                      </div>
+                      <Button
+                        onClick={() => handlePurchaseMarketplaceItem(listing.id, listing.shop_items?.name || 'Item')}
+                        disabled={listing.user_id === user?.id || userXP < listing.asking_price || purchasing === listing.id}
+                        size="sm"
+                        className="w-full"
+                      >
+                        {purchasing === listing.id ? (
+                          <>
+                            <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                            Purchasing...
+                          </>
+                        ) : listing.user_id === user?.id ? (
+                          'Your Listing'
+                        ) : userXP < listing.asking_price ? (
+                          'Not Enough XP'
+                        ) : (
+                          'Purchase'
+                        )}
+                      </Button>
+                    </CardFooter>
+                  </Card>
+                ))}
               </div>
-              {marketplaceListings.length === 0 ? (
-                <div className="text-center py-12 text-muted-foreground">
-                  <Users className="w-12 h-12 mx-auto mb-3 opacity-50" />
-                  <p>No marketplace listings available</p>
-                </div>
-              ) : (
-                <div className="bg-gradient-to-r from-blue-500/10 via-cyan-500/10 to-blue-500/10 p-4 rounded-xl border border-blue-500/20">
-                  <div className="overflow-x-auto pb-4 -mx-4 px-4">
-                    <div className="flex gap-4">
-                      {marketplaceListings.map(listing => renderMarketplaceCard(listing))}
-                    </div>
-                  </div>
-                </div>
-              )}
-            </div>
+            )}
           </div>
         )}
-
-        {/* Bid Dialog */}
-        <Dialog open={bidDialogOpen} onOpenChange={setBidDialogOpen}>
-          <DialogContent>
-            <DialogHeader>
-              <DialogTitle>Place Your Bid</DialogTitle>
-              <DialogDescription>
-                {selectedItem && (
-                  <>
-                    Bidding on <strong>{selectedItem.name}</strong>
-                    <div className="mt-2 text-sm">
-                      Current bid: <strong>{selectedItem.current_bid || selectedItem.starting_bid} XP</strong>
-                    </div>
-                    <div className="text-xs text-muted-foreground">
-                      Minimum bid: {(selectedItem.current_bid || selectedItem.starting_bid || 0) + (selectedItem.min_bid_increment || 10)} XP
-                    </div>
-                  </>
-                )}
-              </DialogDescription>
-            </DialogHeader>
-            <div className="space-y-4 py-4">
-              <div className="space-y-2">
-                <label className="text-sm font-medium">Bid Amount (XP)</label>
-                <Input
-                  type="number"
-                  value={bidAmount}
-                  onChange={(e) => setBidAmount(e.target.value)}
-                  placeholder="Enter your bid"
-                  min={(selectedItem?.current_bid || selectedItem?.starting_bid || 0) + (selectedItem?.min_bid_increment || 10)}
-                />
-              </div>
-              <div className="text-sm text-muted-foreground">
-                Your XP: <strong>{userXP}</strong>
-              </div>
-            </div>
-            <DialogFooter>
-              <Button variant="outline" onClick={() => setBidDialogOpen(false)}>
-                Cancel
-              </Button>
-              <Button onClick={handlePlaceBid} disabled={placingBid || !bidAmount}>
-                {placingBid ? <Loader2 className="w-4 h-4 animate-spin" /> : 'Place Bid'}
-              </Button>
-            </DialogFooter>
-          </DialogContent>
-        </Dialog>
-
-        {/* List Item Dialog */}
-        <Dialog open={listDialogOpen} onOpenChange={setListDialogOpen}>
-          <DialogContent>
-            <DialogHeader>
-              <DialogTitle>List Item on Marketplace</DialogTitle>
-              <DialogDescription>
-                {selectedItem && (
-                  <>
-                    Listing <strong>{selectedItem.name}</strong> for resale
-                  </>
-                )}
-              </DialogDescription>
-            </DialogHeader>
-            <div className="space-y-4 py-4">
-              <div className="space-y-2">
-                <label className="text-sm font-medium">Asking Price (XP)</label>
-                <Input
-                  type="number"
-                  value={listingPrice}
-                  onChange={(e) => setListingPrice(e.target.value)}
-                  placeholder="Enter your asking price"
-                  min={1}
-                />
-                <p className="text-xs text-muted-foreground">
-                  Set a fair price for other users to purchase your item
-                </p>
-              </div>
-            </div>
-            <DialogFooter>
-              <Button variant="outline" onClick={() => setListDialogOpen(false)}>
-                Cancel
-              </Button>
-              <Button onClick={handleCreateListing} disabled={placingBid || !listingPrice}>
-                {placingBid ? <Loader2 className="w-4 h-4 animate-spin" /> : 'List Item'}
-              </Button>
-            </DialogFooter>
-          </DialogContent>
-        </Dialog>
       </div>
+
+      <Dialog open={bidDialogOpen} onOpenChange={setBidDialogOpen}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Place Bid</DialogTitle>
+            <DialogDescription>
+              Place your bid on {selectedItem?.name}
+            </DialogDescription>
+          </DialogHeader>
+          <div className="space-y-4">
+            <div>
+              <label className="text-sm font-medium">Current Bid</label>
+              <div className="text-2xl font-bold text-purple-600">
+                {selectedItem?.current_bid || selectedItem?.starting_bid || 0} XP
+              </div>
+            </div>
+            <div>
+              <label className="text-sm font-medium">Your Bid</label>
+              <Input
+                type="number"
+                value={bidAmount}
+                onChange={(e) => setBidAmount(e.target.value)}
+                placeholder="Enter bid amount"
+                min={(selectedItem?.current_bid || selectedItem?.starting_bid || 0) + (selectedItem?.min_bid_increment || 10)}
+              />
+              <p className="text-xs text-muted-foreground mt-1">
+                Minimum bid: {(selectedItem?.current_bid || selectedItem?.starting_bid || 0) + (selectedItem?.min_bid_increment || 10)} XP
+              </p>
+            </div>
+            <div className="flex items-center justify-between text-sm">
+              <span>Your XP:</span>
+              <span className="font-bold">{userXP} XP</span>
+            </div>
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setBidDialogOpen(false)}>
+              Cancel
+            </Button>
+            <Button onClick={handlePlaceBid} disabled={placingBid || !bidAmount}>
+              {placingBid ? (
+                <>
+                  <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                  Placing Bid...
+                </>
+              ) : (
+                'Place Bid'
+              )}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      <Dialog open={listDialogOpen} onOpenChange={setListDialogOpen}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>List on Marketplace</DialogTitle>
+            <DialogDescription>
+              Set a price for {selectedItem?.name}
+            </DialogDescription>
+          </DialogHeader>
+          <div className="space-y-4">
+            <div>
+              <label className="text-sm font-medium">Asking Price (XP)</label>
+              <Input
+                type="number"
+                value={listingPrice}
+                onChange={(e) => setListingPrice(e.target.value)}
+                placeholder="Enter asking price"
+                min="1"
+              />
+            </div>
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setListDialogOpen(false)}>
+              Cancel
+            </Button>
+            <Button onClick={handleCreateListing} disabled={placingBid || !listingPrice}>
+              {placingBid ? (
+                <>
+                  <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                  Listing...
+                </>
+              ) : (
+                'Create Listing'
+              )}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }
