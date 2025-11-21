@@ -94,7 +94,7 @@ const Games = () => {
             <Gamepad2 className="h-8 w-8 text-primary" />
             <h1 className="text-3xl font-bold text-foreground">Games</h1>
           </div>
-          <p className="text-muted-foreground">Play games, earn XP, and compete with friends</p>
+          <p className="text-muted-foreground">Play games, earn Nexa, and compete with friends</p>
         </div>
 
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">

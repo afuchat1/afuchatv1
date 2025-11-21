@@ -96,7 +96,7 @@ const Leaderboard = ({ gameType, difficulty, limit = 10 }: LeaderboardProps) => 
                 <p className="text-xs text-muted-foreground">@{entry.profiles.handle}</p>
               </div>
               <div className="text-right">
-                <p className="font-bold text-lg text-foreground">{entry.score}</p>
+                <p className="font-bold text-lg text-foreground">{entry.score} Nexa</p>
                 {entry.metadata?.moves && (
                   <p className="text-xs text-muted-foreground">{entry.metadata.moves} moves</p>
                 )}

@@ -408,7 +408,7 @@ const FinancialHub = () => {
             <Wallet className="h-8 w-8 text-blue-600" />
             <h1 className="text-3xl md:text-4xl font-bold">Financial Hub</h1>
           </div>
-          <p className="text-muted-foreground text-lg">Manage your XP, transfers, and transactions</p>
+          <p className="text-muted-foreground text-lg">Manage your Nexa, transfers, and transactions</p>
         </div>
       </div>
 
@@ -422,7 +422,7 @@ const FinancialHub = () => {
             </CardTitle>
           </CardHeader>
           <CardContent>
-            <div className="text-4xl font-bold mb-4">{balance.toLocaleString()} XP</div>
+            <div className="text-4xl font-bold mb-4">{balance.toLocaleString()} Nexa</div>
             <div className="grid grid-cols-2 gap-3">
               <Button onClick={() => navigate('/transfer')} className="w-full">
                 <Send className="h-4 w-4 mr-2" />
@@ -476,7 +476,7 @@ const FinancialHub = () => {
                       </div>
                       <div className="text-right">
                         <div className={`font-bold ${transaction.direction === 'sent' ? 'text-red-500' : 'text-green-500'}`}>
-                          {transaction.direction === 'sent' ? '-' : '+'}{transaction.amount} XP
+                          {transaction.direction === 'sent' ? '-' : '+'}{transaction.amount} Nexa
                         </div>
                         <div className="text-xs text-muted-foreground">
                           {formatDistanceToNow(new Date(transaction.created_at), { addSuffix: true })}
@@ -510,7 +510,7 @@ const FinancialHub = () => {
                         )}
                       </div>
                       <div className="text-right">
-                        <div className="font-bold text-red-500">-{transaction.amount} XP</div>
+                        <div className="font-bold text-red-500">-{transaction.amount} Nexa</div>
                         <div className="text-xs text-muted-foreground">
                           {formatDistanceToNow(new Date(transaction.created_at), { addSuffix: true })}
                         </div>
@@ -543,7 +543,7 @@ const FinancialHub = () => {
                         )}
                       </div>
                       <div className="text-right">
-                        <div className="font-bold text-green-500">+{transaction.amount} XP</div>
+                        <div className="font-bold text-green-500">+{transaction.amount} Nexa</div>
                         <div className="text-xs text-muted-foreground">
                           {formatDistanceToNow(new Date(transaction.created_at), { addSuffix: true })}
                         </div>

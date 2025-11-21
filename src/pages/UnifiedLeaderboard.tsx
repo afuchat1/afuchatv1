@@ -111,7 +111,7 @@ const UnifiedLeaderboard = () => {
           <TabsList className="grid w-full grid-cols-2 mb-6">
             <TabsTrigger value="xp" className="flex items-center gap-2">
               <TrendingUp className="h-4 w-4" />
-              XP Leaders
+              Nexa Leaders
             </TabsTrigger>
             <TabsTrigger value="gifts" className="flex items-center gap-2">
               <Gift className="h-4 w-4" />
@@ -154,7 +154,7 @@ const UnifiedLeaderboard = () => {
                       <Badge variant="secondary" className="mb-2">
                         {user.current_grade || 'Rookie'}
                       </Badge>
-                      <p className="text-lg font-bold text-primary">{user.xp.toLocaleString()} XP</p>
+                      <p className="text-lg font-bold text-primary">{user.xp.toLocaleString()} Nexa</p>
                     </div>
                   </div>
                 </Card>
@@ -199,7 +199,7 @@ const UnifiedLeaderboard = () => {
                         {user.gift_count} {user.gift_count === 1 ? 'gift' : 'gifts'}
                       </Badge>
                       <p className="text-lg font-bold text-pink-500">
-                        {user.total_xp.toLocaleString()} XP
+                        {user.total_xp.toLocaleString()} Nexa
                       </p>
                     </div>
                   </div>
