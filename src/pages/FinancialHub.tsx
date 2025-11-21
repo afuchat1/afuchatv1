@@ -9,7 +9,6 @@ import { ArrowLeft, Wallet, Send, Mail, TrendingUp, TrendingDown, Gift, ArrowUpR
 import { useToast } from '@/hooks/use-toast';
 import Logo from '@/components/Logo';
 import { formatDistanceToNow } from 'date-fns';
-import { cn } from '@/lib/utils';
 
 interface Transaction {
   id: string;
@@ -32,27 +31,6 @@ const FinancialHub = () => {
   const [balance, setBalance] = useState(0);
   const [transactions, setTransactions] = useState<Transaction[]>([]);
   const [loading, setLoading] = useState(true);
-  const [isScrollingDown, setIsScrollingDown] = useState(false);
-
-  useEffect(() => {
-    let lastScrollY = window.scrollY;
-    let ticking = false;
-
-    const handleScroll = () => {
-      if (!ticking) {
-        window.requestAnimationFrame(() => {
-          const currentScrollY = window.scrollY;
-          setIsScrollingDown(currentScrollY > lastScrollY && currentScrollY > 50);
-          lastScrollY = currentScrollY;
-          ticking = false;
-        });
-        ticking = true;
-      }
-    };
-
-    window.addEventListener('scroll', handleScroll, { passive: true });
-    return () => window.removeEventListener('scroll', handleScroll);
-  }, []);
 
   useEffect(() => {
     if (user) {
@@ -423,10 +401,7 @@ const FinancialHub = () => {
 
   return (
     <div className="min-h-screen bg-background pb-20">
-      <header className={cn(
-        "sticky top-0 z-50 w-full border-b border-border bg-background/95 backdrop-blur transition-transform duration-300",
-        isScrollingDown ? "-translate-y-full" : "translate-y-0"
-      )}>
+      <header className="sticky top-0 z-50 w-full border-b border-border bg-background/95 backdrop-blur">
         <div className="container max-w-4xl mx-auto px-4">
           <div className="flex h-16 items-center justify-between">
             <Button variant="ghost" size="icon" onClick={() => navigate(-1)} className="hidden lg:inline-flex">

@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -7,7 +7,6 @@ import { Badge } from '@/components/ui/badge';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { ArrowLeft, Search, MapPin, Star, Car, Users, Clock } from 'lucide-react';
 import { toast } from 'sonner';
-import { cn } from '@/lib/utils';
 
 const rideOptions = [
   { id: 'economy', name: 'Economy', description: '4 passengers', price: '50', icon: '🚗', time: '3 min' },
@@ -21,27 +20,6 @@ const Rides = () => {
   const [pickup, setPickup] = useState('');
   const [destination, setDestination] = useState('');
   const [selectedRide, setSelectedRide] = useState('economy');
-  const [isScrollingDown, setIsScrollingDown] = useState(false);
-
-  useEffect(() => {
-    let lastScrollY = window.scrollY;
-    let ticking = false;
-
-    const handleScroll = () => {
-      if (!ticking) {
-        window.requestAnimationFrame(() => {
-          const currentScrollY = window.scrollY;
-          setIsScrollingDown(currentScrollY > lastScrollY && currentScrollY > 50);
-          lastScrollY = currentScrollY;
-          ticking = false;
-        });
-        ticking = true;
-      }
-    };
-
-    window.addEventListener('scroll', handleScroll, { passive: true });
-    return () => window.removeEventListener('scroll', handleScroll);
-  }, []);
 
   const handleBookRide = () => {
     if (!pickup || !destination) {
@@ -54,10 +32,7 @@ const Rides = () => {
 
   return (
     <div className="min-h-screen bg-background">
-      <header className={cn(
-        "sticky top-0 z-50 w-full border-b border-border bg-background/95 backdrop-blur transition-transform duration-300",
-        isScrollingDown ? "-translate-y-full" : "translate-y-0"
-      )}>
+      <header className="sticky top-0 z-50 w-full border-b border-border bg-background/95 backdrop-blur">
         <div className="flex h-14 items-center px-4">
           <Button variant="ghost" size="icon" onClick={() => navigate(-1)} className="hidden lg:inline-flex">
             <ArrowLeft className="h-5 w-5" />
