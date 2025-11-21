@@ -16,8 +16,8 @@ interface StoryAvatarProps {
 const sizeMap = {
   sm: 'h-6 w-6 sm:h-7 sm:w-7',
   md: 'h-8 w-8 sm:h-10 sm:w-10',
-  lg: 'h-12 w-12 sm:h-14 sm:w-14',
-  xl: 'h-16 w-16 sm:h-20 sm:w-20'
+  lg: 'h-12 w-12',
+  xl: 'h-20 w-20 sm:h-28 sm:w-28'
 };
 
 const ringMap = {
