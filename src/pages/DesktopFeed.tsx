@@ -38,6 +38,36 @@ const DesktopFeed = () => {
   useEffect(() => {
     fetchTrendingTopics();
     fetchSuggestedUsers();
+
+    // Subscribe to profile updates for suggested users
+    const profilesChannel = supabase
+      .channel('desktop-profiles-updates')
+      .on(
+        'postgres_changes',
+        { event: 'UPDATE', schema: 'public', table: 'profiles' },
+        (payload) => {
+          // Update suggested user if they're in the list
+          setSuggested(prev =>
+            prev.map(suggestedUser =>
+              suggestedUser.id === payload.new.id
+                ? {
+                    ...suggestedUser,
+                    display_name: payload.new.display_name || suggestedUser.display_name,
+                    handle: payload.new.handle || suggestedUser.handle,
+                    avatar_url: payload.new.avatar_url,
+                    is_verified: payload.new.is_verified ?? suggestedUser.is_verified,
+                    is_business_mode: payload.new.is_business_mode ?? suggestedUser.is_business_mode,
+                  }
+                : suggestedUser
+            )
+          );
+        }
+      )
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(profilesChannel);
+    };
   }, []);
 
   const fetchTrendingTopics = async () => {

@@ -1836,10 +1836,81 @@ const Feed = () => {
       )
       .subscribe();
 
+    // Subscribe to profile updates
+    const profilesChannel = supabase
+      .channel('profiles-updates')
+      .on(
+        'postgres_changes',
+        { event: 'UPDATE', schema: 'public', table: 'profiles' },
+        (payload) => {
+          // Update profile info in all posts and replies by this user
+          const updateProfile = (currentPosts: Post[]) =>
+            currentPosts.map((p) => {
+              // Update post author profile
+              if (p.author_id === payload.new.id) {
+                return {
+                  ...p,
+                  profiles: {
+                    ...p.profiles,
+                    display_name: payload.new.display_name || p.profiles.display_name,
+                    handle: payload.new.handle || p.profiles.handle,
+                    avatar_url: payload.new.avatar_url,
+                    banner_url: payload.new.banner_url,
+                    bio: payload.new.bio,
+                    is_verified: payload.new.is_verified ?? p.profiles.is_verified,
+                    is_organization_verified: payload.new.is_organization_verified ?? p.profiles.is_organization_verified,
+                    is_business_mode: payload.new.is_business_mode ?? p.profiles.is_business_mode,
+                    is_affiliate: payload.new.is_affiliate ?? p.profiles.is_affiliate,
+                  },
+                };
+              }
+              
+              // Update reply author profiles
+              if (p.replies && p.replies.length > 0) {
+                const updatedReplies = p.replies.map((r) => {
+                  if (r.author_id === payload.new.id) {
+                    return {
+                      ...r,
+                      profiles: {
+                        ...r.profiles,
+                        display_name: payload.new.display_name || r.profiles.display_name,
+                        handle: payload.new.handle || r.profiles.handle,
+                        avatar_url: payload.new.avatar_url,
+                        is_verified: payload.new.is_verified ?? r.profiles.is_verified,
+                        is_organization_verified: payload.new.is_organization_verified ?? r.profiles.is_organization_verified,
+                        is_business_mode: payload.new.is_business_mode ?? r.profiles.is_business_mode,
+                        is_affiliate: payload.new.is_affiliate ?? r.profiles.is_affiliate,
+                      },
+                    };
+                  }
+                  return r;
+                });
+                
+                return { ...p, replies: updatedReplies };
+              }
+              
+              return p;
+            });
+          
+          setPosts(updateProfile);
+          setFollowingPosts(updateProfile);
+          
+          // Update current user profile if it's their own update
+          if (user && payload.new.id === user.id) {
+            setUserProfile({
+              display_name: payload.new.display_name,
+              avatar_url: payload.new.avatar_url,
+            });
+          }
+        }
+      )
+      .subscribe();
+
     return () => {
       supabase.removeChannel(postsChannel);
       supabase.removeChannel(repliesChannel);
       supabase.removeChannel(acksChannel);
+      supabase.removeChannel(profilesChannel);
     };
   }, [user, addReply]);
   
