@@ -46,10 +46,10 @@ const Games = () => {
   const services = [
     { icon: Calendar, route: '/events', label: 'Events' },
     { icon: Plane, route: '/travel', label: 'Travel' },
-    { icon: UtensilsCrossed, route: '/food', label: 'Food' },
+    { icon: UtensilsCrossed, route: '/food-delivery', label: 'Food' },
     { icon: Car, route: '/rides', label: 'Rides' },
     { icon: CalendarCheck, route: '/bookings', label: 'Bookings' },
-    { icon: Wallet, route: '/financial', label: 'Finance' },
+    { icon: Wallet, route: '/wallet', label: 'Finance' },
     { icon: Image, route: '/moments', label: 'Moments' },
   ];
 
