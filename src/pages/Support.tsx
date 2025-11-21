@@ -72,51 +72,143 @@ const Support = () => {
   const faqs = [
     {
       question: "How do I create an account?",
-      answer: "Click on the 'Sign Up' button on the welcome page. You can register using your email address or sign in with Google. Follow the verification steps to activate your account."
+      answer: "Click 'Sign Up' on the welcome page. You can register with your email or use Google/GitHub OAuth. Complete your profile with a display name, username, and optional profile picture. Check your email for verification (if email confirmation is enabled)."
     },
     {
-      question: "How do I reset my password?",
-      answer: "Go to Settings > Account > Change Password, or click 'Forgot Password' on the login page. You'll receive a password reset email to your registered email address."
+      question: "How do I reset or change my password?",
+      answer: "For logged-in users: Go to Settings > Account > Change Password. For forgotten passwords: Click 'Forgot Password' on the sign-in page and follow the email instructions to reset your password securely."
+    },
+    {
+      question: "How do I update my profile picture?",
+      answer: "Go to your profile and click 'Edit Profile' or navigate to Settings > Profile. Upload a new image (JPG, PNG, or GIF, max 5MB). You can also upload a profile picture during sign-up."
+    },
+    {
+      question: "What are XP points and how do I earn them?",
+      answer: "XP is our virtual currency system. Earn XP by: daily login streaks, completing your profile, posting content, engaging with others, playing games, and achieving milestones. Use XP to send gifts, purchase shop items, or transfer to other users."
+    },
+    {
+      question: "How do I send gifts or XP to other users?",
+      answer: "Navigate to the Gifts page or the user's profile. Select a gift or use the Transfer feature to send XP directly. Add an optional message and confirm the transaction. The recipient will be notified immediately."
+    },
+    {
+      question: "What is the difference between public and private accounts?",
+      answer: "Public accounts: Anyone can see your posts and profile. Private accounts: Only approved followers can see your content. You can toggle this in Settings > Profile > Privacy Settings."
+    },
+    {
+      question: "How do chat and messaging work?",
+      answer: "Access Chats from the navigation menu. Start a 1-on-1 chat with any user or create group chats. Messages support text, images, files, voice messages, and reactions. Use read receipts to see when messages are read."
+    },
+    {
+      question: "What are AI features and are they free?",
+      answer: "AfuChat includes AI features for post generation, translation, and image descriptions. Currently, these features are marked as 'Coming Soon' and will be available in future updates. When launched, basic AI features will be free with usage limits."
+    },
+    {
+      question: "How do I report inappropriate content or users?",
+      answer: "Click the three-dot menu on any post or visit a user's profile and select 'Report'. Choose a reason (spam, harassment, inappropriate content, etc.) and submit. Our moderation team reviews reports within 24-48 hours."
+    },
+    {
+      question: "What are verified and business badges?",
+      answer: "Verified badges (blue checkmark) confirm authentic accounts of notable individuals or organizations. Business badges identify business accounts. Apply for verification in Settings > Verification Request with required documentation."
+    },
+    {
+      question: "How do I delete my account?",
+      answer: "Go to Settings > Account > Delete Account. This action is permanent and will delete all your data including posts, messages, and profile information. You'll have a 30-day grace period before permanent deletion."
+    },
+    {
+      question: "Can I use AfuChat on multiple devices?",
+      answer: "Yes! AfuChat syncs across all your devices. Sign in with the same account on web, mobile, or desktop. Your messages, posts, and settings will sync automatically. Manage active sessions in Settings > Security."
+    },
+    {
+      question: "What happens to my data if I delete my account?",
+      answer: "Most data is deleted within 30-90 days. Some data may persist in backups for up to 180 days for technical reasons. Public content cached by others may remain visible. See our Privacy Policy for complete details."
+    },
+    {
+      question: "How do I enable or disable notifications?",
+      answer: "Go to Settings > Notifications to customize: push notifications, email notifications, and notification types (follows, likes, replies, mentions). You can also enable/disable sound and vibration for different notification categories."
+    },
+    {
+      question: "What are Mini Programs?",
+      answer: "Mini Programs are lightweight third-party applications that run within AfuChat. Browse available programs in the Mini Programs section, install with one click, and access them from your menu. Developers can create custom Mini Programs using our SDK."
+    },
+    {
+      question: "How does the referral system work?",
+      answer: "Share your unique referral link (found in Settings > Referral). When someone signs up using your link and completes their profile, both of you earn bonus XP. Track your referrals and rewards in your profile."
+    },
+    {
+      question: "Can I schedule posts for later?",
+      answer: "Post scheduling is currently not available but is planned for a future update. For now, posts are published immediately when you create them."
+    },
+    {
+      question: "How do I block or unblock someone?",
+      answer: "Visit the user's profile, click the three-dot menu, and select 'Block'. Blocked users cannot see your content or contact you. Unblock users from Settings > Privacy > Blocked Users."
+    },
+    {
+      question: "What is the difference between Following and Followers?",
+      answer: "Following: Accounts you choose to follow (you'll see their posts in your feed). Followers: Users who follow you (they see your posts). Both lists are accessible from your profile page."
+    },
+    {
+      question: "How do I change my username?",
+      answer: "Go to Settings > Profile > Edit Profile and update your username (handle). Usernames are case-insensitive and must be unique. Note: Changing your username updates your profile URL."
     },
     {
       question: "What is Business Mode?",
-      answer: "Business Mode allows organizations to access additional features like affiliate management, business dashboard, and analytics. You can request business access through your account settings."
+      answer: "Business Mode allows organizations to access additional features like affiliate management, business dashboard, and analytics. Apply for business verification through Settings > Verification Request with required business documentation."
     },
     {
       question: "How does the XP and leveling system work?",
-      answer: "You earn XP (experience points) by engaging with the platform - posting content, commenting, daily logins, and completing achievements. Your XP determines your grade level, which unlocks special features and accessories."
+      answer: "You earn XP (experience points) by engaging with the platform - posting content, daily logins, completing profile, and achievements. Your XP determines your grade level, which unlocks special features, badges, and shop items. Check your current level on your profile page."
     },
     {
       question: "What are gifts and how do I send them?",
-      answer: "Gifts are virtual items you can send to other users using your XP. Click on any user's profile, select the gift icon, choose a gift, and add an optional message. Seasonal gifts are available during special events."
-    },
-    {
-      question: "How do I customize my owl avatar?",
-      answer: "Go to your profile and click 'Edit Profile', then select 'Customize Avatar'. You can choose different eyes, emotions, accessories, and backgrounds. Some items unlock as you level up."
+      answer: "Gifts are virtual items you can send to other users using your XP. Visit the Gifts page to browse available gifts, select one, search for a recipient, add an optional message, and confirm. Seasonal gifts are available during special events with limited-time availability."
     },
     {
       question: "What are tips and how do they work?",
-      answer: "Tips allow you to support content creators by sending them XP directly on their posts. Click the tip icon on any post, enter the amount, and add an optional message of appreciation."
+      answer: "Tips allow you to support content creators by sending them XP directly on their posts. Click the tip button on any post, enter the amount (minimum varies), add an optional message, and confirm. Recipients are notified immediately and receive the XP in their account."
     },
     {
       question: "Can I use AfuChat on mobile?",
-      answer: "Yes! AfuChat is fully responsive and works great on mobile browsers. You can also install it as a Progressive Web App (PWA) for a native app-like experience. Visit /install for instructions."
-    },
-    {
-      question: "How do I report inappropriate content?",
-      answer: "Click the three dots menu on any post, select 'Report', choose a reason, and submit. Our moderation team reviews all reports promptly."
+      answer: "Yes! AfuChat is fully responsive and works great on mobile browsers (iOS Safari, Chrome, etc.). You can also install it as a Progressive Web App (PWA) for a native app-like experience with offline support. Visit the Install page or use your browser's 'Add to Home Screen' option."
     },
     {
       question: "How do I enable push notifications?",
-      answer: "Go to Settings > Notifications and click 'Enable Push Notifications'. Make sure you allow notifications when your browser prompts you."
+      answer: "Go to Settings > Notifications and click 'Enable Push Notifications'. Allow notifications when your browser prompts you. You can customize which types of notifications you receive (follows, likes, messages, etc.) and manage notification preferences anytime."
     },
     {
       question: "What languages does AfuChat support?",
-      answer: "AfuChat currently supports English, Spanish, French, Arabic, and Swahili. You can change your language preference in Settings > Language."
+      answer: "AfuChat currently supports English, Spanish (Español), French (Français), Arabic (العربية), and Swahili (Kiswahili). Change your language preference in Settings > Language. The interface and most content will be displayed in your selected language."
     },
     {
       question: "How do I become an affiliate?",
-      answer: "Visit the Affiliate Request page through Settings. You'll need to be affiliated with a business account. Fill out the request form and wait for approval from the business."
+      answer: "Visit the Affiliate Request page through Settings > Affiliate Program. You must first connect with a business account that you want to be affiliated with. Fill out the request form with relevant information, and the business will review and approve your request. Once approved, you'll earn commissions on referrals."
+    },
+    {
+      question: "What is the difference between XP transfers and tips?",
+      answer: "XP Transfers: Direct peer-to-peer transfers of any amount between users (accessible via Transfer page). Tips: Rewards for specific posts showing appreciation for content (accessible via tip button on posts). Both use your XP balance."
+    },
+    {
+      question: "How do I play games and earn rewards?",
+      answer: "Navigate to the Games section from the menu. Choose from available games (Memory, Puzzle, Trivia, Simple). Play to earn XP based on your score and difficulty level. You can also challenge friends to compete for higher scores and bragging rights."
+    },
+    {
+      question: "What are Red Envelopes?",
+      answer: "Red Envelopes are a fun way to distribute XP to multiple users in group chats. Create an envelope with a total XP amount and number of recipients. The first users to claim will randomly receive a portion. It's perfect for celebrations and events."
+    },
+    {
+      question: "How does the Shop work?",
+      answer: "The Shop offers exclusive items you can purchase with XP: profile accessories, special themes, avatar customizations, and limited-edition items. Some items are featured or on discount. Purchased items appear in your inventory and can be equipped or used."
+    },
+    {
+      question: "Can I download my data?",
+      answer: "Yes! You have the right to download a copy of your data. Contact support@afuchat.com with 'Data Export Request' in the subject line. We'll provide a complete export of your posts, messages, profile data, and activity within 30 days as required by data protection laws."
+    },
+    {
+      question: "What should I do if my account is hacked?",
+      answer: "Immediately: 1) Try to change your password if you still have access. 2) Contact support@afuchat.com with 'Security Alert - Account Compromised' in the subject. 3) Check Settings > Security > Active Sessions and terminate suspicious sessions. 4) Enable two-factor authentication once you regain access."
+    },
+    {
+      question: "How do I enable two-factor authentication (2FA)?",
+      answer: "Two-factor authentication adds an extra layer of security to your account. Go to Settings > Security > Two-Factor Authentication and follow the setup instructions. You'll need an authenticator app (Google Authenticator, Authy, etc.) to scan the QR code."
     }
   ];
 
