@@ -13,6 +13,7 @@ import { Badge } from '@/components/ui/badge';
 import { UserAvatar } from '@/components/avatar/UserAvatar';
 import { formatDistanceToNow } from 'date-fns';
 import { VerifiedBadge } from '@/components/VerifiedBadge';
+import { ChatStoriesHeader } from '@/components/chat/ChatStoriesHeader';
 
 interface Chat {
   id: string;
@@ -366,6 +367,9 @@ const Chats = () => {
             />
           </div>
         </div>
+
+        {/* Stories Header */}
+        <ChatStoriesHeader />
       </div>
       
       {/* Chat list */}
