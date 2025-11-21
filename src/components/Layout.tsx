@@ -2,7 +2,7 @@ import { ReactNode, useEffect, useState } from 'react';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { useAuth } from '@/contexts/AuthContext';
 import { useAccountMode } from '@/contexts/AccountModeContext';
-import { Home, MessageSquare, Search, Bell, User, Settings, Shield, BarChart3, Grid3x3, Gamepad2 } from 'lucide-react';
+import { Home, MessageSquare, Search, Bell, User, Settings, Shield, BarChart3, Grid3x3, Gamepad2, Bot, ShoppingBag, Wallet, Send, Gift, Image as ImageIcon, Hash, TrendingUp } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import Logo from '@/components/Logo';
 import NotificationIcon from '@/components/nav/NotificationIcon';
@@ -27,13 +27,13 @@ const Layout = ({ children }: LayoutProps) => {
   const { t } = useTranslation();
   const [isAdmin, setIsAdmin] = useState(false);
   const [isBusinessMode, setIsBusinessMode] = useState(false);
+  const [isAffiliate, setIsAffiliate] = useState(false);
   const [isScrollingDown, setIsScrollingDown] = useState(false);
   const [lastScrollY, setLastScrollY] = useState(0);
 
   useEffect(() => {
     if (user) {
       checkAdminStatus();
-      checkBusinessMode();
     }
   }, [user]);
 
@@ -59,12 +59,14 @@ const Layout = ({ children }: LayoutProps) => {
     
     const { data, error } = await supabase
       .from('profiles')
-      .select('is_admin')
+      .select('is_admin, is_business_mode, is_affiliate')
       .eq('id', user.id)
       .single();
 
     if (!error && data) {
       setIsAdmin(data.is_admin || false);
+      setIsBusinessMode(data.is_business_mode || false);
+      setIsAffiliate(data.is_affiliate || false);
     }
   };
 
@@ -89,8 +91,24 @@ const Layout = ({ children }: LayoutProps) => {
     { path: '/chats', icon: MessageSquare, label: t('common.messages') },
   ];
 
+  // Additional features section
+  const featureItems = [
+    { path: '/ai-chat', icon: Bot, label: 'AI Chat', requiresAuth: true },
+    { path: '/shop', icon: ShoppingBag, label: 'Shop' },
+    { path: '/wallet', icon: Wallet, label: 'Wallet', requiresAuth: true },
+    { path: '/transfer', icon: Send, label: 'Transfer', requiresAuth: true },
+    { path: '/gifts', icon: Gift, label: 'Gifts' },
+    { path: '/moments', icon: ImageIcon, label: 'Moments' },
+    { path: '/trending', icon: Hash, label: 'Trending' },
+    { path: '/mini-programs', icon: Grid3x3, label: 'Mini Programs' },
+  ];
+
   if (user) {
     navItems.push({ path: `/${user.id}`, icon: User, label: t('common.profile'), badge: false });
+  }
+
+  if (isAffiliate) {
+    navItems.push({ path: '/affiliate-dashboard', icon: TrendingUp, label: 'Affiliate', badge: false });
   }
 
   if (isAdmin) {
@@ -131,7 +149,8 @@ const Layout = ({ children }: LayoutProps) => {
           <AccountModeSwitcher />
         </div>
 
-        <nav className="flex-1 space-y-1">
+        <nav className="flex-1 space-y-1 overflow-y-auto">
+          {/* Main Navigation */}
           {navItems.map((item) => {
             // Special handling for notifications - it's already a Link component
             if (item.badge && item.path === '/notifications') {
@@ -154,6 +173,31 @@ const Layout = ({ children }: LayoutProps) => {
               </Link>
             );
           })}
+
+          {/* Features Section */}
+          <div className="pt-4 mt-4 border-t border-border">
+            <p className="px-4 text-xs font-semibold text-muted-foreground mb-2">DISCOVER</p>
+            {featureItems.map((item) => {
+              // Check auth requirement
+              if (item.requiresAuth && !user) return null;
+              
+              return (
+                <Link
+                  key={item.path}
+                  to={item.path}
+                  className={cn(
+                    "flex items-center gap-4 px-4 py-2.5 rounded-full transition-colors text-base",
+                    isActive(item.path)
+                      ? "bg-primary/10 text-primary"
+                      : "hover:bg-muted text-foreground"
+                  )}
+                >
+                  <item.icon className="h-6 w-6" />
+                  <span>{item.label}</span>
+                </Link>
+              );
+            })}
+          </div>
         </nav>
 
         {user && (

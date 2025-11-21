@@ -166,7 +166,14 @@ const AppRoutes = () => {
 
       <Route path="/profile/:userId" element={<ProfileRedirect />} />
 
-      <Route path="/:userId" element={<Layout><Profile /></Layout>} />
+      {/* Profile routes with @ prefix - these will show user not found if user doesn't exist */}
+      <Route path="/@:userId" element={<Layout><Profile mustExist={true} /></Layout>} />
+      <Route path="/@:userId/edit" element={<Layout><EditProfile /></Layout>} />
+      <Route path="/@:userId/followers" element={<Layout><Followers /></Layout>} />
+      <Route path="/@:userId/following" element={<Layout><Following /></Layout>} />
+
+      {/* Profile routes without @ prefix - will fall through to 404 if not found */}
+      <Route path="/:userId" element={<Layout><Profile mustExist={false} /></Layout>} />
       <Route path="/:userId/edit" element={<Layout><EditProfile /></Layout>} />
       <Route path="/:userId/followers" element={<Layout><Followers /></Layout>} />
       <Route path="/:userId/following" element={<Layout><Following /></Layout>} />

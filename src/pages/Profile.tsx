@@ -234,7 +234,11 @@ const ProfileAvatarDisplay = ({ profileId, profile }: { profileId: string | null
 	);
 };
 
-const Profile = () => {
+interface ProfileProps {
+	mustExist?: boolean;
+}
+
+const Profile = ({ mustExist = false }: ProfileProps) => {
 	const { t } = useTranslation();
     const { userId: urlParam } = useParams<{ userId: string }>(); 
 	const navigate = useNavigate();
@@ -440,8 +444,14 @@ const Profile = () => {
 		}
 
 		if (!data) {
-			// User not found - redirect to user not found page
-			navigate('/user-not-found', { replace: true, state: { username: urlParam } });
+			// User not found
+			if (mustExist) {
+				// For /@user routes, show user not found page
+				navigate('/user-not-found', { replace: true, state: { username: urlParam } });
+			} else {
+				// For /user routes, treat as 404 page not found
+				navigate('/*', { replace: true });
+			}
 			return;
 		}
 
