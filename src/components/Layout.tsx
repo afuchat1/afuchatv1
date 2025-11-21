@@ -120,27 +120,6 @@ const Layout = ({ children }: LayoutProps) => {
       <InstallPromptBanner />
       <OfflineIndicator />
       
-      {/* Mobile Header with Services Button - Hidden on home page */}
-      {location.pathname !== '/' && (
-        <header className={cn(
-          "lg:hidden sticky top-0 z-40 bg-background/95 backdrop-blur border-b border-border transition-transform duration-300",
-          isScrollingDown ? "-translate-y-full" : "translate-y-0"
-        )}>
-          <div className="flex items-center justify-between px-4 h-14">
-            <Logo />
-            <Button
-              variant="ghost"
-              size="sm"
-              onClick={() => navigate('/games')}
-              className="gap-2"
-            >
-              <Gamepad2 className="h-5 w-5" />
-              <span className="font-semibold">Games</span>
-            </Button>
-          </div>
-        </header>
-      )}
-      
       {/* Desktop Sidebar */}
       <aside className="hidden lg:flex fixed left-0 top-0 bottom-0 w-64 xl:w-72 border-r border-border flex-col p-4">
         <div className="mb-6">
