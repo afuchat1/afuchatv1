@@ -9,6 +9,7 @@ import { Badge } from '@/components/ui/badge';
 import { Separator } from '@/components/ui/separator';
 import { ArrowLeft, TrendingUp, Users, Calendar, Sparkles } from 'lucide-react';
 import { toast } from 'sonner';
+import { GiftImage } from '@/components/gifts/GiftImage';
 
 interface Gift {
   id: string;
@@ -177,8 +178,14 @@ const GiftDetail = () => {
           >
             <ArrowLeft className="h-5 w-5" />
           </Button>
-          <div className="flex items-center gap-3">
-            <span className="text-4xl">{gift.emoji}</span>
+          <div className="flex items-center gap-4">
+            <GiftImage
+              giftId={gift.id}
+              giftName={gift.name}
+              emoji={gift.emoji}
+              rarity={gift.rarity}
+              size="xl"
+            />
             <div>
               <h1 className="text-2xl font-bold">{gift.name}</h1>
               <Badge className={getRarityColor(gift.rarity)}>{gift.rarity}</Badge>

@@ -26,3 +26,6 @@ verify_jwt = false
 
 [functions.translate-post]
 verify_jwt = true
+
+[functions.generate-gift-image]
+verify_jwt = false

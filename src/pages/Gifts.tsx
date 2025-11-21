@@ -8,6 +8,7 @@ import { Skeleton } from '@/components/ui/skeleton';
 import { Gift, TrendingUp, Sparkles } from 'lucide-react';
 import { toast } from 'sonner';
 import { useNavigate } from 'react-router-dom';
+import { GiftImage } from '@/components/gifts/GiftImage';
 
 interface Gift {
   id: string;
@@ -186,7 +187,14 @@ const Gifts = () => {
                   
                   <div className="relative space-y-3">
                     <div className="flex items-start justify-between">
-                      <span className="text-5xl">{gift.emoji}</span>
+                      <GiftImage
+                        giftId={gift.id}
+                        giftName={gift.name}
+                        emoji={gift.emoji}
+                        rarity={gift.rarity}
+                        size="lg"
+                        className="mx-auto"
+                      />
                       <Badge className={getRarityColor(gift.rarity)}>
                         {gift.rarity}
                       </Badge>
@@ -258,7 +266,14 @@ const Gifts = () => {
                   >
                     <div className="space-y-3">
                       <div className="flex items-start justify-between">
-                        <span className="text-5xl">{gift.emoji}</span>
+                        <GiftImage
+                          giftId={gift.id}
+                          giftName={gift.name}
+                          emoji={gift.emoji}
+                          rarity={gift.rarity}
+                          size="lg"
+                          className="mx-auto"
+                        />
                         <Badge variant="secondary" className="text-xs">
                           x{received_count}
                         </Badge>
