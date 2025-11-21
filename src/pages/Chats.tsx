@@ -379,15 +379,6 @@ const Chats = () => {
         isOpen={isNewChatDialogOpen}
         onClose={() => setIsNewChatDialogOpen(false)}
       />
-
-      {/* Floating Action Button */}
-      <Button
-        size="lg"
-        onClick={() => setIsNewChatDialogOpen(true)}
-        className="fixed bottom-6 right-6 h-14 w-14 rounded-full shadow-lg hover:shadow-xl bg-gradient-to-r from-primary to-primary/80 hover:from-primary/90 hover:to-primary/70 transition-all duration-300 z-50"
-      >
-        <MessageSquarePlus className="h-6 w-6" />
-      </Button>
     </div>
   );
 };
