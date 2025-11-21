@@ -254,13 +254,13 @@ export const ReceivedGifts = ({ userId }: ReceivedGiftsProps) => {
 
               <div className="text-center">
                 <h3 className="font-semibold text-xs truncate">{gift.gift.name}</h3>
-                <p className="text-xs text-muted-foreground font-medium">{gift.gift.base_xp_cost || gift.xp_cost} XP</p>
+                <p className="text-xs text-muted-foreground font-medium">{gift.gift.base_xp_cost || gift.xp_cost} Nexa</p>
               </div>
 
               <div className="text-center space-y-1">
                 <div className="flex items-center justify-center gap-1">
                   <span className="text-xs font-bold text-primary">
-                    {calculatePrice(gift.gift_id, gift.gift.base_xp_cost || gift.xp_cost).toLocaleString()} XP
+                    {calculatePrice(gift.gift_id, gift.gift.base_xp_cost || gift.xp_cost).toLocaleString()} Nexa
                   </span>
                   {giftStats[gift.gift_id] && giftStats[gift.gift_id].price_multiplier !== 1 && (
                     <div className="flex items-center gap-0.5 text-[10px] text-green-500">

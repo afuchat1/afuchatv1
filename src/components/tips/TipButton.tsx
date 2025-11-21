@@ -40,14 +40,14 @@ export const TipButton = ({
   const [loading, setLoading] = useState(false);
   const [userXP, setUserXP] = useState(0);
 
-  const fetchUserXP = async () => {
+  const fetchUserNexa = async () => {
     if (!user) return;
     const { data } = await supabase
       .from('profiles')
       .select('xp')
       .eq('id', user.id)
       .single();
-    
+
     if (data) {
       setUserXP(data.xp);
     }
@@ -56,7 +56,7 @@ export const TipButton = ({
   const handleOpenChange = (newOpen: boolean) => {
     setOpen(newOpen);
     if (newOpen) {
-      fetchUserXP();
+      fetchUserNexa();
     } else {
       setAmount('');
       setMessage('');
@@ -95,14 +95,14 @@ export const TipButton = ({
       };
 
       if (result.success) {
-        toast.success(`Tipped ${tipAmount} XP to ${receiverName}!`, {
+        toast.success(`Tipped ${tipAmount} Nexa to ${receiverName}!`, {
           description: message || 'Thank you for supporting this creator!',
         });
         setOpen(false);
         
-        // Dispatch XP update event
-        window.dispatchEvent(new CustomEvent('xp-updated', { 
-          detail: { xp: result.new_sender_xp } 
+        // Dispatch Nexa update event
+        window.dispatchEvent(new CustomEvent('nexa-updated', { 
+          detail: { nexa: result.new_sender_xp } 
         }));
       } else {
         toast.error(result.message);
@@ -131,13 +131,13 @@ export const TipButton = ({
         <DialogHeader>
           <DialogTitle>Send Tip to {receiverName}</DialogTitle>
           <DialogDescription>
-            Support this creator with XP. Your current balance: <Badge variant="outline" className="ml-1">{userXP} XP</Badge>
+            Support this creator with Nexa. Your current balance: <Badge variant="outline" className="ml-1">{userXP} Nexa</Badge>
           </DialogDescription>
         </DialogHeader>
 
         <div className="space-y-4 py-4">
           <div>
-            <label className="text-sm font-medium mb-2 block">Amount (XP)</label>
+            <label className="text-sm font-medium mb-2 block">Amount (Nexa)</label>
             <Input
               type="number"
               placeholder="Enter amount"
@@ -157,7 +157,7 @@ export const TipButton = ({
                 onClick={() => setAmount(quick.toString())}
                 disabled={quick > userXP}
               >
-                {quick} XP
+                {quick} Nexa
               </Button>
             ))}
           </div>
@@ -189,7 +189,7 @@ export const TipButton = ({
             ) : (
               <>
                 <Coins className="w-4 h-4 mr-2" />
-                Send {amount || '0'} XP Tip
+                Send {amount || '0'} Nexa Tip
               </>
             )}
           </Button>

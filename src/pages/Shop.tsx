@@ -218,7 +218,7 @@ export default function Shop() {
 
       if (purchasesError) throw purchasesError;
 
-      // Fetch user XP
+      // Fetch user Nexa
       const { data: profileData, error: profileError } = await supabase
         .from('profiles')
         .select('xp')
@@ -263,8 +263,8 @@ export default function Shop() {
         setUserXP(result.new_xp || 0);
         fetchShopData();
         
-        window.dispatchEvent(new CustomEvent('xp-updated', { 
-          detail: { xp: result.new_xp } 
+        window.dispatchEvent(new CustomEvent('nexa-updated', { 
+          detail: { nexa: result.new_xp } 
         }));
       } else {
         toast.error(result.message);
@@ -389,8 +389,8 @@ export default function Shop() {
         setUserXP(result.new_xp || 0);
         fetchShopData();
         
-        window.dispatchEvent(new CustomEvent('xp-updated', { 
-          detail: { xp: result.new_xp } 
+        window.dispatchEvent(new CustomEvent('nexa-updated', { 
+          detail: { nexa: result.new_xp } 
         }));
       } else {
         toast.error(result.message);
@@ -520,7 +520,7 @@ export default function Shop() {
               <div className="flex items-center justify-between text-xs">
                 <span className="text-muted-foreground">Current Bid:</span>
                 <span className="font-bold text-purple-600">
-                  {item.current_bid || item.starting_bid || 0} XP
+                  {item.current_bid || item.starting_bid || 0} Nexa
                 </span>
               </div>
               {bidCount > 0 && (
@@ -545,14 +545,14 @@ export default function Shop() {
                 {isFeatured && item.discount_percentage ? (
                   <div className="flex items-center gap-1">
                     <span className="text-xs text-muted-foreground line-through">
-                      {item.xp_cost} XP
+                      {item.xp_cost} Nexa
                     </span>
                     <span className="text-sm font-bold text-yellow-600">
-                      {discountedPrice} XP
+                      {discountedPrice} Nexa
                     </span>
                   </div>
                 ) : (
-                  <span className="text-sm font-bold">{item.xp_cost} XP</span>
+                  <span className="text-sm font-bold">{item.xp_cost} Nexa</span>
                 )}
               </div>
               <Button
@@ -573,7 +573,7 @@ export default function Shop() {
                     Owned
                   </>
                 ) : !canAfford ? (
-                  'Not Enough XP'
+                  'Not Enough Nexa'
                 ) : (
                   'Purchase'
                 )}
@@ -603,7 +603,7 @@ export default function Shop() {
           </div>
           <div className="flex items-center gap-2">
             <Sparkles className="w-5 h-5 text-primary" />
-            <span className="text-2xl font-bold">{userXP.toLocaleString()} XP</span>
+            <span className="text-2xl font-bold">{userXP.toLocaleString()} Nexa</span>
           </div>
         </div>
 
@@ -723,7 +723,7 @@ export default function Shop() {
                     <CardFooter className="flex flex-col gap-2">
                       <div className="flex items-center justify-between w-full">
                         <span className="text-sm text-muted-foreground">Price:</span>
-                        <span className="text-lg font-bold">{listing.asking_price} XP</span>
+                        <span className="text-lg font-bold">{listing.asking_price} Nexa</span>
                       </div>
                       <Button
                         onClick={() => handlePurchaseMarketplaceItem(listing.id, listing.shop_items?.name || 'Item')}
@@ -739,7 +739,7 @@ export default function Shop() {
                         ) : listing.user_id === user?.id ? (
                           'Your Listing'
                         ) : userXP < listing.asking_price ? (
-                          'Not Enough XP'
+                          'Not Enough Nexa'
                         ) : (
                           'Purchase'
                         )}
@@ -765,7 +765,7 @@ export default function Shop() {
             <div>
               <label className="text-sm font-medium">Current Bid</label>
               <div className="text-2xl font-bold text-purple-600">
-                {selectedItem?.current_bid || selectedItem?.starting_bid || 0} XP
+                {selectedItem?.current_bid || selectedItem?.starting_bid || 0} Nexa
               </div>
             </div>
             <div>
@@ -778,12 +778,12 @@ export default function Shop() {
                 min={(selectedItem?.current_bid || selectedItem?.starting_bid || 0) + (selectedItem?.min_bid_increment || 10)}
               />
               <p className="text-xs text-muted-foreground mt-1">
-                Minimum bid: {(selectedItem?.current_bid || selectedItem?.starting_bid || 0) + (selectedItem?.min_bid_increment || 10)} XP
+                Minimum bid: {(selectedItem?.current_bid || selectedItem?.starting_bid || 0) + (selectedItem?.min_bid_increment || 10)} Nexa
               </p>
             </div>
             <div className="flex items-center justify-between text-sm">
-              <span>Your XP:</span>
-              <span className="font-bold">{userXP} XP</span>
+              <span>Your Nexa:</span>
+              <span className="font-bold">{userXP} Nexa</span>
             </div>
           </div>
           <DialogFooter>
@@ -814,7 +814,7 @@ export default function Shop() {
           </DialogHeader>
           <div className="space-y-4">
             <div>
-              <label className="text-sm font-medium">Asking Price (XP)</label>
+              <label className="text-sm font-medium">Asking Price (Nexa)</label>
               <Input
                 type="number"
                 value={listingPrice}

@@ -46,7 +46,7 @@ const Transfer = () => {
   const [loading, setLoading] = useState(false);
   const [showScanner, setShowScanner] = useState(false);
 
-  // Fetch user's XP balance
+  // Fetch user's Nexa balance
   const { data: profile } = useQuery({
     queryKey: ['profile', user?.id],
     queryFn: async () => {
@@ -111,12 +111,12 @@ const Transfer = () => {
 
   const handleTransfer = async () => {
     if (!user) {
-      toast.error('Please sign in to transfer XP');
+      toast.error('Please sign in to transfer Nexa');
       return;
     }
 
-    const xpAmount = parseInt(amount);
-    if (!xpAmount || xpAmount <= 0) {
+    const nexaAmount = parseInt(amount);
+    if (!nexaAmount || nexaAmount <= 0) {
       toast.error('Please enter a valid amount');
       return;
     }
@@ -126,8 +126,8 @@ const Transfer = () => {
       return;
     }
 
-    if (xpAmount > (profile?.xp || 0)) {
-      toast.error('Insufficient XP balance');
+    if (nexaAmount > (profile?.xp || 0)) {
+      toast.error('Insufficient Nexa balance');
       return;
     }
 
@@ -136,7 +136,7 @@ const Transfer = () => {
     try {
       const { data, error } = await supabase.rpc('process_xp_transfer', {
         p_receiver_id: receiverProfile.id,
-        p_amount: xpAmount,
+        p_amount: nexaAmount,
         p_message: message.trim() || null
       });
 
@@ -145,7 +145,7 @@ const Transfer = () => {
       const result = data as { success: boolean; message: string };
 
       if (result.success) {
-        toast.success(`Successfully transferred ${xpAmount} XP!`);
+        toast.success(`Successfully transferred ${nexaAmount} Nexa!`);
         setAmount('');
         setMessage('');
         setReceiverProfile(null);
@@ -154,8 +154,8 @@ const Transfer = () => {
         toast.error(result.message);
       }
     } catch (error) {
-      console.error('Error transferring XP:', error);
-      toast.error('Failed to transfer XP');
+      console.error('Error transferring Nexa:', error);
+      toast.error('Failed to transfer Nexa');
     } finally {
       setLoading(false);
     }
@@ -181,7 +181,7 @@ const Transfer = () => {
               >
                 <ArrowLeft className="h-5 w-5" />
               </Button>
-              <h1 className="text-xl font-bold">Transfer XP</h1>
+              <h1 className="text-xl font-bold">Transfer Nexa</h1>
             </div>
           </div>
         </div>
@@ -193,7 +193,7 @@ const Transfer = () => {
               <div className="flex items-center justify-between">
                 <div>
                   <p className="text-sm text-muted-foreground">Available Balance</p>
-                  <p className="text-3xl font-bold">{profile?.xp?.toLocaleString() || 0} XP</p>
+                  <p className="text-3xl font-bold">{profile?.xp?.toLocaleString() || 0} Nexa</p>
                 </div>
                 <Wallet className="h-12 w-12 text-primary" />
               </div>
@@ -221,8 +221,8 @@ const Transfer = () => {
           <TabsContent value="send" className="space-y-4">
             <Card>
               <CardHeader>
-                <CardTitle>Send XP</CardTitle>
-                <CardDescription>Transfer XP to another user</CardDescription>
+                <CardTitle>Send Nexa</CardTitle>
+                <CardDescription>Transfer Nexa to another user</CardDescription>
               </CardHeader>
               <CardContent className="space-y-4">
                 {/* Search User */}
@@ -260,7 +260,7 @@ const Transfer = () => {
 
                 {/* Amount */}
                 <div className="space-y-2">
-                  <Label htmlFor="amount">Amount (XP)</Label>
+                  <Label htmlFor="amount">Amount (Nexa)</Label>
                   <Input
                     id="amount"
                     type="number"
@@ -288,7 +288,7 @@ const Transfer = () => {
                   onClick={handleTransfer}
                   disabled={loading || !receiverProfile || !amount}
                 >
-                  {loading ? 'Processing...' : 'Transfer XP'}
+                  {loading ? 'Processing...' : 'Transfer Nexa'}
                 </Button>
               </CardContent>
             </Card>
@@ -298,8 +298,8 @@ const Transfer = () => {
           <TabsContent value="receive">
             <Card>
               <CardHeader>
-                <CardTitle>Receive XP</CardTitle>
-                <CardDescription>Show your QR code to receive XP</CardDescription>
+                <CardTitle>Receive Nexa</CardTitle>
+                <CardDescription>Show your QR code to receive Nexa</CardDescription>
               </CardHeader>
               <CardContent className="flex flex-col items-center space-y-4">
                 <div className="bg-white p-6 rounded-lg">
@@ -307,7 +307,7 @@ const Transfer = () => {
                 </div>
                 <div className="text-center">
                   <p className="font-medium">{profile?.display_name}</p>
-                  <p className="text-sm text-muted-foreground">Scan to transfer XP</p>
+                  <p className="text-sm text-muted-foreground">Scan to transfer Nexa</p>
                 </div>
               </CardContent>
             </Card>
@@ -318,7 +318,7 @@ const Transfer = () => {
             <Card>
               <CardHeader>
                 <CardTitle>Transfer History</CardTitle>
-                <CardDescription>Your recent XP transfers</CardDescription>
+                <CardDescription>Your recent Nexa transfers</CardDescription>
               </CardHeader>
               <CardContent>
                 <div className="space-y-3">
@@ -347,7 +347,7 @@ const Transfer = () => {
                         </div>
                         <div className={`text-right ${isSent ? 'text-red-500' : 'text-green-500'}`}>
                           <p className="font-bold">
-                            {isSent ? '-' : '+'}{transfer.amount} XP
+                            {isSent ? '-' : '+'}{transfer.amount} Nexa
                           </p>
                         </div>
                       </div>

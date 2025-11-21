@@ -51,7 +51,7 @@ export const ChatRedEnvelope = ({ envelope, onClaim }: ChatRedEnvelopeProps) => 
       if (result.success) {
         toast.success(
           <div className="space-y-1">
-            <p className="font-bold text-lg">🎉 You got {result.amount} XP!</p>
+            <p className="font-bold text-lg">🎉 You got {result.amount} Nexa!</p>
             <p className="text-sm">{result.message}</p>
             {result.is_last && <p className="text-xs">You claimed the last one!</p>}
           </div>,
@@ -88,7 +88,7 @@ export const ChatRedEnvelope = ({ envelope, onClaim }: ChatRedEnvelopeProps) => 
             <div className="mt-2 space-y-1">
               <div className="flex items-center justify-between text-xs">
                 <span className="text-muted-foreground">{envelope.claimed_count}/{envelope.recipient_count} claimed</span>
-                <span className="text-muted-foreground">{envelope.total_amount} XP</span>
+                <span className="text-muted-foreground">{envelope.total_amount} Nexa</span>
               </div>
               <div className="w-full bg-background/50 rounded-full h-1.5">
                 <div 
@@ -102,7 +102,7 @@ export const ChatRedEnvelope = ({ envelope, onClaim }: ChatRedEnvelopeProps) => 
               {hasClaimed ? (
                 <div className="bg-green-500/10 border border-green-500/20 rounded-md px-3 py-1.5 text-center">
                   <p className="text-xs font-medium text-green-600 dark:text-green-400">
-                    ✓ Claimed {hasClaimed.amount} XP
+                    ✓ Claimed {hasClaimed.amount} Nexa
                   </p>
                 </div>
               ) : isFull ? (

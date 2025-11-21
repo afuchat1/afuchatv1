@@ -85,7 +85,7 @@ export const SendGiftDialog = ({ receiverId, receiverName, trigger }: SendGiftDi
   useEffect(() => {
     if (open) {
       fetchGifts();
-      fetchUserXP();
+      fetchUserNexa();
     } else {
       // Reset state when dialog closes
       setSelectedGift(null);
@@ -121,7 +121,7 @@ export const SendGiftDialog = ({ receiverId, receiverName, trigger }: SendGiftDi
     }
   };
 
-  const fetchUserXP = async () => {
+  const fetchUserNexa = async () => {
     if (!user) return;
     const { data } = await supabase
       .from('profiles')
@@ -146,7 +146,7 @@ export const SendGiftDialog = ({ receiverId, receiverName, trigger }: SendGiftDi
     if (!selectedGift || selectedGift.id !== gift.id) {
       // Start new combo or switch gift
       if (currentPrice > userXP) {
-        toast.error(t('gifts.notEnoughXP'));
+        toast.error(t('gifts.notEnoughNexa'));
         return;
       }
       
@@ -162,7 +162,7 @@ export const SendGiftDialog = ({ receiverId, receiverName, trigger }: SendGiftDi
       const totalCost = calculateComboTotalCost(gift.id, gift.base_xp_cost, newCount);
       
       if (totalCost > userXP) {
-        toast.error(t('gifts.notEnoughXP'));
+        toast.error(t('gifts.notEnoughNexa'));
         return;
       }
       
@@ -233,17 +233,17 @@ export const SendGiftDialog = ({ receiverId, receiverName, trigger }: SendGiftDi
           setSentGiftEmojis(Array(selectedGift.count).fill(selectedGift.emoji));
           setShowComboConfetti(true);
           
-          const savedXP = (result.original_cost || 0) - (result.discounted_cost || 0);
+          const savedNexa = (result.original_cost || 0) - (result.discounted_cost || 0);
           toast.success(
-            t('gifts.comboSent', { saved: savedXP }),
+            t('gifts.comboSent', { saved: savedNexa }),
             { description: result.new_grade ? `${t('gamification.grade')}: ${result.new_grade}` : undefined }
           );
           setOpen(false);
           setSelectedGift(null);
-          fetchUserXP();
+          fetchUserNexa();
           
-          window.dispatchEvent(new CustomEvent('xp-updated', { 
-            detail: { xp: result.new_xp, grade: result.new_grade } 
+          window.dispatchEvent(new CustomEvent('nexa-updated', { 
+            detail: { nexa: result.new_xp, grade: result.new_grade } 
           }));
         } else {
           toast.error(result.message);
@@ -276,10 +276,10 @@ export const SendGiftDialog = ({ receiverId, receiverName, trigger }: SendGiftDi
           );
           setOpen(false);
           setSelectedGift(null);
-          fetchUserXP();
+          fetchUserNexa();
           
-          window.dispatchEvent(new CustomEvent('xp-updated', { 
-            detail: { xp: result.new_xp, grade: result.new_grade } 
+          window.dispatchEvent(new CustomEvent('nexa-updated', { 
+            detail: { nexa: result.new_xp, grade: result.new_grade } 
           }));
         } else {
           toast.error(result.message);
@@ -334,7 +334,7 @@ export const SendGiftDialog = ({ receiverId, receiverName, trigger }: SendGiftDi
             <div>
               <DialogTitle className="text-lg">{t('gifts.sendGiftTo', { name: receiverName })}</DialogTitle>
               <DialogDescription className="text-xs">
-                {t('gifts.yourXP', { xp: userXP })}
+                {t('gifts.yourNexa', { nexa: userXP })}
               </DialogDescription>
             </div>
           </div>
@@ -352,7 +352,7 @@ export const SendGiftDialog = ({ receiverId, receiverName, trigger }: SendGiftDi
                   {t('gifts.comboDiscount', { percent: (discount * 100).toFixed(0) })} 
                 </div>
               )}
-              <div className="text-base font-bold text-foreground">{totalCost} XP</div>
+              <div className="text-base font-bold text-foreground">{totalCost} Nexa</div>
               <Button 
                 onClick={handleSendGift} 
                 disabled={loading}
@@ -489,12 +489,12 @@ export const SendGiftDialog = ({ receiverId, receiverName, trigger }: SendGiftDi
                 <div className="grid grid-cols-2 gap-2 text-sm">
                   <div className="bg-muted/50 rounded-lg p-2">
                     <div className="text-xs text-muted-foreground">Base Cost</div>
-                    <div className="font-bold">{previewGift.base_xp_cost} XP</div>
+                    <div className="font-bold">{previewGift.base_xp_cost} Nexa</div>
                   </div>
                   
                   <div className="bg-muted/50 rounded-lg p-2">
                     <div className="text-xs text-muted-foreground">Current Price</div>
-                    <div className="font-bold text-primary">{previewGift.current_price} XP</div>
+                    <div className="font-bold text-primary">{previewGift.current_price} Nexa</div>
                   </div>
                   
                   {previewGift.price_multiplier !== 1 && (

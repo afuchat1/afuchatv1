@@ -1,6 +1,6 @@
 import { useEffect } from 'react';
 import { useAuth } from '@/contexts/AuthContext';
-import { useXP } from './useXP';
+import { useNexa } from './useNexa';
 
 /**
  * Hook to automatically check and award daily login streak
@@ -8,7 +8,7 @@ import { useXP } from './useXP';
  */
 export const useDailyLogin = () => {
   const { user } = useAuth();
-  const { checkDailyLogin } = useXP();
+  const { checkDailyLogin } = useNexa();
 
   useEffect(() => {
     if (user) {

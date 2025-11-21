@@ -276,7 +276,7 @@ export const GiftDetailSheet = ({ giftId, open, onOpenChange, recipientId, recip
                     <div key={index} className="flex items-center justify-between text-xs">
                       <span className="text-muted-foreground">{new Date(entry.date).toLocaleDateString()}</span>
                       <div className="flex items-center gap-2">
-                        <span className="font-medium">{entry.price.toLocaleString()} XP</span>
+                        <span className="font-medium">{entry.price.toLocaleString()} Nexa</span>
                         <span className="text-[10px] text-muted-foreground">({entry.multiplier.toFixed(2)}x)</span>
                       </div>
                     </div>
@@ -300,7 +300,7 @@ export const GiftDetailSheet = ({ giftId, open, onOpenChange, recipientId, recip
                             <span className="font-medium">@{tx.receiver.handle}</span>
                           </div>
                           <div className="text-right">
-                            <p className="text-xs font-medium">{tx.xp_cost.toLocaleString()} XP</p>
+                            <p className="text-xs font-medium">{tx.xp_cost.toLocaleString()} Nexa</p>
                             <p className="text-[10px] text-muted-foreground">
                               {new Date(tx.created_at).toLocaleDateString()}
                             </p>

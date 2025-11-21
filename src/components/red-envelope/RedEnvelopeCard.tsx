@@ -53,7 +53,7 @@ export const RedEnvelopeCard = ({ envelope, onClaim }: RedEnvelopeCardProps) => 
       if (result.success) {
         toast.success(
           <div className="space-y-1">
-            <p className="font-bold text-lg">🎉 You got {result.amount} XP!</p>
+            <p className="font-bold text-lg">🎉 You got {result.amount} Nexa!</p>
             <p className="text-sm">{result.message}</p>
             {result.is_last && <p className="text-xs text-muted-foreground">You claimed the last one!</p>}
           </div>,
@@ -90,7 +90,7 @@ export const RedEnvelopeCard = ({ envelope, onClaim }: RedEnvelopeCardProps) => 
               <div>
                 <p className="font-medium">{envelope.sender?.display_name}'s Red Envelope</p>
                 <p className="text-sm text-muted-foreground">
-                  {envelope.total_amount} XP · {envelope.recipient_count} people
+                  {envelope.total_amount} Nexa · {envelope.recipient_count} people
                 </p>
               </div>
               <Gift className="h-6 w-6 text-red-500" />
@@ -119,7 +119,7 @@ export const RedEnvelopeCard = ({ envelope, onClaim }: RedEnvelopeCardProps) => 
               {hasClaimed ? (
                 <div className="bg-green-500/10 border border-green-500/20 rounded-lg px-4 py-2 text-center">
                   <p className="text-sm font-medium text-green-600 dark:text-green-400">
-                    ✓ You claimed {hasClaimed.amount} XP!
+                    ✓ You claimed {hasClaimed.amount} Nexa!
                   </p>
                 </div>
               ) : isFull ? (

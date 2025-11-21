@@ -62,8 +62,8 @@ export const SendRedEnvelopeDialog = ({ chatId, onSuccess }: SendRedEnvelopeDial
       return;
     }
 
-    if (amount > (profile?.xp || 0)) {
-      toast.error('Insufficient XP balance');
+      if (amount > (profile?.xp || 0)) {
+      toast.error('Insufficient Nexa balance');
       return;
     }
 
@@ -111,20 +111,20 @@ export const SendRedEnvelopeDialog = ({ chatId, onSuccess }: SendRedEnvelopeDial
         <DialogHeader>
           <DialogTitle>Send Red Envelope 🧧</DialogTitle>
           <DialogDescription>
-            Send XP to group members in a fun way!
+            Send Nexa to group members in a fun way!
           </DialogDescription>
         </DialogHeader>
         
         <div className="space-y-4 py-4">
           <div className="space-y-2">
-            <Label>Your XP Balance</Label>
+            <Label>Your Nexa Balance</Label>
             <div className="text-2xl font-bold text-primary">
-              {profile?.xp?.toLocaleString() || 0} XP
+              {profile?.xp?.toLocaleString() || 0} Nexa
             </div>
           </div>
 
           <div className="space-y-2">
-            <Label htmlFor="amount">Total Amount (XP)</Label>
+            <Label htmlFor="amount">Total Amount (Nexa)</Label>
             <Input
               id="amount"
               type="number"

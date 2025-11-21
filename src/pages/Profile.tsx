@@ -12,7 +12,7 @@ import { Skeleton } from '@/components/ui/skeleton';
 import { Popover, PopoverTrigger, PopoverContent } from '@/components/ui/popover';
 import { useTranslation } from 'react-i18next';
 import { GradeBadge, type Grade } from '@/components/gamification/GradeBadge';
-import { NexaProgressBar } from '@/components/gamification/XPProgressBar';
+import { NexaProgressBar } from '@/components/gamification/NexaProgressBar';
 import { AchievementBadges } from '@/components/gamification/AchievementBadges';
 import { ReferralSystem } from '@/components/gamification/ReferralSystem';
 import { ReceivedGifts } from '@/components/gifts/ReceivedGifts';

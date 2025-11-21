@@ -53,7 +53,7 @@ export const ReferralSystem = () => {
     const link = `${window.location.origin}/?ref=${referralCode}`;
     navigator.clipboard.writeText(link);
     toast.success('Referral link copied!', {
-      description: 'Share it with friends to earn 20 XP per signup',
+      description: 'Share it with friends to earn 20 Nexa per signup',
     });
   };
 
@@ -65,7 +65,7 @@ export const ReferralSystem = () => {
           Invite Friends
         </CardTitle>
         <CardDescription>
-          Earn 20 XP for each friend who signs up with your link
+          Earn 20 Nexa for each friend who signs up with your link
         </CardDescription>
       </CardHeader>
       <CardContent className="space-y-4">
@@ -88,7 +88,7 @@ export const ReferralSystem = () => {
             <div className="text-xs text-muted-foreground">Total Referrals</div>
           </Card>
           <Card className="p-3">
-            <div className="text-2xl font-bold text-primary">{totalXP} XP</div>
+            <div className="text-2xl font-bold text-primary">{totalXP} Nexa</div>
             <div className="text-xs text-muted-foreground">Earned from Referrals</div>
           </Card>
         </div>
@@ -118,7 +118,7 @@ export const ReferralSystem = () => {
                 {referral.rewarded && (
                   <Badge variant="outline" className="gap-1">
                     <CheckCircle className="h-3 w-3" />
-                    +20 XP
+                    +20 Nexa
                   </Badge>
                 )}
               </div>
@@ -130,7 +130,7 @@ export const ReferralSystem = () => {
           <Gift className="h-5 w-5 text-blue-600 dark:text-blue-400 flex-shrink-0 mt-0.5" />
           <div className="text-xs text-blue-700 dark:text-blue-300">
             <strong>Tip:</strong> Share your referral link on social media or with friends
-            directly. You'll earn 20 XP once they complete their signup!
+            directly. You'll earn 20 Nexa once they complete their signup!
           </div>
         </div>
       </CardContent>

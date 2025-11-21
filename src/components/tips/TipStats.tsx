@@ -72,7 +72,7 @@ export const TipStats = ({ userId }: TipStatsProps) => {
             </div>
             <Badge variant="outline" className="gap-1">
               <Coins className="w-3 h-3" />
-              {stats.totalReceived} XP
+              {stats.totalReceived} Nexa
             </Badge>
           </div>
         )}
@@ -97,7 +97,7 @@ export const TipStats = ({ userId }: TipStatsProps) => {
             </div>
             <Badge variant="outline" className="gap-1">
               <Coins className="w-3 h-3" />
-              {stats.totalSent} XP
+              {stats.totalSent} Nexa
             </Badge>
           </div>
         )}
