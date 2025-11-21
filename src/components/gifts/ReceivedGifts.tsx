@@ -6,7 +6,7 @@ import { Gift, TrendingUp, Sparkles } from 'lucide-react';
 import { Skeleton } from '@/components/ui/skeleton';
 import { useTranslation } from 'react-i18next';
 import { GiftImage } from './GiftImage';
-import { ReceivedGiftDetailsModal } from './ReceivedGiftDetailsModal';
+import { GiftDetailSheet } from './GiftDetailSheet';
 import { extractText } from '@/lib/textUtils';
 
 interface GiftTransaction {
@@ -53,12 +53,14 @@ export const ReceivedGifts = ({ userId }: ReceivedGiftsProps) => {
   const [gifts, setGifts] = useState<GiftTransaction[]>([]);
   const [loading, setLoading] = useState(true);
   const [totalValue, setTotalValue] = useState(0);
-  const [selectedGift, setSelectedGift] = useState<GiftTransaction | null>(null);
-  const [detailsModalOpen, setDetailsModalOpen] = useState(false);
+  const [selectedGiftId, setSelectedGiftId] = useState<string | null>(null);
+  const [detailsSheetOpen, setDetailsSheetOpen] = useState(false);
   const [giftStats, setGiftStats] = useState<Record<string, GiftStatistics>>({});
+  const [profileName, setProfileName] = useState<string>('');
 
   useEffect(() => {
     fetchGifts();
+    fetchProfileName();
 
     // Set up real-time subscription for new gifts
     const channel = supabase
@@ -83,6 +85,18 @@ export const ReceivedGifts = ({ userId }: ReceivedGiftsProps) => {
       supabase.removeChannel(channel);
     };
   }, [userId]);
+
+  const fetchProfileName = async () => {
+    const { data } = await supabase
+      .from('profiles')
+      .select('display_name')
+      .eq('id', userId)
+      .single();
+    
+    if (data) {
+      setProfileName(data.display_name);
+    }
+  };
 
   const fetchGifts = async () => {
     try {
@@ -172,8 +186,8 @@ export const ReceivedGifts = ({ userId }: ReceivedGiftsProps) => {
   };
 
   const handleGiftClick = (gift: GiftTransaction) => {
-    setSelectedGift(gift);
-    setDetailsModalOpen(true);
+    setSelectedGiftId(gift.gift.id);
+    setDetailsSheetOpen(true);
   };
 
   if (loading) {
@@ -268,16 +282,13 @@ export const ReceivedGifts = ({ userId }: ReceivedGiftsProps) => {
         ))}
       </div>
 
-      {selectedGift && (
-        <ReceivedGiftDetailsModal
-          gift={selectedGift}
-          currentPrice={calculatePrice(selectedGift.gift_id, selectedGift.gift.base_xp_cost || selectedGift.xp_cost)}
-          totalSent={giftStats[selectedGift.gift_id]?.total_sent || 0}
-          priceMultiplier={giftStats[selectedGift.gift_id]?.price_multiplier || 1}
-          open={detailsModalOpen}
-          onOpenChange={setDetailsModalOpen}
-        />
-      )}
+      <GiftDetailSheet
+        giftId={selectedGiftId}
+        open={detailsSheetOpen}
+        onOpenChange={setDetailsSheetOpen}
+        recipientId={userId}
+        recipientName={profileName}
+      />
     </div>
   );
 };

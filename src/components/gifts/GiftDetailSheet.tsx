@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
 import { supabase } from '@/integrations/supabase/client';
+import { useAuth } from '@/contexts/AuthContext';
 import {
   Sheet,
   SheetContent,
@@ -8,11 +9,13 @@ import {
 } from '@/components/ui/sheet';
 import { Card } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
+import { Button } from '@/components/ui/button';
 import { Separator } from '@/components/ui/separator';
 import { Skeleton } from '@/components/ui/skeleton';
-import { TrendingUp, Users, Calendar, Sparkles } from 'lucide-react';
+import { TrendingUp, Users, Calendar, Sparkles, Gift } from 'lucide-react';
 import { toast } from 'sonner';
 import { GiftImage } from '@/components/gifts/GiftImage';
+import { SendGiftDialog } from '@/components/gifts/SendGiftDialog';
 
 interface Gift {
   id: string;
@@ -54,13 +57,18 @@ interface GiftDetailSheetProps {
   giftId: string | null;
   open: boolean;
   onOpenChange: (open: boolean) => void;
+  recipientId?: string;
+  recipientName?: string;
 }
 
-export const GiftDetailSheet = ({ giftId, open, onOpenChange }: GiftDetailSheetProps) => {
+export const GiftDetailSheet = ({ giftId, open, onOpenChange, recipientId, recipientName }: GiftDetailSheetProps) => {
+  const { user } = useAuth();
   const [gift, setGift] = useState<Gift | null>(null);
   const [stats, setStats] = useState<GiftStats | null>(null);
   const [recentTransactions, setRecentTransactions] = useState<RecentTransaction[]>([]);
   const [loading, setLoading] = useState(false);
+
+  const canSendGift = user && recipientId && user.id !== recipientId;
 
   useEffect(() => {
     if (giftId && open) {
@@ -168,18 +176,32 @@ export const GiftDetailSheet = ({ giftId, open, onOpenChange }: GiftDetailSheetP
         ) : (
           <>
             <SheetHeader>
-              <SheetTitle className="flex items-center gap-4">
-                <GiftImage
-                  giftId={gift.id}
-                  giftName={gift.name}
-                  emoji={gift.emoji}
-                  rarity={gift.rarity}
-                  size="xl"
-                />
-                <div>
-                  <h2 className="text-2xl font-bold">{gift.name}</h2>
-                  <Badge className={getRarityColor(gift.rarity)}>{gift.rarity}</Badge>
+              <SheetTitle className="flex items-center justify-between">
+                <div className="flex items-center gap-4">
+                  <GiftImage
+                    giftId={gift.id}
+                    giftName={gift.name}
+                    emoji={gift.emoji}
+                    rarity={gift.rarity}
+                    size="xl"
+                  />
+                  <div>
+                    <h2 className="text-2xl font-bold">{gift.name}</h2>
+                    <Badge className={getRarityColor(gift.rarity)}>{gift.rarity}</Badge>
+                  </div>
                 </div>
+                {canSendGift && (
+                  <SendGiftDialog
+                    receiverId={recipientId!}
+                    receiverName={recipientName || 'User'}
+                    trigger={
+                      <Button className="gap-2">
+                        <Gift className="h-4 w-4" />
+                        Send Gift
+                      </Button>
+                    }
+                  />
+                )}
               </SheetTitle>
             </SheetHeader>
 
