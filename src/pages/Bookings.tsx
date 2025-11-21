@@ -10,7 +10,7 @@ import { toast } from 'sonner';
 
 const services = [
   { 
-    id: 1, 
+    id: '1', 
     name: 'Hair Salon', 
     category: 'Beauty', 
     rating: 4.9, 
@@ -22,7 +22,7 @@ const services = [
     description: 'Professional hair styling and treatment'
   },
   { 
-    id: 2, 
+    id: '2', 
     name: 'Spa & Massage', 
     category: 'Wellness', 
     rating: 4.8, 
@@ -34,7 +34,7 @@ const services = [
     description: 'Relaxing spa treatments and massages'
   },
   { 
-    id: 3, 
+    id: '3', 
     name: 'Fitness Training', 
     category: 'Fitness', 
     rating: 4.7, 
@@ -46,7 +46,7 @@ const services = [
     description: 'Personal training sessions'
   },
   { 
-    id: 4, 
+    id: '4', 
     name: 'Dental Clinic', 
     category: 'Healthcare', 
     rating: 4.9, 
@@ -58,7 +58,7 @@ const services = [
     description: 'Professional dental care and checkups'
   },
   { 
-    id: 5, 
+    id: '5', 
     name: 'Car Wash', 
     category: 'Auto', 
     rating: 4.6, 
@@ -70,7 +70,7 @@ const services = [
     description: 'Quick and thorough car cleaning'
   },
   { 
-    id: 6, 
+    id: '6', 
     name: 'Pet Grooming', 
     category: 'Pets', 
     rating: 4.8, 
@@ -100,8 +100,8 @@ const Bookings = () => {
   const featuredServices = filteredServices.filter(s => s.featured);
   const regularServices = filteredServices.filter(s => !s.featured);
 
-  const handleBook = (serviceName: string) => {
-    toast.success(`Booking ${serviceName}...`);
+  const handleBook = (serviceName: string, serviceId: string) => {
+    navigate(`/bookings/${serviceId}`);
   };
 
   return (
@@ -156,7 +156,11 @@ const Bookings = () => {
                 </div>
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   {featuredServices.map((service) => (
-                    <Card key={service.id} className="cursor-pointer hover:shadow-xl transition-all duration-300 overflow-hidden group">
+                    <Card 
+                      key={service.id} 
+                      className="cursor-pointer hover:shadow-xl transition-all duration-300 overflow-hidden group"
+                      onClick={() => handleBook(service.name, service.id.toString())}
+                    >
                       <CardContent className="p-5">
                         <div className="flex gap-4">
                           <div className="w-20 h-20 rounded-xl overflow-hidden flex-shrink-0 border">
@@ -190,7 +194,10 @@ const Bookings = () => {
                             </div>
                             <div className="flex items-center justify-between">
                               <span className="text-xl font-bold text-primary">{service.price} XP</span>
-                              <Button size="sm" onClick={() => handleBook(service.name)}>
+                              <Button size="sm" onClick={(e) => {
+                                e.stopPropagation();
+                                handleBook(service.name, service.id.toString());
+                              }}>
                                 Book Now
                               </Button>
                             </div>
@@ -209,7 +216,11 @@ const Bookings = () => {
                 <h2 className="text-xl font-bold mb-4">All Services</h2>
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   {regularServices.map((service) => (
-                    <Card key={service.id} className="cursor-pointer hover:shadow-lg transition-all">
+                    <Card 
+                      key={service.id} 
+                      className="cursor-pointer hover:shadow-lg transition-all"
+                      onClick={() => handleBook(service.name, service.id.toString())}
+                    >
                       <CardContent className="p-4">
                         <div className="flex gap-4">
                           <div className="w-16 h-16 rounded-lg overflow-hidden flex-shrink-0 border">
@@ -237,7 +248,10 @@ const Bookings = () => {
                             </div>
                             <div className="flex items-center justify-between">
                               <span className="text-lg font-bold text-primary">{service.price} XP</span>
-                              <Button size="sm" variant="outline" onClick={() => handleBook(service.name)}>
+                              <Button size="sm" variant="outline" onClick={(e) => {
+                                e.stopPropagation();
+                                handleBook(service.name, service.id.toString());
+                              }}>
                                 Book
                               </Button>
                             </div>

@@ -10,7 +10,7 @@ import { toast } from 'sonner';
 
 const events = [
   {
-    id: 1,
+    id: '1',
     title: 'Summer Music Festival',
     date: 'June 15-17, 2025',
     location: 'Central Park',
@@ -23,7 +23,7 @@ const events = [
     description: 'Three days of non-stop music featuring top artists'
   },
   {
-    id: 2,
+    id: '2',
     title: 'Tech Conference 2025',
     date: 'July 20-22, 2025',
     location: 'Convention Center',
@@ -36,7 +36,7 @@ const events = [
     description: 'Latest innovations and networking opportunities'
   },
   {
-    id: 3,
+    id: '3',
     title: 'Food & Wine Expo',
     date: 'Aug 10-12, 2025',
     location: 'Downtown Arena',
@@ -49,7 +49,7 @@ const events = [
     description: 'Taste exceptional wines and culinary delights'
   },
   {
-    id: 4,
+    id: '4',
     title: 'Art Gallery Opening',
     date: 'Sep 5, 2025',
     location: 'Metropolitan Museum',
@@ -62,7 +62,7 @@ const events = [
     description: 'Exclusive preview of contemporary art collection'
   },
   {
-    id: 5,
+    id: '5',
     title: 'Sports Championship',
     date: 'Oct 15, 2025',
     location: 'Stadium',
@@ -75,7 +75,7 @@ const events = [
     description: 'Experience the thrill of championship finals'
   },
   {
-    id: 6,
+    id: '6',
     title: 'Comedy Night',
     date: 'Nov 8, 2025',
     location: 'Comedy Club',
@@ -106,8 +106,8 @@ const Events = () => {
   const featuredEvents = filteredEvents.filter(e => e.featured);
   const regularEvents = filteredEvents.filter(e => !e.featured);
 
-  const handleBookTicket = (eventTitle: string) => {
-    toast.success(`Booking ticket for ${eventTitle}...`);
+  const handleBookTicket = (eventTitle: string, eventId: string) => {
+    navigate(`/events/${eventId}`);
   };
 
   return (
@@ -170,7 +170,11 @@ const Events = () => {
                 </div>
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
                   {featuredEvents.map((event) => (
-                    <Card key={event.id} className="overflow-hidden hover:shadow-xl transition-all duration-300 group">
+                    <Card 
+                      key={event.id} 
+                      className="overflow-hidden hover:shadow-xl transition-all duration-300 group cursor-pointer"
+                      onClick={() => handleBookTicket(event.title, event.id.toString())}
+                    >
                       <div className="aspect-video relative overflow-hidden">
                         <img 
                           src={event.image} 
@@ -218,7 +222,10 @@ const Events = () => {
 
                         <div className="flex items-center justify-between pt-3 border-t">
                           <span className="text-xl font-bold text-primary">{event.price} XP</span>
-                          <Button size="sm" onClick={() => handleBookTicket(event.title)} className="gap-2">
+                          <Button size="sm" onClick={(e) => {
+                            e.stopPropagation();
+                            handleBookTicket(event.title, event.id.toString());
+                          }} className="gap-2">
                             <Ticket className="h-4 w-4" />
                             Book Now
                           </Button>
@@ -236,7 +243,11 @@ const Events = () => {
                 <h2 className="text-xl font-bold mb-4">All Events</h2>
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
                   {regularEvents.map((event) => (
-                    <Card key={event.id} className="overflow-hidden hover:shadow-lg transition-all duration-300">
+                    <Card 
+                      key={event.id} 
+                      className="overflow-hidden hover:shadow-lg transition-all duration-300 cursor-pointer"
+                      onClick={() => handleBookTicket(event.title, event.id.toString())}
+                    >
                       <div className="aspect-video relative overflow-hidden">
                         <img 
                           src={event.image} 
@@ -273,7 +284,10 @@ const Events = () => {
 
                         <div className="flex items-center justify-between">
                           <span className="text-lg font-bold text-primary">{event.price} XP</span>
-                          <Button size="sm" variant="outline" onClick={() => handleBookTicket(event.title)}>
+                          <Button size="sm" variant="outline" onClick={(e) => {
+                            e.stopPropagation();
+                            handleBookTicket(event.title, event.id.toString());
+                          }}>
                             <Ticket className="h-4 w-4 mr-2" />
                             Book
                           </Button>

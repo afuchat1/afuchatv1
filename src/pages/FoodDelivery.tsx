@@ -23,7 +23,7 @@ const categories = [
 
 const restaurants = [
   { 
-    id: 1, 
+    id: '1', 
     name: 'Italian Delights', 
     cuisine: 'Italian', 
     rating: 4.8, 
@@ -35,7 +35,7 @@ const restaurants = [
     deliveryFee: '10'
   },
   { 
-    id: 2, 
+    id: '2', 
     name: 'Coffee House', 
     cuisine: 'Cafe', 
     rating: 4.7, 
@@ -47,7 +47,7 @@ const restaurants = [
     deliveryFee: '5'
   },
   { 
-    id: 3, 
+    id: '3', 
     name: 'Sweet Treats', 
     cuisine: 'Desserts', 
     rating: 4.9, 
@@ -59,7 +59,7 @@ const restaurants = [
     deliveryFee: '8'
   },
   { 
-    id: 4, 
+    id: '4', 
     name: 'Burger Palace', 
     cuisine: 'American', 
     rating: 4.6, 
@@ -71,7 +71,7 @@ const restaurants = [
     deliveryFee: '0'
   },
   { 
-    id: 5, 
+    id: '5', 
     name: 'Ocean Fresh', 
     cuisine: 'Seafood', 
     rating: 4.8, 
@@ -83,7 +83,7 @@ const restaurants = [
     deliveryFee: '15'
   },
   { 
-    id: 6, 
+    id: '6', 
     name: 'Green Bowl', 
     cuisine: 'Healthy', 
     rating: 4.7, 
@@ -108,8 +108,8 @@ const FoodDelivery = () => {
     return matchesSearch && matchesCategory;
   });
 
-  const handleOrder = (restaurantName: string) => {
-    toast.success(`Opening menu for ${restaurantName}...`);
+  const handleOrder = (restaurantName: string, restaurantId: string) => {
+    navigate(`/food-delivery/${restaurantId}`);
   };
 
   return (
@@ -172,7 +172,11 @@ const FoodDelivery = () => {
                 </div>
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
                   {filteredRestaurants.filter(r => r.featured).map((restaurant) => (
-                    <Card key={restaurant.id} className="overflow-hidden cursor-pointer hover:shadow-xl transition-all duration-300 group">
+                    <Card 
+                      key={restaurant.id} 
+                      className="overflow-hidden cursor-pointer hover:shadow-xl transition-all duration-300 group"
+                      onClick={() => handleOrder(restaurant.name, restaurant.id)}
+                    >
                       <div className="aspect-video relative overflow-hidden">
                         <img 
                           src={restaurant.image} 
@@ -210,7 +214,7 @@ const FoodDelivery = () => {
                           <span>•</span>
                           <span>Min {restaurant.minOrder} XP</span>
                         </div>
-                        <Button className="w-full" onClick={() => handleOrder(restaurant.name)}>
+                        <Button className="w-full" onClick={() => handleOrder(restaurant.name, restaurant.id)}>
                           Order Now
                         </Button>
                       </CardContent>
@@ -225,7 +229,11 @@ const FoodDelivery = () => {
               <h2 className="text-xl font-bold mb-4">All Restaurants</h2>
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
                 {filteredRestaurants.filter(r => !r.featured).map((restaurant) => (
-                  <Card key={restaurant.id} className="overflow-hidden cursor-pointer hover:shadow-lg transition-all">
+                  <Card 
+                    key={restaurant.id} 
+                    className="overflow-hidden cursor-pointer hover:shadow-lg transition-all"
+                    onClick={() => handleOrder(restaurant.name, restaurant.id)}
+                  >
                     <div className="aspect-video relative overflow-hidden">
                       <img 
                         src={restaurant.image} 
@@ -251,7 +259,10 @@ const FoodDelivery = () => {
                         <Clock className="h-3 w-3" />
                         {restaurant.deliveryTime} min • Min {restaurant.minOrder} XP
                       </div>
-                      <Button variant="outline" className="w-full" onClick={() => handleOrder(restaurant.name)}>
+                      <Button variant="outline" className="w-full" onClick={(e) => {
+                        e.stopPropagation();
+                        handleOrder(restaurant.name, restaurant.id);
+                      }}>
                         View Menu
                       </Button>
                     </CardContent>

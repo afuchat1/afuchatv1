@@ -9,15 +9,15 @@ import { Search, Plane, Hotel, Calendar, MapPin, Star, Users, ArrowRight, Wifi, 
 import { toast } from 'sonner';
 
 const flights = [
-  { id: 1, from: 'NYC', to: 'LAX', fromFull: 'New York', toFull: 'Los Angeles', price: '500', duration: '6h', airline: 'SkyLine', rating: 4.8, stops: 'Direct', image: 'https://images.unsplash.com/photo-1436491865332-7a61a109cc05?w=600&h=400&fit=crop' },
-  { id: 2, from: 'LON', to: 'PAR', fromFull: 'London', toFull: 'Paris', price: '200', duration: '1h 30m', airline: 'EuroJet', rating: 4.7, stops: 'Direct', image: 'https://images.unsplash.com/photo-1464037866556-6812c9d1c72e?w=600&h=400&fit=crop' },
-  { id: 3, from: 'TOK', to: 'SYD', fromFull: 'Tokyo', toFull: 'Sydney', price: '800', duration: '9h', airline: 'Pacific Air', rating: 4.9, stops: 'Direct', image: 'https://images.unsplash.com/photo-1525624286412-4099c83c1bc8?w=600&h=400&fit=crop' },
-  { id: 4, from: 'DXB', to: 'NYC', fromFull: 'Dubai', toFull: 'New York', price: '950', duration: '14h', airline: 'Emirates', rating: 4.9, stops: 'Direct', image: 'https://images.unsplash.com/photo-1583938443000-d87479eda0b8?w=600&h=400&fit=crop' },
+  { id: '1', from: 'NYC', to: 'LAX', fromFull: 'New York', toFull: 'Los Angeles', price: '500', duration: '6h', airline: 'SkyLine', rating: 4.8, stops: 'Direct', image: 'https://images.unsplash.com/photo-1436491865332-7a61a109cc05?w=600&h=400&fit=crop' },
+  { id: '2', from: 'LON', to: 'PAR', fromFull: 'London', toFull: 'Paris', price: '200', duration: '1h 30m', airline: 'EuroJet', rating: 4.7, stops: 'Direct', image: 'https://images.unsplash.com/photo-1464037866556-6812c9d1c72e?w=600&h=400&fit=crop' },
+  { id: '3', from: 'TOK', to: 'SYD', fromFull: 'Tokyo', toFull: 'Sydney', price: '800', duration: '9h', airline: 'Pacific Air', rating: 4.9, stops: 'Direct', image: 'https://images.unsplash.com/photo-1525624286412-4099c83c1bc8?w=600&h=400&fit=crop' },
+  { id: '4', from: 'DXB', to: 'NYC', fromFull: 'Dubai', toFull: 'New York', price: '950', duration: '14h', airline: 'Emirates', rating: 4.9, stops: 'Direct', image: 'https://images.unsplash.com/photo-1583938443000-d87479eda0b8?w=600&h=400&fit=crop' },
 ];
 
 const hotels = [
   { 
-    id: 1, 
+    id: '1', 
     name: 'Grand Plaza Hotel', 
     location: 'New York', 
     price: '300', 
@@ -28,7 +28,7 @@ const hotels = [
     featured: true
   },
   { 
-    id: 2, 
+    id: '2', 
     name: 'Beach Resort', 
     location: 'Miami', 
     price: '250', 
@@ -39,7 +39,7 @@ const hotels = [
     featured: true
   },
   { 
-    id: 3, 
+    id: '3', 
     name: 'Mountain Lodge', 
     location: 'Denver', 
     price: '200', 
@@ -50,7 +50,7 @@ const hotels = [
     featured: false
   },
   { 
-    id: 4, 
+    id: '4', 
     name: 'City Center Inn', 
     location: 'Chicago', 
     price: '180', 
@@ -132,7 +132,9 @@ const Travel = () => {
             <div className="space-y-4">
               <h2 className="text-xl font-bold">Available Flights</h2>
               {flights.map((flight) => (
-                <Card key={flight.id} className="overflow-hidden hover:shadow-xl transition-all duration-300">
+                <Card key={flight.id} className="overflow-hidden hover:shadow-xl transition-all duration-300 cursor-pointer"
+                  onClick={() => navigate(`/travel/flight/${flight.id}`)}
+                >
                   <div className="grid grid-cols-1 md:grid-cols-5 gap-0">
                     {/* Flight Image */}
                     <div className="md:col-span-2 aspect-video md:aspect-auto relative overflow-hidden">
@@ -212,7 +214,11 @@ const Travel = () => {
               <h2 className="text-xl font-bold mb-4">Featured Hotels</h2>
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
                 {hotels.filter(h => h.featured).map((hotel) => (
-                  <Card key={hotel.id} className="overflow-hidden hover:shadow-xl transition-all duration-300 group">
+                  <Card 
+                    key={hotel.id} 
+                    className="overflow-hidden hover:shadow-xl transition-all duration-300 group cursor-pointer"
+                    onClick={() => navigate(`/travel/hotel/${hotel.id}`)}
+                  >
                     <div className="aspect-video relative overflow-hidden">
                       <img 
                         src={hotel.image} 
@@ -247,15 +253,18 @@ const Travel = () => {
                         ))}
                       </div>
                       
-                      <div className="flex items-center justify-between pt-3 border-t">
-                        <div>
-                          <div className="text-xl font-bold text-primary">{hotel.price} XP</div>
-                          <div className="text-xs text-muted-foreground">per night</div>
+                        <div className="flex items-center justify-between pt-3 border-t">
+                          <div>
+                            <div className="text-xl font-bold text-primary">{hotel.price} XP</div>
+                            <div className="text-xs text-muted-foreground">per night</div>
+                          </div>
+                          <Button size="sm" onClick={(e) => {
+                            e.stopPropagation();
+                            navigate(`/travel/hotel/${hotel.id}`);
+                          }}>
+                            Book
+                          </Button>
                         </div>
-                        <Button size="sm" onClick={() => handleBook('Hotel', hotel.name)}>
-                          Book
-                        </Button>
-                      </div>
                     </CardContent>
                   </Card>
                 ))}
@@ -267,7 +276,11 @@ const Travel = () => {
               <h2 className="text-xl font-bold mb-4">All Hotels</h2>
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
                 {hotels.filter(h => !h.featured).map((hotel) => (
-                  <Card key={hotel.id} className="overflow-hidden hover:shadow-lg transition-all">
+                  <Card 
+                    key={hotel.id} 
+                    className="overflow-hidden hover:shadow-lg transition-all cursor-pointer"
+                    onClick={() => navigate(`/travel/hotel/${hotel.id}`)}
+                  >
                     <div className="aspect-video relative overflow-hidden">
                       <img 
                         src={hotel.image} 
@@ -298,7 +311,10 @@ const Travel = () => {
                       </div>
                       <div className="flex items-center justify-between">
                         <span className="text-lg font-bold text-primary">{hotel.price} XP/night</span>
-                        <Button size="sm" variant="outline" onClick={() => handleBook('Hotel', hotel.name)}>
+                        <Button size="sm" variant="outline" onClick={(e) => {
+                          e.stopPropagation();
+                          navigate(`/travel/hotel/${hotel.id}`);
+                        }}>
                           View
                         </Button>
                       </div>

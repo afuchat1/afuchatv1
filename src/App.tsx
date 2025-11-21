@@ -72,6 +72,11 @@ const Bookings = lazy(() => import("./pages/Bookings"));
 const Rides = lazy(() => import("./pages/Rides"));
 const Travel = lazy(() => import("./pages/Travel"));
 const Events = lazy(() => import("./pages/Events"));
+const RestaurantDetail = lazy(() => import("./pages/RestaurantDetail"));
+const EventDetail = lazy(() => import("./pages/EventDetail"));
+const ServiceDetail = lazy(() => import("./pages/ServiceDetail"));
+const FlightDetail = lazy(() => import("./pages/FlightDetail"));
+const HotelDetail = lazy(() => import("./pages/HotelDetail"));
 import Layout from "./components/Layout";
 
 const queryClient = new QueryClient();
@@ -145,10 +150,15 @@ const AppRoutes = () => {
       
       {/* New Super App Services */}
       <Route path="/food-delivery" element={<Layout><FoodDelivery /></Layout>} />
+      <Route path="/food-delivery/:id" element={<Layout><RestaurantDetail /></Layout>} />
       <Route path="/bookings" element={<Layout><Bookings /></Layout>} />
+      <Route path="/bookings/:id" element={<Layout><ServiceDetail /></Layout>} />
       <Route path="/rides" element={<Layout><Rides /></Layout>} />
       <Route path="/travel" element={<Layout><Travel /></Layout>} />
+      <Route path="/travel/flight/:id" element={<Layout><FlightDetail /></Layout>} />
+      <Route path="/travel/hotel/:id" element={<Layout><HotelDetail /></Layout>} />
       <Route path="/events" element={<Layout><Events /></Layout>} />
+      <Route path="/events/:id" element={<Layout><EventDetail /></Layout>} />
 
       <Route path="/profile/:userId" element={<ProfileRedirect />} />
 
