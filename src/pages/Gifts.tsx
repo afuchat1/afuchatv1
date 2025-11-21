@@ -7,8 +7,8 @@ import { Badge } from '@/components/ui/badge';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Gift, TrendingUp, Sparkles } from 'lucide-react';
 import { toast } from 'sonner';
-import { useNavigate } from 'react-router-dom';
 import { GiftImage } from '@/components/gifts/GiftImage';
+import { GiftDetailSheet } from '@/components/gifts/GiftDetailSheet';
 
 interface Gift {
   id: string;
@@ -36,10 +36,11 @@ interface OwnedGift {
 
 const Gifts = () => {
   const { user } = useAuth();
-  const navigate = useNavigate();
   const [allGifts, setAllGifts] = useState<GiftWithStats[]>([]);
   const [ownedGifts, setOwnedGifts] = useState<OwnedGift[]>([]);
   const [loading, setLoading] = useState(true);
+  const [selectedGiftId, setSelectedGiftId] = useState<string | null>(null);
+  const [sheetOpen, setSheetOpen] = useState(false);
 
   useEffect(() => {
     fetchGifts();
@@ -134,7 +135,8 @@ const Gifts = () => {
   };
 
   const handleGiftClick = (giftId: string) => {
-    navigate(`/gifts/${giftId}`);
+    setSelectedGiftId(giftId);
+    setSheetOpen(true);
   };
 
   if (loading) {
@@ -176,9 +178,8 @@ const Gifts = () => {
           </TabsList>
 
           <TabsContent value="all" className="space-y-6">
-            <div className="overflow-x-auto pb-4">
-              <div className="flex gap-6 min-w-max px-2">
-                {allGifts.map(gift => (
+            <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-6">
+              {allGifts.map(gift => (
                   <div
                     key={gift.id}
                     className="cursor-pointer transition-all duration-300 hover:scale-110 group relative flex-shrink-0 w-32"
@@ -230,7 +231,6 @@ const Gifts = () => {
                   </div>
                 ))}
               </div>
-            </div>
           </TabsContent>
 
           <TabsContent value="owned" className="space-y-6">
@@ -251,9 +251,8 @@ const Gifts = () => {
                 </p>
               </Card>
             ) : (
-              <div className="overflow-x-auto pb-4">
-                <div className="flex gap-6 min-w-max px-2">
-                  {ownedGifts.map(({ gift, received_count, last_received }) => (
+              <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-6">
+                {ownedGifts.map(({ gift, received_count, last_received }) => (
                     <div
                       key={gift.id}
                       className="cursor-pointer transition-all duration-300 hover:scale-110 group relative flex-shrink-0 w-32"
@@ -284,11 +283,16 @@ const Gifts = () => {
                     </div>
                   ))}
                 </div>
-              </div>
-            )}
+              )}
           </TabsContent>
         </Tabs>
       </div>
+
+      <GiftDetailSheet
+        giftId={selectedGiftId}
+        open={sheetOpen}
+        onOpenChange={setSheetOpen}
+      />
     </div>
   );
 };
