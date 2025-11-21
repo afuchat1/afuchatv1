@@ -67,7 +67,7 @@ const FinancialHub = lazy(() => import("./pages/FinancialHub"));
 const SocialHub = lazy(() => import("./pages/SocialHub"));
 const SecurityDashboard = lazy(() => import("./pages/SecurityDashboard"));
 const ChangePassword = lazy(() => import("./pages/ChangePassword"));
-const SuperAppHub = lazy(() => import("./pages/SuperAppHub"));
+
 const FoodDelivery = lazy(() => import("./pages/FoodDelivery"));
 const Bookings = lazy(() => import("./pages/Bookings"));
 const Rides = lazy(() => import("./pages/Rides"));
@@ -105,7 +105,6 @@ const AppRoutes = () => {
     }>
       <Routes>
       <Route path="/" element={<Home />} />
-      <Route path="/hub" element={<Layout><SuperAppHub /></Layout>} />
       <Route path="/auth" element={<Welcome />} />
       <Route path="/auth/signin" element={<SignIn />} />
       <Route path="/auth/signup" element={<SignUp />} />

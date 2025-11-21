@@ -21,7 +21,6 @@ import {
   BarChart3,
   Image as ImageIcon,
   Hash,
-  Zap,
   Bell,
   TrendingUp
 } from 'lucide-react';
@@ -79,7 +78,6 @@ export function MobileMenuSheet() {
     { icon: ImageIcon, label: 'Moments', path: '/moments' },
     { icon: Hash, label: 'Trending', path: '/trending' },
     { icon: Grid3x3, label: 'Mini Programs', path: '/mini-programs' },
-    { icon: Zap, label: 'Super App', path: '/hub' },
     { icon: Bell, label: 'Notifications', path: '/notifications', requiresAuth: true },
   ];
 
