@@ -14,6 +14,47 @@ export type Database = {
   }
   public: {
     Tables: {
+      acoin_transactions: {
+        Row: {
+          amount: number
+          created_at: string | null
+          fee_charged: number | null
+          id: string
+          metadata: Json | null
+          nexa_spent: number | null
+          transaction_type: string
+          user_id: string
+        }
+        Insert: {
+          amount: number
+          created_at?: string | null
+          fee_charged?: number | null
+          id?: string
+          metadata?: Json | null
+          nexa_spent?: number | null
+          transaction_type: string
+          user_id: string
+        }
+        Update: {
+          amount?: number
+          created_at?: string | null
+          fee_charged?: number | null
+          id?: string
+          metadata?: Json | null
+          nexa_spent?: number | null
+          transaction_type?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "acoin_transactions_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       active_sessions: {
         Row: {
           browser: string | null
@@ -229,6 +270,30 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      currency_settings: {
+        Row: {
+          conversion_fee_percent: number | null
+          id: string
+          nexa_to_acoin_rate: number | null
+          p2p_fee_percent: number | null
+          updated_at: string | null
+        }
+        Insert: {
+          conversion_fee_percent?: number | null
+          id?: string
+          nexa_to_acoin_rate?: number | null
+          p2p_fee_percent?: number | null
+          updated_at?: string | null
+        }
+        Update: {
+          conversion_fee_percent?: number | null
+          id?: string
+          nexa_to_acoin_rate?: number | null
+          p2p_fee_percent?: number | null
+          updated_at?: string | null
+        }
+        Relationships: []
       }
       follows: {
         Row: {
@@ -1092,6 +1157,7 @@ export type Database = {
       }
       profiles: {
         Row: {
+          acoin: number | null
           affiliate_earnings: number | null
           affiliated_business_id: string | null
           ai_chat_id: string | null
@@ -1121,6 +1187,7 @@ export type Database = {
           xp: number
         }
         Insert: {
+          acoin?: number | null
           affiliate_earnings?: number | null
           affiliated_business_id?: string | null
           ai_chat_id?: string | null
@@ -1150,6 +1217,7 @@ export type Database = {
           xp?: number
         }
         Update: {
+          acoin?: number | null
           affiliate_earnings?: number | null
           affiliated_business_id?: string | null
           ai_chat_id?: string | null
@@ -1911,6 +1979,7 @@ export type Database = {
       check_daily_login_streak: { Args: { p_user_id: string }; Returns: Json }
       check_profile_completion: { Args: { p_user_id: string }; Returns: Json }
       claim_red_envelope: { Args: { p_envelope_id: string }; Returns: Json }
+      convert_nexa_to_acoin: { Args: { p_nexa_amount: number }; Returns: Json }
       create_marketplace_listing:
         | {
             Args: { p_asking_price: number; p_purchase_id: string }

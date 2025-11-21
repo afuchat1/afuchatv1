@@ -12,7 +12,7 @@ import { Skeleton } from '@/components/ui/skeleton';
 import { Popover, PopoverTrigger, PopoverContent } from '@/components/ui/popover';
 import { useTranslation } from 'react-i18next';
 import { GradeBadge, type Grade } from '@/components/gamification/GradeBadge';
-import { XPProgressBar } from '@/components/gamification/XPProgressBar';
+import { NexaProgressBar } from '@/components/gamification/XPProgressBar';
 import { AchievementBadges } from '@/components/gamification/AchievementBadges';
 import { ReferralSystem } from '@/components/gamification/ReferralSystem';
 import { ReceivedGifts } from '@/components/gifts/ReceivedGifts';
@@ -979,14 +979,14 @@ const Profile = ({ mustExist = false }: ProfileProps) => {
 						</a>
 					)}
 
-					{/* XP Progress Bar */}
-					<div className="mt-4">
-						<XPProgressBar 
-							currentXP={profile.xp} 
-							currentGrade={profile.current_grade as Grade}
-							showDetails={true}
-						/>
-					</div>
+				{/* Nexa Progress Bar */}
+				<div className="mt-4">
+					<NexaProgressBar 
+						currentNexa={profile.xp} 
+						currentGrade={profile.current_grade as Grade}
+						showDetails={true}
+					/>
+				</div>
 
 					<div className="flex items-center space-x-4 mt-3 text-muted-foreground text-sm">
 						<div className="flex items-center gap-1">

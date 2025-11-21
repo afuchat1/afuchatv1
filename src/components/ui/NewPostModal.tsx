@@ -1,7 +1,7 @@
 import React, { useState, useRef } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/contexts/AuthContext';
-import { useXP } from '@/hooks/useXP';
+import { useNexa } from '@/hooks/useNexa';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Textarea } from '@/components/ui/textarea';
@@ -27,7 +27,7 @@ interface NewPostModalProps {
 
 const NewPostModal: React.FC<NewPostModalProps> = ({ isOpen, onClose }) => {
     const { user } = useAuth();
-    const { awardXP } = useXP();
+    const { awardNexa } = useNexa();
     
     // AI Features coming soon
     const AI_COMING_SOON = true;
@@ -154,7 +154,7 @@ const NewPostModal: React.FC<NewPostModalProps> = ({ isOpen, onClose }) => {
                 await supabase.from('post_link_previews').insert(previewInserts);
             }
 
-            await awardXP('create_post');
+            await awardNexa('create_post');
             toast.success('Post created successfully!');
             handleClose();
         } catch (error) {

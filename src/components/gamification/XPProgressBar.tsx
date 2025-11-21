@@ -2,8 +2,8 @@ import { motion } from 'framer-motion';
 import { useEffect, useState } from 'react';
 import { GradeBadge, type Grade } from './GradeBadge';
 
-interface XPProgressBarProps {
-  currentXP: number;
+interface NexaProgressBarProps {
+  currentNexa: number;
   currentGrade: Grade;
   showDetails?: boolean;
 }
@@ -16,7 +16,7 @@ const GRADE_THRESHOLDS = [
   { grade: 'Legend' as Grade, min: 5000, max: Infinity },
 ];
 
-export const XPProgressBar = ({ currentXP, currentGrade, showDetails = true }: XPProgressBarProps) => {
+export const NexaProgressBar = ({ currentNexa, currentGrade, showDetails = true }: NexaProgressBarProps) => {
   const [progress, setProgress] = useState(0);
   
   const currentThreshold = GRADE_THRESHOLDS.find(t => t.grade === currentGrade);
@@ -25,14 +25,14 @@ export const XPProgressBar = ({ currentXP, currentGrade, showDetails = true }: X
   useEffect(() => {
     if (!currentThreshold) return;
     
-    const xpInCurrentGrade = currentXP - currentThreshold.min;
-    const xpNeededForNext = currentThreshold.max - currentThreshold.min;
-    const progressPercent = Math.min((xpInCurrentGrade / xpNeededForNext) * 100, 100);
+    const nexaInCurrentGrade = currentNexa - currentThreshold.min;
+    const nexaNeededForNext = currentThreshold.max - currentThreshold.min;
+    const progressPercent = Math.min((nexaInCurrentGrade / nexaNeededForNext) * 100, 100);
     
     setProgress(progressPercent);
-  }, [currentXP, currentThreshold]);
+  }, [currentNexa, currentThreshold]);
 
-  const xpToNextGrade = nextThreshold ? nextThreshold.min - currentXP : 0;
+  const nexaToNextGrade = nextThreshold ? nextThreshold.min - currentNexa : 0;
 
   return (
     <div className="w-full space-y-2">
@@ -40,11 +40,11 @@ export const XPProgressBar = ({ currentXP, currentGrade, showDetails = true }: X
         <div className="flex items-center justify-between text-xs">
           <div className="flex items-center gap-2">
             <GradeBadge grade={currentGrade} size="sm" showLabel />
-            <span className="text-muted-foreground">{currentXP} XP</span>
+            <span className="text-muted-foreground">{currentNexa} Nexa</span>
           </div>
           {nextThreshold && (
             <span className="text-muted-foreground">
-              {xpToNextGrade} XP to {nextThreshold.grade}
+              {nexaToNextGrade} Nexa to {nextThreshold.grade}
             </span>
           )}
         </div>

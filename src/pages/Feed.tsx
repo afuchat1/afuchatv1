@@ -9,7 +9,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/ui/tabs';
 import { useTranslation } from 'react-i18next';
-import { useXP } from '@/hooks/useXP';
+import { useNexa } from '@/hooks/useNexa';
 import { useAITranslation } from '@/hooks/useAITranslation';
 import PostActionsSheet from '@/components/PostActionsSheet';
 import DeletePostSheet from '@/components/DeletePostSheet';
@@ -393,7 +393,7 @@ const PostCard = ({ post, addReply, user, navigate, onAcknowledge, onDeletePost,
   }) => {
 
   const { t, i18n } = useTranslation();
-  const { awardXP } = useXP();
+  const { awardNexa } = useNexa();
   const { translateText } = useAITranslation();
   const [showComments, setShowComments] = useState(false);
   const [replyText, setReplyText] = useState('');
@@ -544,9 +544,9 @@ const PostCard = ({ post, addReply, user, navigate, onAcknowledge, onDeletePost,
       toast.error('Failed to post reply');
       console.error(error);
     } else {
-      // Award XP for creating a reply
+      // Award Nexa for creating a reply
       toast.success('Reply posted!');
-      awardXP('create_reply', { post_id: post.id });
+      awardNexa('create_reply', { post_id: post.id });
     }
   };
 
@@ -571,7 +571,7 @@ const PostCard = ({ post, addReply, user, navigate, onAcknowledge, onDeletePost,
 
     // Refetch replies would happen through realtime subscription
     toast.success('Reply posted!');
-    awardXP('create_reply', { post_id: post.id });
+    awardNexa('create_reply', { post_id: post.id });
   };
 
   const handlePinReply = async (replyId: string, currentPinnedState: boolean) => {
@@ -923,7 +923,7 @@ const PostCard = ({ post, addReply, user, navigate, onAcknowledge, onDeletePost,
 
 const Feed = () => {
   const { t } = useTranslation();
-  const { awardXP } = useXP();
+  const { awardNexa } = useNexa();
   const { user } = useAuth();
   const [posts, setPosts] = useState<Post[]>([]);
   const [followingPosts, setFollowingPosts] = useState<Post[]>([]);
@@ -1105,10 +1105,10 @@ const Feed = () => {
         setPosts(revertPosts);
         setFollowingPosts(revertPosts);
       } else {
-        // Award XP for giving a reaction
-        awardXP('give_reaction', { post_id: postId });
+        // Award Nexa for giving a reaction
+        awardNexa('give_reaction', { post_id: postId });
         
-        // Award XP to post author for receiving a reaction
+        // Award Nexa to post author for receiving a reaction
         const post = posts.find(p => p.id === postId) || followingPosts.find(p => p.id === postId);
         if (post && post.author_id !== currentUserId) {
           fetch('https://rhnsjqqtdzlkvqazfcbg.supabase.co/functions/v1/award-xp', {
@@ -1127,7 +1127,7 @@ const Feed = () => {
         }
       }
     }
-  }, [user, navigate, posts, followingPosts, awardXP]);
+  }, [user, navigate, posts, followingPosts, awardNexa]);
 
   // NEW: Delete Post Handler - Opens confirmation sheet
   const handleDeletePost = useCallback((postId: string) => {

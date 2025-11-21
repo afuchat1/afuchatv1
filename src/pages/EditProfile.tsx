@@ -12,7 +12,7 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/com
 import { Separator } from '@/components/ui/separator'; 
 import { Loader2, User, Lock, Eye, MessageCircle, Upload, X, Building2 } from 'lucide-react';
 import { handleSchema, displayNameSchema, bioSchema } from '@/lib/validation';
-import { useXP } from '@/hooks/useXP';
+import { useNexa } from '@/hooks/useNexa';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 
 // Import Supabase types
@@ -37,7 +37,7 @@ const EditProfile: React.FC = () => {
   const { user, loading: isLoadingAuth } = useAuth();
   const navigate = useNavigate();
   const { userId } = useParams<{ userId: string }>();
-  const { checkProfileCompletion } = useXP();
+  const { checkProfileCompletion } = useNexa();
 
   const [profile, setProfile] = useState<EditProfileForm>({
     display_name: '',
