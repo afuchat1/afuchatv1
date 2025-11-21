@@ -191,9 +191,9 @@ const Gifts = () => {
           <TabsContent value="all" className="space-y-6">
             <div className="grid grid-cols-3 sm:grid-cols-4 md:grid-cols-5 lg:grid-cols-6 gap-6">
               {allGifts.map(gift => (
-                  <Card
+                  <div
                     key={gift.id}
-                    className="cursor-pointer transition-all duration-300 hover:scale-105 hover:shadow-xl hover:-translate-y-1 group relative p-4 border-2 hover:border-primary/50 bg-gradient-to-br from-background to-primary/5"
+                    className="cursor-pointer transition-all duration-300 hover:scale-105 hover:-translate-y-1 group relative p-4"
                     onClick={() => handleGiftClick(gift)}
                   >
                     <div className="relative space-y-2">
@@ -204,7 +204,7 @@ const Gifts = () => {
                           emoji={gift.emoji}
                           rarity={gift.rarity}
                           size="lg"
-                          className="mx-auto drop-shadow-2xl group-hover:drop-shadow-[0_0_20px_rgba(var(--primary),0.5)]"
+                          className="mx-auto"
                         />
                         <Badge className={`absolute -top-2 -right-2 ${getRarityColor(gift.rarity)} text-[10px] px-1.5 py-0.5`}>
                           {gift.rarity}
@@ -236,7 +236,7 @@ const Gifts = () => {
                         )}
                       </div>
                     </div>
-                  </Card>
+                  </div>
                 ))}
               </div>
           </TabsContent>
@@ -269,9 +269,9 @@ const Gifts = () => {
                   };
                   
                   return (
-                    <Card
+                    <div
                       key={gift.id}
-                      className="cursor-pointer transition-all duration-300 hover:scale-105 hover:shadow-xl hover:-translate-y-1 group relative p-4 border-2 hover:border-primary/50 bg-gradient-to-br from-background to-primary/5"
+                      className="cursor-pointer transition-all duration-300 hover:scale-105 hover:-translate-y-1 group relative p-4"
                       onClick={() => handleGiftClick(giftWithStats)}
                     >
                       <div className="space-y-2">
@@ -282,7 +282,7 @@ const Gifts = () => {
                             emoji={gift.emoji}
                             rarity={gift.rarity}
                             size="lg"
-                            className="mx-auto drop-shadow-2xl group-hover:drop-shadow-[0_0_20px_rgba(var(--primary),0.5)]"
+                            className="mx-auto"
                           />
                           <Badge variant="secondary" className="absolute -top-2 -right-2 text-xs font-bold px-1.5 py-0.5">
                             x{received_count}
@@ -293,7 +293,7 @@ const Gifts = () => {
                           <h3 className="font-semibold text-xs truncate">{gift.name}</h3>
                         </div>
                       </div>
-                    </Card>
+                    </div>
                   );
                 })}
                 </div>
