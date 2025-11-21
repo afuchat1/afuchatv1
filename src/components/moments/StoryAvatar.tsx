@@ -21,10 +21,10 @@ const sizeMap = {
 };
 
 const ringMap = {
-  sm: 'p-[2px]',
-  md: 'p-[2.5px]',
-  lg: 'p-[3px]',
-  xl: 'p-[3.5px]'
+  sm: 'p-[1.5px]',
+  md: 'p-[2px]',
+  lg: 'p-[2px]',
+  xl: 'p-[2.5px]'
 };
 
 export const StoryAvatar = ({
@@ -47,7 +47,7 @@ export const StoryAvatar = ({
 
     if (hasActiveStories && showStoryRing) {
       e.stopPropagation();
-      navigate('/moments');
+      navigate(`/moments?user=${userId}`);
     }
   };
 
@@ -64,7 +64,7 @@ export const StoryAvatar = ({
     return (
       <div
         className={cn(
-          'rounded-full bg-gradient-to-tr from-yellow-400 via-pink-500 to-purple-500 cursor-pointer transition-transform hover:scale-105',
+          'rounded-full bg-gradient-to-tr from-yellow-400 via-pink-500 to-purple-500 cursor-pointer transition-all duration-200 hover:scale-105',
           ringMap[size],
           className
         )}

@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useSearchParams } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/contexts/AuthContext';
@@ -31,6 +31,7 @@ const Moments = () => {
   const navigate = useNavigate();
   const { user } = useAuth();
   const { t } = useTranslation();
+  const [searchParams] = useSearchParams();
   const [stories, setStories] = useState<Story[]>([]);
   const [myStories, setMyStories] = useState<Story[]>([]);
   const [loading, setLoading] = useState(true);
@@ -40,6 +41,17 @@ const Moments = () => {
   useEffect(() => {
     fetchStories();
   }, [user]);
+
+  // Auto-open user's stories if user param is present
+  useEffect(() => {
+    const userId = searchParams.get('user');
+    if (userId && stories.length > 0) {
+      const userStories = stories.filter(s => s.user_id === userId);
+      if (userStories.length > 0) {
+        handleStoryClick(userStories[0]);
+      }
+    }
+  }, [searchParams, stories]);
 
   const fetchStories = async () => {
     try {
