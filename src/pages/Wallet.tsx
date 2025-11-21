@@ -180,7 +180,7 @@ const Wallet = () => {
                 <WalletIcon className="h-8 w-8 text-primary" />
                 <div>
                   <CardTitle className="text-2xl">Wallet</CardTitle>
-                  <CardDescription>Your XP balance</CardDescription>
+                  <CardDescription>Your Nexa & ACoin balance</CardDescription>
                 </div>
               </div>
               <Badge variant="secondary" className="text-lg px-4 py-2">

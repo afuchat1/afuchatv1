@@ -193,7 +193,7 @@ const Bookings = () => {
                               </Badge>
                             </div>
                             <div className="flex items-center justify-between">
-                              <span className="text-xl font-bold text-primary">{service.price} XP</span>
+                              <span className="text-xl font-bold text-primary">{service.price} Nexa</span>
                               <Button size="sm" onClick={(e) => {
                                 e.stopPropagation();
                                 handleBook(service.name, service.id.toString());
@@ -247,7 +247,7 @@ const Bookings = () => {
                               <span>{service.slots} slots</span>
                             </div>
                             <div className="flex items-center justify-between">
-                              <span className="text-lg font-bold text-primary">{service.price} XP</span>
+                              <span className="text-lg font-bold text-primary">{service.price} Nexa</span>
                               <Button size="sm" variant="outline" onClick={(e) => {
                                 e.stopPropagation();
                                 handleBook(service.name, service.id.toString());

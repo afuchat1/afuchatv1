@@ -604,10 +604,10 @@ const Profile = ({ mustExist = false }: ProfileProps) => {
 		fetchCurrentUserVerification();
 	}, [user]);
 
-	// Listen for XP updates from gift sending
+	// Listen for Nexa updates from gift sending
 	useEffect(() => {
-		const handleXPUpdate = (event: CustomEvent) => {
-			// If viewing own profile, update the XP and grade
+		const handleNexaUpdate = (event: CustomEvent) => {
+			// If viewing own profile, update the Nexa and grade
 			if (user && profileId === user.id) {
 				setProfile(prev => prev ? {
 					...prev,
@@ -617,9 +617,9 @@ const Profile = ({ mustExist = false }: ProfileProps) => {
 			}
 		};
 
-		window.addEventListener('xp-updated', handleXPUpdate as EventListener);
+		window.addEventListener('nexa-updated', handleNexaUpdate as EventListener);
 		return () => {
-			window.removeEventListener('xp-updated', handleXPUpdate as EventListener);
+			window.removeEventListener('nexa-updated', handleNexaUpdate as EventListener);
 		};
 	}, [user, profileId]);
 

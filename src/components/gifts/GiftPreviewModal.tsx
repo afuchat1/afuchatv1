@@ -127,7 +127,7 @@ export const GiftPreviewModal = ({ gift, open, onOpenChange, onSendGift }: GiftP
                   <span className="text-2xl font-bold text-primary">
                     {(gift.current_price || gift.base_xp_cost).toLocaleString()}
                   </span>
-                  <span className="text-xs text-muted-foreground">XP</span>
+                  <span className="text-xs text-muted-foreground">Nexa</span>
                   {gift.price_multiplier && gift.price_multiplier !== 1 && (
                     <Badge variant="secondary" className="ml-auto">
                       <TrendingUp className="h-3 w-3 mr-1" />

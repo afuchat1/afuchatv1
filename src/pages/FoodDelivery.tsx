@@ -212,7 +212,7 @@ const FoodDelivery = () => {
                             {restaurant.deliveryTime} min
                           </div>
                           <span>•</span>
-                          <span>Min {restaurant.minOrder} XP</span>
+                          <span>Min {restaurant.minOrder} Nexa</span>
                         </div>
                         <Button className="w-full" onClick={() => handleOrder(restaurant.name, restaurant.id)}>
                           Order Now
@@ -257,7 +257,7 @@ const FoodDelivery = () => {
                       </div>
                       <div className="flex items-center gap-1 text-sm text-muted-foreground mb-3">
                         <Clock className="h-3 w-3" />
-                        {restaurant.deliveryTime} min • Min {restaurant.minOrder} XP
+                        {restaurant.deliveryTime} min • Min {restaurant.minOrder} Nexa
                       </div>
                       <Button variant="outline" className="w-full" onClick={(e) => {
                         e.stopPropagation();

@@ -96,7 +96,7 @@ const TriviaGame = () => {
           p_xp_amount: xpEarned,
           p_metadata: { score: finalScore, total: questions.length, game: 'trivia' }
         });
-        toast.success(`Trivia Complete! You earned ${xpEarned} XP with ${finalScore}/${questions.length} correct!`);
+        toast.success(`Trivia Complete! You earned ${xpEarned} Nexa with ${finalScore}/${questions.length} correct!`);
       } catch (error) {
         console.error('Error awarding XP:', error);
       }

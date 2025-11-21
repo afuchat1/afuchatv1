@@ -222,10 +222,10 @@ const GiftDetail = () => {
             <div className="space-y-2">
               <p className="text-sm text-muted-foreground">Current Price</p>
               <p className="text-3xl font-bold text-primary">
-                {stats.current_price.toLocaleString()} XP
+                {stats.current_price.toLocaleString()} Nexa
               </p>
               <p className="text-xs text-muted-foreground">
-                Base: {gift.base_xp_cost.toLocaleString()} XP
+                Base: {gift.base_xp_cost.toLocaleString()} Nexa
               </p>
             </div>
           </Card>
@@ -272,7 +272,7 @@ const GiftDetail = () => {
               <div key={index} className="flex items-center justify-between text-sm">
                 <span className="text-muted-foreground">{new Date(entry.date).toLocaleDateString()}</span>
                 <div className="flex items-center gap-2">
-                  <span className="font-medium">{entry.price.toLocaleString()} XP</span>
+                  <span className="font-medium">{entry.price.toLocaleString()} Nexa</span>
                   <span className="text-xs text-muted-foreground">({entry.multiplier.toFixed(2)}x)</span>
                 </div>
               </div>
@@ -297,7 +297,7 @@ const GiftDetail = () => {
                       <span className="font-medium">@{tx.receiver.handle}</span>
                     </div>
                     <div className="text-right">
-                      <p className="text-sm font-medium">{tx.xp_cost.toLocaleString()} XP</p>
+                      <p className="text-sm font-medium">{tx.xp_cost.toLocaleString()} Nexa</p>
                       <p className="text-xs text-muted-foreground">
                         {new Date(tx.created_at).toLocaleDateString()}
                       </p>

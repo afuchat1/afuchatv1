@@ -164,11 +164,11 @@ const RestaurantDetail = () => {
             <Separator className="my-4" />
 
             <div className="flex items-center justify-between text-sm">
-              <span className="text-muted-foreground">Minimum Order: {restaurant.minOrder} XP</span>
+              <span className="text-muted-foreground">Minimum Order: {restaurant.minOrder} Nexa</span>
               {restaurant.deliveryFee === '0' ? (
                 <Badge className="bg-green-600">Free Delivery</Badge>
               ) : (
-                <span className="text-muted-foreground">Delivery: {restaurant.deliveryFee} XP</span>
+                <span className="text-muted-foreground">Delivery: {restaurant.deliveryFee} Nexa</span>
               )}
             </div>
           </CardContent>
@@ -191,7 +191,7 @@ const RestaurantDetail = () => {
                       <div>
                         <h3 className="font-bold text-lg mb-1">{item.name}</h3>
                         <p className="text-sm text-muted-foreground mb-2">{item.description}</p>
-                        <p className="text-lg font-bold text-primary">{item.price} XP</p>
+                        <p className="text-lg font-bold text-primary">{item.price} Nexa</p>
                       </div>
                       <div className="flex items-center gap-2 mt-2">
                         {cart[item.id] ? (
@@ -232,7 +232,7 @@ const RestaurantDetail = () => {
           <div className="container max-w-4xl mx-auto flex items-center justify-between">
             <div>
               <p className="font-semibold">{totalItems} items</p>
-              <p className="text-lg font-bold text-primary">{totalPrice + parseInt(restaurant.deliveryFee)} XP</p>
+              <p className="text-lg font-bold text-primary">{totalPrice + parseInt(restaurant.deliveryFee)} Nexa</p>
             </div>
             <Button size="lg" onClick={() => toast.success('Checkout coming soon!')}>
               Checkout

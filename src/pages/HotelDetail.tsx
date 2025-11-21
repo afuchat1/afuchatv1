@@ -189,7 +189,7 @@ const HotelDetail = () => {
                           </div>
                         </div>
                         <div className="text-right">
-                          <p className="text-2xl font-bold text-primary">{room.price} XP</p>
+                          <p className="text-2xl font-bold text-primary">{room.price} Nexa</p>
                           <p className="text-xs text-muted-foreground">per night</p>
                         </div>
                       </div>
@@ -237,12 +237,12 @@ const HotelDetail = () => {
                         </div>
                         <div className="flex justify-between">
                           <span className="text-muted-foreground">{calculateNights()} nights</span>
-                          <span className="font-medium">{selectedRoomData?.price} XP/night</span>
+                          <span className="font-medium">{selectedRoomData?.price} Nexa/night</span>
                         </div>
                         <Separator />
                         <div className="flex justify-between text-lg font-bold">
                           <span>Total</span>
-                          <span className="text-primary">{totalPrice} XP</span>
+                          <span className="text-primary">{totalPrice} Nexa</span>
                         </div>
                       </div>
                     </>

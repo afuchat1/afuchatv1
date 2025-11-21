@@ -261,7 +261,7 @@ const BusinessDashboard = () => {
                 <TrendingUp className="h-6 w-6 text-green-500" />
               </div>
               <div>
-                <p className="text-sm text-muted-foreground">Total XP Generated</p>
+                <p className="text-sm text-muted-foreground">Total Nexa Generated</p>
                 <p className="text-2xl font-bold">{stats.totalEngagement.toLocaleString()}</p>
               </div>
             </div>
@@ -370,7 +370,7 @@ const BusinessDashboard = () => {
                               <Badge variant="secondary">Affiliate</Badge>
                             </div>
                             <p className="text-sm text-muted-foreground">
-                              {affiliate.xp.toLocaleString()} XP
+                              {affiliate.xp.toLocaleString()} Nexa
                             </p>
                           </div>
                         </div>

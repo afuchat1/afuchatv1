@@ -48,7 +48,7 @@ const FloatingActionButton = () => {
     },
     {
       icon: <Send className="h-6 w-6" />,
-      label: 'Transfer XP',
+      label: 'Transfer Nexa',
       onClick: () => handleActionClick(() => navigate('/transfer')),
       color: 'bg-green-500'
     },

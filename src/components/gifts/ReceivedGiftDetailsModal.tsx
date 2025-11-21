@@ -131,7 +131,7 @@ export const ReceivedGiftDetailsModal = ({
                   {t('gifts.currentPrice')}
                 </span>
               </div>
-              <div className="text-lg font-bold text-primary">{currentPrice} XP</div>
+              <div className="text-lg font-bold text-primary">{currentPrice} Nexa</div>
             </div>
 
             <div className="bg-muted/30 rounded-lg p-3 text-center">
@@ -148,7 +148,7 @@ export const ReceivedGiftDetailsModal = ({
           {/* Value Badge */}
           <div className="bg-gradient-to-br from-primary/10 via-accent/10 to-primary/10 rounded-lg p-3 border border-primary/20 text-center">
             <div className="text-xs text-muted-foreground mb-1">Value Received</div>
-            <div className="text-xl font-bold text-foreground">{gift.xp_cost} XP</div>
+            <div className="text-xl font-bold text-foreground">{gift.xp_cost} Nexa</div>
           </div>
 
           {/* Price History Chart */}

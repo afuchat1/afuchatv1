@@ -125,7 +125,7 @@ const PuzzleGame = () => {
           metadata: { moves, time }
         });
 
-        toast.success(`Solved! ${moves} moves in ${time}s | +${totalXp} XP`);
+        toast.success(`Solved! ${moves} moves in ${time}s | +${totalXp} Nexa`);
       } catch (error) {
         console.error('Error:', error);
       }
@@ -161,7 +161,7 @@ const PuzzleGame = () => {
             <Puzzle className="h-8 w-8 text-purple-500" />
             15 Puzzle Challenge
           </h1>
-          <p className="text-muted-foreground">Arrange tiles in order - faster = more XP!</p>
+          <p className="text-muted-foreground">Arrange tiles in order - faster = more Nexa!</p>
         </div>
 
         <div className="grid grid-cols-3 gap-3 mb-6">
@@ -239,7 +239,7 @@ const PuzzleGame = () => {
               <span className="font-semibold text-foreground">Tips:</span>
             </div>
             <ul className="space-y-1 pl-4">
-              <li>• Solve in fewer moves for more XP</li>
+              <li>• Solve in fewer moves for more Nexa</li>
               <li>• Complete faster for time bonus</li>
               <li>• Adjacent tiles can be moved</li>
             </ul>

@@ -156,7 +156,7 @@ const SimpleGame = () => {
             metadata: { combo_max: combo }
           });
 
-          toast.success(`Game Over! Score: ${score} | Earned ${xpEarned} XP!`);
+          toast.success(`Game Over! Score: ${score} | Earned ${xpEarned} Nexa!`);
         } catch (error) {
           console.error('Error:', error);
         }
@@ -229,7 +229,7 @@ const SimpleGame = () => {
         <div className="text-center mb-6">
           <h1 className="text-3xl font-bold mb-2 flex items-center justify-center gap-2">
             <Zap className="h-8 w-8 text-yellow-500 animate-pulse" />
-            XP Collector Pro
+            Nexa Collector Pro
           </h1>
           <p className="text-muted-foreground">Click targets fast for combos & bonuses!</p>
         </div>
@@ -346,8 +346,8 @@ const SimpleGame = () => {
             <div className="flex items-start gap-2">
               <span className="text-lg">💎</span>
               <div>
-                <p className="font-semibold text-foreground">Earn XP</p>
-                <p>Get 1 XP for every 5 points scored</p>
+                <p className="font-semibold text-foreground">Earn Nexa</p>
+                <p>Get 1 Nexa for every 5 points scored</p>
               </div>
             </div>
           </div>

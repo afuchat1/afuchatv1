@@ -181,7 +181,7 @@ const Travel = () => {
                         </div>
                         <div className="flex items-center gap-4 w-full md:w-auto justify-between md:justify-start">
                           <div className="text-right">
-                            <div className="text-2xl font-bold text-primary">{flight.price} XP</div>
+                            <div className="text-2xl font-bold text-primary">{flight.price} Nexa</div>
                             <div className="text-xs text-muted-foreground">per person</div>
                           </div>
                           <Button onClick={() => handleBook('Flight', `${flight.fromFull} to ${flight.toFull}`)} className="gap-2">
@@ -255,7 +255,7 @@ const Travel = () => {
                       
                         <div className="flex items-center justify-between pt-3 border-t">
                           <div>
-                            <div className="text-xl font-bold text-primary">{hotel.price} XP</div>
+                            <div className="text-xl font-bold text-primary">{hotel.price} Nexa</div>
                             <div className="text-xs text-muted-foreground">per night</div>
                           </div>
                           <Button size="sm" onClick={(e) => {
@@ -310,7 +310,7 @@ const Travel = () => {
                         ))}
                       </div>
                       <div className="flex items-center justify-between">
-                        <span className="text-lg font-bold text-primary">{hotel.price} XP/night</span>
+                        <span className="text-lg font-bold text-primary">{hotel.price} Nexa/night</span>
                         <Button size="sm" variant="outline" onClick={(e) => {
                           e.stopPropagation();
                           navigate(`/travel/hotel/${hotel.id}`);

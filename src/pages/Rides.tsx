@@ -130,7 +130,7 @@ const Rides = () => {
                     </div>
                     <div className="flex items-center justify-between text-sm">
                       <span className="text-muted-foreground">Estimated fare</span>
-                      <span className="text-2xl font-bold text-primary">{selectedRideData.price} XP</span>
+                      <span className="text-2xl font-bold text-primary">{selectedRideData.price} Nexa</span>
                     </div>
                   </div>
                 )}
@@ -169,7 +169,7 @@ const Rides = () => {
                       <div className="flex items-center justify-between mb-1">
                         <h3 className="font-bold text-lg">{ride.name}</h3>
                         <div className="text-right">
-                          <div className="text-xl font-bold text-primary">{ride.price} XP</div>
+                          <div className="text-xl font-bold text-primary">{ride.price} Nexa</div>
                         </div>
                       </div>
                       <p className="text-sm text-muted-foreground mb-2">{ride.description}</p>
@@ -204,7 +204,7 @@ const Rides = () => {
                   Payment Info
                 </h3>
                 <p className="text-sm text-muted-foreground">
-                  All rides are paid using your XP balance. Ensure you have sufficient XP before booking.
+                  All rides are paid using your Nexa balance. Ensure you have sufficient Nexa before booking.
                 </p>
               </CardContent>
             </Card>

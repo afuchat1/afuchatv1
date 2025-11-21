@@ -225,7 +225,7 @@ const AffiliateDashboard = () => {
                 <TrendingUp className="h-4 w-4" />
                 <span className="text-sm">Total Earnings</span>
               </div>
-              <p className="text-2xl font-bold">{affiliateInfo.total_earnings} XP</p>
+              <p className="text-2xl font-bold">{affiliateInfo.total_earnings} Nexa</p>
             </Card>
             <Card className="p-4">
               <div className="flex items-center gap-2 text-muted-foreground mb-2">
@@ -260,7 +260,7 @@ const AffiliateDashboard = () => {
               <div className="space-y-2 text-sm">
                 <p className="font-medium">How affiliate earnings work</p>
                 <p className="text-muted-foreground">
-                  As an affiliate of {affiliateInfo.businessName}, you'll earn XP based on your engagement and the terms set by the business. 
+                  As an affiliate of {affiliateInfo.businessName}, you'll earn Nexa based on your engagement and the terms set by the business. 
                   Check back regularly to track your earnings.
                 </p>
               </div>

@@ -23,7 +23,7 @@ const RedEnvelope = () => {
   const [envelopeType, setEnvelopeType] = useState<'random' | 'equal'>('random');
   const [loading, setLoading] = useState(false);
 
-  // Fetch user's XP
+  // Fetch user's Nexa
   const { data: profile } = useQuery({
     queryKey: ['profile', user?.id],
     queryFn: async () => {
@@ -103,7 +103,7 @@ const RedEnvelope = () => {
     }
 
     if (amount > (profile?.xp || 0)) {
-      toast.error('Insufficient XP balance');
+      toast.error('Insufficient Nexa balance');
       return;
     }
 
@@ -148,7 +148,7 @@ const RedEnvelope = () => {
               <div className="flex items-center justify-between">
                 <div>
                   <p className="text-sm text-muted-foreground">Available Balance</p>
-                  <p className="text-3xl font-bold">{profile?.xp?.toLocaleString() || 0} XP</p>
+                  <p className="text-3xl font-bold">{profile?.xp?.toLocaleString() || 0} Nexa</p>
                 </div>
                 <Gift className="h-12 w-12 text-red-500" />
               </div>
@@ -178,12 +178,12 @@ const RedEnvelope = () => {
               <CardHeader>
                 <CardTitle>Create Red Envelope</CardTitle>
                 <CardDescription>
-                  Share XP with multiple friends - they'll get random amounts!
+                  Share Nexa with multiple friends - they'll get random amounts!
                 </CardDescription>
               </CardHeader>
               <CardContent className="space-y-4">
                 <div className="space-y-2">
-                  <Label htmlFor="amount">Total XP Amount</Label>
+                  <Label htmlFor="amount">Total Nexa Amount</Label>
                   <Input
                     id="amount"
                     type="number"
@@ -248,7 +248,7 @@ const RedEnvelope = () => {
                 <div className="bg-muted/50 rounded-lg p-3 space-y-1">
                   <p className="text-xs font-medium">How it works:</p>
                   <ul className="text-xs text-muted-foreground space-y-1 list-disc list-inside">
-                    <li>Your XP is immediately deducted when you create the envelope</li>
+                    <li>Your Nexa is immediately deducted when you create the envelope</li>
                     <li>Others can claim until all portions are taken or 24 hours pass</li>
                     <li>Random mode: Each claim gets a different random amount</li>
                     <li>Equal mode: Everyone gets exactly the same amount</li>
@@ -290,7 +290,7 @@ const RedEnvelope = () => {
                       <div className="flex items-start justify-between mb-4">
                         <div>
                           <p className="font-medium">
-                            {envelope.total_amount} XP · {envelope.recipient_count} people
+                            {envelope.total_amount} Nexa · {envelope.recipient_count} people
                           </p>
                           <p className="text-sm text-muted-foreground">
                             {envelope.claimed_count} / {envelope.recipient_count} claimed

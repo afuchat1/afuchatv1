@@ -221,7 +221,7 @@ const Events = () => {
                         </div>
 
                         <div className="flex items-center justify-between pt-3 border-t">
-                          <span className="text-xl font-bold text-primary">{event.price} XP</span>
+                          <span className="text-xl font-bold text-primary">{event.price} Nexa</span>
                           <Button size="sm" onClick={(e) => {
                             e.stopPropagation();
                             handleBookTicket(event.title, event.id.toString());
@@ -283,7 +283,7 @@ const Events = () => {
                         </div>
 
                         <div className="flex items-center justify-between">
-                          <span className="text-lg font-bold text-primary">{event.price} XP</span>
+                          <span className="text-lg font-bold text-primary">{event.price} Nexa</span>
                           <Button size="sm" variant="outline" onClick={(e) => {
                             e.stopPropagation();
                             handleBookTicket(event.title, event.id.toString());

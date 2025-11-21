@@ -57,7 +57,7 @@ const TermsOfUse = () => {
               <li>Connect with other users through following and social features</li>
               <li>Access AI-powered features for content generation and assistance</li>
               <li>Participate in gamification features including achievements and rewards</li>
-              <li>Transfer virtual currency (XP) and send gifts to other users</li>
+              <li>Transfer virtual currency (Nexa) and send gifts to other users</li>
               <li>Access mini-programs and third-party integrations</li>
             </ul>
             <p className="text-foreground/90 leading-relaxed mb-4 mt-4">

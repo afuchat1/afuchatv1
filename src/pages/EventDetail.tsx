@@ -154,7 +154,7 @@ const EventDetail = () => {
                 <Ticket className="h-5 w-5 text-primary" />
                 <div>
                   <p className="text-sm text-muted-foreground">Price</p>
-                  <p className="font-semibold text-primary text-lg">{event.price} XP</p>
+                  <p className="font-semibold text-primary text-lg">{event.price} Nexa</p>
                 </div>
               </div>
             </div>
@@ -169,7 +169,7 @@ const EventDetail = () => {
 
             <Button size="lg" className="w-full gap-2" onClick={handleBookTicket}>
               <Ticket className="h-5 w-5" />
-              Book Tickets - {event.price} XP
+              Book Tickets - {event.price} Nexa
             </Button>
           </CardContent>
         </Card>

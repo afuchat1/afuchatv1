@@ -221,13 +221,13 @@ const Gifts = () => {
 
                       <div className="text-center">
                         <h3 className="font-semibold text-xs truncate">{gift.name}</h3>
-                        <p className="text-xs text-muted-foreground font-medium">{gift.base_xp_cost} XP</p>
+                        <p className="text-xs text-muted-foreground font-medium">{gift.base_xp_cost} Nexa</p>
                       </div>
 
                       <div className="text-center space-y-1">
                         <div className="flex items-center justify-center gap-1">
                           <span className="text-xs font-bold text-primary">
-                            {gift.current_price.toLocaleString()} XP
+                            {gift.current_price.toLocaleString()} Nexa
                           </span>
                           {gift.price_multiplier !== 1 && (
                             <div className="flex items-center gap-0.5 text-[10px] text-green-500">
@@ -300,7 +300,7 @@ const Gifts = () => {
 
                         <div className="text-center">
                           <h3 className="font-semibold text-xs truncate">{gift.name}</h3>
-                          <p className="text-xs text-muted-foreground font-medium">{gift.base_xp_cost} XP</p>
+                          <p className="text-xs text-muted-foreground font-medium">{gift.base_xp_cost} Nexa</p>
                         </div>
                       </div>
                     </div>

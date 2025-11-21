@@ -11,8 +11,8 @@ const Games = () => {
   const games = [
     { 
       icon: Zap, 
-      title: 'XP Collector', 
-      description: 'Click orbs to collect XP and level up', 
+      title: 'Nexa Collector', 
+      description: 'Click orbs to collect Nexa and level up',
       route: '/game', 
       color: 'bg-orange-500',
       gradient: 'from-orange-500 to-red-500'

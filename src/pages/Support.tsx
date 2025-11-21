@@ -83,12 +83,12 @@ const Support = () => {
       answer: "Go to your profile and click 'Edit Profile' or navigate to Settings > Profile. Upload a new image (JPG, PNG, or GIF, max 5MB). You can also upload a profile picture during sign-up."
     },
     {
-      question: "What are XP points and how do I earn them?",
-      answer: "XP is our virtual currency system. Earn XP by: daily login streaks, completing your profile, posting content, engaging with others, playing games, and achieving milestones. Use XP to send gifts, purchase shop items, or transfer to other users."
+      question: "What are Nexa points and how do I earn them?",
+      answer: "Nexa is our main virtual currency. Earn Nexa by: daily login streaks, completing your profile, posting content, engaging with others, playing games, and achieving milestones. Use Nexa to send gifts, purchase shop items, transfer to other users, or convert to ACoin for premium features."
     },
     {
-      question: "How do I send gifts or XP to other users?",
-      answer: "Navigate to the Gifts page or the user's profile. Select a gift or use the Transfer feature to send XP directly. Add an optional message and confirm the transaction. The recipient will be notified immediately."
+      question: "How do I send gifts or Nexa to other users?",
+      answer: "Navigate to the Gifts page or the user's profile. Select a gift or use the Transfer feature to send Nexa directly. Add an optional message and confirm the transaction. The recipient will be notified immediately."
     },
     {
       question: "What is the difference between public and private accounts?",
@@ -132,7 +132,7 @@ const Support = () => {
     },
     {
       question: "How does the referral system work?",
-      answer: "Share your unique referral link (found in Settings > Referral). When someone signs up using your link and completes their profile, both of you earn bonus XP. Track your referrals and rewards in your profile."
+      answer: "Share your unique referral link (found in Settings > Referral). When someone signs up using your link and completes their profile, both of you earn bonus Nexa. Track your referrals and rewards in your profile."
     },
     {
       question: "Can I schedule posts for later?",
@@ -155,16 +155,16 @@ const Support = () => {
       answer: "Business Mode allows organizations to access additional features like affiliate management, business dashboard, and analytics. Apply for business verification through Settings > Verification Request with required business documentation."
     },
     {
-      question: "How does the XP and leveling system work?",
-      answer: "You earn XP (experience points) by engaging with the platform - posting content, daily logins, completing profile, and achievements. Your XP determines your grade level, which unlocks special features, badges, and shop items. Check your current level on your profile page."
+      question: "How does the Nexa and leveling system work?",
+      answer: "You earn Nexa (experience points) by engaging with the platform - posting content, daily logins, completing profile, and achievements. Your Nexa determines your grade level, which unlocks special features, badges, and shop items. Check your current level on your profile page."
     },
     {
       question: "What are gifts and how do I send them?",
-      answer: "Gifts are virtual items you can send to other users using your XP. Visit the Gifts page to browse available gifts, select one, search for a recipient, add an optional message, and confirm. Seasonal gifts are available during special events with limited-time availability."
+      answer: "Gifts are virtual items you can send to other users using your Nexa. Visit the Gifts page to browse available gifts, select one, search for a recipient, add an optional message, and confirm. Seasonal gifts are available during special events with limited-time availability."
     },
     {
       question: "What are tips and how do they work?",
-      answer: "Tips allow you to support content creators by sending them XP directly on their posts. Click the tip button on any post, enter the amount (minimum varies), add an optional message, and confirm. Recipients are notified immediately and receive the XP in their account."
+      answer: "Tips allow you to support content creators by sending them Nexa directly on their posts. Click the tip button on any post, enter the amount (minimum varies), add an optional message, and confirm. Recipients are notified immediately and receive the Nexa in their account."
     },
     {
       question: "Can I use AfuChat on mobile?",
@@ -183,16 +183,16 @@ const Support = () => {
       answer: "Visit the Affiliate Request page through Settings > Affiliate Program. You must first connect with a business account that you want to be affiliated with. Fill out the request form with relevant information, and the business will review and approve your request. Once approved, you'll earn commissions on referrals."
     },
     {
-      question: "What is the difference between XP transfers and tips?",
-      answer: "XP Transfers: Direct peer-to-peer transfers of any amount between users (accessible via Transfer page). Tips: Rewards for specific posts showing appreciation for content (accessible via tip button on posts). Both use your XP balance."
+      question: "What is the difference between Nexa transfers and tips?",
+      answer: "Nexa Transfers: Direct peer-to-peer transfers of any amount between users (accessible via Transfer page). Tips: Rewards for specific posts showing appreciation for content (accessible via tip button on posts). Both use your Nexa balance."
     },
     {
       question: "How do I play games and earn rewards?",
-      answer: "Navigate to the Games section from the menu. Choose from available games (Memory, Puzzle, Trivia, Simple). Play to earn XP based on your score and difficulty level. You can also challenge friends to compete for higher scores and bragging rights."
+      answer: "Navigate to the Games section from the menu. Choose from available games (Memory, Puzzle, Trivia, Nexa Collector). Play to earn Nexa based on your score and difficulty level. You can also challenge friends to compete for higher scores and bragging rights."
     },
     {
       question: "What are Red Envelopes?",
-      answer: "Red Envelopes are a fun way to distribute XP to multiple users in group chats. Create an envelope with a total XP amount and number of recipients. The first users to claim will randomly receive a portion. It's perfect for celebrations and events."
+      answer: "Red Envelopes are a fun way to distribute Nexa to multiple users in group chats. Create an envelope with a total Nexa amount and number of recipients. The first users to claim will randomly receive a portion. It's perfect for celebrations and events."
     },
     {
       question: "How does the Shop work?",

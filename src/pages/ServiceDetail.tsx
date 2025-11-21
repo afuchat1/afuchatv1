@@ -165,7 +165,7 @@ const ServiceDetail = () => {
                       {item.duration}
                     </div>
                   </div>
-                  <p className="text-lg font-bold text-primary">{item.price} XP</p>
+                  <p className="text-lg font-bold text-primary">{item.price} Nexa</p>
                 </div>
               ))}
             </div>
@@ -213,7 +213,7 @@ const ServiceDetail = () => {
                 disabled={!selectedSlot}
               >
                 <CalendarCheck className="h-5 w-5" />
-                Book Appointment - {service.price} XP
+                Book Appointment - {service.price} Nexa
               </Button>
             </CardContent>
           </Card>

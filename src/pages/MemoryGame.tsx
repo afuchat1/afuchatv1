@@ -183,7 +183,7 @@ const MemoryGame = () => {
           metadata: { moves, time, streak }
         });
 
-        toast.success(`Perfect! ${moves} moves in ${time}s | +${totalXp} XP`);
+        toast.success(`Perfect! ${moves} moves in ${time}s | +${totalXp} Nexa`);
         playSound(660, 0.5);
       } catch (error) {
         console.error('Error:', error);

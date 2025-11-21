@@ -186,7 +186,7 @@ const FlightDetail = () => {
             <div className="flex items-center justify-between">
               <div>
                 <p className="text-sm text-muted-foreground">Total Price</p>
-                <p className="text-3xl font-bold text-primary">{flight.price} XP</p>
+                <p className="text-3xl font-bold text-primary">{flight.price} Nexa</p>
                 <p className="text-xs text-muted-foreground">per person</p>
               </div>
               <Button size="lg" onClick={handleBookFlight}>
@@ -227,7 +227,7 @@ const FlightDetail = () => {
               </div>
               <div className="flex items-start gap-2">
                 <div className="w-1.5 h-1.5 rounded-full bg-primary mt-1.5" />
-                <p>Changes permitted with a fee of 50 XP</p>
+                <p>Changes permitted with a fee of 50 Nexa</p>
               </div>
               <div className="flex items-start gap-2">
                 <div className="w-1.5 h-1.5 rounded-full bg-primary mt-1.5" />

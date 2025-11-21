@@ -36,15 +36,15 @@ sdk.ready(() => {
   console.log('Current user:', user);
 });`,
 
-    xp: `// XP Integration Example
+    nexa: `// Nexa Integration Example
 import { AfuSDK } from '@afuchat/sdk';
 
 const sdk = new AfuSDK({ appId: 'your-app-id' });
 
-// Award XP to user
+// Award Nexa to user
 async function awardPoints(amount: number) {
   try {
-    const result = await sdk.xp.award({
+    const result = await sdk.nexa.award({
       amount: amount,
       reason: 'Game completion',
       metadata: {
@@ -53,16 +53,16 @@ async function awardPoints(amount: number) {
       }
     });
     
-    console.log('XP awarded:', result);
+    console.log('Nexa awarded:', result);
   } catch (error) {
-    console.error('Failed to award XP:', error);
+    console.error('Failed to award Nexa:', error);
   }
 }
 
-// Get user's XP balance
+// Get user's Nexa balance
 async function getBalance() {
-  const balance = await sdk.xp.getBalance();
-  console.log('User XP:', balance);
+  const balance = await sdk.nexa.getBalance();
+  console.log('User Nexa:', balance);
 }`,
 
     social: `// Social Features Example
@@ -161,8 +161,8 @@ sdk.ui.showModal({
 
   const apiEndpoints = [
     { method: 'GET', endpoint: '/api/v1/user', description: 'Get current user info' },
-    { method: 'GET', endpoint: '/api/v1/xp/balance', description: 'Get user XP balance' },
-    { method: 'POST', endpoint: '/api/v1/xp/award', description: 'Award XP to user (requires approval)' },
+    { method: 'GET', endpoint: '/api/v1/nexa/balance', description: 'Get user Nexa balance' },
+    { method: 'POST', endpoint: '/api/v1/nexa/award', description: 'Award Nexa to user (requires approval)' },
     { method: 'GET', endpoint: '/api/v1/friends', description: 'Get user\'s friends list' },
     { method: 'POST', endpoint: '/api/v1/share', description: 'Share content to feed' },
     { method: 'POST', endpoint: '/api/v1/storage/set', description: 'Save user data' },
@@ -240,7 +240,7 @@ sdk.ui.showModal({
                       <h3 className="font-semibold mb-2">✨ Key Features</h3>
                       <ul className="space-y-1 text-sm text-muted-foreground">
                         <li>• Instant load - no installation needed</li>
-                        <li>• Access to XP system</li>
+                        <li>• Access to Nexa system</li>
                         <li>• Social sharing capabilities</li>
                         <li>• User data storage</li>
                         <li>• Native UI components</li>
@@ -275,9 +275,9 @@ sdk.ui.showModal({
                     </div>
                     <div className="text-center p-4 border rounded-lg">
                       <div className="text-2xl mb-2">💎</div>
-                      <h4 className="font-medium mb-1">XP Integration</h4>
+                      <h4 className="font-medium mb-1">Nexa Integration</h4>
                       <p className="text-xs text-muted-foreground">
-                        Award and manage user XP
+                        Award and manage user Nexa
                       </p>
                     </div>
                     <div className="text-center p-4 border rounded-lg">
@@ -395,8 +395,8 @@ sdk.ui.showModal({
   "category": "games",
   "permissions": [
     "user.info",
-    "xp.read",
-    "xp.award",
+    "nexa.read",
+    "nexa.award",
     "social.share",
     "storage.read",
     "storage.write"
