@@ -188,27 +188,59 @@ const Layout = ({ children }: LayoutProps) => {
           isScrollingDown ? "translate-y-full" : "translate-y-0"
         )}>
           <div className="flex justify-around items-center h-16 px-2 pb-safe">
-            {[
-              { path: '/', icon: Home },
-              { path: '/search', icon: Search },
-              { path: '/chats', icon: MessageSquare },
-              { path: user ? `/${user.id}` : '/auth', icon: User }
-            ].map((item) => (
-              <Link
-                key={item.path}
-                to={item.path}
-                className={cn(
-                  "flex flex-col items-center justify-center flex-1 h-full transition-colors",
-                  isActive(item.path) ? "text-primary" : "text-muted-foreground"
-                )}
-              >
-                <item.icon className={cn(
-                  "h-6 w-6",
-                  isActive(item.path) && "fill-current"
-                )} />
-              </Link>
-            ))}
+            <Link
+              to="/"
+              className={cn(
+                "flex flex-col items-center justify-center flex-1 h-full transition-colors",
+                isActive('/') ? "text-primary" : "text-muted-foreground"
+              )}
+            >
+              <Home className={cn(
+                "h-6 w-6",
+                isActive('/') && "fill-current"
+              )} />
+            </Link>
+            
+            <Link
+              to="/search"
+              className={cn(
+                "flex flex-col items-center justify-center flex-1 h-full transition-colors",
+                isActive('/search') ? "text-primary" : "text-muted-foreground"
+              )}
+            >
+              <Search className={cn(
+                "h-6 w-6",
+                isActive('/search') && "fill-current"
+              )} />
+            </Link>
+            
             <MobileMenuSheet />
+            
+            <Link
+              to="/chats"
+              className={cn(
+                "flex flex-col items-center justify-center flex-1 h-full transition-colors",
+                isActive('/chats') ? "text-primary" : "text-muted-foreground"
+              )}
+            >
+              <MessageSquare className={cn(
+                "h-6 w-6",
+                isActive('/chats') && "fill-current"
+              )} />
+            </Link>
+            
+            <Link
+              to={user ? `/${user.id}` : '/auth'}
+              className={cn(
+                "flex flex-col items-center justify-center flex-1 h-full transition-colors",
+                isActive(user ? `/${user.id}` : '/auth') ? "text-primary" : "text-muted-foreground"
+              )}
+            >
+              <User className={cn(
+                "h-6 w-6",
+                isActive(user ? `/${user.id}` : '/auth') && "fill-current"
+              )} />
+            </Link>
           </div>
         </nav>
       )}
