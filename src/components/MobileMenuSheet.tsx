@@ -79,7 +79,7 @@ export function MobileMenuSheet() {
     { icon: ImageIcon, label: 'Moments', path: '/moments' },
     { icon: Hash, label: 'Trending', path: '/trending' },
     { icon: Grid3x3, label: 'Mini Programs', path: '/mini-programs' },
-    { icon: Zap, label: 'Super App', path: '/super-app' },
+    { icon: Zap, label: 'Super App', path: '/hub' },
     { icon: Bell, label: 'Notifications', path: '/notifications', requiresAuth: true },
   ];
 
@@ -98,7 +98,7 @@ export function MobileMenuSheet() {
     menuItems.push({ 
       icon: TrendingUp, 
       label: 'Affiliate', 
-      path: '/affiliate/dashboard', 
+      path: '/affiliate-dashboard', 
       requiresAffiliate: true 
     });
   }
