@@ -65,7 +65,28 @@ const AIChat: React.FC = () => {
             }
         });
 
-        if (error) throw error;
+        if (error) {
+          console.error('Edge function error:', error);
+          
+          // Get error message from various possible sources
+          const errorMsg = error.message || JSON.stringify(error);
+          
+          // Check for payment required error (402)
+          if (errorMsg.includes('402') || errorMsg.includes('Payment required') || errorMsg.includes('credits')) {
+            toast.error('Out of AI credits! Go to Settings → Workspace → Usage to add credits.', {
+              duration: 6000,
+            });
+            return;
+          }
+          
+          // Check for rate limit error (429)
+          if (errorMsg.includes('429') || errorMsg.includes('Rate limit')) {
+            toast.error('Rate limit exceeded. Please try again in a moment.');
+            return;
+          }
+          
+          throw error;
+        }
         
         const assistantMessage: Message = {
             role: 'assistant',
@@ -133,14 +154,25 @@ const AIChat: React.FC = () => {
       console.log('Response:', { data, error });
 
       if (error) {
-        if (error.message?.includes('429')) {
+        console.error('Edge function error:', error);
+        
+        // Get error message from various possible sources
+        const errorMsg = error.message || JSON.stringify(error);
+        
+        // Check for payment required error (402)
+        if (errorMsg.includes('402') || errorMsg.includes('Payment required') || errorMsg.includes('credits')) {
+          toast.error('Out of AI credits! Go to Settings → Workspace → Usage to add credits.', {
+            duration: 6000,
+          });
+          return;
+        }
+        
+        // Check for rate limit error (429)
+        if (errorMsg.includes('429') || errorMsg.includes('Rate limit')) {
           toast.error('Rate limit exceeded. Please try again in a moment.');
           return;
         }
-        if (error.message?.includes('402')) {
-          toast.error('AI service requires payment. Please add credits.');
-          return;
-        }
+        
         throw error;
       }
 

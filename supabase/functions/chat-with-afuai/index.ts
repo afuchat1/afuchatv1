@@ -146,19 +146,28 @@ serve(async (req) => {
     });
 
     if (!response.ok) {
+      const errorText = await response.text();
+      console.error('AI Gateway error:', {
+        status: response.status,
+        statusText: response.statusText,
+        body: errorText
+      });
+      
       if (response.status === 429) {
-        return new Response(JSON.stringify({ error: 'Rate limit exceeded' }), {
+        return new Response(JSON.stringify({ error: 'Rate limit exceeded. Please try again later.' }), {
           status: 429,
           headers: { ...corsHeaders, 'Content-Type': 'application/json' },
         });
       }
       if (response.status === 402) {
-        return new Response(JSON.stringify({ error: 'Payment required' }), {
+        return new Response(JSON.stringify({ 
+          error: 'Payment required. Your Lovable AI credits have been exhausted. Please add credits to your workspace.' 
+        }), {
           status: 402,
           headers: { ...corsHeaders, 'Content-Type': 'application/json' },
         });
       }
-      throw new Error('AI gateway error');
+      throw new Error(`AI gateway error: ${response.status} ${errorText}`);
     }
 
     const data = await response.json();
