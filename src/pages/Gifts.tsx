@@ -9,6 +9,7 @@ import { Gift, TrendingUp, Sparkles } from 'lucide-react';
 import { toast } from 'sonner';
 import { GiftImage } from '@/components/gifts/GiftImage';
 import { GiftDetailSheet } from '@/components/gifts/GiftDetailSheet';
+import { GiftPreviewModal } from '@/components/gifts/GiftPreviewModal';
 
 interface Gift {
   id: string;
@@ -41,6 +42,8 @@ const Gifts = () => {
   const [loading, setLoading] = useState(true);
   const [selectedGiftId, setSelectedGiftId] = useState<string | null>(null);
   const [sheetOpen, setSheetOpen] = useState(false);
+  const [previewModalOpen, setPreviewModalOpen] = useState(false);
+  const [selectedGift, setSelectedGift] = useState<GiftWithStats | null>(null);
 
   useEffect(() => {
     fetchGifts();
@@ -134,9 +137,17 @@ const Gifts = () => {
     }
   };
 
-  const handleGiftClick = (giftId: string) => {
-    setSelectedGiftId(giftId);
-    setSheetOpen(true);
+  const handleGiftClick = (gift: GiftWithStats) => {
+    setSelectedGift(gift);
+    setPreviewModalOpen(true);
+  };
+
+  const handleSendGift = () => {
+    if (selectedGift) {
+      setPreviewModalOpen(false);
+      setSelectedGiftId(selectedGift.id);
+      setSheetOpen(true);
+    }
   };
 
   if (loading) {
@@ -180,10 +191,10 @@ const Gifts = () => {
           <TabsContent value="all" className="space-y-6">
             <div className="grid grid-cols-3 sm:grid-cols-4 md:grid-cols-5 lg:grid-cols-6 gap-6">
               {allGifts.map(gift => (
-                  <div
+                  <Card
                     key={gift.id}
-                    className="cursor-pointer transition-all duration-300 hover:scale-110 group relative flex-shrink-0 w-32"
-                    onClick={() => handleGiftClick(gift.id)}
+                    className="cursor-pointer transition-all duration-300 hover:scale-105 hover:shadow-xl hover:-translate-y-1 group relative p-4 border-2 hover:border-primary/50 bg-gradient-to-br from-background to-primary/5"
+                    onClick={() => handleGiftClick(gift)}
                   >
                     <div className="relative space-y-2">
                       <div className="relative">
@@ -225,7 +236,7 @@ const Gifts = () => {
                         )}
                       </div>
                     </div>
-                  </div>
+                  </Card>
                 ))}
               </div>
           </TabsContent>
@@ -249,11 +260,19 @@ const Gifts = () => {
               </Card>
             ) : (
               <div className="grid grid-cols-3 sm:grid-cols-4 md:grid-cols-5 lg:grid-cols-6 gap-6">
-                {ownedGifts.map(({ gift, received_count, last_received }) => (
-                    <div
+                {ownedGifts.map(({ gift, received_count, last_received }) => {
+                  const giftWithStats = allGifts.find(g => g.id === gift.id) || {
+                    ...gift,
+                    current_price: gift.base_xp_cost,
+                    total_sent: 0,
+                    price_multiplier: 1
+                  };
+                  
+                  return (
+                    <Card
                       key={gift.id}
-                      className="cursor-pointer transition-all duration-300 hover:scale-110 group relative flex-shrink-0 w-32"
-                      onClick={() => handleGiftClick(gift.id)}
+                      className="cursor-pointer transition-all duration-300 hover:scale-105 hover:shadow-xl hover:-translate-y-1 group relative p-4 border-2 hover:border-primary/50 bg-gradient-to-br from-background to-primary/5"
+                      onClick={() => handleGiftClick(giftWithStats)}
                     >
                       <div className="space-y-2">
                         <div className="relative">
@@ -274,13 +293,21 @@ const Gifts = () => {
                           <h3 className="font-semibold text-xs truncate">{gift.name}</h3>
                         </div>
                       </div>
-                    </div>
-                  ))}
+                    </Card>
+                  );
+                })}
                 </div>
               )}
           </TabsContent>
         </Tabs>
       </div>
+
+      <GiftPreviewModal
+        gift={selectedGift}
+        open={previewModalOpen}
+        onOpenChange={setPreviewModalOpen}
+        onSendGift={handleSendGift}
+      />
 
       <GiftDetailSheet
         giftId={selectedGiftId}
