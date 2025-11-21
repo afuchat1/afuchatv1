@@ -821,14 +821,15 @@ const Profile = ({ mustExist = false }: ProfileProps) => {
 					
 				<div className="flex items-end -mt-20 sm:-mt-16">
 					<div className="relative">
-						<StoryAvatar 
-							userId={profileId}
-							avatarUrl={profile.avatar_url}
-							name={profile.display_name}
-							size="xl"
-							className="h-24 w-24 sm:h-32 sm:w-32 border-4 border-background"
-							showStoryRing={true}
-						/>
+						<div className="h-24 w-24 sm:h-32 sm:w-32 border-4 border-background rounded-full overflow-hidden">
+							<StoryAvatar 
+								userId={profileId}
+								avatarUrl={profile.avatar_url}
+								name={profile.display_name}
+								size="xl"
+								showStoryRing={true}
+							/>
+						</div>
 						<OnlineStatus lastSeen={profile.last_seen} showOnlineStatus={profile.show_online_status} />
 					</div>
 
