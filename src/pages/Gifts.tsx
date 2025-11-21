@@ -178,7 +178,7 @@ const Gifts = () => {
           </TabsList>
 
           <TabsContent value="all" className="space-y-6">
-            <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-6">
+            <div className="grid grid-cols-3 sm:grid-cols-4 md:grid-cols-5 lg:grid-cols-6 gap-6">
               {allGifts.map(gift => (
                   <div
                     key={gift.id}
@@ -248,7 +248,7 @@ const Gifts = () => {
                 </p>
               </Card>
             ) : (
-              <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-6">
+              <div className="grid grid-cols-3 sm:grid-cols-4 md:grid-cols-5 lg:grid-cols-6 gap-6">
                 {ownedGifts.map(({ gift, received_count, last_received }) => (
                     <div
                       key={gift.id}
