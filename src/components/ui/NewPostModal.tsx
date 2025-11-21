@@ -279,6 +279,7 @@ const NewPostModal: React.FC<NewPostModalProps> = ({ isOpen, onClose }) => {
                     newPreviews.push(reader.result as string);
                     processedCount++;
                     if (processedCount === validFiles.length) {
+                        setSelectedImages(prev => [...prev, ...validFiles]);
                         setImagePreviews(prev => [...prev, ...newPreviews]);
                         const newAltTexts: string[] = [];
                         for (const preview of newPreviews) {
@@ -295,8 +296,6 @@ const NewPostModal: React.FC<NewPostModalProps> = ({ isOpen, onClose }) => {
                 toast.error(`Failed to compress ${file.name}`);
             }
         }
-
-        setSelectedImages(prev => [...prev, ...validFiles]);
     };
 
     const handleRemoveImage = (index: number) => {
