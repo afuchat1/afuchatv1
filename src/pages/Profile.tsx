@@ -5,7 +5,8 @@ import { useAuth } from '@/contexts/AuthContext';
 import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { toast } from 'sonner';
-import { ArrowLeft, MessageSquare, UserPlus, Pencil, Calendar, Lock, LogOut, Settings, Camera } from 'lucide-react';
+import { ArrowLeft, MessageSquare, UserPlus, Pencil, Calendar, Lock, LogOut, Settings, Camera, User, Bell, Shield } from 'lucide-react';
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
 import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/ui/tabs';
 import { Separator } from '@/components/ui/separator';
 import { Skeleton } from '@/components/ui/skeleton';
@@ -805,26 +806,47 @@ const Profile = () => {
 				</div>
 
 				<div className="p-4 relative">
-					{/* Edit Profile Button - Right side, overlapping banner/content */}
-					{user && user.id === profileId && (
-						<div className="absolute top-4 right-4 z-10 flex gap-2">
-							<Button 
-								variant="outline" 
-								size="icon"
-								className="rounded-full bg-background hover:bg-muted border-2"
-								onClick={() => navigate('/settings')}
-							>
-								<Settings className="h-5 w-5" />
-							</Button>
-							<Button 
-								variant="outline" 
-								className="rounded-full px-6 py-2 font-bold bg-background hover:bg-muted border-2 h-auto"
-								onClick={() => navigate(`/${urlParam}/edit`)}
-							>
-								{t('profile.editProfile')}
-							</Button>
-						</div>
-					)}
+				{/* Edit Profile Button - Right side, overlapping banner/content */}
+				{user && user.id === profileId && (
+					<div className="absolute top-4 right-4 z-10 flex gap-2">
+						<DropdownMenu>
+							<DropdownMenuTrigger asChild>
+								<Button 
+									variant="outline" 
+									size="icon"
+									className="rounded-full bg-background hover:bg-muted border-2"
+								>
+									<Settings className="h-5 w-5" />
+								</Button>
+							</DropdownMenuTrigger>
+							<DropdownMenuContent align="end" className="w-56 bg-background">
+								<DropdownMenuItem onClick={() => navigate('/settings')} className="cursor-pointer">
+									<User className="mr-2 h-4 w-4" />
+									<span>Account Settings</span>
+								</DropdownMenuItem>
+								<DropdownMenuItem onClick={() => navigate('/settings')} className="cursor-pointer">
+									<Lock className="mr-2 h-4 w-4" />
+									<span>Privacy</span>
+								</DropdownMenuItem>
+								<DropdownMenuItem onClick={() => navigate('/settings')} className="cursor-pointer">
+									<Bell className="mr-2 h-4 w-4" />
+									<span>Notifications</span>
+								</DropdownMenuItem>
+								<DropdownMenuItem onClick={() => navigate('/settings')} className="cursor-pointer">
+									<Shield className="mr-2 h-4 w-4" />
+									<span>Security</span>
+								</DropdownMenuItem>
+							</DropdownMenuContent>
+						</DropdownMenu>
+						<Button 
+							variant="outline" 
+							className="rounded-full px-6 py-2 font-bold bg-background hover:bg-muted border-2 h-auto"
+							onClick={() => navigate(`/${urlParam}/edit`)}
+						>
+							{t('profile.editProfile')}
+						</Button>
+					</div>
+				)}
 					
 					<div className="flex items-end -mt-20 sm:-mt-16">
 						<div className="relative h-24 w-24 sm:h-32 sm:w-32 rounded-full overflow-hidden bg-background border-4 border-background">
