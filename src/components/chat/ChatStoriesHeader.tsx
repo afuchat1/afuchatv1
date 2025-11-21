@@ -18,9 +18,8 @@ export const ChatStoriesHeader = () => {
   const navigate = useNavigate();
   const [storyUsers, setStoryUsers] = useState<StoryUser[]>([]);
   const [loading, setLoading] = useState(true);
-  const [isExpanded, setIsExpanded] = useState(false);
+  const [expandProgress, setExpandProgress] = useState(0);
   const [startY, setStartY] = useState(0);
-  const [currentY, setCurrentY] = useState(0);
   const [isDragging, setIsDragging] = useState(false);
   const headerRef = useRef<HTMLDivElement>(null);
 
@@ -28,7 +27,6 @@ export const ChatStoriesHeader = () => {
     if (!user) return;
     fetchActiveStories();
 
-    // Subscribe to story changes
     const channel = supabase
       .channel('chat-stories-updates')
       .on(
@@ -51,7 +49,6 @@ export const ChatStoriesHeader = () => {
 
   const fetchActiveStories = async () => {
     try {
-      // Get all active stories
       const { data: stories, error } = await supabase
         .from('stories')
         .select(`
@@ -63,7 +60,6 @@ export const ChatStoriesHeader = () => {
 
       if (error) throw error;
 
-      // Group by user and count stories
       const userMap = new Map<string, StoryUser>();
       
       stories?.forEach((story: any) => {
@@ -97,28 +93,26 @@ export const ChatStoriesHeader = () => {
   };
 
   const handleTouchStart = (e: React.TouchEvent) => {
-    if (!isExpanded) {
-      setStartY(e.touches[0].clientY);
-      setIsDragging(true);
-    }
+    setStartY(e.touches[0].clientY);
+    setIsDragging(true);
   };
 
   const handleTouchMove = (e: React.TouchEvent) => {
-    if (isDragging && !isExpanded) {
+    if (isDragging) {
       const deltaY = e.touches[0].clientY - startY;
       if (deltaY > 0) {
-        setCurrentY(deltaY);
+        const progress = Math.min(deltaY / 150, 1);
+        setExpandProgress(progress);
       }
     }
   };
 
   const handleTouchEnd = () => {
-    if (isDragging) {
-      if (currentY > 50) {
-        setIsExpanded(true);
-      }
-      setIsDragging(false);
-      setCurrentY(0);
+    setIsDragging(false);
+    if (expandProgress < 0.5) {
+      setExpandProgress(0);
+    } else {
+      setExpandProgress(1);
     }
   };
 
@@ -129,126 +123,152 @@ export const ChatStoriesHeader = () => {
   if (loading || storyUsers.length === 0) return null;
 
   const totalStories = storyUsers.reduce((sum, user) => sum + user.story_count, 0);
+  const isExpanded = expandProgress > 0.5;
 
   return (
     <div
       ref={headerRef}
-      className={cn(
-        "transition-all duration-300 ease-out",
-        isExpanded ? "px-0 pb-6" : "px-6 pb-4"
-      )}
+      className="transition-all duration-300 ease-out"
       onTouchStart={handleTouchStart}
       onTouchMove={handleTouchMove}
       onTouchEnd={handleTouchEnd}
       style={{
-        transform: isDragging ? `translateY(${currentY * 0.5}px)` : 'none',
+        paddingLeft: `${24 - expandProgress * 24}px`,
+        paddingRight: `${24 - expandProgress * 24}px`,
+        paddingBottom: `${16 + expandProgress * 8}px`,
       }}
     >
-      {!isExpanded ? (
-        // Collapsed view - overlapping avatars
-        <div className="flex items-center gap-4">
-          <div className="flex items-center -space-x-3">
-            {storyUsers.slice(0, 4).map((storyUser, index) => (
-              <div
-                key={storyUser.user_id}
-                onClick={() => handleStoryClick(storyUser.user_id)}
-                className={cn(
-                  "relative cursor-pointer transition-all duration-200 hover:scale-110 hover:z-10",
-                  index === 0 ? "z-40" : index === 1 ? "z-30" : index === 2 ? "z-20" : "z-10"
-                )}
-                style={{ 
-                  transform: `translateX(${index * 2}px)`,
-                }}
-              >
-                <div className="p-[2.5px] rounded-full bg-gradient-to-tr from-yellow-400 via-pink-500 to-purple-500">
-                  {storyUser.avatar_url ? (
-                    <img
-                      src={storyUser.avatar_url}
-                      alt={storyUser.display_name}
-                      className="h-14 w-14 rounded-full object-cover border-[3px] border-background"
-                    />
-                  ) : (
-                    <div className="h-14 w-14 rounded-full bg-gradient-to-br from-primary to-primary/80 flex items-center justify-center border-[3px] border-background">
-                      <span className="text-lg font-semibold text-white">
-                        {storyUser.display_name?.charAt(0).toUpperCase()}
-                      </span>
-                    </div>
-                  )}
-                </div>
-              </div>
-            ))}
-          </div>
-
-          <div className="flex flex-col">
-            <h2 className="text-xl font-bold text-foreground">
-              {totalStories} {totalStories === 1 ? 'Story' : 'Stories'}
-            </h2>
-            <p className="text-xs text-muted-foreground">
-              Pull down to expand
-            </p>
-          </div>
-        </div>
-      ) : (
-        // Expanded view - horizontal scroll with all stories
-        <div className="space-y-4">
-          <div className="px-6 flex items-center justify-between">
-            <h2 className="text-xl font-bold text-foreground">Stories</h2>
-            <button
-              onClick={() => setIsExpanded(false)}
-              className="text-sm text-muted-foreground hover:text-foreground transition-colors"
-            >
-              Close
-            </button>
-          </div>
-          
-          <div className="overflow-x-auto scrollbar-hide">
-            <div className="flex gap-4 px-6 pb-2">
-              {/* My Story / Create Story */}
-              <div
-                onClick={handleCreateStory}
-                className="flex-shrink-0 cursor-pointer transition-transform duration-200 hover:scale-105"
-              >
-                <div className="relative">
-                  <div className="h-20 w-20 rounded-full bg-gradient-to-br from-muted to-muted/50 flex items-center justify-center border-2 border-dashed border-primary/50">
-                    <Plus className="h-8 w-8 text-primary" />
-                  </div>
-                </div>
-                <p className="text-xs text-center mt-2 font-medium truncate w-20">My Story</p>
-              </div>
-
-              {/* Other users' stories */}
-              {storyUsers.map((storyUser) => (
+      <div
+        style={{
+          height: `${80 + expandProgress * 80}px`,
+          overflow: 'hidden',
+          transition: isDragging ? 'none' : 'all 0.3s ease-out',
+        }}
+      >
+        {/* Collapsed content */}
+        <div
+          style={{
+            opacity: 1 - expandProgress,
+            transform: `translateY(${expandProgress * -20}px)`,
+            transition: isDragging ? 'none' : 'all 0.3s ease-out',
+          }}
+        >
+          <div className="flex items-center gap-4 px-6">
+            <div className="flex items-center -space-x-3">
+              {storyUsers.slice(0, 4).map((storyUser, index) => (
                 <div
                   key={storyUser.user_id}
                   onClick={() => handleStoryClick(storyUser.user_id)}
-                  className="flex-shrink-0 cursor-pointer transition-transform duration-200 hover:scale-105"
+                  className={cn(
+                    "relative cursor-pointer transition-all duration-200 hover:scale-110 hover:z-10",
+                    index === 0 ? "z-40" : index === 1 ? "z-30" : index === 2 ? "z-20" : "z-10"
+                  )}
+                  style={{ 
+                    transform: `translateX(${index * 2}px)`,
+                  }}
                 >
-                  <div className="relative">
-                    <div className="p-[2.5px] rounded-full bg-gradient-to-tr from-yellow-400 via-pink-500 to-purple-500">
-                      {storyUser.avatar_url ? (
-                        <img
-                          src={storyUser.avatar_url}
-                          alt={storyUser.display_name}
-                          className="h-20 w-20 rounded-full object-cover border-[3px] border-background"
-                        />
-                      ) : (
-                        <div className="h-20 w-20 rounded-full bg-gradient-to-br from-primary to-primary/80 flex items-center justify-center border-[3px] border-background">
-                          <span className="text-2xl font-semibold text-white">
-                            {storyUser.display_name?.charAt(0).toUpperCase()}
-                          </span>
-                        </div>
-                      )}
-                    </div>
+                  <div className="p-[2.5px] rounded-full bg-gradient-to-tr from-yellow-400 via-pink-500 to-purple-500">
+                    {storyUser.avatar_url ? (
+                      <img
+                        src={storyUser.avatar_url}
+                        alt={storyUser.display_name}
+                        className="h-14 w-14 rounded-full object-cover border-[3px] border-background"
+                      />
+                    ) : (
+                      <div className="h-14 w-14 rounded-full bg-gradient-to-br from-primary to-primary/80 flex items-center justify-center border-[3px] border-background">
+                        <span className="text-lg font-semibold text-white">
+                          {storyUser.display_name?.charAt(0).toUpperCase()}
+                        </span>
+                      </div>
+                    )}
                   </div>
-                  <p className="text-xs text-center mt-2 font-medium truncate w-20">
-                    {storyUser.display_name}
-                  </p>
                 </div>
               ))}
             </div>
+
+            <div className="flex flex-col">
+              <h2 className="text-xl font-bold text-foreground">
+                {totalStories} {totalStories === 1 ? 'Story' : 'Stories'}
+              </h2>
+              <p className="text-xs text-muted-foreground">
+                Swipe down to expand
+              </p>
+            </div>
           </div>
         </div>
-      )}
+
+        {/* Expanded content */}
+        <div
+          style={{
+            opacity: expandProgress,
+            transform: `translateY(${(1 - expandProgress) * 20}px)`,
+            transition: isDragging ? 'none' : 'all 0.3s ease-out',
+            position: 'absolute',
+            top: 0,
+            left: 0,
+            right: 0,
+          }}
+        >
+          <div className="space-y-4">
+            <div className="px-6 flex items-center justify-between">
+              <h2 className="text-xl font-bold text-foreground">Stories</h2>
+              <button
+                onClick={() => setExpandProgress(0)}
+                className="text-sm text-muted-foreground hover:text-foreground transition-colors"
+              >
+                Close
+              </button>
+            </div>
+            
+            <div className="overflow-x-auto scrollbar-hide">
+              <div className="flex gap-4 px-6 pb-2">
+                {/* My Story / Create Story */}
+                <div
+                  onClick={handleCreateStory}
+                  className="flex-shrink-0 cursor-pointer transition-transform duration-200 hover:scale-105"
+                >
+                  <div className="relative">
+                    <div className="h-20 w-20 rounded-full bg-gradient-to-br from-muted to-muted/50 flex items-center justify-center border-2 border-dashed border-primary/50">
+                      <Plus className="h-8 w-8 text-primary" />
+                    </div>
+                  </div>
+                  <p className="text-xs text-center mt-2 font-medium truncate w-20">My Story</p>
+                </div>
+
+                {/* Other users' stories */}
+                {storyUsers.map((storyUser) => (
+                  <div
+                    key={storyUser.user_id}
+                    onClick={() => handleStoryClick(storyUser.user_id)}
+                    className="flex-shrink-0 cursor-pointer transition-transform duration-200 hover:scale-105"
+                  >
+                    <div className="relative">
+                      <div className="p-[2.5px] rounded-full bg-gradient-to-tr from-yellow-400 via-pink-500 to-purple-500">
+                        {storyUser.avatar_url ? (
+                          <img
+                            src={storyUser.avatar_url}
+                            alt={storyUser.display_name}
+                            className="h-20 w-20 rounded-full object-cover border-[3px] border-background"
+                          />
+                        ) : (
+                          <div className="h-20 w-20 rounded-full bg-gradient-to-br from-primary to-primary/80 flex items-center justify-center border-[3px] border-background">
+                            <span className="text-2xl font-semibold text-white">
+                              {storyUser.display_name?.charAt(0).toUpperCase()}
+                            </span>
+                          </div>
+                        )}
+                      </div>
+                    </div>
+                    <p className="text-xs text-center mt-2 font-medium truncate w-20">
+                      {storyUser.display_name}
+                    </p>
+                  </div>
+                ))}
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
     </div>
   );
 };
