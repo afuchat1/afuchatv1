@@ -67,6 +67,8 @@ const FinancialHub = lazy(() => import("./pages/FinancialHub"));
 const SocialHub = lazy(() => import("./pages/SocialHub"));
 const SecurityDashboard = lazy(() => import("./pages/SecurityDashboard"));
 const ChangePassword = lazy(() => import("./pages/ChangePassword"));
+const Gifts = lazy(() => import("./pages/Gifts"));
+const GiftDetail = lazy(() => import("./pages/GiftDetail"));
 
 const FoodDelivery = lazy(() => import("./pages/FoodDelivery"));
 const Bookings = lazy(() => import("./pages/Bookings"));
@@ -123,6 +125,8 @@ const AppRoutes = () => {
       <Route path="/leaderboard" element={<Layout><UnifiedLeaderboard /></Layout>} />
       <Route path="/wallet" element={<Layout><FinancialHub /></Layout>} />
       <Route path="/social" element={<Layout><SocialHub /></Layout>} />
+      <Route path="/gifts" element={<Layout><Gifts /></Layout>} />
+      <Route path="/gifts/:id" element={<Layout><GiftDetail /></Layout>} />
       <Route path="/qr-code" element={<Layout><QRCode /></Layout>} />
       <Route path="/settings" element={<Layout><Settings /></Layout>} />
       <Route path="/security" element={<Layout><SecurityDashboard /></Layout>} />

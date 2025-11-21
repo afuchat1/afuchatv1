@@ -77,7 +77,7 @@ export function MobileMenuSheet() {
     { icon: ShoppingBag, label: 'Shop', path: '/shop' },
     { icon: Wallet, label: 'Wallet', path: '/wallet', requiresAuth: true },
     { icon: Send, label: 'Transfer', path: '/transfer', requiresAuth: true },
-    { icon: Gift, label: 'Gifts', path: '/wallet', requiresAuth: true },
+    { icon: Gift, label: 'Gifts', path: '/gifts' },
     { icon: ImageIcon, label: 'Moments', path: '/moments' },
     { icon: Hash, label: 'Trending', path: '/trending' },
     { icon: Grid3x3, label: 'Mini Programs', path: '/mini-programs' },
