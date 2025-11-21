@@ -1603,8 +1603,11 @@ const Feed = () => {
               has_liked: false,
             };
 
-            // Add to both feeds
-            setPosts(prev => [formattedPost, ...prev]);
+            // Add to both feeds (check for duplicates first)
+            setPosts(prev => {
+              if (prev.some(p => p.id === formattedPost.id)) return prev;
+              return [formattedPost, ...prev];
+            });
             
             // Check if post is from someone user follows for "Following" feed
             if (user) {
@@ -1616,7 +1619,10 @@ const Feed = () => {
                 .single();
               
               if (isFollowing) {
-                setFollowingPosts(prev => [formattedPost, ...prev]);
+                setFollowingPosts(prev => {
+                  if (prev.some(p => p.id === formattedPost.id)) return prev;
+                  return [formattedPost, ...prev];
+                });
               }
             }
             
