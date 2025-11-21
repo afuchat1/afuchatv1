@@ -207,17 +207,6 @@ const MemoryGame = () => {
 
   return (
     <div className="min-h-screen bg-background pb-20">
-      <header className="sticky top-0 z-50 w-full border-b border-border bg-background/95 backdrop-blur">
-        <div className="container max-w-4xl mx-auto px-4">
-          <div className="flex h-16 items-center justify-between">
-            <Button variant="ghost" size="icon" onClick={() => navigate(-1)} className="hidden lg:inline-flex">
-              <ArrowLeft className="h-5 w-5" />
-            </Button>
-            <Logo size="sm" />
-            <div className="w-10" />
-          </div>
-        </div>
-      </header>
 
       <main className="container max-w-4xl mx-auto px-4 py-6">
         <div className="text-center mb-6">

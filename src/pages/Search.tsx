@@ -296,8 +296,7 @@ const Search = () => {
 
   return (
     <div className="h-full flex flex-col">
-      <div className="p-4 bg-background/95 backdrop-blur sticky top-0 z-10 border-b border-border">
-        <h1 className="text-base font-bold text-foreground mb-4">{t('search.title')}</h1>
+      <div className="p-4">
         <div className="flex gap-2">
           <Input
             placeholder={t('search.placeholder')}

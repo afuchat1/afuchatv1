@@ -171,9 +171,6 @@ const Notifications = () => {
   if (loading) {
     return (
       <div className="h-full flex flex-col max-w-4xl mx-auto">
-        <div className="p-3 sm:p-4 md:p-5 border-b border-border sticky top-0 bg-background/95 backdrop-blur z-10">
-          <h1 className="text-base sm:text-lg md:text-xl font-bold text-foreground">Notifications</h1>
-        </div>
         <div className="p-3 sm:p-4 space-y-3 sm:space-y-4">
           {[...Array(10)].map((_, i) => (
             <div key={i} className="flex items-center space-x-3 sm:space-x-4">
@@ -191,8 +188,7 @@ const Notifications = () => {
 
   return (
     <div className="h-full flex flex-col max-w-4xl mx-auto">
-      <div className="p-3 sm:p-4 md:p-5 border-b border-border sticky top-0 bg-background/95 backdrop-blur z-10">
-        <h1 className="text-base sm:text-lg md:text-xl font-bold text-foreground">Notifications</h1>
+      <div className="p-3 sm:p-4 md:p-5">
       </div>
       <div className="flex-1 overflow-y-auto">
         {notifications.length === 0 ? (

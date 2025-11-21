@@ -206,27 +206,6 @@ export default function Followers() {
 
   return (
     <div className="min-h-screen bg-background pb-20">
-      {/* Header */}
-      <div className="sticky top-0 z-10 bg-background/95 backdrop-blur border-b border-border">
-        <div className="flex items-center gap-4 p-4">
-          <Button
-            variant="ghost"
-            size="icon"
-            className="rounded-full hidden lg:inline-flex"
-            onClick={() => navigate(-1)}
-          >
-            <ArrowLeft className="h-5 w-5" />
-          </Button>
-          <div>
-            <h1 className="text-xl font-bold">Followers</h1>
-            <p className="text-sm text-muted-foreground">
-              {loading ? "Loading..." : `${users.length} followers`}
-            </p>
-          </div>
-        </div>
-      </div>
-
-      {/* Content */}
       <div className="max-w-2xl mx-auto">
         {loading ? (
           <div className="space-y-1">

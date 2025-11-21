@@ -776,39 +776,6 @@ const Profile = () => {
 
 	return (
 		<div className="h-full flex flex-col">
-		<div className="p-4 sticky top-0 bg-background/95 backdrop-blur z-10 border-b border-border">
-			<div className="flex items-center justify-between">
-				<div className="flex items-center">
-					<Button
-						variant="ghost"
-						size="icon"
-						// 🚨 MODIFICATION 2: Changed navigate(-1) to navigate('/')
-						onClick={() => navigate('/')}
-						className="rounded-full mr-4 hidden lg:inline-flex"
-					>
-						<ArrowLeft className="h-5 w-5" />
-					</Button>
-						<div>
-							<h1 className="text-xl font-bold">{profile.display_name}</h1>
-							<p className="text-xs text-muted-foreground">{posts.length} {t('profile.posts')}</p>
-						</div>
-					</div>
-					{user && user.id === profileId && (
-						<div className="flex items-center gap-1">
-							<Button
-								variant="ghost"
-								size="icon"
-								onClick={() => setIsActionsSheetOpen(true)}
-								className="rounded-full"
-								title="More options"
-							>
-								<Settings className="h-5 w-5" />
-							</Button>
-						</div>
-					)}
-				</div>
-			</div>
-
 			<div className="flex-1 overflow-y-auto">
 				<div className="relative h-36 bg-gray-300 dark:bg-gray-700 w-full">
 					{profile?.banner_url ? (

@@ -229,13 +229,6 @@ const Chats = () => {
   if (effectiveLoading) {
     return (
       <div className="h-full flex flex-col bg-gradient-to-b from-background to-muted/20">
-        <div className="sticky top-0 z-10 bg-background/95 backdrop-blur border-b border-border p-6">
-          <div className="flex items-center justify-between mb-4">
-            <Skeleton className="h-8 w-32" />
-            <Skeleton className="h-10 w-10 rounded-full" />
-          </div>
-          <Skeleton className="h-11 w-full rounded-xl" />
-        </div>
         <div className="flex-1 p-4 space-y-3">
           {[...Array(6)].map((_, i) => <ChatItemSkeleton key={i} />)}
         </div>
@@ -342,9 +335,8 @@ const Chats = () => {
 
   return (
     <div className="h-full flex flex-col bg-gradient-to-b from-background to-muted/20">
-      {/* Header */}
-      <div className="sticky top-0 z-10 bg-background/95 backdrop-blur border-b border-border p-6">
-        <div className="p-6 pb-4">
+      <div className="p-6">
+        <div className="pb-4">
           <div className="flex items-center justify-between mb-5">
             <div>
               <h1 className="text-2xl md:text-3xl font-bold bg-gradient-to-r from-foreground to-foreground/70 bg-clip-text text-transparent">
