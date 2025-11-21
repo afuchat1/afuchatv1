@@ -30,15 +30,6 @@ const Travel = () => {
 
   return (
     <div className="min-h-screen bg-background">
-      <header className="sticky top-0 z-50 w-full border-b border-border bg-background/95 backdrop-blur">
-        <div className="flex h-14 items-center px-4">
-          <Button variant="ghost" size="icon" onClick={() => navigate(-1)} className="hidden lg:inline-flex">
-            <ArrowLeft className="h-5 w-5" />
-          </Button>
-          <h1 className="ml-4 text-lg font-semibold">Travel & Hotels</h1>
-        </div>
-      </header>
-
       <main className="container max-w-6xl mx-auto px-4 py-6">
         <Tabs defaultValue="flights" className="w-full">
           <TabsList className="grid w-full grid-cols-2 mb-6">

@@ -48,21 +48,6 @@ const FoodDelivery = () => {
 
   return (
     <div className="min-h-screen bg-background">
-      <header className="sticky top-0 z-50 w-full border-b border-border bg-background/95 backdrop-blur">
-        <div className="flex h-14 items-center px-4">
-          <Button variant="ghost" size="icon" onClick={() => navigate(-1)} className="hidden lg:inline-flex">
-            <ArrowLeft className="h-5 w-5" />
-          </Button>
-          <div className="ml-4 flex-1">
-            <h1 className="text-lg font-semibold">Food Delivery</h1>
-            <div className="flex items-center gap-1 text-xs text-muted-foreground">
-              <MapPin className="h-3 w-3" />
-              <span>Deliver to Current Location</span>
-            </div>
-          </div>
-        </div>
-      </header>
-
       <main className="container max-w-6xl mx-auto px-4 py-6 space-y-6">
         {/* Search */}
         <div className="relative">
