@@ -335,39 +335,8 @@ const Chats = () => {
   };
 
   return (
-    <div className="h-full flex flex-col bg-gradient-to-b from-background to-muted/20">
-      <div className="p-6">
-        <div className="pb-4">
-          <div className="flex items-center justify-between mb-5">
-            <div>
-              <h1 className="text-2xl md:text-3xl font-bold bg-gradient-to-r from-foreground to-foreground/70 bg-clip-text text-transparent">
-                {t('chat.title')}
-              </h1>
-              <p className="text-sm text-muted-foreground mt-1">
-                {filteredChats.length} {filteredChats.length === 1 ? t('chat.conversation') : t('chat.conversations')}
-              </p>
-            </div>
-            <Button 
-              size="lg"
-              className="rounded-full shadow-lg hover:shadow-xl h-12 w-12 p-0 bg-gradient-to-r from-primary to-primary/80 hover:from-primary/90 hover:to-primary/70 transition-all duration-300"
-              onClick={() => setIsNewChatDialogOpen(true)}
-            >
-              <MessageSquarePlus className="h-5 w-5" />
-            </Button>
-          </div>
-
-          {/* Search bar */}
-          <div className="relative">
-            <Search className="absolute left-4 top-1/2 -translate-y-1/2 h-5 w-5 text-muted-foreground" />
-            <Input
-              placeholder={t('chat.searchChats')}
-              value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
-              className="pl-12 h-11 rounded-xl bg-background/50 backdrop-blur-sm focus:bg-background transition-colors"
-            />
-          </div>
-        </div>
-
+    <div className="h-full flex flex-col bg-gradient-to-b from-background to-muted/20 relative">
+      <div className="pt-6 pb-4">
         {/* Stories Header */}
         <ChatStoriesHeader />
       </div>
@@ -410,6 +379,15 @@ const Chats = () => {
         isOpen={isNewChatDialogOpen}
         onClose={() => setIsNewChatDialogOpen(false)}
       />
+
+      {/* Floating Action Button */}
+      <Button
+        size="lg"
+        onClick={() => setIsNewChatDialogOpen(true)}
+        className="fixed bottom-6 right-6 h-14 w-14 rounded-full shadow-lg hover:shadow-xl bg-gradient-to-r from-primary to-primary/80 hover:from-primary/90 hover:to-primary/70 transition-all duration-300 z-50"
+      >
+        <MessageSquarePlus className="h-6 w-6" />
+      </Button>
     </div>
   );
 };
