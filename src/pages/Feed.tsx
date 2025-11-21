@@ -1031,32 +1031,19 @@ const Feed = () => {
 
   // Load cached data immediately on mount
   useEffect(() => {
-    const cachedPosts = sessionStorage.getItem('feedPosts');
-    const cachedFollowingPosts = sessionStorage.getItem('feedFollowingPosts');
+    // Always fetch fresh data on mount - don't use stale cache
+    fetchPosts();
+    
     const cachedTab = sessionStorage.getItem('feedActiveTab');
-
-    if (cachedPosts) {
-      const parsed = JSON.parse(cachedPosts);
-      setPosts(parsed);
-      setLoading(false);
-      setForceLoaded(true);
-    }
-    if (cachedFollowingPosts) {
-      setFollowingPosts(JSON.parse(cachedFollowingPosts));
-    }
     if (cachedTab) {
       setActiveTab(cachedTab as 'foryou' | 'following');
     }
-    
-    // If no cache, fetch normally
-    if (!cachedPosts) {
-      fetchPosts();
-    }
   }, []);
 
-  // Fetch current user profile
+  // Fetch current user profile and refetch posts when user changes
   useEffect(() => {
     if (user) {
+      // Fetch user profile
       supabase
         .from('profiles')
         .select('display_name, avatar_url')
@@ -1067,6 +1054,9 @@ const Feed = () => {
             setUserProfile(data);
           }
         });
+      
+      // Refetch posts to get correct has_liked status
+      fetchPosts();
     }
   }, [user]);
 
