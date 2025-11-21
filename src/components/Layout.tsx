@@ -9,7 +9,6 @@ import NotificationIcon from '@/components/nav/NotificationIcon';
 import InstallPromptBanner from '@/components/InstallPromptBanner';
 import { OfflineIndicator } from '@/components/OfflineIndicator';
 import { AccountModeSwitcher } from '@/components/AccountModeSwitcher';
-import FloatingActionButton from '@/components/ui/FloatingActionButton';
 import { MobileMenuSheet } from '@/components/MobileMenuSheet';
 import { supabase } from '@/integrations/supabase/client';
 import { cn } from '@/lib/utils';
@@ -127,9 +126,6 @@ const Layout = ({ children }: LayoutProps) => {
     }
     return location.pathname.startsWith(path);
   };
-
-  // Show FAB only on home and chat pages
-  const showFAB = location.pathname === '/' || location.pathname.startsWith('/chat');
   
   // Hide bottom navigation in chat rooms
   const isChatRoom = location.pathname.startsWith('/chat/');
@@ -288,9 +284,6 @@ const Layout = ({ children }: LayoutProps) => {
           </div>
         </nav>
       )}
-
-      {/* Floating Action Button - Only on home and chat pages */}
-      {showFAB && <FloatingActionButton />}
     </div>
   );
 };
