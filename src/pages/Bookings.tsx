@@ -38,17 +38,6 @@ const Bookings = () => {
 
   return (
     <div className="min-h-screen bg-background">
-      <header className="sticky top-0 z-50 w-full border-b border-border bg-background/95 backdrop-blur">
-        <div className="flex h-14 items-center px-4">
-          <Button variant="ghost" size="icon" onClick={() => navigate(-1)} className="hidden lg:inline-flex">
-            <ArrowLeft className="h-5 w-5" />
-          </Button>
-          <div className="ml-4">
-            <h1 className="text-lg font-semibold">Bookings & Reservations</h1>
-          </div>
-        </div>
-      </header>
-
       <main className="container max-w-6xl mx-auto px-4 py-6">
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
           {/* Left: Services */}
