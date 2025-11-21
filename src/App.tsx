@@ -19,6 +19,7 @@ import Welcome from "./pages/auth/Welcome";
 import SignIn from "./pages/auth/SignIn";
 import SignUp from "./pages/auth/SignUp";
 import NotFound from "./pages/NotFound";
+import UserNotFound from "./pages/UserNotFound";
 
 // Lazy load other pages
 const ForgotPassword = lazy(() => import("./pages/auth/ForgotPassword"));
@@ -167,6 +168,7 @@ const AppRoutes = () => {
       <Route path="/:userId/followers" element={<Layout><Followers /></Layout>} />
       <Route path="/:userId/following" element={<Layout><Following /></Layout>} />
 
+      <Route path="/user-not-found" element={<UserNotFound />} />
       <Route path="*" element={<NotFound />} />
     </Routes>
     </Suspense>
