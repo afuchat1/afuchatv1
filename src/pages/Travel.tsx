@@ -9,10 +9,10 @@ import { Search, Plane, Hotel, Calendar, MapPin, Star, Users, ArrowRight, Wifi, 
 import { toast } from 'sonner';
 
 const flights = [
-  { id: 1, from: 'NYC', to: 'LAX', fromFull: 'New York', toFull: 'Los Angeles', price: '500', duration: '6h', airline: '✈️ SkyLine', rating: 4.8, stops: 'Direct' },
-  { id: 2, from: 'LON', to: 'PAR', fromFull: 'London', toFull: 'Paris', price: '200', duration: '1h 30m', airline: '✈️ EuroJet', rating: 4.7, stops: 'Direct' },
-  { id: 3, from: 'TOK', to: 'SYD', fromFull: 'Tokyo', toFull: 'Sydney', price: '800', duration: '9h', airline: '✈️ Pacific Air', rating: 4.9, stops: 'Direct' },
-  { id: 4, from: 'DXB', to: 'NYC', fromFull: 'Dubai', toFull: 'New York', price: '950', duration: '14h', airline: '✈️ Emirates', rating: 4.9, stops: 'Direct' },
+  { id: 1, from: 'NYC', to: 'LAX', fromFull: 'New York', toFull: 'Los Angeles', price: '500', duration: '6h', airline: 'SkyLine', rating: 4.8, stops: 'Direct', image: 'https://images.unsplash.com/photo-1436491865332-7a61a109cc05?w=600&h=400&fit=crop' },
+  { id: 2, from: 'LON', to: 'PAR', fromFull: 'London', toFull: 'Paris', price: '200', duration: '1h 30m', airline: 'EuroJet', rating: 4.7, stops: 'Direct', image: 'https://images.unsplash.com/photo-1464037866556-6812c9d1c72e?w=600&h=400&fit=crop' },
+  { id: 3, from: 'TOK', to: 'SYD', fromFull: 'Tokyo', toFull: 'Sydney', price: '800', duration: '9h', airline: 'Pacific Air', rating: 4.9, stops: 'Direct', image: 'https://images.unsplash.com/photo-1525624286412-4099c83c1bc8?w=600&h=400&fit=crop' },
+  { id: 4, from: 'DXB', to: 'NYC', fromFull: 'Dubai', toFull: 'New York', price: '950', duration: '14h', airline: 'Emirates', rating: 4.9, stops: 'Direct', image: 'https://images.unsplash.com/photo-1583938443000-d87479eda0b8?w=600&h=400&fit=crop' },
 ];
 
 const hotels = [
@@ -133,21 +133,33 @@ const Travel = () => {
               <h2 className="text-xl font-bold">Available Flights</h2>
               {flights.map((flight) => (
                 <Card key={flight.id} className="overflow-hidden hover:shadow-xl transition-all duration-300">
-                  <CardContent className="p-6">
-                    <div className="flex flex-col md:flex-row items-start md:items-center justify-between gap-4">
-                      <div className="flex items-center gap-4 flex-1">
-                        <div className="w-16 h-16 rounded-xl bg-gradient-to-br from-blue-500/20 to-cyan-500/10 flex items-center justify-center border">
-                          <Plane className="w-8 h-8 text-blue-600" />
-                        </div>
-                        <div className="flex-1">
-                          <div className="flex items-center gap-3 mb-2">
+                  <div className="grid grid-cols-1 md:grid-cols-5 gap-0">
+                    {/* Flight Image */}
+                    <div className="md:col-span-2 aspect-video md:aspect-auto relative overflow-hidden">
+                      <img 
+                        src={flight.image} 
+                        alt={`Flight from ${flight.fromFull} to ${flight.toFull}`}
+                        className="w-full h-full object-cover"
+                      />
+                      <div className="absolute top-2 left-2">
+                        <Badge className="bg-background/90 backdrop-blur-sm text-foreground border">
+                          {flight.airline}
+                        </Badge>
+                      </div>
+                    </div>
+
+                    {/* Flight Details */}
+                    <CardContent className="md:col-span-3 p-4 md:p-6 flex flex-col justify-center">
+                      <div className="flex flex-col md:flex-row items-start md:items-center justify-between gap-4">
+                        <div className="flex-1 w-full">
+                          <div className="flex items-center gap-3 mb-3">
                             <div className="text-center">
                               <div className="text-2xl font-bold">{flight.from}</div>
                               <div className="text-xs text-muted-foreground">{flight.fromFull}</div>
                             </div>
-                            <div className="flex-1 flex items-center justify-center">
+                            <div className="flex-1 flex items-center justify-center min-w-0">
                               <div className="border-t-2 border-dashed flex-1" />
-                              <Plane className="h-5 w-5 text-primary mx-2" />
+                              <Plane className="h-5 w-5 text-primary mx-2 flex-shrink-0" />
                               <div className="border-t-2 border-dashed flex-1" />
                             </div>
                             <div className="text-center">
@@ -155,29 +167,29 @@ const Travel = () => {
                               <div className="text-xs text-muted-foreground">{flight.toFull}</div>
                             </div>
                           </div>
-                          <div className="flex items-center gap-4 text-sm text-muted-foreground">
+                          <div className="flex items-center gap-4 text-sm text-muted-foreground flex-wrap">
                             <span>{flight.duration}</span>
                             <span>•</span>
                             <span>{flight.stops}</span>
-                            <Badge variant="outline" className="gap-1 ml-auto">
+                            <Badge variant="outline" className="gap-1">
                               <Star className="h-3 w-3 fill-yellow-400 text-yellow-400" />
                               {flight.rating}
                             </Badge>
                           </div>
                         </div>
-                      </div>
-                      <div className="flex items-center gap-4 w-full md:w-auto">
-                        <div className="text-right flex-1 md:flex-none">
-                          <div className="text-2xl font-bold text-primary">{flight.price} XP</div>
-                          <div className="text-xs text-muted-foreground">per person</div>
+                        <div className="flex items-center gap-4 w-full md:w-auto justify-between md:justify-start">
+                          <div className="text-right">
+                            <div className="text-2xl font-bold text-primary">{flight.price} XP</div>
+                            <div className="text-xs text-muted-foreground">per person</div>
+                          </div>
+                          <Button onClick={() => handleBook('Flight', `${flight.fromFull} to ${flight.toFull}`)} className="gap-2">
+                            Book Now
+                            <ArrowRight className="h-4 w-4" />
+                          </Button>
                         </div>
-                        <Button onClick={() => handleBook('Flight', `${flight.fromFull} to ${flight.toFull}`)} className="gap-2">
-                          Book Now
-                          <ArrowRight className="h-4 w-4" />
-                        </Button>
                       </div>
-                    </div>
-                  </CardContent>
+                    </CardContent>
+                  </div>
                 </Card>
               ))}
             </div>
