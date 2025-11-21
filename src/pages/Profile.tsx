@@ -1065,19 +1065,41 @@ const Profile = ({ mustExist = false }: ProfileProps) => {
 						) : (
 							<div className="space-y-0 divide-y divide-border">
 								{posts.map((post) => (
-									<Card key={post.id} className="p-4 rounded-none border-x-0 border-t-0 hover:bg-muted/10 cursor-pointer transition-colors" onClick={() => navigate(`/post/${post.id}`)}>
-										<ContentParser content={post.content} />
-										{post.post_images && post.post_images.length > 0 && (
-											<div className="mt-3">
-												<ImageCarousel 
-													images={post.post_images
-														.sort((a, b) => a.display_order - b.display_order)
-														.map(img => ({ url: img.image_url, alt: img.alt_text || 'Post image' }))}
-												/>
+									<Card
+										key={post.id}
+										className="p-4 rounded-none border-x-0 border-t-0 hover:bg-muted/10 cursor-pointer transition-colors"
+										onClick={() => navigate(`/post/${post.id}`)}
+									>
+										<div className="flex items-start gap-3">
+											<StoryAvatar
+												userId={profileId!}
+												avatarUrl={profile.avatar_url}
+												name={profile.display_name}
+												size="md"
+												showStoryRing={true}
+											/>
+											<div className="flex-1 min-w-0">
+												<ContentParser content={post.content} />
+												{post.post_images && post.post_images.length > 0 && (
+													<div className="mt-3">
+														<ImageCarousel
+															images={post.post_images
+																.sort((a, b) => a.display_order - b.display_order)
+																.map((img) => ({ url: img.image_url, alt: img.alt_text || 'Post image' }))}
+														/>
+													</div>
+												)}
+												<div className="flex justify-between items-center text-xs text-muted-foreground mt-2">
+													<span>
+														{new Date(post.created_at).toLocaleString('en-US', {
+															hour: '2-digit',
+															minute: '2-digit',
+															day: 'numeric',
+															month: 'short',
+														})}
+													</span>
+												</div>
 											</div>
-										)}
-										<div className="flex justify-between items-center text-xs text-muted-foreground mt-2">
-											<span>{new Date(post.created_at).toLocaleString('en-US', { hour: '2-digit', minute: '2-digit', day: 'numeric', month: 'short' })}</span>
 										</div>
 									</Card>
 								))}
