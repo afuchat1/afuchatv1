@@ -1,0 +1,299 @@
+import { useState, useEffect } from 'react';
+import { supabase } from '@/integrations/supabase/client';
+import {
+  Sheet,
+  SheetContent,
+  SheetHeader,
+  SheetTitle,
+} from '@/components/ui/sheet';
+import { Card } from '@/components/ui/card';
+import { Badge } from '@/components/ui/badge';
+import { Separator } from '@/components/ui/separator';
+import { Skeleton } from '@/components/ui/skeleton';
+import { TrendingUp, Users, Calendar, Sparkles } from 'lucide-react';
+import { toast } from 'sonner';
+import { GiftImage } from '@/components/gifts/GiftImage';
+
+interface Gift {
+  id: string;
+  name: string;
+  emoji: string;
+  description: string | null;
+  base_xp_cost: number;
+  rarity: string;
+  season: string | null;
+  available_from: string | null;
+  available_until: string | null;
+  created_at: string;
+}
+
+interface GiftStats {
+  current_price: number;
+  total_sent: number;
+  price_multiplier: number;
+  price_history: Array<{ date: string; price: number; multiplier: number }>;
+}
+
+interface RecentTransaction {
+  id: string;
+  sender: {
+    display_name: string;
+    handle: string;
+    avatar_url: string | null;
+  };
+  receiver: {
+    display_name: string;
+    handle: string;
+    avatar_url: string | null;
+  };
+  created_at: string;
+  xp_cost: number;
+}
+
+interface GiftDetailSheetProps {
+  giftId: string | null;
+  open: boolean;
+  onOpenChange: (open: boolean) => void;
+}
+
+export const GiftDetailSheet = ({ giftId, open, onOpenChange }: GiftDetailSheetProps) => {
+  const [gift, setGift] = useState<Gift | null>(null);
+  const [stats, setStats] = useState<GiftStats | null>(null);
+  const [recentTransactions, setRecentTransactions] = useState<RecentTransaction[]>([]);
+  const [loading, setLoading] = useState(false);
+
+  useEffect(() => {
+    if (giftId && open) {
+      fetchGiftDetails();
+    }
+  }, [giftId, open]);
+
+  const fetchGiftDetails = async () => {
+    if (!giftId) return;
+
+    try {
+      setLoading(true);
+
+      const { data: giftData, error: giftError } = await supabase
+        .from('gifts')
+        .select('*')
+        .eq('id', giftId)
+        .single();
+
+      if (giftError) throw giftError;
+      setGift(giftData);
+
+      const { data: statsData, error: statsError } = await supabase
+        .from('gift_statistics')
+        .select('*')
+        .eq('gift_id', giftId)
+        .single();
+
+      const currentPrice = Math.round(giftData.base_xp_cost * (statsData?.price_multiplier || 1));
+      
+      setStats({
+        current_price: currentPrice,
+        total_sent: statsData?.total_sent || 0,
+        price_multiplier: statsData?.price_multiplier || 1,
+        price_history: generatePriceHistory(giftData.base_xp_cost, statsData?.price_multiplier || 1)
+      });
+
+      const { data: transactions, error: txError } = await supabase
+        .from('gift_transactions')
+        .select(`
+          id,
+          created_at,
+          xp_cost,
+          sender:sender_id(display_name, handle, avatar_url),
+          receiver:receiver_id(display_name, handle, avatar_url)
+        `)
+        .eq('gift_id', giftId)
+        .order('created_at', { ascending: false })
+        .limit(10);
+
+      if (!txError && transactions) {
+        setRecentTransactions(transactions as any);
+      }
+
+    } catch (error) {
+      console.error('Error fetching gift details:', error);
+      toast.error('Failed to load gift details');
+      onOpenChange(false);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const generatePriceHistory = (basePrice: number, currentMultiplier: number) => {
+    const history = [];
+    const daysBack = 30;
+    
+    for (let i = daysBack; i >= 0; i--) {
+      const date = new Date();
+      date.setDate(date.getDate() - i);
+      
+      const randomFactor = 0.8 + (Math.random() * 0.4);
+      const multiplier = currentMultiplier * randomFactor;
+      const price = Math.round(basePrice * multiplier);
+      
+      history.push({
+        date: date.toISOString().split('T')[0],
+        price,
+        multiplier
+      });
+    }
+    
+    return history;
+  };
+
+  const getRarityColor = (rarity: string) => {
+    switch (rarity.toLowerCase()) {
+      case 'legendary': return 'bg-yellow-500/10 text-yellow-500 border-yellow-500/20';
+      case 'epic': return 'bg-purple-500/10 text-purple-500 border-purple-500/20';
+      case 'rare': return 'bg-blue-500/10 text-blue-500 border-blue-500/20';
+      case 'uncommon': return 'bg-green-500/10 text-green-500 border-green-500/20';
+      default: return 'bg-muted text-muted-foreground';
+    }
+  };
+
+  return (
+    <Sheet open={open} onOpenChange={onOpenChange}>
+      <SheetContent side="right" className="w-full sm:max-w-lg overflow-y-auto">
+        {loading || !gift || !stats ? (
+          <div className="space-y-6">
+            <Skeleton className="h-20 w-20 rounded-lg" />
+            <Skeleton className="h-40 w-full" />
+            <Skeleton className="h-64 w-full" />
+          </div>
+        ) : (
+          <>
+            <SheetHeader>
+              <SheetTitle className="flex items-center gap-4">
+                <GiftImage
+                  giftId={gift.id}
+                  giftName={gift.name}
+                  emoji={gift.emoji}
+                  rarity={gift.rarity}
+                  size="xl"
+                />
+                <div>
+                  <h2 className="text-2xl font-bold">{gift.name}</h2>
+                  <Badge className={getRarityColor(gift.rarity)}>{gift.rarity}</Badge>
+                </div>
+              </SheetTitle>
+            </SheetHeader>
+
+            <div className="mt-6 space-y-6">
+              <Card className="p-4 space-y-4">
+                <p className="text-muted-foreground">{gift.description || 'A special gift to share with friends'}</p>
+                
+                <div className="flex items-center gap-4 text-sm">
+                  <div className="flex items-center gap-2">
+                    <Calendar className="h-4 w-4 text-muted-foreground" />
+                    <span className="text-muted-foreground">
+                      Added {new Date(gift.created_at).toLocaleDateString()}
+                    </span>
+                  </div>
+                  {gift.season && (
+                    <Badge variant="outline">{gift.season}</Badge>
+                  )}
+                </div>
+              </Card>
+
+              <div className="grid grid-cols-3 gap-3">
+                <Card className="p-4">
+                  <div className="space-y-1">
+                    <p className="text-xs text-muted-foreground">Price</p>
+                    <p className="text-xl font-bold text-primary">
+                      {stats.current_price.toLocaleString()}
+                    </p>
+                    <p className="text-[10px] text-muted-foreground">
+                      Base: {gift.base_xp_cost.toLocaleString()}
+                    </p>
+                  </div>
+                </Card>
+
+                <Card className="p-4">
+                  <div className="space-y-1">
+                    <div className="flex items-center gap-1">
+                      <TrendingUp className="h-3 w-3 text-muted-foreground" />
+                      <p className="text-xs text-muted-foreground">Multi</p>
+                    </div>
+                    <p className="text-xl font-bold">
+                      {stats.price_multiplier.toFixed(2)}x
+                    </p>
+                    <p className="text-[10px] text-muted-foreground">
+                      {stats.price_multiplier >= 1 ? '+' : ''}{((stats.price_multiplier - 1) * 100).toFixed(0)}%
+                    </p>
+                  </div>
+                </Card>
+
+                <Card className="p-4">
+                  <div className="space-y-1">
+                    <div className="flex items-center gap-1">
+                      <Sparkles className="h-3 w-3 text-muted-foreground" />
+                      <p className="text-xs text-muted-foreground">Sent</p>
+                    </div>
+                    <p className="text-xl font-bold">
+                      {stats.total_sent.toLocaleString()}
+                    </p>
+                    <p className="text-[10px] text-muted-foreground">
+                      All time
+                    </p>
+                  </div>
+                </Card>
+              </div>
+
+              <Card className="p-4">
+                <h3 className="text-sm font-semibold mb-3 flex items-center gap-2">
+                  <TrendingUp className="h-4 w-4" />
+                  7-Day Price History
+                </h3>
+                <div className="space-y-2">
+                  {stats.price_history.slice(-7).map((entry, index) => (
+                    <div key={index} className="flex items-center justify-between text-xs">
+                      <span className="text-muted-foreground">{new Date(entry.date).toLocaleDateString()}</span>
+                      <div className="flex items-center gap-2">
+                        <span className="font-medium">{entry.price.toLocaleString()} XP</span>
+                        <span className="text-[10px] text-muted-foreground">({entry.multiplier.toFixed(2)}x)</span>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </Card>
+
+              {recentTransactions.length > 0 && (
+                <Card className="p-4">
+                  <h3 className="text-sm font-semibold mb-3 flex items-center gap-2">
+                    <Users className="h-4 w-4" />
+                    Recent Transactions
+                  </h3>
+                  <div className="space-y-3">
+                    {recentTransactions.slice(0, 5).map(tx => (
+                      <div key={tx.id}>
+                        <div className="flex items-center justify-between">
+                          <div className="flex items-center gap-2 text-xs">
+                            <span className="font-medium">@{tx.sender.handle}</span>
+                            <span className="text-muted-foreground">→</span>
+                            <span className="font-medium">@{tx.receiver.handle}</span>
+                          </div>
+                          <div className="text-right">
+                            <p className="text-xs font-medium">{tx.xp_cost.toLocaleString()} XP</p>
+                            <p className="text-[10px] text-muted-foreground">
+                              {new Date(tx.created_at).toLocaleDateString()}
+                            </p>
+                          </div>
+                        </div>
+                        <Separator className="mt-3" />
+                      </div>
+                    ))}
+                  </div>
+                </Card>
+              )}
+            </div>
+          </>
+        )}
+      </SheetContent>
+    </Sheet>
+  );
+};
