@@ -105,21 +105,6 @@ export default function TrendingHashtags() {
   return (
     <div className="min-h-screen bg-background pb-20">
       <div className="max-w-4xl mx-auto space-y-4">
-        <div className="sticky top-0 z-10 bg-background/95 backdrop-blur border-b border-border p-4">
-          <div className="flex items-center gap-4">
-            <Button variant="ghost" size="icon" onClick={() => navigate(-1)} className="hidden lg:inline-flex">
-              <ArrowLeft className="h-5 w-5" />
-            </Button>
-            <div>
-              <h1 className="text-2xl font-bold flex items-center gap-2">
-                <TrendingUp className="h-6 w-6 text-primary" />
-                Trending Hashtags
-              </h1>
-              <p className="text-sm text-muted-foreground">Discover what's popular on AfuChat</p>
-            </div>
-          </div>
-        </div>
-
         <div className="grid md:grid-cols-2 gap-4 p-4">
           {/* Trending List */}
           <Card>

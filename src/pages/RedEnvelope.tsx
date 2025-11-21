@@ -141,26 +141,6 @@ const RedEnvelope = () => {
   return (
     <div className="min-h-screen bg-background pb-20 md:pb-0">
       <div className="max-w-4xl mx-auto">
-        {/* Header */}
-        <div className="sticky top-0 z-10 bg-background/95 backdrop-blur border-b border-border">
-          <div className="flex items-center justify-between p-4">
-            <div className="flex items-center gap-4">
-              <Button
-                variant="ghost"
-                size="icon"
-                onClick={() => navigate('/services')}
-                className="hidden lg:inline-flex"
-              >
-                <ArrowLeft className="h-5 w-5" />
-              </Button>
-              <div>
-                <h1 className="text-xl font-bold">Red Envelopes</h1>
-                <p className="text-sm text-muted-foreground">Share XP with friends</p>
-              </div>
-            </div>
-          </div>
-        </div>
-
         {/* Balance Card */}
         <div className="p-4">
           <Card className="bg-gradient-to-br from-red-500/10 to-red-600/10 border-red-500/20">

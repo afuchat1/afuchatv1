@@ -448,19 +448,6 @@ const PostDetail = () => {
 
   return (
     <div className="min-h-screen bg-background border-x border-border max-w-2xl mx-auto flex flex-col">
-      {/* --- HEADER (Unchanged) --- */}
-      <div className="flex items-center p-4 border-b border-border sticky top-0 z-10 bg-background/95 backdrop-blur">
-        <Button 
-          variant="ghost" 
-          size="icon" 
-          onClick={() => navigate(-1)} 
-          className="p-2 hidden lg:inline-flex"
-        >
-          <ArrowLeft className="h-5 w-5" />
-        </Button>
-        <h1 className="text-xl font-extrabold ml-4">Post</h1>
-      </div>
-
       <div className="flex-1">
         
         {/* --- MAIN POST CONTENT --- */}

@@ -1542,7 +1542,7 @@ const Feed = () => {
   return (
     <div className="h-full flex flex-col max-w-4xl mx-auto">
       <Tabs value={activeTab} onValueChange={(v) => setActiveTab(v as 'foryou' | 'following')} className="w-full">
-        <div className="sticky top-0 z-10 bg-background/95 backdrop-blur border-b border-border">
+        <div>
           {newPostsCount > 0 && (
             <button
               onClick={handleLoadNewPosts}
