@@ -10,6 +10,7 @@ import { toast } from 'sonner';
 import { GiftImage } from '@/components/gifts/GiftImage';
 import { GiftDetailSheet } from '@/components/gifts/GiftDetailSheet';
 import { GiftPreviewModal } from '@/components/gifts/GiftPreviewModal';
+import { SelectRecipientDialog } from '@/components/gifts/SelectRecipientDialog';
 
 interface Gift {
   id: string;
@@ -44,6 +45,8 @@ const Gifts = () => {
   const [sheetOpen, setSheetOpen] = useState(false);
   const [previewModalOpen, setPreviewModalOpen] = useState(false);
   const [selectedGift, setSelectedGift] = useState<GiftWithStats | null>(null);
+  const [recipientSelectorOpen, setRecipientSelectorOpen] = useState(false);
+  const [selectedRecipient, setSelectedRecipient] = useState<{ id: string; name: string } | null>(null);
 
   useEffect(() => {
     fetchGifts();
@@ -145,9 +148,14 @@ const Gifts = () => {
   const handleSendGift = () => {
     if (selectedGift) {
       setPreviewModalOpen(false);
-      setSelectedGiftId(selectedGift.id);
-      setSheetOpen(true);
+      setRecipientSelectorOpen(true);
     }
+  };
+
+  const handleRecipientSelected = (recipient: { id: string; name: string }) => {
+    setSelectedRecipient(recipient);
+    setSelectedGiftId(selectedGift?.id || null);
+    setSheetOpen(true);
   };
 
   if (loading) {
@@ -311,10 +319,18 @@ const Gifts = () => {
         onSendGift={handleSendGift}
       />
 
+      <SelectRecipientDialog
+        open={recipientSelectorOpen}
+        onOpenChange={setRecipientSelectorOpen}
+        onSelectRecipient={handleRecipientSelected}
+      />
+
       <GiftDetailSheet
         giftId={selectedGiftId}
         open={sheetOpen}
         onOpenChange={setSheetOpen}
+        recipientId={selectedRecipient?.id}
+        recipientName={selectedRecipient?.name}
       />
     </div>
   );
