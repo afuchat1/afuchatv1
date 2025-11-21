@@ -22,18 +22,31 @@ serve(async (req) => {
       throw new Error('LOVABLE_API_KEY is not configured');
     }
 
-    // Create a detailed prompt based on rarity
+    // Create a detailed prompt based on rarity with better visual descriptions
     const rarityStyles = {
-      common: 'simple, minimalist style',
-      uncommon: 'polished, refined style with subtle glow',
-      rare: 'vibrant, glowing style with sparkles',
-      epic: 'majestic, radiant style with magical aura',
-      legendary: 'divine, ethereal style with intense golden glow and particle effects'
+      common: 'clean and simple design, soft pastel colors, gentle glow, minimalist aesthetic',
+      uncommon: 'polished 3D render, vibrant colors, subtle particle effects, refined details',
+      rare: 'stunning 3D artwork, rich colors with metallic accents, dynamic lighting, floating sparkles and light rays',
+      epic: 'epic cinematic quality, dramatic lighting, glowing magical auras, swirling energy particles, holographic effects',
+      legendary: 'legendary masterpiece, radiant golden light beams, intense magical energy, ethereal glow, divine sparkles, premium luxury feel'
     };
 
     const style = rarityStyles[rarity as keyof typeof rarityStyles] || rarityStyles.common;
     
-    const prompt = `Create a beautiful, high-quality 3D render of ${giftName} (${emoji}) as a gift item. ${style}. Transparent background, PNG format, centered composition, professional product photography style, soft studio lighting, no shadows on background. The item should look premium and gift-worthy, floating in space with subtle depth. Size: 512x512px`;
+    const prompt = `Create an ultra-realistic, beautiful 3D digital gift of ${giftName}. Style: ${style}. 
+
+Requirements:
+- High-quality product photography style with professional studio lighting
+- Completely transparent background (PNG format)
+- Centered composition with the gift floating gracefully
+- Soft shadows beneath the item for depth
+- Premium, gift-worthy appearance with attention to detail
+- Size: 512x512px
+- Make it look like a real, tangible luxury gift item
+- Add appropriate visual effects based on rarity (sparkles, glow, particles)
+- The ${emoji} should inspire the design but make it realistic and beautiful
+
+Make this look like an expensive digital gift that someone would be excited to receive!`;
 
     console.log('Generating image with prompt:', prompt);
 
@@ -44,7 +57,7 @@ serve(async (req) => {
         "Content-Type": "application/json",
       },
       body: JSON.stringify({
-        model: "google/gemini-2.5-flash-image-preview",
+        model: "google/gemini-2.5-flash-image",
         messages: [
           {
             role: "user",
