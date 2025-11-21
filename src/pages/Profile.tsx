@@ -5,8 +5,7 @@ import { useAuth } from '@/contexts/AuthContext';
 import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { toast } from 'sonner';
-import { ArrowLeft, MessageSquare, UserPlus, Pencil, Calendar, Lock, LogOut, Settings, Camera, User, Bell, Shield } from 'lucide-react';
-import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
+import { ArrowLeft, MessageSquare, UserPlus, Pencil, Calendar, Lock, LogOut, Camera } from 'lucide-react';
 import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/ui/tabs';
 import { Separator } from '@/components/ui/separator';
 import { Skeleton } from '@/components/ui/skeleton';
@@ -273,19 +272,6 @@ const Profile = () => {
 	const [isUploadingBanner, setIsUploadingBanner] = useState(false);
 	const [currentUserIsVerified, setCurrentUserIsVerified] = useState(false);
 
-	// Keyboard shortcut for settings
-	useEffect(() => {
-		const handleKeyDown = (e: KeyboardEvent) => {
-			// Ctrl+, or Cmd+, for settings
-			if ((e.ctrlKey || e.metaKey) && e.key === ',') {
-				e.preventDefault();
-				navigate('/settings');
-			}
-		};
-
-		window.addEventListener('keydown', handleKeyDown);
-		return () => window.removeEventListener('keydown', handleKeyDown);
-	}, [navigate]);
 
 	const handleBannerUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
 		if (!e.target.files || e.target.files.length === 0 || !user || !profileId) return;
@@ -733,14 +719,6 @@ const Profile = () => {
 			navigate('/');
 		}
 	};
-    
-    const handleEditProfile = () => {
-		navigate(`/${urlParam}/edit`);
-	};
-
-	const handleAdminDashboard = () => {
-		navigate('/admin'); 
-	};
 
 	if (loading) {
 		return (
@@ -819,57 +797,6 @@ const Profile = () => {
 				{/* Edit Profile Button - Right side, overlapping banner/content */}
 				{user && user.id === profileId && (
 					<div className="absolute top-4 right-4 z-10 flex gap-2">
-						<DropdownMenu>
-							<DropdownMenuTrigger asChild>
-								<Button 
-									variant="outline" 
-									size="icon"
-									className="rounded-full bg-background hover:bg-muted border-2"
-									aria-label="Settings menu (Ctrl+,)"
-									title="Settings (Ctrl+,)"
-								>
-									<Settings className="h-5 w-5" />
-								</Button>
-							</DropdownMenuTrigger>
-							<DropdownMenuContent 
-								align="end" 
-								className="w-56 bg-background"
-								aria-label="Settings options"
-							>
-								<DropdownMenuItem 
-									onClick={() => navigate('/settings')} 
-									className="cursor-pointer"
-									aria-label="Go to account settings"
-								>
-									<User className="mr-2 h-4 w-4" />
-									<span>Account Settings</span>
-								</DropdownMenuItem>
-								<DropdownMenuItem 
-									onClick={() => navigate('/settings')} 
-									className="cursor-pointer"
-									aria-label="Manage privacy settings"
-								>
-									<Lock className="mr-2 h-4 w-4" />
-									<span>Privacy</span>
-								</DropdownMenuItem>
-								<DropdownMenuItem 
-									onClick={() => navigate('/settings')} 
-									className="cursor-pointer"
-									aria-label="Configure notifications"
-								>
-									<Bell className="mr-2 h-4 w-4" />
-									<span>Notifications</span>
-								</DropdownMenuItem>
-								<DropdownMenuItem 
-									onClick={() => navigate('/settings')} 
-									className="cursor-pointer"
-									aria-label="View security settings"
-								>
-									<Shield className="mr-2 h-4 w-4" />
-									<span>Security</span>
-								</DropdownMenuItem>
-							</DropdownMenuContent>
-						</DropdownMenu>
 						<Button 
 							variant="outline" 
 							className="rounded-full px-6 py-2 font-bold bg-background hover:bg-muted border-2 h-auto"
@@ -889,16 +816,6 @@ const Profile = () => {
 
 					{user && user.id === profileId ? (
 						<div className="flex flex-col gap-2">
-								{isAdmin && (
-									<Button
-										onClick={handleAdminDashboard}
-										variant="secondary"
-										className="rounded-full px-4 font-bold"
-									>
-										<Settings className="h-4 w-4 mr-2" />
-										{t('profile.adminDashboard')}
-									</Button>
-								)}
 							</div>
 						) : (
 							<div className="flex gap-2">
@@ -1213,7 +1130,7 @@ const Profile = () => {
 				isOpen={isActionsSheetOpen}
 				onClose={() => setIsActionsSheetOpen(false)}
 				onLogout={handleLogout}
-				onEditProfile={handleEditProfile}
+				onEditProfile={() => navigate(`/${urlParam}/edit`)}
 			/>
 
 			{/* Affiliate Details Sheet */}
