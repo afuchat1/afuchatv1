@@ -1979,6 +1979,7 @@ export type Database = {
       check_daily_login_streak: { Args: { p_user_id: string }; Returns: Json }
       check_profile_completion: { Args: { p_user_id: string }; Returns: Json }
       claim_red_envelope: { Args: { p_envelope_id: string }; Returns: Json }
+      cleanup_expired_sessions: { Args: never; Returns: number }
       convert_nexa_to_acoin: { Args: { p_nexa_amount: number }; Returns: Json }
       create_marketplace_listing:
         | {
@@ -2095,6 +2096,16 @@ export type Database = {
           success: boolean
         }[]
       }
+      record_login_attempt: {
+        Args: {
+          p_ip_address?: string
+          p_location?: string
+          p_success?: boolean
+          p_user_agent?: string
+          p_user_id: string
+        }
+        Returns: string
+      }
       reject_affiliate_by_business: {
         Args: { p_notes?: string; p_request_id: string }
         Returns: Json
@@ -2136,6 +2147,17 @@ export type Database = {
           message: string
           success: boolean
         }[]
+      }
+      upsert_active_session: {
+        Args: {
+          p_browser?: string
+          p_device_name?: string
+          p_expires_at?: string
+          p_ip_address?: string
+          p_session_token: string
+          p_user_id: string
+        }
+        Returns: string
       }
     }
     Enums: {
