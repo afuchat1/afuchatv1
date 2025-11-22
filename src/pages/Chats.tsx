@@ -120,12 +120,7 @@ const Chats = () => {
               }
             }
             
-            let chatData: Chat = {
-              ...member.chats,
-              last_message_content: ''
-            };
-            
-            // Fetch the last message for this chat
+            // Fetch the last message for this chat first
             const { data: lastMessage, error: messageError } = await supabase
               .from('messages')
               .select('encrypted_content, attachment_type, audio_url, sent_at')
@@ -133,6 +128,13 @@ const Chats = () => {
               .order('sent_at', { ascending: false })
               .limit(1)
               .maybeSingle();
+            
+            let chatData: Chat = {
+              ...member.chats,
+              last_message_content: '',
+              // Use last message timestamp for sorting, fallback to chat updated_at
+              updated_at: lastMessage?.sent_at || member.chats.updated_at
+            };
             
             if (messageError) {
               console.error('Error fetching last message for chat:', chatId, messageError);
