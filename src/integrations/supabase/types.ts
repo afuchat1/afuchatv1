@@ -927,6 +927,81 @@ export type Database = {
           },
         ]
       }
+      notification_preferences: {
+        Row: {
+          created_at: string | null
+          email_digest_frequency: string | null
+          email_enabled: boolean | null
+          email_follows: boolean | null
+          email_gifts: boolean | null
+          email_likes: boolean | null
+          email_mentions: boolean | null
+          email_messages: boolean | null
+          email_replies: boolean | null
+          id: string
+          push_enabled: boolean | null
+          push_follows: boolean | null
+          push_gifts: boolean | null
+          push_likes: boolean | null
+          push_mentions: boolean | null
+          push_messages: boolean | null
+          push_replies: boolean | null
+          quiet_hours_enabled: boolean | null
+          quiet_hours_end: string | null
+          quiet_hours_start: string | null
+          updated_at: string | null
+          user_id: string
+        }
+        Insert: {
+          created_at?: string | null
+          email_digest_frequency?: string | null
+          email_enabled?: boolean | null
+          email_follows?: boolean | null
+          email_gifts?: boolean | null
+          email_likes?: boolean | null
+          email_mentions?: boolean | null
+          email_messages?: boolean | null
+          email_replies?: boolean | null
+          id?: string
+          push_enabled?: boolean | null
+          push_follows?: boolean | null
+          push_gifts?: boolean | null
+          push_likes?: boolean | null
+          push_mentions?: boolean | null
+          push_messages?: boolean | null
+          push_replies?: boolean | null
+          quiet_hours_enabled?: boolean | null
+          quiet_hours_end?: string | null
+          quiet_hours_start?: string | null
+          updated_at?: string | null
+          user_id: string
+        }
+        Update: {
+          created_at?: string | null
+          email_digest_frequency?: string | null
+          email_enabled?: boolean | null
+          email_follows?: boolean | null
+          email_gifts?: boolean | null
+          email_likes?: boolean | null
+          email_mentions?: boolean | null
+          email_messages?: boolean | null
+          email_replies?: boolean | null
+          id?: string
+          push_enabled?: boolean | null
+          push_follows?: boolean | null
+          push_gifts?: boolean | null
+          push_likes?: boolean | null
+          push_mentions?: boolean | null
+          push_messages?: boolean | null
+          push_replies?: boolean | null
+          quiet_hours_enabled?: boolean | null
+          quiet_hours_end?: string | null
+          quiet_hours_start?: string | null
+          updated_at?: string | null
+          user_id?: string
+        }
+        Relationships: []
+      }
       notifications: {
         Row: {
           actor_id: string | null

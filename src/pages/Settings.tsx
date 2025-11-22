@@ -2,7 +2,7 @@ import { useState } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import { useAuth } from '@/contexts/AuthContext';
 import { Button } from '@/components/ui/button';
-import { ArrowLeft, User, Bell, Shield, Palette, Database, LogOut, UserX, Key } from 'lucide-react';
+import { ArrowLeft, User, Bell, Shield, Palette, Database, LogOut, UserX, Key, Activity } from 'lucide-react';
 import { toast } from 'sonner';
 import { supabase } from '@/integrations/supabase/client';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
@@ -13,8 +13,9 @@ import { DataPrivacySettings } from '@/components/settings/DataPrivacySettings';
 import { AppearanceSettings } from '@/components/settings/AppearanceSettings';
 import { BlockedUsersSettings } from '@/components/settings/BlockedUsersSettings';
 import { TwoFactorAuthSettings } from '@/components/settings/TwoFactorAuthSettings';
+import { ActivityLog } from '@/components/settings/ActivityLog';
 
-type SettingsTab = 'account' | 'security' | 'notifications' | 'data' | 'appearance' | 'blocked' | '2fa';
+type SettingsTab = 'account' | 'security' | 'notifications' | 'data' | 'appearance' | 'blocked' | '2fa' | 'activity';
 
 const Settings = () => {
   const navigate = useNavigate();
@@ -46,6 +47,7 @@ const Settings = () => {
     { value: '2fa', label: '2FA', icon: Key },
     { value: 'blocked', label: 'Blocked', icon: UserX },
     { value: 'notifications', label: 'Notifications', icon: Bell },
+    { value: 'activity', label: 'Activity', icon: Activity },
     { value: 'data', label: 'Data & Privacy', icon: Database },
     { value: 'appearance', label: 'Appearance', icon: Palette },
   ];
@@ -81,7 +83,7 @@ const Settings = () => {
       <div className="max-w-6xl mx-auto px-4 py-8">
         <Tabs value={activeTab} onValueChange={(value) => handleTabChange(value as SettingsTab)}>
           <div className="overflow-x-auto mb-8">
-            <TabsList className="grid w-full grid-cols-7 min-w-[700px]">
+            <TabsList className="grid w-full grid-cols-8 min-w-[800px]">
               {tabs.map((tab) => {
                 const Icon = tab.icon;
                 return (
@@ -129,9 +131,17 @@ const Settings = () => {
           <TabsContent value="notifications" className="mt-0">
             <div className="space-y-2 mb-6">
               <h2 className="text-3xl font-bold tracking-tight">Notifications</h2>
-              <p className="text-muted-foreground text-lg">Control how you receive notifications</p>
+              <p className="text-muted-foreground text-lg">Control how you receive notifications with granular preferences</p>
             </div>
             <NotificationsSettings />
+          </TabsContent>
+
+          <TabsContent value="activity" className="mt-0">
+            <div className="space-y-2 mb-6">
+              <h2 className="text-3xl font-bold tracking-tight">Activity Log</h2>
+              <p className="text-muted-foreground text-lg">View your recent activity and XP earnings</p>
+            </div>
+            <ActivityLog />
           </TabsContent>
 
           <TabsContent value="data" className="mt-0">
