@@ -42,10 +42,24 @@ export const TwoFactorAuthSettings = () => {
       if (error) throw error;
 
       const totpFactors = data?.totp || [];
-      const enrolledFactor = totpFactors.find(f => f.status === 'verified');
-      setIsEnrolled(!!enrolledFactor);
-      if (enrolledFactor) {
-        setFactorId(enrolledFactor.id);
+      
+      // Find verified factor - check the friendly_name pattern
+      const verifiedFactor = totpFactors.find(f => f.friendly_name?.includes('Authenticator App'));
+      setIsEnrolled(!!verifiedFactor);
+      if (verifiedFactor) {
+        setFactorId(verifiedFactor.id);
+      }
+
+      // Clean up any old factors with similar names
+      const oldFactors = totpFactors.filter(f => 
+        f.friendly_name?.includes('Authenticator App') && !verifiedFactor
+      );
+      for (const factor of oldFactors) {
+        try {
+          await supabase.auth.mfa.unenroll({ factorId: factor.id });
+        } catch (err) {
+          console.error('Error cleaning up old factor:', err);
+        }
       }
     } catch (error) {
       console.error('Error checking MFA status:', error);
@@ -55,9 +69,25 @@ export const TwoFactorAuthSettings = () => {
   const handleEnroll = async () => {
     setIsEnrolling(true);
     try {
+      // First, clean up any existing factors with similar names
+      const { data: factorsData } = await supabase.auth.mfa.listFactors();
+      const existingFactors = factorsData?.totp?.filter(f => 
+        f.friendly_name?.includes('Authenticator App')
+      ) || [];
+      
+      for (const factor of existingFactors) {
+        try {
+          await supabase.auth.mfa.unenroll({ factorId: factor.id });
+        } catch (err) {
+          console.error('Error cleaning up old factor:', err);
+        }
+      }
+
+      // Now enroll with a unique friendly name
+      const timestamp = Date.now();
       const { data, error } = await supabase.auth.mfa.enroll({
         factorType: 'totp',
-        friendlyName: 'Authenticator App'
+        friendlyName: `Authenticator App ${timestamp}`
       });
 
       if (error) throw error;
