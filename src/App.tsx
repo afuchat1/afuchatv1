@@ -202,8 +202,8 @@ const App = () => (
               <Sonner />
               <BrowserRouter future={{ v7_startTransition: true }}>
                 <AppRoutes />
+                <SettingsSheet />
               </BrowserRouter>
-              <SettingsSheet />
             </TooltipProvider>
           </SettingsProvider>
         </AccountModeProvider>
