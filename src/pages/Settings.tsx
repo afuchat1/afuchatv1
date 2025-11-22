@@ -8,7 +8,7 @@ import { Switch } from '@/components/ui/switch';
 import { 
   ArrowLeft, User, Bell, Lock, Shield, LogOut, Languages, 
   Sun, Moon, Monitor, Mail, HelpCircle, Palette, 
-  ChevronRight, Settings as SettingsIcon
+  ChevronRight, Settings as SettingsIcon, Loader2, Download, Trash2
 } from 'lucide-react';
 import { toast } from 'sonner';
 import { supabase } from '@/integrations/supabase/client';
@@ -57,6 +57,8 @@ const Settings = () => {
   const [showOnlineStatus, setShowOnlineStatus] = useState(true);
   const [showReadReceipts, setShowReadReceipts] = useState(true);
   const [isDownloadingData, setIsDownloadingData] = useState(false);
+  const [isDeletingAccount, setIsDeletingAccount] = useState(false);
+  const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
 
   const languages = [
     { code: 'en', name: t('languages.en'), flag: '🇬🇧' },
@@ -193,6 +195,47 @@ const Settings = () => {
       toast.error('Failed to download data. Please try again.');
     } finally {
       setIsDownloadingData(false);
+    }
+  };
+
+  const handleDeleteAccount = async () => {
+    if (!user) {
+      toast.error('You must be signed in');
+      return;
+    }
+
+    setIsDeletingAccount(true);
+    try {
+      const { data: { session } } = await supabase.auth.getSession();
+      if (!session) {
+        toast.error('Session expired. Please sign in again.');
+        return;
+      }
+
+      const response = await fetch(
+        'https://rhnsjqqtdzlkvqazfcbg.supabase.co/functions/v1/delete-user-account',
+        {
+          method: 'POST',
+          headers: {
+            'Authorization': `Bearer ${session.access_token}`,
+            'Content-Type': 'application/json',
+          },
+        }
+      );
+
+      if (!response.ok) {
+        throw new Error('Failed to delete account');
+      }
+
+      toast.success('Account deleted successfully');
+      
+      // Sign out and redirect
+      await supabase.auth.signOut();
+      navigate('/');
+    } catch (error) {
+      console.error('Error deleting account:', error);
+      toast.error('Failed to delete account. Please try again.');
+      setIsDeletingAccount(false);
     }
   };
 
@@ -366,6 +409,62 @@ const Settings = () => {
                       }}
                     />
                   </div>
+                </div>
+              </div>
+            </Card>
+
+            <Card className="border-destructive shadow-lg hover:shadow-xl transition-shadow duration-300">
+              <div className="p-6">
+                <div className="flex items-center gap-3 mb-6">
+                  <div className="p-2 bg-destructive/10 rounded-lg">
+                    <Trash2 className="h-5 w-5 text-destructive" />
+                  </div>
+                  <h3 className="text-xl font-semibold text-destructive">Danger Zone</h3>
+                </div>
+                <div className="space-y-4">
+                  <p className="text-sm text-muted-foreground">
+                    Permanently delete your account and all associated data. This action cannot be undone.
+                  </p>
+                  {!showDeleteConfirm ? (
+                    <Button
+                      variant="destructive"
+                      onClick={() => setShowDeleteConfirm(true)}
+                      className="w-full"
+                    >
+                      <Trash2 className="mr-2 h-4 w-4" />
+                      Delete Account
+                    </Button>
+                  ) : (
+                    <div className="space-y-3 p-4 bg-destructive/10 rounded-lg border border-destructive">
+                      <p className="text-sm font-semibold text-destructive">
+                        Are you absolutely sure? This will permanently delete your account and all data.
+                      </p>
+                      <div className="flex gap-2">
+                        <Button
+                          variant="outline"
+                          onClick={() => setShowDeleteConfirm(false)}
+                          className="flex-1"
+                        >
+                          Cancel
+                        </Button>
+                        <Button
+                          variant="destructive"
+                          onClick={handleDeleteAccount}
+                          disabled={isDeletingAccount}
+                          className="flex-1"
+                        >
+                          {isDeletingAccount ? (
+                            <>
+                              <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                              Deleting...
+                            </>
+                          ) : (
+                            'Delete Forever'
+                          )}
+                        </Button>
+                      </div>
+                    </div>
+                  )}
                 </div>
               </div>
             </Card>
@@ -746,6 +845,60 @@ const Settings = () => {
                 <li>Activity & achievements</li>
               </ul>
             </div>
+          </div>
+        </Card>
+        <Card className="border-destructive shadow-md">
+          <div className="p-4 space-y-4">
+            <div className="flex items-center gap-2 mb-2">
+              <Trash2 className="h-4 w-4 text-destructive" />
+              <p className="font-semibold text-destructive">Danger Zone</p>
+            </div>
+            <p className="text-xs text-muted-foreground mb-3">
+              Permanently delete your account and all data. This cannot be undone.
+            </p>
+            {!showDeleteConfirm ? (
+              <Button
+                variant="destructive"
+                size="sm"
+                onClick={() => setShowDeleteConfirm(true)}
+                className="w-full"
+              >
+                <Trash2 className="mr-2 h-3 w-3" />
+                Delete Account
+              </Button>
+            ) : (
+              <div className="space-y-3 p-3 bg-destructive/10 rounded-lg border border-destructive">
+                <p className="text-xs font-semibold text-destructive">
+                  Are you sure? This is permanent!
+                </p>
+                <div className="flex gap-2">
+                  <Button
+                    size="sm"
+                    variant="outline"
+                    onClick={() => setShowDeleteConfirm(false)}
+                    className="flex-1"
+                  >
+                    Cancel
+                  </Button>
+                  <Button
+                    size="sm"
+                    variant="destructive"
+                    onClick={handleDeleteAccount}
+                    disabled={isDeletingAccount}
+                    className="flex-1"
+                  >
+                    {isDeletingAccount ? (
+                      <>
+                        <Loader2 className="mr-1 h-3 w-3 animate-spin" />
+                        Deleting...
+                      </>
+                    ) : (
+                      'Delete Forever'
+                    )}
+                  </Button>
+                </div>
+              </div>
+            )}
           </div>
         </Card>
       </div>
