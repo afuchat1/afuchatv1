@@ -191,6 +191,45 @@ export type Database = {
           },
         ]
       }
+      blocked_users: {
+        Row: {
+          blocked_at: string | null
+          blocked_id: string
+          blocker_id: string
+          id: string
+          reason: string | null
+        }
+        Insert: {
+          blocked_at?: string | null
+          blocked_id: string
+          blocker_id: string
+          id?: string
+          reason?: string | null
+        }
+        Update: {
+          blocked_at?: string | null
+          blocked_id?: string
+          blocker_id?: string
+          id?: string
+          reason?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "blocked_users_blocked_id_fkey"
+            columns: ["blocked_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "blocked_users_blocker_id_fkey"
+            columns: ["blocker_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       chat_members: {
         Row: {
           chat_id: string | null
@@ -2050,6 +2089,10 @@ export type Database = {
       }
       is_chat_member: {
         Args: { _chat_id: string; _user_id: string }
+        Returns: boolean
+      }
+      is_user_blocked: {
+        Args: { p_blocked_id: string; p_blocker_id: string }
         Returns: boolean
       }
       is_user_in_chat: {
