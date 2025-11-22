@@ -2,7 +2,7 @@ import { useNavigate } from 'react-router-dom';
 import { useAuth } from '@/contexts/AuthContext';
 import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { User, Globe, Mail, Phone } from 'lucide-react';
+import { User, Globe, Mail } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 import { toast } from 'sonner';
 import { supabase } from '@/integrations/supabase/client';
@@ -13,6 +13,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import { PhoneNumberInput } from './PhoneNumberInput';
 
 export const AccountSettings = () => {
   const navigate = useNavigate();
@@ -114,29 +115,22 @@ export const AccountSettings = () => {
           <div className="p-2 bg-primary/10 rounded-lg">
             <Mail className="h-5 w-5 text-primary" />
           </div>
-          <h3 className="text-xl font-semibold">Contact Information</h3>
+          <h3 className="text-xl font-semibold">Email</h3>
         </div>
         <div className="space-y-4">
           <div className="p-4 rounded-lg bg-muted/30">
             <div className="flex items-center gap-3">
               <Mail className="h-5 w-5 text-muted-foreground" />
               <div>
-                <p className="font-medium">Email</p>
+                <p className="font-medium">Email Address</p>
                 <p className="text-sm text-muted-foreground">{user?.email || 'No email set'}</p>
-              </div>
-            </div>
-          </div>
-          <div className="p-4 rounded-lg bg-muted/30">
-            <div className="flex items-center gap-3">
-              <Phone className="h-5 w-5 text-muted-foreground" />
-              <div>
-                <p className="font-medium">Phone Number</p>
-                <p className="text-sm text-muted-foreground">Not configured</p>
               </div>
             </div>
           </div>
         </div>
       </Card>
+
+      <PhoneNumberInput />
     </div>
   );
 };

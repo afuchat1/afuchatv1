@@ -1293,6 +1293,7 @@ export type Database = {
           last_login_date: string | null
           last_seen: string | null
           login_streak: number | null
+          phone_number: string | null
           profile_completion_rewarded: boolean | null
           show_online_status: boolean | null
           show_read_receipts: boolean | null
@@ -1323,6 +1324,7 @@ export type Database = {
           last_login_date?: string | null
           last_seen?: string | null
           login_streak?: number | null
+          phone_number?: string | null
           profile_completion_rewarded?: boolean | null
           show_online_status?: boolean | null
           show_read_receipts?: boolean | null
@@ -1353,6 +1355,7 @@ export type Database = {
           last_login_date?: string | null
           last_seen?: string | null
           login_streak?: number | null
+          phone_number?: string | null
           profile_completion_rewarded?: boolean | null
           show_online_status?: boolean | null
           show_read_receipts?: boolean | null
