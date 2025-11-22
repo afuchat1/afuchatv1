@@ -538,6 +538,282 @@ const Settings = () => {
     }
   };
 
+  // Render all sections vertically for mobile
+  const renderAllSections = () => (
+    <>
+      {/* General Section */}
+      <div className="space-y-4">
+        <div className="flex items-center gap-3">
+          <div className="p-2 bg-primary/10 rounded-lg">
+            <User className="h-5 w-5 text-primary" />
+          </div>
+          <h2 className="text-2xl font-bold">General</h2>
+        </div>
+        <Card className="border-border/50 shadow-md">
+          <div className="p-4">
+            <SettingItem
+              label="Edit Profile"
+              description="Update your name, bio, and profile"
+              onClick={() => user && navigate(`/${user.id}/edit`)}
+            />
+          </div>
+        </Card>
+      </div>
+
+      {/* Security & Privacy Section */}
+      <div className="space-y-4">
+        <div className="flex items-center gap-3">
+          <div className="p-2 bg-primary/10 rounded-lg">
+            <Lock className="h-5 w-5 text-primary" />
+          </div>
+          <h2 className="text-2xl font-bold">Security & Privacy</h2>
+        </div>
+        <Card className="border-border/50 shadow-md">
+          <div className="p-4 space-y-1">
+            <SettingItem
+              label="Change Password"
+              description="Update your account password"
+              onClick={() => navigate('/change-password')}
+            />
+            <Separator className="my-2" />
+            <SettingItem
+              label="Security Dashboard"
+              description="View login history and sessions"
+              onClick={() => navigate('/security')}
+            />
+          </div>
+        </Card>
+        <Card className="border-border/50 shadow-md">
+          <div className="p-4 space-y-4">
+            <div className="flex items-start justify-between gap-4 p-3 rounded-lg bg-muted/30">
+              <div className="flex-1">
+                <p className="font-semibold mb-1">Private Account</p>
+                <p className="text-xs text-muted-foreground">Only followers can see your posts</p>
+              </div>
+              <Switch
+                checked={privateAccount}
+                onCheckedChange={(checked) => {
+                  setPrivateAccount(checked);
+                  handlePrivacyToggle('is_private', checked);
+                }}
+              />
+            </div>
+            <Separator />
+            <div className="flex items-start justify-between gap-4 p-3 rounded-lg bg-muted/30">
+              <div className="flex-1">
+                <p className="font-semibold mb-1">Show Online Status</p>
+                <p className="text-xs text-muted-foreground">Let others see when you're online</p>
+              </div>
+              <Switch
+                checked={showOnlineStatus}
+                onCheckedChange={(checked) => {
+                  setShowOnlineStatus(checked);
+                  handlePrivacyToggle('show_online_status', checked);
+                }}
+              />
+            </div>
+            <Separator />
+            <div className="flex items-start justify-between gap-4 p-3 rounded-lg bg-muted/30">
+              <div className="flex-1">
+                <p className="font-semibold mb-1">Read Receipts</p>
+                <p className="text-xs text-muted-foreground">Show when you've read messages</p>
+              </div>
+              <Switch
+                checked={showReadReceipts}
+                onCheckedChange={(checked) => {
+                  setShowReadReceipts(checked);
+                  handlePrivacyToggle('show_read_receipts', checked);
+                }}
+              />
+            </div>
+          </div>
+        </Card>
+      </div>
+
+      {/* Notifications Section */}
+      <div className="space-y-4">
+        <div className="flex items-center gap-3">
+          <div className="p-2 bg-primary/10 rounded-lg">
+            <Bell className="h-5 w-5 text-primary" />
+          </div>
+          <h2 className="text-2xl font-bold">Notifications</h2>
+        </div>
+        <Card className="border-border/50 shadow-md">
+          <div className="p-4 space-y-4">
+            <div>
+              <p className="font-semibold mb-2">Push Notifications</p>
+              <p className="text-xs text-muted-foreground mb-4">
+                Receive alerts even when app is closed
+              </p>
+              <EnableNotificationsButton />
+            </div>
+            <Separator />
+            <div className="flex items-start justify-between gap-4 p-3 rounded-lg bg-muted/30">
+              <div className="flex-1">
+                <p className="font-semibold mb-1">In-App Notifications</p>
+                <p className="text-xs text-muted-foreground">Show while using the app</p>
+              </div>
+              <Switch checked={notificationsEnabled} onCheckedChange={setNotificationsEnabled} />
+            </div>
+          </div>
+        </Card>
+      </div>
+
+      {/* Appearance Section */}
+      <div className="space-y-4">
+        <div className="flex items-center gap-3">
+          <div className="p-2 bg-primary/10 rounded-lg">
+            <Palette className="h-5 w-5 text-primary" />
+          </div>
+          <h2 className="text-2xl font-bold">Appearance</h2>
+        </div>
+        <Card className="border-border/50 shadow-md">
+          <div className="p-4 space-y-4">
+            <div>
+              <p className="font-semibold mb-3">Theme</p>
+              <div className="grid grid-cols-3 gap-3">
+                <button
+                  onClick={() => setTheme('light')}
+                  className={cn(
+                    "flex flex-col items-center gap-2 p-4 rounded-lg border-2 transition-all",
+                    theme === 'light' 
+                      ? 'border-primary bg-primary/10' 
+                      : 'border-border/40'
+                  )}
+                >
+                  <Sun className="h-5 w-5" />
+                  <span className="text-xs font-medium">Light</span>
+                </button>
+                <button
+                  onClick={() => setTheme('dark')}
+                  className={cn(
+                    "flex flex-col items-center gap-2 p-4 rounded-lg border-2 transition-all",
+                    theme === 'dark' 
+                      ? 'border-primary bg-primary/10' 
+                      : 'border-border/40'
+                  )}
+                >
+                  <Moon className="h-5 w-5" />
+                  <span className="text-xs font-medium">Dark</span>
+                </button>
+                <button
+                  onClick={() => setTheme('system')}
+                  className={cn(
+                    "flex flex-col items-center gap-2 p-4 rounded-lg border-2 transition-all",
+                    theme === 'system' 
+                      ? 'border-primary bg-primary/10' 
+                      : 'border-border/40'
+                  )}
+                >
+                  <Monitor className="h-5 w-5" />
+                  <span className="text-xs font-medium">System</span>
+                </button>
+              </div>
+            </div>
+            <Separator />
+            <div>
+              <p className="font-semibold mb-3">Language</p>
+              <Select value={i18n.language} onValueChange={handleLanguageChange}>
+                <SelectTrigger className="w-full bg-muted/30 border-border/50">
+                  <SelectValue placeholder="Select language" />
+                </SelectTrigger>
+                <SelectContent className="bg-popover border-border/50">
+                  {languages.map((lang) => (
+                    <SelectItem key={lang.code} value={lang.code}>
+                      <span className="flex items-center gap-2">
+                        <span>{lang.flag}</span>
+                        <span>{lang.name}</span>
+                      </span>
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+          </div>
+        </Card>
+      </div>
+
+      {/* Help & Support Section */}
+      <div className="space-y-4">
+        <div className="flex items-center gap-3">
+          <div className="p-2 bg-primary/10 rounded-lg">
+            <HelpCircle className="h-5 w-5 text-primary" />
+          </div>
+          <h2 className="text-2xl font-bold">Help & Support</h2>
+        </div>
+        <Card className="border-border/50 shadow-md">
+          <div className="p-4">
+            <SettingItem
+              label="Support Center"
+              description="Browse FAQs and help articles"
+              onClick={() => navigate('/support')}
+            />
+          </div>
+        </Card>
+        <Card className="border-border/50 shadow-md">
+          <div className="p-4">
+            <div className="flex items-start gap-3 p-3 rounded-lg bg-muted/30">
+              <Mail className="h-5 w-5 text-primary shrink-0 mt-0.5" />
+              <div className="space-y-1">
+                <p className="font-semibold">Email Support</p>
+                <a 
+                  href="mailto:support@afuchat.com" 
+                  className="text-sm text-primary hover:underline block"
+                >
+                  support@afuchat.com
+                </a>
+                <p className="text-xs text-muted-foreground">Response: 24-48 hours</p>
+              </div>
+            </div>
+          </div>
+        </Card>
+      </div>
+
+      {/* About Section */}
+      <div className="space-y-4">
+        <div className="flex items-center gap-3">
+          <div className="p-2 bg-primary/10 rounded-lg">
+            <Shield className="h-5 w-5 text-primary" />
+          </div>
+          <h2 className="text-2xl font-bold">About</h2>
+        </div>
+        <Card className="border-border/50 shadow-md">
+          <div className="p-4 space-y-3">
+            <div className="flex items-center justify-between p-3 rounded-lg bg-muted/30">
+              <span className="text-sm font-medium text-muted-foreground">Version</span>
+              <span className="text-sm font-semibold">1.0.0</span>
+            </div>
+            <p className="text-xs text-muted-foreground px-3">© 2024 AfuChat. All rights reserved.</p>
+          </div>
+        </Card>
+        <Card className="border-border/50 shadow-md">
+          <div className="p-4 space-y-1">
+            <SettingItem
+              label="Terms of Use"
+              description="Read our terms and conditions"
+              onClick={() => navigate('/terms')}
+            />
+            <Separator className="my-2" />
+            <SettingItem
+              label="Privacy Policy"
+              description="Learn how we protect your data"
+              onClick={() => navigate('/privacy')}
+            />
+          </div>
+        </Card>
+        <Button 
+          variant="destructive" 
+          size="lg"
+          className="w-full shadow-md h-12 font-semibold" 
+          onClick={handleLogout}
+        >
+          <LogOut className="h-4 w-4 mr-2" />
+          Log Out
+        </Button>
+      </div>
+    </>
+  );
+
   return (
     <div className="min-h-screen bg-gradient-to-b from-background to-muted/20">
       {/* Desktop Header */}
@@ -586,31 +862,29 @@ const Settings = () => {
           </div>
         </aside>
 
-        {/* Mobile Section Selector */}
-        <div className="lg:hidden border-b border-border/40 bg-background/95 backdrop-blur sticky top-0 z-40">
-          <div className="flex flex-wrap gap-2 p-3">
-            {sidebarItems.map((item) => (
-              <button
-                key={item.id}
-                onClick={() => handleSectionChange(item.id)}
-                className={cn(
-                  "flex items-center gap-2 px-4 py-2.5 rounded-xl whitespace-nowrap transition-all duration-200",
-                  activeSection === item.id
-                    ? "bg-primary text-primary-foreground shadow-lg shadow-primary/20"
-                    : "bg-card text-muted-foreground hover:bg-card/80 border border-border/40"
-                )}
-              >
-                <item.icon className="h-4 w-4" />
-                <span className="text-sm font-medium">{item.label}</span>
-              </button>
-            ))}
-          </div>
-        </div>
-
-        {/* Main Content with Smooth Scroll */}
+        {/* Mobile: All Sections Vertical Scroll / Desktop: Selected Section */}
         <main className="flex-1 overflow-y-auto">
-          <div className="max-w-4xl mx-auto px-4 py-8 lg:px-8 lg:py-12 pb-24 lg:pb-12">
-            <div className="space-y-8">
+          <div className="max-w-4xl mx-auto px-4 py-6 lg:px-8 lg:py-12 pb-24 lg:pb-12">
+            {/* Mobile: Show all sections vertically */}
+            <div className="lg:hidden space-y-8">
+              {/* Mobile Header */}
+              <div className="flex items-center gap-3 mb-2">
+                <Button variant="ghost" size="icon" onClick={() => navigate(-1)}>
+                  <ArrowLeft className="h-5 w-5" />
+                </Button>
+                <div className="flex items-center gap-3">
+                  <div className="p-2 bg-primary/10 rounded-lg">
+                    <SettingsIcon className="h-5 w-5 text-primary" />
+                  </div>
+                  <h1 className="text-2xl font-bold">Settings</h1>
+                </div>
+              </div>
+
+              {renderAllSections()}
+            </div>
+
+            {/* Desktop: Show selected section only */}
+            <div className="hidden lg:block space-y-8">
               {renderContent()}
             </div>
           </div>
