@@ -141,7 +141,7 @@ const Settings = () => {
           <TabsContent value="activity" className="mt-0">
             <div className="space-y-2 mb-6">
               <h2 className="text-3xl font-bold tracking-tight">Activity Log</h2>
-              <p className="text-muted-foreground text-lg">View your recent activity and XP earnings</p>
+              <p className="text-muted-foreground text-lg">View your recent activity and Nexa earnings</p>
             </div>
             <ActivityLog />
           </TabsContent>
