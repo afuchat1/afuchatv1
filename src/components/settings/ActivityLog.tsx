@@ -111,7 +111,7 @@ export const ActivityLog = () => {
               <TrendingUp className="h-5 w-5 text-primary" />
             </div>
             <div>
-              <p className="text-sm text-muted-foreground">Total XP Earned</p>
+              <p className="text-sm text-muted-foreground">Total Nexa Earned</p>
               <p className="text-2xl font-bold">{stats.totalXP.toLocaleString()}</p>
             </div>
           </div>
@@ -174,7 +174,7 @@ export const ActivityLog = () => {
                           {getActivityLabel(activity.action_type)}
                         </p>
                         <Badge variant={activity.xp_earned > 0 ? 'default' : 'secondary'}>
-                          {activity.xp_earned > 0 ? '+' : ''}{activity.xp_earned} XP
+                          {activity.xp_earned > 0 ? '+' : ''}{activity.xp_earned} Nexa
                         </Badge>
                       </div>
                       <p className="text-sm text-muted-foreground">

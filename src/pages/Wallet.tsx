@@ -190,7 +190,7 @@ const Wallet = () => {
           </CardHeader>
           <CardContent>
             <div className="text-4xl font-bold text-primary mb-4">
-              {profile?.xp?.toLocaleString() || 0} XP
+              {profile?.xp?.toLocaleString() || 0} Nexa
             </div>
             <div className="grid grid-cols-2 gap-4">
               <Button variant="outline" onClick={() => navigate('/shop')}>
@@ -231,7 +231,7 @@ const Wallet = () => {
                   </div>
                   <div className="text-right shrink-0">
                     <p className={`font-bold ${isNegative ? 'text-red-500' : 'text-green-500'}`}>
-                      {isNegative ? '-' : '+'}{Math.abs(amount).toLocaleString()} XP
+                      {isNegative ? '-' : '+'}{Math.abs(amount).toLocaleString()} Nexa
                     </p>
                   </div>
                 </div>
