@@ -1017,7 +1017,6 @@ const Feed = () => {
   const [posts, setPosts] = useState<Post[]>([]);
   const [followingPosts, setFollowingPosts] = useState<Post[]>([]);
   const [loading, setLoading] = useState(true);
-  const [forceLoaded, setForceLoaded] = useState(false);
   const [activeTab, setActiveTab] = useState<'foryou' | 'following'>('foryou');
   const [newPostsCount, setNewPostsCount] = useState(0);
   const [userProfile, setUserProfile] = useState<{ display_name: string; avatar_url: string | null } | null>(null);
@@ -1343,6 +1342,7 @@ const Feed = () => {
 
 
   const fetchPosts = useCallback(async () => {
+    console.log('[Feed] fetchPosts: Starting fetch...');
     setLoading(true);
     try {
       // Fetch all posts for "For You" tab
@@ -1357,7 +1357,12 @@ const Feed = () => {
         .order('created_at', { ascending: false })
         .limit(50);
 
-      if (postsError) throw postsError;
+      console.log('[Feed] fetchPosts: Posts query result:', { postData, postsError });
+      
+      if (postsError) {
+        console.error('[Feed] fetchPosts: Error fetching posts:', postsError);
+        throw postsError;
+      }
       if (!postData) postData = [];
 
       // Fetch following posts if user is logged in
@@ -1505,14 +1510,24 @@ const Feed = () => {
         } as Post;
       });
 
+      console.log('[Feed] fetchPosts: Final posts count:', finalPosts.length);
+      console.log('[Feed] fetchPosts: Following posts count:', finalFollowingPosts.length);
+      
       setPosts(finalPosts);
       setFollowingPosts(finalFollowingPosts);
     } catch (err) {
-      console.error('Error fetching posts:', err);
+      console.error('[Feed] fetchPosts: Critical error:', err);
       if (err instanceof Error) {
-        toast.error('Could not fetch feed. Check RLS policies or console.');
+        console.error('[Feed] fetchPosts: Error details:', err.message, err.stack);
+        toast.error(`Could not fetch feed: ${err.message}`);
+      } else {
+        toast.error('Could not fetch feed. Please try again.');
       }
+      // Set empty arrays to show "no posts" message instead of infinite loading
+      setPosts([]);
+      setFollowingPosts([]);
     } finally {
+      console.log('[Feed] fetchPosts: Setting loading to false');
       setLoading(false);
     }
   }, [user]);
@@ -1937,15 +1952,7 @@ const Feed = () => {
   );
 
 
-  const effectiveLoading = loading && !forceLoaded;
-  useEffect(() => {
-    const timer = setTimeout(() => {
-      setForceLoaded(true);
-    }, 5000);
-    return () => clearTimeout(timer);
-  }, []);
-
-  if (effectiveLoading) {
+  if (loading) {
     return (
       <div className="flex flex-col h-full">
         {[...Array(5)].map((_, i) => (
@@ -1994,7 +2001,7 @@ const Feed = () => {
         </div>
 
         <TabsContent value={activeTab} className="flex-1 overflow-y-auto m-0" ref={feedRef}>
-          {currentPosts.length === 0 && !effectiveLoading ? (
+          {currentPosts.length === 0 ? (
             <div className="text-center text-muted-foreground py-6 sm:py-8 text-xs sm:text-sm px-4">
               {activeTab === 'following' && user
                 ? 'Follow users to see their posts here'
