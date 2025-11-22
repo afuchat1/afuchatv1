@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useRef } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/contexts/AuthContext';
 import { Card } from '@/components/ui/card';
@@ -61,6 +61,9 @@ const Chats = () => {
   const [forceLoaded, setForceLoaded] = useState(false);
   const [isNewChatDialogOpen, setIsNewChatDialogOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
+  const [showFab, setShowFab] = useState(true);
+  const scrollRef = useRef<HTMLDivElement>(null);
+  const lastScrollY = useRef(0);
 
   useEffect(() => {
     const timer = setTimeout(() => {
@@ -246,6 +249,31 @@ const Chats = () => {
       setFilteredChats(filtered);
     }
   }, [searchQuery, chats, t]);
+
+  useEffect(() => {
+    const handleScroll = () => {
+      if (!scrollRef.current) return;
+      
+      const currentScrollY = scrollRef.current.scrollTop;
+      
+      if (currentScrollY < 10) {
+        setShowFab(true);
+      } else if (currentScrollY > lastScrollY.current && currentScrollY > 50) {
+        setShowFab(false);
+      } else if (currentScrollY < lastScrollY.current) {
+        setShowFab(true);
+      }
+      
+      lastScrollY.current = currentScrollY;
+    };
+
+    const scrollElement = scrollRef.current;
+    scrollElement?.addEventListener('scroll', handleScroll);
+
+    return () => {
+      scrollElement?.removeEventListener('scroll', handleScroll);
+    };
+  }, []);
   
   const ChatItemSkeleton = () => (
     <div className="flex items-center gap-4 p-4 rounded-2xl bg-gradient-to-r from-muted/50 to-muted/30 animate-pulse">
@@ -373,7 +401,7 @@ const Chats = () => {
       </div>
       
       {/* Chat list */}
-      <div className="flex-1 overflow-y-auto px-4 py-4 space-y-3">
+      <div ref={scrollRef} className="flex-1 overflow-y-auto px-4 py-4 space-y-3">
         {filteredChats.length === 0 ? (
           <div className="flex flex-col items-center justify-center h-full text-center px-6 py-12">
             <div className="relative mb-6">
@@ -415,7 +443,9 @@ const Chats = () => {
       <Button
         size="lg"
         onClick={() => setIsNewChatDialogOpen(true)}
-        className="fixed bottom-20 right-6 h-14 w-14 rounded-full shadow-lg hover:shadow-xl bg-gradient-to-r from-primary to-primary/80 hover:from-primary/90 hover:to-primary/70 transition-all duration-300 z-50"
+        className={`fixed bottom-20 right-6 h-14 w-14 rounded-full shadow-lg hover:shadow-xl bg-gradient-to-r from-primary to-primary/80 hover:from-primary/90 hover:to-primary/70 transition-all duration-300 z-50 ${
+          showFab ? 'translate-y-0 opacity-100' : 'translate-y-20 opacity-0 pointer-events-none'
+        }`}
       >
         <Pencil className="h-6 w-6" />
       </Button>
