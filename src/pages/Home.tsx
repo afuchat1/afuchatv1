@@ -5,6 +5,7 @@ import { supabase } from '@/integrations/supabase/client';
 import Feed from './Feed';
 import DesktopFeed from './DesktopFeed';
 import NewPostModal from '@/components/ui/NewPostModal';
+import FloatingActionButton from '@/components/ui/FloatingActionButton';
 import Layout from '@/components/Layout';
 import { useIsMobile } from '@/hooks/use-mobile';
 
@@ -76,6 +77,7 @@ const Home = () => {
     return (
       <>
         <DesktopFeed />
+        <FloatingActionButton />
         {user && (
           <NewPostModal
             isOpen={isPostModalOpen}
@@ -91,6 +93,7 @@ const Home = () => {
     <Layout>
       <div className="relative">
         <Feed />
+        <FloatingActionButton />
         {user && (
           <NewPostModal
             isOpen={isPostModalOpen}
