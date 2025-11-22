@@ -3,7 +3,7 @@ import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/contexts/AuthContext';
 import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { MessageSquarePlus, Users, User, Clock, Search } from 'lucide-react';
+import { Pencil, Users, User, Clock, Search } from 'lucide-react';
 import { Skeleton } from '@/components/ui/skeleton';
 import { useNavigate } from 'react-router-dom';
 import NewChatDialog from '@/components/ui/NewChatDialog';
@@ -348,7 +348,7 @@ const Chats = () => {
             <div className="relative mb-6">
               <div className="absolute inset-0 bg-primary/20 rounded-full blur-3xl" />
               <div className="relative bg-gradient-to-br from-primary/10 to-primary/5 rounded-full p-8">
-                <MessageSquarePlus className="h-16 w-16 text-primary/60" />
+                <Pencil className="h-16 w-16 text-primary/60" />
               </div>
             </div>
             <h3 className="text-xl font-semibold mb-2 text-foreground">
@@ -363,7 +363,7 @@ const Chats = () => {
                 size="lg"
                 className="rounded-full shadow-lg hover:shadow-xl"
               >
-                <MessageSquarePlus className="h-5 w-5 mr-2" />
+                <Pencil className="h-5 w-5 mr-2" />
                 {t('chat.startNewChat')}
               </Button>
             )}
@@ -386,7 +386,7 @@ const Chats = () => {
         onClick={() => setIsNewChatDialogOpen(true)}
         className="fixed bottom-20 right-6 h-14 w-14 rounded-full shadow-lg hover:shadow-xl bg-gradient-to-r from-primary to-primary/80 hover:from-primary/90 hover:to-primary/70 transition-all duration-300 z-50"
       >
-        <MessageSquarePlus className="h-6 w-6" />
+        <Pencil className="h-6 w-6" />
       </Button>
     </div>
   );
