@@ -10,6 +10,7 @@ import InstallPromptBanner from '@/components/InstallPromptBanner';
 import { OfflineIndicator } from '@/components/OfflineIndicator';
 import { AccountModeSwitcher } from '@/components/AccountModeSwitcher';
 import { MobileMenuSheet } from '@/components/MobileMenuSheet';
+import FloatingActionButton from '@/components/ui/FloatingActionButton';
 import { supabase } from '@/integrations/supabase/client';
 import { cn } from '@/lib/utils';
 import { useTranslation } from 'react-i18next';
@@ -220,6 +221,9 @@ const Layout = ({ children }: LayoutProps) => {
           {children}
         </div>
       </main>
+
+      {/* Floating Action Button */}
+      <FloatingActionButton />
 
       {/* Mobile Bottom Navigation - Hidden in chat rooms */}
       {!isChatRoom && (
