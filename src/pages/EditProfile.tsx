@@ -10,7 +10,8 @@ import { Textarea } from '@/components/ui/textarea';
 import { Switch } from '@/components/ui/switch';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Separator } from '@/components/ui/separator'; 
-import { Loader2, User, Lock, Eye, MessageCircle, Upload, X, Building2 } from 'lucide-react';
+import { User, Lock, Eye, MessageCircle, Upload, X, Building2 } from 'lucide-react';
+import { Skeleton } from '@/components/ui/skeleton';
 import { handleSchema, displayNameSchema, bioSchema } from '@/lib/validation';
 import { useNexa } from '@/hooks/useNexa';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
@@ -333,7 +334,11 @@ const EditProfile: React.FC = () => {
   if (isLoadingAuth || loadingProfile) {
     return (
       <div className="min-h-screen bg-background flex items-center justify-center p-4">
-        <Loader2 className="h-8 w-8 animate-spin text-primary" />
+        <div className="w-full max-w-lg space-y-3">
+          <Skeleton className="h-12 w-full" />
+          <Skeleton className="h-48 w-full" />
+          <Skeleton className="h-12 w-full" />
+        </div>
       </div>
     );
   }
@@ -556,7 +561,6 @@ const EditProfile: React.FC = () => {
               disabled={saving}
               className="px-8 h-12 text-base bg-primary hover:bg-primary/90 focus-visible:ring-1 focus-visible:ring-primary/20 transition-colors"
             >
-              {saving && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
               {saving ? 'Saving...' : 'Save Changes'}
             </Button>
           </div>

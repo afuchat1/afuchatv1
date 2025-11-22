@@ -6,7 +6,7 @@ import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { toast } from 'sonner';
-import { Loader2 } from 'lucide-react';
+import { Skeleton } from '@/components/ui/skeleton';
 import { VerifiedBadge } from '@/components/VerifiedBadge';
 
 interface SuggestedUser {
@@ -180,7 +180,11 @@ export default function SuggestedUsers() {
   if (loading) {
     return (
       <div className="min-h-screen flex items-center justify-center">
-        <Loader2 className="h-8 w-8 animate-spin text-primary" />
+        <div className="w-full max-w-md p-4 space-y-3">
+          <Skeleton className="h-24 w-full" />
+          <Skeleton className="h-24 w-full" />
+          <Skeleton className="h-24 w-full" />
+        </div>
       </div>
     );
   }
@@ -245,7 +249,7 @@ export default function SuggestedUsers() {
                   variant={followingIds.has(suggestedUser.id) ? "secondary" : "default"}
                 >
                   {processingFollow.has(suggestedUser.id) ? (
-                    <Loader2 className="h-4 w-4 animate-spin" />
+                    'Following...'
                   ) : followingIds.has(suggestedUser.id) ? (
                     'Following'
                   ) : suggestedUser.following_me ? (

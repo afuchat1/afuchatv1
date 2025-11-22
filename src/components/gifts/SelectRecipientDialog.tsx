@@ -10,7 +10,8 @@ import {
 } from '@/components/ui/dialog';
 import { Input } from '@/components/ui/input';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
-import { Search, Loader2 } from 'lucide-react';
+import { Search } from 'lucide-react';
+import { Skeleton } from '@/components/ui/skeleton';
 import { VerifiedBadge } from '@/components/VerifiedBadge';
 import { BusinessBadge } from '@/components/BusinessBadge';
 import { AffiliatedBadge } from '@/components/AffiliatedBadge';
@@ -151,7 +152,11 @@ export const SelectRecipientDialog = ({
           <div className="space-y-2 max-h-96 overflow-y-auto">
             {loading ? (
               <div className="flex items-center justify-center py-8">
-                <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
+                <div className="space-y-3 p-4">
+                  <Skeleton className="h-16 w-full" />
+                  <Skeleton className="h-16 w-full" />
+                  <Skeleton className="h-16 w-full" />
+                </div>
               </div>
             ) : profiles.length === 0 ? (
               <div className="text-center py-8 text-sm text-muted-foreground">

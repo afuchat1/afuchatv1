@@ -10,7 +10,8 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
-import { ArrowLeft, Users, TrendingUp, DollarSign, UserCheck, Clock, CheckCircle, XCircle, Loader2 } from 'lucide-react';
+import { ArrowLeft, Users, TrendingUp, DollarSign, UserCheck, Clock, CheckCircle, XCircle } from 'lucide-react';
+import { Skeleton } from '@/components/ui/skeleton';
 import { toast } from 'sonner';
 import { supabase } from '@/integrations/supabase/client';
 import Logo from '@/components/Logo';
@@ -286,7 +287,11 @@ const BusinessDashboard = () => {
             <TabsContent value="requests" className="mt-6">
               {loading ? (
                 <div className="flex items-center justify-center py-12">
-                  <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
+                  <div className="space-y-3 w-full max-w-md">
+                    <Skeleton className="h-24 w-full" />
+                    <Skeleton className="h-24 w-full" />
+                    <Skeleton className="h-24 w-full" />
+                  </div>
                 </div>
               ) : affiliateRequests.length === 0 ? (
                 <div className="text-center py-12">
@@ -344,7 +349,11 @@ const BusinessDashboard = () => {
             <TabsContent value="affiliates" className="mt-6">
               {loading ? (
                 <div className="flex items-center justify-center py-12">
-                  <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
+                  <div className="space-y-3 w-full max-w-md">
+                    <Skeleton className="h-20 w-full" />
+                    <Skeleton className="h-20 w-full" />
+                    <Skeleton className="h-20 w-full" />
+                  </div>
                 </div>
               ) : affiliates.length === 0 ? (
                 <div className="text-center py-12">
@@ -445,7 +454,6 @@ const BusinessDashboard = () => {
             >
               {processingRequest ? (
                 <>
-                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
                   Approving...
                 </>
               ) : (

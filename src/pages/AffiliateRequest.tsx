@@ -12,7 +12,8 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
-import { ArrowLeft, Building2, Loader2 } from 'lucide-react';
+import { ArrowLeft, Building2 } from 'lucide-react';
+import { Skeleton } from '@/components/ui/skeleton';
 import { toast } from 'sonner';
 import { supabase } from '@/integrations/supabase/client';
 import Logo from '@/components/Logo';
@@ -257,7 +258,7 @@ const AffiliateRequest = () => {
               <Label htmlFor="business">Business Profile *</Label>
               {fetchingProfiles ? (
                 <div className="flex items-center justify-center py-8">
-                  <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
+                  <Skeleton className="h-12 w-full" />
                 </div>
               ) : businessProfiles.length === 0 ? (
                 <p className="text-sm text-muted-foreground py-4">
@@ -309,7 +310,6 @@ const AffiliateRequest = () => {
               >
                 {loading ? (
                   <>
-                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
                     Submitting...
                   </>
                 ) : (

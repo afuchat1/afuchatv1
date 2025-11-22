@@ -248,7 +248,7 @@ const AuthSheetContent: React.FC<AuthSheetContentProps> = ({ onClose }) => {
           >
             {loading ? (
               <>
-                <span className="mr-1 animate-spin rounded-full h-3 w-3 border-b-2 border-white"></span>
+                
                 Processing...
               </>
             ) : isSignUp ? 'Create Account' : 'Sign In'}

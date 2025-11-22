@@ -4,7 +4,7 @@ import { useAuth } from '@/contexts/AuthContext';
 import { Card } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
-import { Search as SearchIcon, User, MessageSquare, Loader2, TrendingUp } from 'lucide-react';
+import { Search as SearchIcon, User, MessageSquare, TrendingUp } from 'lucide-react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { Skeleton } from '@/components/ui/skeleton';
 import { toast } from 'sonner';
@@ -310,7 +310,7 @@ const Search = () => {
             disabled={loading || !query.trim()} 
             className="rounded-full h-10 w-10 p-0"
           >
-            {loading ? <Loader2 className="h-5 w-5 animate-spin" /> : <SearchIcon className="h-5 w-5" />}
+            {loading ? <SearchIcon className="h-5 w-5 opacity-50" /> : <SearchIcon className="h-5 w-5" />}
           </Button>
         </div>
       </div>

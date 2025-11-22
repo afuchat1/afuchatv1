@@ -6,7 +6,8 @@ import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
-import { ArrowLeft, Send, User, Loader2, Phone, Video, MoreVertical, Check, MessageSquare, HelpCircle, Info, Mic, MicOff, Play, Pause, Volume2, X, Smile, Paperclip } from 'lucide-react';
+import { Skeleton } from '@/components/ui/skeleton';
+import { ArrowLeft, Send, User, Phone, Video, MoreVertical, Check, MessageSquare, HelpCircle, Info, Mic, MicOff, Play, Pause, Volume2, X, Smile, Paperclip } from 'lucide-react';
 import { toast } from 'sonner';
 import { messageSchema } from '@/lib/validation';
 import { ChatRedEnvelope } from '@/components/chat/ChatRedEnvelope';
@@ -800,9 +801,10 @@ const ChatRoom = () => {
   if (loading) {
     return (
       <div className="flex-1 flex items-center justify-center bg-background min-h-screen">
-        <div className="text-center p-4">
-          <Loader2 className="h-8 w-8 animate-spin mx-auto mb-2 text-primary" />
-          <p className="text-muted-foreground">Loading chat...</p>
+        <div className="w-full max-w-md p-4 space-y-3">
+          <Skeleton className="h-16 w-full" />
+          <Skeleton className="h-96 w-full" />
+          <Skeleton className="h-16 w-full" />
         </div>
       </div>
     );
@@ -960,7 +962,7 @@ const ChatRoom = () => {
                   onClick={stopRecording}
                   disabled={uploading}
                 >
-                  {uploading ? <Loader2 className="h-5 w-5 animate-spin" /> : <MicOff className="h-5 w-5" />}
+                  {uploading ? <MicOff className="h-5 w-5 opacity-50" /> : <MicOff className="h-5 w-5" />}
                 </Button>
               </div>
             ) : audioBlob ? (
@@ -975,7 +977,7 @@ const ChatRoom = () => {
                   onClick={sendVoiceMessage}
                   disabled={uploading}
                 >
-                  {uploading ? <Loader2 className="h-5 w-5 animate-spin" /> : <Send className="h-5 w-5" />}
+                  {uploading ? <Send className="h-5 w-5 opacity-50" /> : <Send className="h-5 w-5" />}
                 </Button>
               </div>
             ) : (
@@ -1020,7 +1022,7 @@ const ChatRoom = () => {
                     className="h-11 w-11 rounded-full bg-primary hover:bg-primary/90 text-primary-foreground flex-shrink-0"
                     disabled={sending || uploadingFile}
                   >
-                    {(sending || uploadingFile) ? <Loader2 className="h-5 w-5 animate-spin" /> : <Send className="h-5 w-5" />}
+                    {(sending || uploadingFile) ? <Send className="h-5 w-5 opacity-50" /> : <Send className="h-5 w-5" />}
                   </Button>
                 ) : (
                   <>

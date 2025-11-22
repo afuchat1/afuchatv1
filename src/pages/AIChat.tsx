@@ -5,7 +5,8 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Card } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
-import { Bot, Send, Loader2, ArrowLeft } from 'lucide-react'; 
+import { Bot, Send, ArrowLeft } from 'lucide-react';
+import { Skeleton } from '@/components/ui/skeleton';
 import { toast } from 'sonner';
 import { useNavigate, useLocation } from 'react-router-dom';
 
@@ -320,7 +321,7 @@ const AIChat: React.FC = () => {
         {loading && (
           <div className="flex justify-start">
             <Card className="max-w-[80%] p-3 bg-card border-border">
-              <Loader2 className="h-4 w-4 animate-spin" />
+              <Skeleton className="h-4 w-32" />
             </Card>
           </div>
         )}
@@ -343,7 +344,7 @@ const AIChat: React.FC = () => {
             className="rounded-full"
             size="icon"
           >
-            {loading ? <Loader2 className="h-4 w-4 animate-spin" /> : <Send className="h-4 w-4" />}
+            {loading ? <Send className="h-4 w-4 opacity-50" /> : <Send className="h-4 w-4" />}
           </Button>
         </div>
       </div>

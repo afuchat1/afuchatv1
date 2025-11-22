@@ -1,7 +1,8 @@
 import { useState } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { Button } from './button';
-import { Upload, X, Loader2 } from 'lucide-react';
+import { Upload, X } from 'lucide-react';
+import { Skeleton } from '@/components/ui/skeleton';
 import { toast } from 'sonner';
 
 interface ImageUploadProps {
@@ -99,7 +100,7 @@ export const ImageUpload = ({
         <label className="flex flex-col items-center justify-center w-full h-48 border-2 border-dashed border-border rounded-lg cursor-pointer hover:bg-accent/50 transition-colors">
           <div className="flex flex-col items-center justify-center pt-5 pb-6">
             {uploading ? (
-              <Loader2 className="h-8 w-8 animate-spin text-primary" />
+              <Skeleton className="h-full w-full" />
             ) : (
               <>
                 <Upload className="h-8 w-8 mb-2 text-muted-foreground" />
