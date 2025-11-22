@@ -79,28 +79,45 @@ const Chats = () => {
       try {
         const { data: chatMembers, error } = await supabase
           .from('chat_members')
-          .select('chat_id, chats(id, name, is_group, updated_at)')
+          .select(`
+            chat_id,
+            chats!inner(id, name, is_group, updated_at)
+          `)
           .eq('user_id', user.id);
 
-        if (error) throw error;
+        if (error) {
+          console.error('Error fetching chat members:', error);
+          throw error;
+        }
+
+        console.log('Chat members fetched:', chatMembers);
 
         if (chatMembers && chatMembers.length > 0) {
-          // Filter out chats where the user is chatting with themselves
           const validChats: Chat[] = [];
           
           for (const member of chatMembers) {
             if (!member.chats) continue;
             
+            const chatId = member.chats.id;
+            
             // Get all members of this chat
-            const { data: allMembers } = await supabase
+            const { data: allMembers, error: membersError } = await supabase
               .from('chat_members')
               .select('user_id')
-              .eq('chat_id', member.chats.id);
+              .eq('chat_id', chatId);
+            
+            if (membersError) {
+              console.error('Error fetching members for chat:', chatId, membersError);
+              continue;
+            }
             
             // Skip if it's a 1-on-1 chat with yourself
             if (allMembers && allMembers.length === 2) {
               const memberIds = allMembers.map(m => m.user_id);
-              if (memberIds[0] === memberIds[1]) continue;
+              if (memberIds[0] === memberIds[1]) {
+                console.log('Skipping self-chat:', chatId);
+                continue;
+              }
             }
             
             let chatData: Chat = {
@@ -109,13 +126,17 @@ const Chats = () => {
             };
             
             // Fetch the last message for this chat
-            const { data: lastMessage } = await supabase
+            const { data: lastMessage, error: messageError } = await supabase
               .from('messages')
               .select('encrypted_content, attachment_type, audio_url, sent_at')
-              .eq('chat_id', member.chats.id)
+              .eq('chat_id', chatId)
               .order('sent_at', { ascending: false })
               .limit(1)
-              .single();
+              .maybeSingle();
+            
+            if (messageError) {
+              console.error('Error fetching last message for chat:', chatId, messageError);
+            }
             
             if (lastMessage) {
               if (lastMessage.audio_url) {
@@ -137,9 +158,13 @@ const Chats = () => {
                   .from('profiles')
                   .select('id, display_name, handle, avatar_url, last_seen, show_online_status, is_verified, is_organization_verified, is_affiliate, affiliated_business_id')
                   .eq('id', otherUserId)
-                  .single();
+                  .maybeSingle();
                 
-                if (profile && !profileError) {
+                if (profileError) {
+                  console.error('Error fetching profile for user:', otherUserId, profileError);
+                }
+                
+                if (profile) {
                   chatData.other_user = profile;
                   // Check if user is online (last seen within 5 minutes)
                   if (profile.last_seen && profile.show_online_status) {
@@ -147,33 +172,37 @@ const Chats = () => {
                     const now = new Date().getTime();
                     chatData.is_online = now - lastSeenTime < 5 * 60 * 1000;
                   }
-                } else {
-                  console.error('Failed to fetch profile for user:', otherUserId, profileError);
                 }
               }
             }
             
-            // Count unread messages for this chat
-            const { count: unreadCount } = await supabase
+            // Count unread messages - simplified query
+            const { count: unreadCount, error: countError } = await supabase
               .from('messages')
               .select('*', { count: 'exact', head: true })
-              .eq('chat_id', member.chats.id)
+              .eq('chat_id', chatId)
               .neq('sender_id', user.id)
-              .not('id', 'in', `(
-                SELECT message_id FROM message_status 
-                WHERE user_id = '${user.id}' 
-                AND read_at IS NOT NULL
-              )`);
+              .is('read_at', null);
+            
+            if (countError) {
+              console.error('Error counting unread messages for chat:', chatId, countError);
+            }
             
             chatData.unread_count = unreadCount || 0;
             
             validChats.push(chatData);
+            console.log('Added chat to validChats:', chatData);
           }
           
           validChats.sort((a, b) => new Date(b.updated_at).getTime() - new Date(a.updated_at).getTime());
           
+          console.log('Final valid chats:', validChats);
           setChats(validChats);
           setFilteredChats(validChats);
+        } else {
+          console.log('No chat members found');
+          setChats([]);
+          setFilteredChats([]);
         }
       } catch (err) {
         console.error('Error fetching chats:', err);
