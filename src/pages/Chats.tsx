@@ -395,8 +395,8 @@ const Chats = () => {
 
   return (
     <div className="h-full flex flex-col bg-gradient-to-b from-background to-muted/20 relative">
-      <div className="pt-6 pb-4">
-        {/* Stories Header */}
+      {/* Stories Header - Sticky at top */}
+      <div className="pt-6">
         <ChatStoriesHeader />
       </div>
       

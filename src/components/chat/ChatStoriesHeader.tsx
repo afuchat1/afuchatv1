@@ -148,7 +148,7 @@ export const ChatStoriesHeader = () => {
   return (
     <div
       ref={headerRef}
-      className="sticky top-0 z-40 transition-all duration-300 ease-out bg-background touch-pan-x"
+      className="sticky top-0 z-50 transition-all duration-300 ease-out bg-background/95 backdrop-blur-sm touch-pan-x pb-2"
       onTouchStart={handleTouchStart}
       onTouchMove={handleTouchMove}
       onTouchEnd={handleTouchEnd}
