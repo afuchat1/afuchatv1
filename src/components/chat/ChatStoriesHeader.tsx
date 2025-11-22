@@ -113,9 +113,10 @@ export const ChatStoriesHeader = () => {
       return;
     }
     
-    // Only handle vertical swipe if not horizontal scrolling and expanded
+    // Only handle vertical swipe if not horizontal scrolling
     if (!isHorizontalScroll && expandProgress < 1) {
       if (deltaY > 0) {
+        e.preventDefault(); // Prevent browser pull-to-refresh
         const progress = Math.min(deltaY / 150, 1);
         setExpandProgress(progress);
       }
@@ -147,7 +148,7 @@ export const ChatStoriesHeader = () => {
   return (
     <div
       ref={headerRef}
-      className="sticky top-0 z-40 transition-all duration-300 ease-out bg-background"
+      className="sticky top-0 z-40 transition-all duration-300 ease-out bg-background touch-pan-x"
       onTouchStart={handleTouchStart}
       onTouchMove={handleTouchMove}
       onTouchEnd={handleTouchEnd}
