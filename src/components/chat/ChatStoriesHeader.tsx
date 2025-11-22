@@ -120,10 +120,11 @@ export const ChatStoriesHeader = () => {
     navigate('/moments');
   };
 
-  if (loading || storyUsers.length === 0) return null;
+  if (loading) return null;
 
   const totalStories = storyUsers.reduce((sum, user) => sum + user.story_count, 0);
   const isExpanded = expandProgress > 0.5;
+  const hasStories = storyUsers.length > 0;
 
   return (
     <div
@@ -154,46 +155,63 @@ export const ChatStoriesHeader = () => {
           }}
         >
           <div className="flex items-center gap-4 px-6">
-            <div className="flex items-center -space-x-3">
-              {storyUsers.slice(0, 4).map((storyUser, index) => (
-                <div
-                  key={storyUser.user_id}
-                  onClick={() => handleStoryClick(storyUser.user_id)}
-                  className={cn(
-                    "relative cursor-pointer transition-all duration-200 hover:scale-110 hover:z-10",
-                    index === 0 ? "z-40" : index === 1 ? "z-30" : index === 2 ? "z-20" : "z-10"
-                  )}
-                  style={{ 
-                    transform: `translateX(${index * 2}px)`,
-                  }}
-                >
-                  <div className="p-[2.5px] rounded-full bg-gradient-to-tr from-yellow-400 via-pink-500 to-purple-500">
-                    {storyUser.avatar_url ? (
-                      <img
-                        src={storyUser.avatar_url}
-                        alt={storyUser.display_name}
-                        className="h-14 w-14 rounded-full object-cover border-[3px] border-background"
-                      />
-                    ) : (
-                      <div className="h-14 w-14 rounded-full bg-gradient-to-br from-primary to-primary/80 flex items-center justify-center border-[3px] border-background">
-                        <span className="text-lg font-semibold text-white">
-                          {storyUser.display_name?.charAt(0).toUpperCase()}
-                        </span>
+            {hasStories ? (
+              <>
+                <div className="flex items-center -space-x-3">
+                  {storyUsers.slice(0, 4).map((storyUser, index) => (
+                    <div
+                      key={storyUser.user_id}
+                      onClick={() => handleStoryClick(storyUser.user_id)}
+                      className={cn(
+                        "relative cursor-pointer transition-all duration-200 hover:scale-110 hover:z-10",
+                        index === 0 ? "z-40" : index === 1 ? "z-30" : index === 2 ? "z-20" : "z-10"
+                      )}
+                      style={{ 
+                        transform: `translateX(${index * 2}px)`,
+                      }}
+                    >
+                      <div className="p-[2.5px] rounded-full bg-gradient-to-tr from-yellow-400 via-pink-500 to-purple-500">
+                        {storyUser.avatar_url ? (
+                          <img
+                            src={storyUser.avatar_url}
+                            alt={storyUser.display_name}
+                            className="h-14 w-14 rounded-full object-cover border-[3px] border-background"
+                          />
+                        ) : (
+                          <div className="h-14 w-14 rounded-full bg-gradient-to-br from-primary to-primary/80 flex items-center justify-center border-[3px] border-background">
+                            <span className="text-lg font-semibold text-white">
+                              {storyUser.display_name?.charAt(0).toUpperCase()}
+                            </span>
+                          </div>
+                        )}
                       </div>
-                    )}
-                  </div>
+                    </div>
+                  ))}
                 </div>
-              ))}
-            </div>
 
-            <div className="flex flex-col">
-              <h2 className="text-xl font-bold text-foreground">
-                {totalStories} {totalStories === 1 ? 'Story' : 'Stories'}
-              </h2>
-              <p className="text-xs text-muted-foreground">
-                Swipe down to expand
-              </p>
-            </div>
+                <div className="flex flex-col">
+                  <h2 className="text-xl font-bold text-foreground">
+                    {totalStories} {totalStories === 1 ? 'Story' : 'Stories'}
+                  </h2>
+                  <p className="text-xs text-muted-foreground">
+                    Swipe down to expand
+                  </p>
+                </div>
+              </>
+            ) : (
+              <div
+                onClick={handleCreateStory}
+                className="flex items-center gap-3 cursor-pointer"
+              >
+                <div className="h-14 w-14 rounded-full bg-gradient-to-br from-primary/20 to-primary/10 flex items-center justify-center border-2 border-dashed border-primary/50">
+                  <Plus className="h-6 w-6 text-primary" />
+                </div>
+                <div className="flex flex-col">
+                  <h2 className="text-base font-bold text-foreground">Create Story</h2>
+                  <p className="text-xs text-muted-foreground">Share a moment</p>
+                </div>
+              </div>
+            )}
           </div>
         </div>
 
