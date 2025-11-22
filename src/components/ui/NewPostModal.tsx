@@ -6,7 +6,7 @@ import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Textarea } from '@/components/ui/textarea';
 import { toast } from 'sonner';
-import { X, Sparkles, Image as ImageIcon, Loader2, Globe } from 'lucide-react';
+import { X, Sparkles, Image as ImageIcon, Globe } from 'lucide-react';
 import { ImageEditor } from '@/components/image-editor/ImageEditor';
 import { BatchImageEditor } from '@/components/image-editor/BatchImageEditor';
 import { postSchema } from '@/lib/validation';
@@ -297,7 +297,7 @@ const NewPostModal: React.FC<NewPostModalProps> = ({ isOpen, onClose }) => {
                         >
                             {isPosting ? (
                                 <>
-                                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                                    <Sparkles className="mr-2 h-4 w-4" />
                                     Posting
                                 </>
                             ) : (
@@ -490,7 +490,7 @@ const NewPostModal: React.FC<NewPostModalProps> = ({ isOpen, onClose }) => {
                             >
                                 {generatingAI ? (
                                     <>
-                                        <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                                        <Sparkles className="mr-2 h-4 w-4" />
                                         Generating
                                     </>
                                 ) : (

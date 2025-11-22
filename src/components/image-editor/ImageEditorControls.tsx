@@ -6,8 +6,7 @@ import {
   FlipHorizontal, 
   FlipVertical, 
   Save, 
-  X,
-  Loader2
+  X
 } from 'lucide-react';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 
@@ -143,7 +142,7 @@ export const ImageEditorControls = ({
         >
           {isProcessing ? (
             <>
-              <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+              <Save className="h-4 w-4 mr-2" />
               Processing...
             </>
           ) : (

@@ -13,7 +13,7 @@ import {
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { Badge } from '@/components/ui/badge';
-import { Coins, Loader2, Heart } from 'lucide-react';
+import { Coins, Heart } from 'lucide-react';
 import { toast } from 'sonner';
 
 interface TipButtonProps {
@@ -183,7 +183,7 @@ export const TipButton = ({
           >
             {loading ? (
               <>
-                <Loader2 className="w-4 h-4 animate-spin mr-2" />
+                <Coins className="w-4 h-4 mr-2" />
                 Sending...
               </>
             ) : (

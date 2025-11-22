@@ -7,7 +7,8 @@ import { Card, CardHeader, CardTitle, CardDescription, CardFooter } from '@/comp
 import { Badge } from '@/components/ui/badge';
 import { Input } from '@/components/ui/input';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from '@/components/ui/dialog';
-import { Loader2, Check, Sparkles, Zap, Clock, Hammer, TrendingUp, Users } from 'lucide-react';
+import { Check, Sparkles, Zap, Clock, Hammer, TrendingUp, Users } from 'lucide-react';
+import { Skeleton } from '@/components/ui/skeleton';
 import { toast } from 'sonner';
 
 interface ShopItem {
@@ -564,7 +565,6 @@ export default function Shop() {
               >
                 {purchasing === item.id ? (
                   <>
-                    <Loader2 className="w-3 h-3 mr-1 animate-spin" />
                     Purchasing...
                   </>
                 ) : owned ? (
@@ -588,7 +588,11 @@ export default function Shop() {
   if (loading) {
     return (
       <div className="flex items-center justify-center min-h-screen">
-        <Loader2 className="h-8 w-8 animate-spin" />
+        <div className="w-full max-w-2xl p-4 space-y-3">
+          <Skeleton className="h-32 w-full" />
+          <Skeleton className="h-32 w-full" />
+          <Skeleton className="h-32 w-full" />
+        </div>
       </div>
     );
   }
@@ -733,7 +737,6 @@ export default function Shop() {
                       >
                         {purchasing === listing.id ? (
                           <>
-                            <Loader2 className="w-4 h-4 mr-2 animate-spin" />
                             Purchasing...
                           </>
                         ) : listing.user_id === user?.id ? (
@@ -793,7 +796,6 @@ export default function Shop() {
             <Button onClick={handlePlaceBid} disabled={placingBid || !bidAmount}>
               {placingBid ? (
                 <>
-                  <Loader2 className="w-4 h-4 mr-2 animate-spin" />
                   Placing Bid...
                 </>
               ) : (
@@ -831,7 +833,6 @@ export default function Shop() {
             <Button onClick={handleCreateListing} disabled={placingBid || !listingPrice}>
               {placingBid ? (
                 <>
-                  <Loader2 className="w-4 h-4 mr-2 animate-spin" />
                   Listing...
                 </>
               ) : (

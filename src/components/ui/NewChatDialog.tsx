@@ -5,7 +5,7 @@ import { useNavigate } from 'react-router-dom';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
-import { User, Search, Loader2 } from 'lucide-react';
+import { User, Search } from 'lucide-react';
 import { toast } from 'sonner';
 import { Skeleton } from '@/components/ui/skeleton';
 import { useTranslation } from 'react-i18next';
@@ -206,7 +206,7 @@ const NewChatDialog = ({ isOpen, onClose }: NewChatDialogProps) => {
                       <p className="text-xs text-muted-foreground truncate mt-1">{profile.bio}</p>
                     )}
                   </div>
-                  {creating && <Loader2 className="h-4 w-4 animate-spin" />}
+                  {creating && <User className="h-4 w-4" />}
                 </button>
               ))
             )}

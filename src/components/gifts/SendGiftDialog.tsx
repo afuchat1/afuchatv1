@@ -11,7 +11,7 @@ import {
 } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { Gift, Loader2, TrendingUp, Sparkles } from 'lucide-react';
+import { Gift, TrendingUp, Sparkles } from 'lucide-react';
 import { toast } from 'sonner';
 import { useTranslation } from 'react-i18next';
 import { GiftImage } from './GiftImage';
@@ -360,7 +360,7 @@ export const SendGiftDialog = ({ receiverId, receiverName, trigger }: SendGiftDi
               >
                 {loading ? (
                   <>
-                    <Loader2 className="h-4 w-4 animate-spin mr-2" />
+                    <Sparkles className="h-4 w-4 mr-2" />
                     {t('gifts.sending')}
                   </>
                 ) : (

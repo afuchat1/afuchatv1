@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { Button } from './button';
 import { Textarea } from './textarea';
-import { Loader2, Sparkles } from 'lucide-react';
+import { Sparkles } from 'lucide-react';
 
 interface AltTextEditorProps {
   value: string;
@@ -25,7 +25,7 @@ export const AltTextEditor = ({ value, onChange, onGenerate, isGenerating }: Alt
         >
           {isGenerating ? (
             <>
-              <Loader2 className="h-3 w-3 mr-1 animate-spin" />
+              <Sparkles className="h-3 w-3 mr-1" />
               Generating...
             </>
           ) : (

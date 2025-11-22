@@ -1,6 +1,7 @@
 import { useState, useRef } from "react";
 import { useNavigate } from "react-router-dom";
-import { ArrowLeft, Upload, Loader2, X, FileText, Image as ImageIcon, CheckCircle2 } from "lucide-react";
+import { ArrowLeft, Upload, X, FileText, Image as ImageIcon, CheckCircle2 } from "lucide-react";
+import { Skeleton } from "@/components/ui/skeleton";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -513,7 +514,6 @@ Example: https://instagram.com/yourprofile, https://youtube.com/@yourchannel, ht
               >
                 {loading ? (
                   <>
-                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
                     Submitting...
                   </>
                 ) : (

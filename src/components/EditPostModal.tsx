@@ -4,7 +4,7 @@ import { useAuth } from '@/contexts/AuthContext';
 import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';
 import { toast } from 'sonner';
-import { Save, X, Image as ImageIcon, Loader2, Trash2, Pencil } from 'lucide-react';
+import { Save, X, Image as ImageIcon, Trash2, Pencil } from 'lucide-react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { postSchema } from '@/lib/validation';
 import { ImageEditor } from '@/components/image-editor/ImageEditor';
@@ -173,7 +173,7 @@ export const EditPostModal: React.FC<EditPostModalProps> = ({ isOpen, onClose, p
           )}
           <div className="flex gap-2">
             <Button variant="outline" onClick={onClose} className="flex-1"><X className="h-4 w-4 mr-2" />Cancel</Button>
-            <Button onClick={handleUpdate} className="flex-1" disabled={isUpdating}>{isUpdating ? <Loader2 className="h-4 w-4 animate-spin mr-2" /> : <Save className="h-4 w-4 mr-2" />}Update</Button>
+            <Button onClick={handleUpdate} className="flex-1" disabled={isUpdating}><Save className="h-4 w-4 mr-2" />Update</Button>
           </div>
         </div>
       </DialogContent>

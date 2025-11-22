@@ -1,6 +1,7 @@
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
-import { ArrowLeft, FileText, Image as ImageIcon, CheckCircle2, XCircle, ExternalLink, Loader2 } from "lucide-react";
+import { ArrowLeft, FileText, Image as ImageIcon, CheckCircle2, XCircle, ExternalLink } from "lucide-react";
+import { Skeleton } from "@/components/ui/skeleton";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
@@ -210,7 +211,11 @@ export default function AdminVerificationRequests() {
           <TabsContent value={activeTab} className="space-y-4 mt-6">
             {loading ? (
               <div className="flex justify-center py-12">
-                <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
+                <div className="space-y-3 w-full max-w-md">
+                  <Skeleton className="h-32 w-full" />
+                  <Skeleton className="h-32 w-full" />
+                  <Skeleton className="h-32 w-full" />
+                </div>
               </div>
             ) : requests.length === 0 ? (
               <Card className="border-0 shadow-none">
@@ -455,7 +460,7 @@ export default function AdminVerificationRequests() {
                     disabled={actionLoading}
                   >
                     {actionLoading ? (
-                      <Loader2 className="h-4 w-4 animate-spin" />
+                      <CheckCircle2 className="h-4 w-4 mr-2 opacity-50" />
                     ) : (
                       <>
                         <CheckCircle2 className="h-4 w-4 mr-2" />
@@ -517,7 +522,7 @@ export default function AdminVerificationRequests() {
                 disabled={!rejectionReason.trim() || actionLoading}
               >
                 {actionLoading ? (
-                  <Loader2 className="h-4 w-4 animate-spin" />
+                  "Confirming..."
                 ) : (
                   "Confirm Rejection"
                 )}

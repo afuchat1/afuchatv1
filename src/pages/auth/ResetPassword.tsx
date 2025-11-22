@@ -5,7 +5,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { toast } from 'sonner';
-import { Eye, EyeOff, Loader2 } from 'lucide-react';
+import { Eye, EyeOff } from 'lucide-react';
 import Logo from '@/components/Logo';
 import { passwordSchema } from '@/lib/validation';
 
@@ -62,9 +62,9 @@ const ResetPassword = () => {
   if (!validSession) {
     return (
       <div className="min-h-screen flex items-center justify-center p-4 bg-background">
-        <div className="text-center">
-          <Loader2 className="h-8 w-8 animate-spin mx-auto mb-4" />
-          <p className="text-muted-foreground">Verifying reset link...</p>
+        <div className="w-full max-w-sm space-y-3">
+          <Skeleton className="h-12 w-full" />
+          <Skeleton className="h-8 w-full" />
         </div>
       </div>
     );
@@ -136,8 +136,7 @@ const ResetPassword = () => {
           >
             {loading ? (
               <>
-                <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                Updating password...
+                Updating...
               </>
             ) : (
               'Update password'
