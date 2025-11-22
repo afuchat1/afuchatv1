@@ -162,20 +162,27 @@ const Settings = () => {
     switch (activeSection) {
       case 'general':
         return (
-          <div className="space-y-6">
-            <div>
-              <h2 className="text-2xl font-bold mb-2">General Settings</h2>
-              <p className="text-muted-foreground">Manage your account and profile information</p>
+          <div className="space-y-6 animate-in fade-in slide-in-from-bottom-4 duration-500">
+            <div className="space-y-2">
+              <h2 className="text-3xl font-bold tracking-tight">General Settings</h2>
+              <p className="text-muted-foreground text-lg">Manage your account and profile information</p>
             </div>
 
-            <Card className="p-6">
-              <h3 className="text-lg font-semibold mb-4">Profile</h3>
-              <div className="space-y-3">
-                <SettingItem
-                  label="Edit Profile"
-                  description="Update your name, bio, and other profile details"
-                  onClick={() => user && navigate(`/${user.id}/edit`)}
-                />
+            <Card className="border-border/50 shadow-lg hover:shadow-xl transition-shadow duration-300">
+              <div className="p-6">
+                <div className="flex items-center gap-3 mb-6">
+                  <div className="p-2 bg-primary/10 rounded-lg">
+                    <User className="h-5 w-5 text-primary" />
+                  </div>
+                  <h3 className="text-xl font-semibold">Profile</h3>
+                </div>
+                <div className="space-y-1">
+                  <SettingItem
+                    label="Edit Profile"
+                    description="Update your name, bio, and other profile details"
+                    onClick={() => user && navigate(`/${user.id}/edit`)}
+                  />
+                </div>
               </div>
             </Card>
           </div>
@@ -183,78 +190,92 @@ const Settings = () => {
 
       case 'security':
         return (
-          <div className="space-y-6">
-            <div>
-              <h2 className="text-2xl font-bold mb-2">Security & Privacy</h2>
-              <p className="text-muted-foreground">Manage your account security and privacy settings</p>
+          <div className="space-y-6 animate-in fade-in slide-in-from-bottom-4 duration-500">
+            <div className="space-y-2">
+              <h2 className="text-3xl font-bold tracking-tight">Security & Privacy</h2>
+              <p className="text-muted-foreground text-lg">Manage your account security and privacy settings</p>
             </div>
 
-            <Card className="p-6">
-              <h3 className="text-lg font-semibold mb-4">Account Security</h3>
-              <div className="space-y-3">
-                <SettingItem
-                  label="Change Password"
-                  description="Update your account password"
-                  icon={<Lock className="h-5 w-5" />}
-                  onClick={() => navigate('/change-password')}
-                />
-                <Separator />
-                <SettingItem
-                  label="Security Dashboard"
-                  description="View login history and active sessions"
-                  icon={<Shield className="h-5 w-5" />}
-                  onClick={() => navigate('/security')}
-                />
+            <Card className="border-border/50 shadow-lg hover:shadow-xl transition-shadow duration-300">
+              <div className="p-6">
+                <div className="flex items-center gap-3 mb-6">
+                  <div className="p-2 bg-primary/10 rounded-lg">
+                    <Shield className="h-5 w-5 text-primary" />
+                  </div>
+                  <h3 className="text-xl font-semibold">Account Security</h3>
+                </div>
+                <div className="space-y-1">
+                  <SettingItem
+                    label="Change Password"
+                    description="Update your account password"
+                    icon={<Lock className="h-5 w-5" />}
+                    onClick={() => navigate('/change-password')}
+                  />
+                  <Separator className="my-2" />
+                  <SettingItem
+                    label="Security Dashboard"
+                    description="View login history and active sessions"
+                    icon={<Shield className="h-5 w-5" />}
+                    onClick={() => navigate('/security')}
+                  />
+                </div>
               </div>
             </Card>
 
-            <Card className="p-6">
-              <h3 className="text-lg font-semibold mb-4">Privacy Settings</h3>
-              <div className="space-y-4">
-                <div className="flex items-center justify-between">
-                  <div>
-                    <p className="font-medium">Private Account</p>
-                    <p className="text-sm text-muted-foreground">Only approved followers can see your posts</p>
+            <Card className="border-border/50 shadow-lg hover:shadow-xl transition-shadow duration-300">
+              <div className="p-6">
+                <div className="flex items-center gap-3 mb-6">
+                  <div className="p-2 bg-primary/10 rounded-lg">
+                    <Lock className="h-5 w-5 text-primary" />
                   </div>
-                  <Switch
-                    checked={privateAccount}
-                    onCheckedChange={(checked) => {
-                      setPrivateAccount(checked);
-                      handlePrivacyToggle('is_private', checked);
-                    }}
-                  />
+                  <h3 className="text-xl font-semibold">Privacy Settings</h3>
                 </div>
-                
-                <Separator />
-                
-                <div className="flex items-center justify-between">
-                  <div>
-                    <p className="font-medium">Show Online Status</p>
-                    <p className="text-sm text-muted-foreground">Let others see when you're online</p>
+                <div className="space-y-6">
+                  <div className="flex items-start justify-between gap-4 p-4 rounded-lg bg-muted/30 hover:bg-muted/50 transition-colors">
+                    <div className="flex-1">
+                      <p className="font-semibold mb-1">Private Account</p>
+                      <p className="text-sm text-muted-foreground">Only approved followers can see your posts</p>
+                    </div>
+                    <Switch
+                      checked={privateAccount}
+                      onCheckedChange={(checked) => {
+                        setPrivateAccount(checked);
+                        handlePrivacyToggle('is_private', checked);
+                      }}
+                    />
                   </div>
-                  <Switch
-                    checked={showOnlineStatus}
-                    onCheckedChange={(checked) => {
-                      setShowOnlineStatus(checked);
-                      handlePrivacyToggle('show_online_status', checked);
-                    }}
-                  />
-                </div>
-                
-                <Separator />
-                
-                <div className="flex items-center justify-between">
-                  <div>
-                    <p className="font-medium">Read Receipts</p>
-                    <p className="text-sm text-muted-foreground">Show when you've read messages</p>
+                  
+                  <Separator />
+                  
+                  <div className="flex items-start justify-between gap-4 p-4 rounded-lg bg-muted/30 hover:bg-muted/50 transition-colors">
+                    <div className="flex-1">
+                      <p className="font-semibold mb-1">Show Online Status</p>
+                      <p className="text-sm text-muted-foreground">Let others see when you're online</p>
+                    </div>
+                    <Switch
+                      checked={showOnlineStatus}
+                      onCheckedChange={(checked) => {
+                        setShowOnlineStatus(checked);
+                        handlePrivacyToggle('show_online_status', checked);
+                      }}
+                    />
                   </div>
-                  <Switch
-                    checked={showReadReceipts}
-                    onCheckedChange={(checked) => {
-                      setShowReadReceipts(checked);
-                      handlePrivacyToggle('show_read_receipts', checked);
-                    }}
-                  />
+                  
+                  <Separator />
+                  
+                  <div className="flex items-start justify-between gap-4 p-4 rounded-lg bg-muted/30 hover:bg-muted/50 transition-colors">
+                    <div className="flex-1">
+                      <p className="font-semibold mb-1">Read Receipts</p>
+                      <p className="text-sm text-muted-foreground">Show when you've read messages</p>
+                    </div>
+                    <Switch
+                      checked={showReadReceipts}
+                      onCheckedChange={(checked) => {
+                        setShowReadReceipts(checked);
+                        handlePrivacyToggle('show_read_receipts', checked);
+                      }}
+                    />
+                  </div>
                 </div>
               </div>
             </Card>
@@ -263,28 +284,35 @@ const Settings = () => {
 
       case 'notifications':
         return (
-          <div className="space-y-6">
-            <div>
-              <h2 className="text-2xl font-bold mb-2">Notifications</h2>
-              <p className="text-muted-foreground">Manage how you receive notifications</p>
+          <div className="space-y-6 animate-in fade-in slide-in-from-bottom-4 duration-500">
+            <div className="space-y-2">
+              <h2 className="text-3xl font-bold tracking-tight">Notifications</h2>
+              <p className="text-muted-foreground text-lg">Manage how you receive notifications</p>
             </div>
 
-            <Card className="p-6">
-              <h3 className="text-lg font-semibold mb-4">Push Notifications</h3>
-              <p className="text-sm text-muted-foreground mb-4">
-                Enable push notifications to receive alerts for new messages, likes, and replies even when the app is closed
-              </p>
-              <EnableNotificationsButton />
-              
-              <Separator className="my-6" />
-              
-              <div className="space-y-4">
-                <div className="flex items-center justify-between">
-                  <div>
-                    <p className="font-medium">In-App Notifications</p>
-                    <p className="text-sm text-muted-foreground">Show notifications while using the app</p>
+            <Card className="border-border/50 shadow-lg hover:shadow-xl transition-shadow duration-300">
+              <div className="p-6">
+                <div className="flex items-center gap-3 mb-6">
+                  <div className="p-2 bg-primary/10 rounded-lg">
+                    <Bell className="h-5 w-5 text-primary" />
                   </div>
-                  <Switch checked={notificationsEnabled} onCheckedChange={setNotificationsEnabled} />
+                  <h3 className="text-xl font-semibold">Push Notifications</h3>
+                </div>
+                <p className="text-sm text-muted-foreground mb-6">
+                  Enable push notifications to receive alerts for new messages, likes, and replies even when the app is closed
+                </p>
+                <EnableNotificationsButton />
+                
+                <Separator className="my-6" />
+                
+                <div className="space-y-6">
+                  <div className="flex items-start justify-between gap-4 p-4 rounded-lg bg-muted/30 hover:bg-muted/50 transition-colors">
+                    <div className="flex-1">
+                      <p className="font-semibold mb-1">In-App Notifications</p>
+                      <p className="text-sm text-muted-foreground">Show notifications while using the app</p>
+                    </div>
+                    <Switch checked={notificationsEnabled} onCheckedChange={setNotificationsEnabled} />
+                  </div>
                 </div>
               </div>
             </Card>
@@ -293,105 +321,148 @@ const Settings = () => {
 
       case 'appearance':
         return (
-          <div className="space-y-6">
-            <div>
-              <h2 className="text-2xl font-bold mb-2">Appearance</h2>
-              <p className="text-muted-foreground">Customize how the app looks</p>
+          <div className="space-y-6 animate-in fade-in slide-in-from-bottom-4 duration-500">
+            <div className="space-y-2">
+              <h2 className="text-3xl font-bold tracking-tight">Appearance</h2>
+              <p className="text-muted-foreground text-lg">Customize how the app looks</p>
             </div>
 
-            <Card className="p-6">
-              <h3 className="text-lg font-semibold mb-4">Theme</h3>
-              <p className="text-sm text-muted-foreground mb-4">Choose your preferred color scheme</p>
-              <div className="grid grid-cols-3 gap-3">
-                <button
-                  onClick={() => setTheme('light')}
-                  className={cn(
-                    "flex flex-col items-center gap-2 p-4 rounded-lg border-2 transition-all",
-                    theme === 'light' 
-                      ? 'border-primary bg-primary/10' 
-                      : 'border-border hover:bg-muted'
-                  )}
-                >
-                  <Sun className="h-6 w-6" />
-                  <span className="text-sm font-medium">Light</span>
-                </button>
-                <button
-                  onClick={() => setTheme('dark')}
-                  className={cn(
-                    "flex flex-col items-center gap-2 p-4 rounded-lg border-2 transition-all",
-                    theme === 'dark' 
-                      ? 'border-primary bg-primary/10' 
-                      : 'border-border hover:bg-muted'
-                  )}
-                >
-                  <Moon className="h-6 w-6" />
-                  <span className="text-sm font-medium">Dark</span>
-                </button>
-                <button
-                  onClick={() => setTheme('system')}
-                  className={cn(
-                    "flex flex-col items-center gap-2 p-4 rounded-lg border-2 transition-all",
-                    theme === 'system' 
-                      ? 'border-primary bg-primary/10' 
-                      : 'border-border hover:bg-muted'
-                  )}
-                >
-                  <Monitor className="h-6 w-6" />
-                  <span className="text-sm font-medium">System</span>
-                </button>
+            <Card className="border-border/50 shadow-lg hover:shadow-xl transition-shadow duration-300">
+              <div className="p-6">
+                <div className="flex items-center gap-3 mb-6">
+                  <div className="p-2 bg-primary/10 rounded-lg">
+                    <Palette className="h-5 w-5 text-primary" />
+                  </div>
+                  <h3 className="text-xl font-semibold">Theme</h3>
+                </div>
+                <p className="text-sm text-muted-foreground mb-6">Choose your preferred color scheme</p>
+                <div className="grid grid-cols-3 gap-4">
+                  <button
+                    onClick={() => setTheme('light')}
+                    className={cn(
+                      "flex flex-col items-center gap-3 p-6 rounded-xl border-2 transition-all duration-200 hover:scale-105",
+                      theme === 'light' 
+                        ? 'border-primary bg-primary/10 shadow-lg shadow-primary/20' 
+                        : 'border-border/40 hover:bg-muted/50'
+                    )}
+                  >
+                    <div className={cn(
+                      "p-3 rounded-lg",
+                      theme === 'light' ? 'bg-primary/20' : 'bg-muted'
+                    )}>
+                      <Sun className="h-6 w-6" />
+                    </div>
+                    <span className="text-sm font-semibold">Light</span>
+                  </button>
+                  <button
+                    onClick={() => setTheme('dark')}
+                    className={cn(
+                      "flex flex-col items-center gap-3 p-6 rounded-xl border-2 transition-all duration-200 hover:scale-105",
+                      theme === 'dark' 
+                        ? 'border-primary bg-primary/10 shadow-lg shadow-primary/20' 
+                        : 'border-border/40 hover:bg-muted/50'
+                    )}
+                  >
+                    <div className={cn(
+                      "p-3 rounded-lg",
+                      theme === 'dark' ? 'bg-primary/20' : 'bg-muted'
+                    )}>
+                      <Moon className="h-6 w-6" />
+                    </div>
+                    <span className="text-sm font-semibold">Dark</span>
+                  </button>
+                  <button
+                    onClick={() => setTheme('system')}
+                    className={cn(
+                      "flex flex-col items-center gap-3 p-6 rounded-xl border-2 transition-all duration-200 hover:scale-105",
+                      theme === 'system' 
+                        ? 'border-primary bg-primary/10 shadow-lg shadow-primary/20' 
+                        : 'border-border/40 hover:bg-muted/50'
+                    )}
+                  >
+                    <div className={cn(
+                      "p-3 rounded-lg",
+                      theme === 'system' ? 'bg-primary/20' : 'bg-muted'
+                    )}>
+                      <Monitor className="h-6 w-6" />
+                    </div>
+                    <span className="text-sm font-semibold">System</span>
+                  </button>
+                </div>
               </div>
             </Card>
 
-            <Card className="p-6">
-              <h3 className="text-lg font-semibold mb-4">Language</h3>
-              <p className="text-sm text-muted-foreground mb-4">Select your preferred language</p>
-              <Select value={i18n.language} onValueChange={handleLanguageChange}>
-                <SelectTrigger className="w-full">
-                  <SelectValue placeholder="Select language" />
-                </SelectTrigger>
-                <SelectContent>
-                  {languages.map((lang) => (
-                    <SelectItem key={lang.code} value={lang.code}>
-                      <span className="flex items-center gap-2">
-                        <span>{lang.flag}</span>
-                        <span>{lang.name}</span>
-                      </span>
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
+            <Card className="border-border/50 shadow-lg hover:shadow-xl transition-shadow duration-300">
+              <div className="p-6">
+                <div className="flex items-center gap-3 mb-6">
+                  <div className="p-2 bg-primary/10 rounded-lg">
+                    <Languages className="h-5 w-5 text-primary" />
+                  </div>
+                  <h3 className="text-xl font-semibold">Language</h3>
+                </div>
+                <p className="text-sm text-muted-foreground mb-6">Select your preferred language</p>
+                <Select value={i18n.language} onValueChange={handleLanguageChange}>
+                  <SelectTrigger className="w-full h-12 bg-muted/30 border-border/50">
+                    <SelectValue placeholder="Select language" />
+                  </SelectTrigger>
+                  <SelectContent className="bg-popover border-border/50">
+                    {languages.map((lang) => (
+                      <SelectItem key={lang.code} value={lang.code}>
+                        <span className="flex items-center gap-3">
+                          <span className="text-xl">{lang.flag}</span>
+                          <span className="font-medium">{lang.name}</span>
+                        </span>
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
             </Card>
           </div>
         );
 
       case 'help':
         return (
-          <div className="space-y-6">
-            <div>
-              <h2 className="text-2xl font-bold mb-2">Help & Support</h2>
-              <p className="text-muted-foreground">Get help and contact support</p>
+          <div className="space-y-6 animate-in fade-in slide-in-from-bottom-4 duration-500">
+            <div className="space-y-2">
+              <h2 className="text-3xl font-bold tracking-tight">Help & Support</h2>
+              <p className="text-muted-foreground text-lg">Get help and contact support</p>
             </div>
 
-            <Card className="p-6">
-              <SettingItem
-                label="Support Center"
-                description="Browse FAQs and help articles"
-                icon={<HelpCircle className="h-5 w-5" />}
-                onClick={() => navigate('/support')}
-              />
+            <Card className="border-border/50 shadow-lg hover:shadow-xl transition-shadow duration-300">
+              <div className="p-6">
+                <SettingItem
+                  label="Support Center"
+                  description="Browse FAQs and help articles"
+                  icon={<HelpCircle className="h-5 w-5" />}
+                  onClick={() => navigate('/support')}
+                />
+              </div>
             </Card>
 
-            <Card className="p-6">
-              <h3 className="text-lg font-semibold mb-4">Contact Support</h3>
-              <div className="bg-muted/50 rounded-lg p-4 border border-border">
-                <div className="flex items-start gap-3">
-                  <Mail className="h-5 w-5 text-primary mt-0.5 shrink-0" />
-                  <div className="space-y-1">
-                    <p className="text-sm font-medium">Email Support</p>
-                    <a href="mailto:support@afuchat.com" className="text-sm text-primary hover:underline">
-                      support@afuchat.com
-                    </a>
-                    <p className="text-xs text-muted-foreground mt-2">Response time: 24-48 hours</p>
+            <Card className="border-border/50 shadow-lg hover:shadow-xl transition-shadow duration-300">
+              <div className="p-6">
+                <div className="flex items-center gap-3 mb-6">
+                  <div className="p-2 bg-primary/10 rounded-lg">
+                    <Mail className="h-5 w-5 text-primary" />
+                  </div>
+                  <h3 className="text-xl font-semibold">Contact Support</h3>
+                </div>
+                <div className="bg-gradient-to-br from-muted/50 to-muted/30 rounded-xl p-6 border border-border/50">
+                  <div className="flex items-start gap-4">
+                    <div className="p-3 rounded-lg bg-primary/10">
+                      <Mail className="h-6 w-6 text-primary shrink-0" />
+                    </div>
+                    <div className="space-y-2 flex-1">
+                      <p className="font-semibold">Email Support</p>
+                      <a 
+                        href="mailto:support@afuchat.com" 
+                        className="text-sm text-primary hover:underline font-medium block"
+                      >
+                        support@afuchat.com
+                      </a>
+                      <p className="text-xs text-muted-foreground">Response time: 24-48 hours</p>
+                    </div>
                   </div>
                 </div>
               </div>
@@ -401,39 +472,62 @@ const Settings = () => {
 
       case 'about':
         return (
-          <div className="space-y-6">
-            <div>
-              <h2 className="text-2xl font-bold mb-2">About</h2>
-              <p className="text-muted-foreground">App information and legal</p>
+          <div className="space-y-6 animate-in fade-in slide-in-from-bottom-4 duration-500">
+            <div className="space-y-2">
+              <h2 className="text-3xl font-bold tracking-tight">About</h2>
+              <p className="text-muted-foreground text-lg">App information and legal</p>
             </div>
 
-            <Card className="p-6">
-              <h3 className="text-lg font-semibold mb-4">App Information</h3>
-              <div className="space-y-2">
-                <p className="text-sm text-muted-foreground">Version 1.0.0</p>
-                <p className="text-sm text-muted-foreground">© 2024 AfuChat. All rights reserved.</p>
+            <Card className="border-border/50 shadow-lg hover:shadow-xl transition-shadow duration-300">
+              <div className="p-6">
+                <div className="flex items-center gap-3 mb-6">
+                  <div className="p-2 bg-primary/10 rounded-lg">
+                    <Shield className="h-5 w-5 text-primary" />
+                  </div>
+                  <h3 className="text-xl font-semibold">App Information</h3>
+                </div>
+                <div className="space-y-3 p-4 rounded-lg bg-muted/30">
+                  <div className="flex items-center justify-between">
+                    <span className="text-sm font-medium text-muted-foreground">Version</span>
+                    <span className="text-sm font-semibold">1.0.0</span>
+                  </div>
+                  <Separator />
+                  <p className="text-sm text-muted-foreground">© 2024 AfuChat. All rights reserved.</p>
+                </div>
               </div>
             </Card>
 
-            <Card className="p-6">
-              <h3 className="text-lg font-semibold mb-4">Legal</h3>
-              <div className="space-y-3">
-                <SettingItem
-                  label="Terms of Use"
-                  description="Read our terms and conditions"
-                  onClick={() => navigate('/terms')}
-                />
-                <Separator />
-                <SettingItem
-                  label="Privacy Policy"
-                  description="Learn how we protect your data"
-                  onClick={() => navigate('/privacy')}
-                />
+            <Card className="border-border/50 shadow-lg hover:shadow-xl transition-shadow duration-300">
+              <div className="p-6">
+                <div className="flex items-center gap-3 mb-6">
+                  <div className="p-2 bg-primary/10 rounded-lg">
+                    <Shield className="h-5 w-5 text-primary" />
+                  </div>
+                  <h3 className="text-xl font-semibold">Legal</h3>
+                </div>
+                <div className="space-y-1">
+                  <SettingItem
+                    label="Terms of Use"
+                    description="Read our terms and conditions"
+                    onClick={() => navigate('/terms')}
+                  />
+                  <Separator className="my-2" />
+                  <SettingItem
+                    label="Privacy Policy"
+                    description="Learn how we protect your data"
+                    onClick={() => navigate('/privacy')}
+                  />
+                </div>
               </div>
             </Card>
 
-            <Button variant="destructive" className="w-full" onClick={handleLogout}>
-              <LogOut className="h-4 w-4 mr-2" />
+            <Button 
+              variant="destructive" 
+              size="lg"
+              className="w-full shadow-lg hover:shadow-xl transition-all duration-200 h-14 text-base font-semibold" 
+              onClick={handleLogout}
+            >
+              <LogOut className="h-5 w-5 mr-3" />
               Log Out
             </Button>
           </div>
@@ -445,40 +539,47 @@ const Settings = () => {
   };
 
   return (
-    <div className="min-h-screen bg-background">
-      <header className="sticky top-0 z-50 w-full border-b border-border bg-background/95 backdrop-blur hidden lg:block">
-        <div className="flex h-14 items-center px-4">
-          <Button variant="ghost" size="icon" onClick={() => navigate(-1)}>
+    <div className="min-h-screen bg-gradient-to-b from-background to-muted/20">
+      {/* Desktop Header */}
+      <header className="sticky top-0 z-50 w-full border-b border-border/40 bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/80 hidden lg:block">
+        <div className="flex h-16 items-center px-6">
+          <Button variant="ghost" size="icon" onClick={() => navigate(-1)} className="mr-3">
             <ArrowLeft className="h-5 w-5" />
           </Button>
-          <h1 className="ml-4 text-lg font-semibold">Settings</h1>
+          <div className="flex items-center gap-3">
+            <div className="p-2 bg-primary/10 rounded-lg">
+              <SettingsIcon className="h-5 w-5 text-primary" />
+            </div>
+            <h1 className="text-xl font-semibold">Settings</h1>
+          </div>
         </div>
       </header>
 
       <div className="lg:flex lg:min-h-screen">
         {/* Desktop Sidebar */}
-        <aside className="hidden lg:block lg:w-64 xl:w-72 border-r border-border bg-muted/30">
-          <div className="sticky top-0 p-6">
-            <div className="mb-6">
-              <h1 className="text-2xl font-bold flex items-center gap-2">
-                <SettingsIcon className="h-6 w-6" />
-                Settings
-              </h1>
-            </div>
-            <nav className="space-y-1">
+        <aside className="hidden lg:block lg:w-72 xl:w-80 border-r border-border/40 bg-muted/30 sticky top-16 h-[calc(100vh-4rem)] overflow-y-auto">
+          <div className="p-6">
+            <nav className="space-y-2">
               {sidebarItems.map((item) => (
                 <button
                   key={item.id}
                   onClick={() => handleSectionChange(item.id)}
                   className={cn(
-                    "w-full flex items-center gap-3 px-4 py-3 rounded-lg transition-colors text-left",
+                    "w-full flex items-center gap-3 px-4 py-3 rounded-xl transition-all duration-200",
                     activeSection === item.id
-                      ? "bg-background text-primary font-medium shadow-sm"
-                      : "hover:bg-background/50 text-muted-foreground"
+                      ? "bg-background text-primary font-semibold shadow-md shadow-primary/10 border border-primary/20"
+                      : "hover:bg-background/60 text-muted-foreground hover:text-foreground"
                   )}
                 >
-                  <item.icon className="h-5 w-5" />
-                  <span>{item.label}</span>
+                  <div className={cn(
+                    "p-2 rounded-lg transition-colors",
+                    activeSection === item.id 
+                      ? "bg-primary/10 text-primary" 
+                      : "bg-muted text-muted-foreground"
+                  )}>
+                    <item.icon className="h-4 w-4" />
+                  </div>
+                  <span className="text-sm">{item.label}</span>
                 </button>
               ))}
             </nav>
@@ -486,18 +587,18 @@ const Settings = () => {
         </aside>
 
         {/* Mobile Section Selector */}
-        <div className="lg:hidden border-b border-border bg-background sticky top-14 z-40">
-          <div className="overflow-x-auto">
-            <div className="flex gap-2 p-2 min-w-max">
+        <div className="lg:hidden border-b border-border/40 bg-background/95 backdrop-blur sticky top-0 z-40">
+          <div className="overflow-x-auto scrollbar-hide">
+            <div className="flex gap-2 p-3 min-w-max">
               {sidebarItems.map((item) => (
                 <button
                   key={item.id}
                   onClick={() => handleSectionChange(item.id)}
                   className={cn(
-                    "flex items-center gap-2 px-4 py-2 rounded-full whitespace-nowrap transition-colors",
+                    "flex items-center gap-2 px-4 py-2.5 rounded-xl whitespace-nowrap transition-all duration-200",
                     activeSection === item.id
-                      ? "bg-primary text-primary-foreground"
-                      : "bg-muted text-muted-foreground hover:bg-muted/80"
+                      ? "bg-primary text-primary-foreground shadow-lg shadow-primary/20"
+                      : "bg-card text-muted-foreground hover:bg-card/80 border border-border/40"
                   )}
                 >
                   <item.icon className="h-4 w-4" />
@@ -508,14 +609,15 @@ const Settings = () => {
           </div>
         </div>
 
-        {/* Main Content */}
-        <main className="flex-1 p-4 lg:p-8 pb-24 lg:pb-8">
-          <div className="max-w-3xl mx-auto">
-            {renderContent()}
+        {/* Main Content with Smooth Scroll */}
+        <main className="flex-1 overflow-y-auto">
+          <div className="max-w-4xl mx-auto px-4 py-8 lg:px-8 lg:py-12 pb-24 lg:pb-12">
+            <div className="space-y-8">
+              {renderContent()}
+            </div>
           </div>
         </main>
       </div>
-
     </div>
   );
 };
@@ -534,16 +636,20 @@ const SettingItem = ({
 }) => (
   <button
     onClick={onClick}
-    className="w-full flex items-center justify-between py-3 px-2 rounded-lg hover:bg-muted transition-colors text-left group"
+    className="w-full flex items-center justify-between py-4 px-4 rounded-xl hover:bg-muted/50 transition-all duration-200 text-left group border border-transparent hover:border-border/40"
   >
-    <div className="flex items-center gap-3 flex-1">
-      {icon && <div className="text-muted-foreground">{icon}</div>}
+    <div className="flex items-center gap-4 flex-1">
+      {icon && (
+        <div className="p-2 rounded-lg bg-muted text-muted-foreground group-hover:bg-primary/10 group-hover:text-primary transition-colors">
+          {icon}
+        </div>
+      )}
       <div className="flex-1">
-        <p className="font-medium">{label}</p>
+        <p className="font-semibold mb-0.5 group-hover:text-primary transition-colors">{label}</p>
         <p className="text-sm text-muted-foreground">{description}</p>
       </div>
     </div>
-    <ChevronRight className="h-5 w-5 text-muted-foreground group-hover:text-foreground transition-colors" />
+    <ChevronRight className="h-5 w-5 text-muted-foreground group-hover:text-primary group-hover:translate-x-1 transition-all" />
   </button>
 );
 
