@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import { useAuth } from '@/contexts/AuthContext';
-import { Card } from '@/components/ui/card';
+import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Separator } from '@/components/ui/separator';
 import { Switch } from '@/components/ui/switch';
@@ -56,6 +56,7 @@ const Settings = () => {
   const [privateAccount, setPrivateAccount] = useState(false);
   const [showOnlineStatus, setShowOnlineStatus] = useState(true);
   const [showReadReceipts, setShowReadReceipts] = useState(true);
+  const [isDownloadingData, setIsDownloadingData] = useState(false);
 
   const languages = [
     { code: 'en', name: t('languages.en'), flag: '🇬🇧' },
@@ -147,6 +148,54 @@ const Settings = () => {
     }
   };
 
+  const handleDownloadData = async () => {
+    if (!user) {
+      toast.error('You must be signed in to download your data');
+      return;
+    }
+
+    setIsDownloadingData(true);
+    try {
+      const { data: { session } } = await supabase.auth.getSession();
+      if (!session) {
+        toast.error('Session expired. Please sign in again.');
+        return;
+      }
+
+      const response = await fetch(
+        'https://rhnsjqqtdzlkvqazfcbg.supabase.co/functions/v1/export-user-data',
+        {
+          method: 'POST',
+          headers: {
+            'Authorization': `Bearer ${session.access_token}`,
+            'Content-Type': 'application/json',
+          },
+        }
+      );
+
+      if (!response.ok) {
+        throw new Error('Failed to export data');
+      }
+
+      const blob = await response.blob();
+      const url = window.URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `afuchat-data-export-${new Date().toISOString().split('T')[0]}.json`;
+      document.body.appendChild(a);
+      a.click();
+      window.URL.revokeObjectURL(url);
+      document.body.removeChild(a);
+
+      toast.success('Your data has been downloaded successfully!');
+    } catch (error) {
+      console.error('Error downloading data:', error);
+      toast.error('Failed to download data. Please try again.');
+    } finally {
+      setIsDownloadingData(false);
+    }
+  };
+
   const handleLogout = async () => {
     try {
       const { error } = await supabase.auth.signOut();
@@ -182,6 +231,47 @@ const Settings = () => {
                     description="Update your name, bio, and other profile details"
                     onClick={() => user && navigate(`/${user.id}/edit`)}
                   />
+                </div>
+              </div>
+            </Card>
+
+            <Card className="border-border/50 shadow-lg hover:shadow-xl transition-shadow duration-300">
+              <div className="p-6">
+                <div className="flex items-center gap-3 mb-6">
+                  <div className="p-2 bg-primary/10 rounded-lg">
+                    <Shield className="h-5 w-5 text-primary" />
+                  </div>
+                  <h3 className="text-xl font-semibold">Data & Privacy</h3>
+                </div>
+                <div className="space-y-4">
+                  <div className="flex items-start justify-between gap-4 p-4 rounded-lg bg-muted/30 hover:bg-muted/50 transition-colors">
+                    <div className="flex-1">
+                      <p className="font-semibold mb-1">Download Your Data</p>
+                      <p className="text-sm text-muted-foreground">
+                        Export all your data including posts, messages, and activity
+                      </p>
+                    </div>
+                    <Button
+                      variant="outline"
+                      onClick={handleDownloadData}
+                      disabled={isDownloadingData}
+                      className="flex-shrink-0"
+                    >
+                      {isDownloadingData ? 'Preparing...' : 'Download'}
+                    </Button>
+                  </div>
+                  <div className="text-xs text-muted-foreground p-4 bg-muted/50 rounded-lg">
+                    <p className="font-medium mb-2">What's included:</p>
+                    <ul className="list-disc list-inside space-y-1">
+                      <li>Profile information</li>
+                      <li>Posts and replies</li>
+                      <li>Messages from your chats</li>
+                      <li>Followers and following</li>
+                      <li>Tips and gifts sent/received</li>
+                      <li>Achievements and activity log</li>
+                      <li>Game scores and shop purchases</li>
+                    </ul>
+                  </div>
                 </div>
               </div>
             </Card>
@@ -625,6 +715,36 @@ const Settings = () => {
                   handlePrivacyToggle('show_read_receipts', checked);
                 }}
               />
+            </div>
+          </div>
+        </Card>
+        <Card className="border-border/50 shadow-md">
+          <div className="p-4 space-y-4">
+            <div className="flex items-start justify-between gap-4 p-3 rounded-lg bg-muted/30">
+              <div className="flex-1">
+                <p className="font-semibold mb-1">Download Your Data</p>
+                <p className="text-xs text-muted-foreground">
+                  Export all your data
+                </p>
+              </div>
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={handleDownloadData}
+                disabled={isDownloadingData}
+                className="flex-shrink-0"
+              >
+                {isDownloadingData ? 'Preparing...' : 'Download'}
+              </Button>
+            </div>
+            <div className="text-xs text-muted-foreground p-3 bg-muted/50 rounded-lg">
+              <p className="font-medium mb-2">Includes:</p>
+              <ul className="list-disc list-inside space-y-1 text-[10px]">
+                <li>Profile & posts</li>
+                <li>Messages & chats</li>
+                <li>Tips & gifts</li>
+                <li>Activity & achievements</li>
+              </ul>
             </div>
           </div>
         </Card>
