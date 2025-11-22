@@ -12,6 +12,7 @@ import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
 import { format } from 'date-fns';
 import { Badge } from '@/components/ui/badge';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 
 interface LoginHistory {
   id: string;
@@ -29,6 +30,7 @@ interface ActiveSession {
   ip_address: string | null;
   last_active: string;
   created_at: string;
+  expires_at: string;
 }
 
 interface SecurityAlert {
@@ -44,8 +46,10 @@ const SecurityDashboard = () => {
   const { user } = useAuth();
   const [loginHistory, setLoginHistory] = useState<LoginHistory[]>([]);
   const [activeSessions, setActiveSessions] = useState<ActiveSession[]>([]);
+  const [inactiveSessions, setInactiveSessions] = useState<ActiveSession[]>([]);
   const [securityAlerts, setSecurityAlerts] = useState<SecurityAlert[]>([]);
   const [loading, setLoading] = useState(true);
+  const [lastLogin, setLastLogin] = useState<string | null>(null);
 
   useEffect(() => {
     if (user) {
@@ -62,6 +66,7 @@ const SecurityDashboard = () => {
           .from('login_history')
           .select('*')
           .eq('user_id', user.id)
+          .eq('success', true)
           .order('login_time', { ascending: false })
           .limit(10),
         supabase
@@ -77,8 +82,26 @@ const SecurityDashboard = () => {
           .limit(5)
       ]);
 
-      if (historyRes.data) setLoginHistory(historyRes.data);
-      if (sessionsRes.data) setActiveSessions(sessionsRes.data);
+      if (historyRes.data) {
+        setLoginHistory(historyRes.data);
+        // Get the most recent successful login
+        if (historyRes.data.length > 0) {
+          setLastLogin(historyRes.data[0].login_time);
+        }
+      }
+      
+      if (sessionsRes.data) {
+        const now = new Date();
+        const active = sessionsRes.data.filter(
+          session => new Date(session.expires_at) > now
+        );
+        const inactive = sessionsRes.data.filter(
+          session => new Date(session.expires_at) <= now
+        );
+        setActiveSessions(active);
+        setInactiveSessions(inactive);
+      }
+      
       if (alertsRes.data) setSecurityAlerts(alertsRes.data);
     } catch (error) {
       console.error('Error fetching security data:', error);
@@ -147,6 +170,23 @@ const SecurityDashboard = () => {
       </header>
 
       <main className="container max-w-4xl mx-auto p-4 space-y-6 pb-24">
+        {/* Last Login Info */}
+        {lastLogin && (
+          <Card className="p-6 bg-gradient-to-br from-primary/10 to-primary/5 border-primary/20">
+            <div className="flex items-center gap-3">
+              <div className="p-2 bg-primary/20 rounded-lg">
+                <Clock className="h-5 w-5 text-primary" />
+              </div>
+              <div>
+                <p className="text-sm text-muted-foreground">Last login</p>
+                <p className="font-semibold">
+                  {format(new Date(lastLogin), 'MMM dd, yyyy HH:mm')}
+                </p>
+              </div>
+            </div>
+          </Card>
+        )}
+
         {/* Security Alerts */}
         {securityAlerts.length > 0 && (
           <Card className="p-6">
@@ -192,55 +232,118 @@ const SecurityDashboard = () => {
           </Card>
         )}
 
-        {/* Active Sessions */}
+        {/* Sessions with Tabs */}
         <Card className="p-6">
           <div className="flex items-center gap-2 mb-4">
             <Smartphone className="h-5 w-5 text-primary" />
-            <h2 className="text-xl font-semibold">Active Sessions</h2>
+            <h2 className="text-xl font-semibold">Sessions</h2>
           </div>
-          {activeSessions.length === 0 ? (
-            <p className="text-sm text-muted-foreground">No active sessions found</p>
-          ) : (
-            <div className="space-y-3">
-              {activeSessions.map((session) => (
-                <div key={session.id} className="p-4 rounded-lg border bg-card">
-                  <div className="flex items-start justify-between gap-3">
-                    <div className="flex-1">
-                      <div className="flex items-center gap-2 mb-2">
-                        <Smartphone className="h-4 w-4 text-muted-foreground" />
-                        <span className="font-medium">{session.device_name || 'Unknown Device'}</span>
+          
+          <Tabs defaultValue="active" className="w-full">
+            <TabsList className="grid w-full grid-cols-2">
+              <TabsTrigger value="active">
+                Active ({activeSessions.length})
+              </TabsTrigger>
+              <TabsTrigger value="inactive">
+                Inactive ({inactiveSessions.length})
+              </TabsTrigger>
+            </TabsList>
+            
+            <TabsContent value="active" className="mt-4">
+              {activeSessions.length === 0 ? (
+                <p className="text-sm text-muted-foreground">No active sessions found</p>
+              ) : (
+                <div className="space-y-3">
+                  {activeSessions.map((session) => (
+                    <div key={session.id} className="p-4 rounded-lg border bg-card">
+                      <div className="flex items-start justify-between gap-3">
+                        <div className="flex-1">
+                          <div className="flex items-center gap-2 mb-2">
+                            <Smartphone className="h-4 w-4 text-muted-foreground" />
+                            <span className="font-medium">{session.device_name || 'Unknown Device'}</span>
+                            <Badge variant="default" className="text-xs">Active</Badge>
+                          </div>
+                          <div className="space-y-1 text-sm text-muted-foreground">
+                            {session.browser && (
+                              <div className="flex items-center gap-2">
+                                <Activity className="h-3 w-3" />
+                                <span>{session.browser}</span>
+                              </div>
+                            )}
+                            {session.ip_address && (
+                              <div className="flex items-center gap-2">
+                                <MapPin className="h-3 w-3" />
+                                <span>{session.ip_address}</span>
+                              </div>
+                            )}
+                            <div className="flex items-center gap-2">
+                              <Clock className="h-3 w-3" />
+                              <span>Last active: {format(new Date(session.last_active), 'MMM dd, HH:mm')}</span>
+                            </div>
+                            <div className="flex items-center gap-2">
+                              <Clock className="h-3 w-3" />
+                              <span>Expires: {format(new Date(session.expires_at), 'MMM dd, HH:mm')}</span>
+                            </div>
+                          </div>
+                        </div>
+                        <Button
+                          variant="destructive"
+                          size="sm"
+                          onClick={() => handleRevokeSession(session.id)}
+                        >
+                          Revoke
+                        </Button>
                       </div>
-                      <div className="space-y-1 text-sm text-muted-foreground">
-                        {session.browser && (
-                          <div className="flex items-center gap-2">
-                            <Activity className="h-3 w-3" />
-                            <span>{session.browser}</span>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </TabsContent>
+            
+            <TabsContent value="inactive" className="mt-4">
+              {inactiveSessions.length === 0 ? (
+                <p className="text-sm text-muted-foreground">No inactive sessions found</p>
+              ) : (
+                <div className="space-y-3">
+                  {inactiveSessions.map((session) => (
+                    <div key={session.id} className="p-4 rounded-lg border bg-muted/30 opacity-75">
+                      <div className="flex items-start justify-between gap-3">
+                        <div className="flex-1">
+                          <div className="flex items-center gap-2 mb-2">
+                            <Smartphone className="h-4 w-4 text-muted-foreground" />
+                            <span className="font-medium">{session.device_name || 'Unknown Device'}</span>
+                            <Badge variant="secondary" className="text-xs">Expired</Badge>
                           </div>
-                        )}
-                        {session.ip_address && (
-                          <div className="flex items-center gap-2">
-                            <MapPin className="h-3 w-3" />
-                            <span>{session.ip_address}</span>
+                          <div className="space-y-1 text-sm text-muted-foreground">
+                            {session.browser && (
+                              <div className="flex items-center gap-2">
+                                <Activity className="h-3 w-3" />
+                                <span>{session.browser}</span>
+                              </div>
+                            )}
+                            {session.ip_address && (
+                              <div className="flex items-center gap-2">
+                                <MapPin className="h-3 w-3" />
+                                <span>{session.ip_address}</span>
+                              </div>
+                            )}
+                            <div className="flex items-center gap-2">
+                              <Clock className="h-3 w-3" />
+                              <span>Last active: {format(new Date(session.last_active), 'MMM dd, HH:mm')}</span>
+                            </div>
+                            <div className="flex items-center gap-2">
+                              <Clock className="h-3 w-3" />
+                              <span>Expired: {format(new Date(session.expires_at), 'MMM dd, HH:mm')}</span>
+                            </div>
                           </div>
-                        )}
-                        <div className="flex items-center gap-2">
-                          <Clock className="h-3 w-3" />
-                          <span>Last active: {format(new Date(session.last_active), 'MMM dd, HH:mm')}</span>
                         </div>
                       </div>
                     </div>
-                    <Button
-                      variant="destructive"
-                      size="sm"
-                      onClick={() => handleRevokeSession(session.id)}
-                    >
-                      Revoke
-                    </Button>
-                  </div>
+                  ))}
                 </div>
-              ))}
-            </div>
-          )}
+              )}
+            </TabsContent>
+          </Tabs>
         </Card>
 
         {/* Login History */}
