@@ -132,11 +132,10 @@ export const MessageBubble = ({
     <div className="flex flex-col">
       {/* --- Reply Preview --- */}
       {repliedMessage && (
-        <div className={`flex items-start gap-2 px-3 py-2 mb-1 border-l-2 ${
+        <div className={`px-3 py-2 mb-1 border-l-2 ${
           isOwn ? 'border-primary-foreground/40 bg-primary-foreground/10' : 'border-primary bg-muted/50'
         }`}>
-          <Reply className="h-3 w-3 mt-0.5 flex-shrink-0 opacity-60" />
-          <div className="flex flex-col min-w-0 flex-1">
+          <div className="flex flex-col min-w-0">
             <span className={`text-xs truncate ${
               isOwn ? 'text-primary-foreground/80' : 'text-muted-foreground'
             }`}>
