@@ -64,7 +64,7 @@ export const StoryAvatar = ({
     return (
       <div
         className={cn(
-          'rounded-full bg-gradient-to-tr from-yellow-400 via-pink-500 to-purple-500 cursor-pointer transition-all duration-200 hover:scale-105',
+          'rounded-full bg-gradient-to-tr from-cyan-400 to-teal-500 cursor-pointer transition-all duration-200 hover:scale-105',
           ringMap[size],
           className
         )}

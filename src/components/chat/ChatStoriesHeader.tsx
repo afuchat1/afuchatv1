@@ -189,7 +189,7 @@ export const ChatStoriesHeader = () => {
                         transform: `translateX(${index * 2}px)`,
                       }}
                     >
-                      <div className="p-[2.5px] rounded-full bg-gradient-to-tr from-yellow-400 via-pink-500 to-purple-500">
+                      <div className="p-[2.5px] rounded-full bg-gradient-to-tr from-cyan-400 to-teal-500">
                         {storyUser.avatar_url ? (
                           <img
                             src={storyUser.avatar_url}
@@ -247,14 +247,8 @@ export const ChatStoriesHeader = () => {
           }}
         >
           <div className="space-y-4">
-            <div className="px-6 flex items-center justify-between">
-              <h2 className="text-xl font-bold text-foreground">Stories</h2>
-              <button
-                onClick={() => setExpandProgress(0)}
-                className="text-sm text-muted-foreground hover:text-foreground transition-colors"
-              >
-                Close
-              </button>
+            <div className="px-6 flex items-center justify-center">
+              <h2 className="text-2xl font-bold text-foreground">Telegram</h2>
             </div>
             
             <div className="overflow-x-auto scrollbar-hide">
@@ -280,7 +274,7 @@ export const ChatStoriesHeader = () => {
                     className="flex-shrink-0 cursor-pointer transition-transform duration-200 hover:scale-105"
                   >
                     <div className="relative">
-                      <div className="p-[2.5px] rounded-full bg-gradient-to-tr from-yellow-400 via-pink-500 to-purple-500">
+                      <div className="p-[2.5px] rounded-full bg-gradient-to-tr from-cyan-400 to-teal-500">
                         {storyUser.avatar_url ? (
                           <img
                             src={storyUser.avatar_url}
