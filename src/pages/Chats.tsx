@@ -69,6 +69,8 @@ const Chats = () => {
   const [shouldCollapseStories, setShouldCollapseStories] = useState(true);
   const [hideBottomNav, setHideBottomNav] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
+  const [hasMore, setHasMore] = useState(true);
+  const [loadingMore, setLoadingMore] = useState(false);
 
   const filteredChats = chats.filter((chat) => {
     if (!searchQuery.trim()) return true;
@@ -85,26 +87,25 @@ const Chats = () => {
   useEffect(() => {
     if (!user) return;
 
-    const fetchChats = async () => {
-      // Try to load cached chats first for instant display
-      const cachedChats = sessionStorage.getItem('cachedChats');
-      if (cachedChats) {
-        try {
-          setChats(JSON.parse(cachedChats));
-          setLoading(false); // Show cached content immediately
-        } catch (e) {
-          console.error('Failed to parse cached chats:', e);
+    const fetchChats = async (isInitial = true) => {
+      if (isInitial) {
+        // Try to load cached chats first for instant display
+        const cachedChats = sessionStorage.getItem('cachedChats');
+        if (cachedChats) {
+          try {
+            setChats(JSON.parse(cachedChats));
+            setLoading(false); // Show cached content immediately
+          } catch (e) {
+            console.error('Failed to parse cached chats:', e);
+          }
         }
       }
       
-      // Set a timeout to prevent endless loading (30 seconds)
-      const loadingTimeout = setTimeout(() => {
-        setLoading(false);
-        toast.error('Loading is taking longer than expected. Please check your connection.');
-      }, 30000); // 30 second timeout
-      
       try {
-        // Fetch only 1-1 chat data with member profiles in a single query
+        const BATCH_SIZE = 30;
+        const offset = isInitial ? 0 : chats.length;
+
+        // Fetch chat members with limit and offset for pagination
         const { data: chatMembers, error } = await supabase
           .from('chat_members')
           .select(`
@@ -121,49 +122,58 @@ const Chats = () => {
             )
           `)
           .eq('user_id', user.id)
-          .eq('chats.is_group', false);
+          .eq('chats.is_group', false)
+          .order('updated_at', { foreignTable: 'chats', ascending: false })
+          .range(offset, offset + BATCH_SIZE - 1);
 
         if (error) throw error;
 
         if (!chatMembers || chatMembers.length === 0) {
-          setChats([]);
-          setLoading(false);
+          setHasMore(false);
+          if (isInitial) {
+            setChats([]);
+          }
           return;
+        }
+
+        if (chatMembers.length < BATCH_SIZE) {
+          setHasMore(false);
         }
 
         const chatIds = chatMembers.map(m => m.chats.id);
 
-        // Batch fetch last messages for all chats
-        const messagesPromises = chatIds.map(chatId =>
+        // Optimized: Fetch all messages and unread counts in bulk with fewer queries
+        const [allMessages, allUnreadCounts] = await Promise.all([
           supabase
             .from('messages')
-            .select('encrypted_content, attachment_type, audio_url, sent_at, sender_id, read_at, chat_id')
-            .eq('chat_id', chatId)
-            .order('sent_at', { ascending: false })
-            .limit(1)
-            .maybeSingle()
-        );
-
-        // Batch fetch unread counts for all chats - only count messages that are:
-        // 1. Not sent by current user
-        // 2. Have not been read (read_at is null)
-        const unreadPromises = chatIds.map(chatId =>
+            .select('chat_id, encrypted_content, attachment_type, audio_url, sent_at, sender_id, read_at')
+            .in('chat_id', chatIds)
+            .order('sent_at', { ascending: false }),
           supabase
             .from('messages')
-            .select('id', { count: 'exact', head: true })
-            .eq('chat_id', chatId)
+            .select('chat_id, id')
+            .in('chat_id', chatIds)
             .neq('sender_id', user.id)
             .is('read_at', null)
-        );
-
-        const [messagesResults, unreadResults] = await Promise.all([
-          Promise.all(messagesPromises),
-          Promise.all(unreadPromises)
         ]);
 
-        // Build chat data with profiles from nested query
+        // Group messages by chat_id to get last message for each
+        const messagesByChat = new Map<string, any>();
+        allMessages.data?.forEach(msg => {
+          if (!messagesByChat.has(msg.chat_id)) {
+            messagesByChat.set(msg.chat_id, msg);
+          }
+        });
+
+        // Count unread messages per chat
+        const unreadByChat = new Map<string, number>();
+        allUnreadCounts.data?.forEach(msg => {
+          unreadByChat.set(msg.chat_id, (unreadByChat.get(msg.chat_id) || 0) + 1);
+        });
+
+        // Build chat data
         const validChats: Chat[] = [];
-        chatMembers.forEach((member, index) => {
+        chatMembers.forEach((member) => {
           const chatId = member.chats.id;
           const chatMemb = member.chats.chat_members || [];
 
@@ -173,16 +183,15 @@ const Chats = () => {
             if (memberIds[0] === memberIds[1]) return;
           }
 
-          const lastMessageResult = messagesResults[index];
-          const unreadResult = unreadResults[index];
-          const lastMessage = lastMessageResult.data;
+          const lastMessage = messagesByChat.get(chatId);
+          const unreadCount = unreadByChat.get(chatId) || 0;
 
           let chatData: Chat = {
             ...member.chats,
             last_message_content: '',
             updated_at: lastMessage?.sent_at || member.chats.updated_at,
             is_read: lastMessage ? (lastMessage.sender_id === user.id || !!lastMessage.read_at) : true,
-            unread_count: unreadResult.count || 0
+            unread_count: unreadCount
           };
 
           if (lastMessage) {
@@ -198,7 +207,6 @@ const Chats = () => {
           }
 
           if (!member.chats.is_group) {
-            // Find the other user's profile from the nested chat_members data
             const otherMember = chatMemb.find((m: any) => m.user_id !== user.id);
             if (otherMember?.profiles) {
               chatData.other_user = {
@@ -216,18 +224,22 @@ const Chats = () => {
         });
 
         validChats.sort((a, b) => new Date(b.updated_at).getTime() - new Date(a.updated_at).getTime());
-        setChats(validChats);
-        // Cache the chats for instant loading next time
-        sessionStorage.setItem('cachedChats', JSON.stringify(validChats));
+        
+        if (isInitial) {
+          setChats(validChats);
+          sessionStorage.setItem('cachedChats', JSON.stringify(validChats));
+        } else {
+          setChats(prev => [...prev, ...validChats]);
+        }
       } catch (err) {
         console.error('Error fetching chats:', err);
       } finally {
-        clearTimeout(loadingTimeout); // Clear the timeout
         setLoading(false);
+        setLoadingMore(false);
       }
     };
 
-    fetchChats();
+    fetchChats(true);
 
     // Real-time subscription for new messages AND when messages are marked as read
     const channel = supabase
@@ -237,7 +249,7 @@ const Chats = () => {
         schema: 'public', 
         table: 'messages' 
       }, () => {
-        fetchChats(); // Refresh to show new message
+        fetchChats(true); // Refresh to show new message
       })
       .on('postgres_changes', { 
         event: 'UPDATE', 
@@ -246,7 +258,7 @@ const Chats = () => {
       }, (payload) => {
         // Only refresh if read_at was updated (message was read)
         if (payload.new.read_at && !payload.old.read_at) {
-          fetchChats(); // Refresh to update unread counts
+          fetchChats(true); // Refresh to update unread counts
         }
       })
       .subscribe();
@@ -284,6 +296,142 @@ const Chats = () => {
       } else if (!scrollingDown) {
         setShowFab(true);
       }
+
+      // Load more chats when near bottom
+      const scrollHeight = scrollElement.scrollHeight;
+      const clientHeight = scrollElement.clientHeight;
+      const isNearBottom = scrollHeight - currentScrollY - clientHeight < 200;
+      
+      if (isNearBottom && hasMore && !loadingMore && !loading) {
+        setLoadingMore(true);
+        // Trigger loading more chats
+        if (user) {
+          const fetchMoreChats = async () => {
+            try {
+              const BATCH_SIZE = 30;
+              const offset = chats.length;
+
+              const { data: chatMembers, error } = await supabase
+                .from('chat_members')
+                .select(`
+                  chat_id,
+                  chats!inner(
+                    id, 
+                    name, 
+                    is_group, 
+                    updated_at,
+                    chat_members!inner(
+                      user_id,
+                      profiles(id, display_name, handle, avatar_url, is_verified, is_organization_verified)
+                    )
+                  )
+                `)
+                .eq('user_id', user.id)
+                .eq('chats.is_group', false)
+                .order('updated_at', { foreignTable: 'chats', ascending: false })
+                .range(offset, offset + BATCH_SIZE - 1);
+
+              if (error) throw error;
+
+              if (!chatMembers || chatMembers.length === 0) {
+                setHasMore(false);
+                setLoadingMore(false);
+                return;
+              }
+
+              if (chatMembers.length < BATCH_SIZE) {
+                setHasMore(false);
+              }
+
+              const chatIds = chatMembers.map(m => m.chats.id);
+
+              const [allMessages, allUnreadCounts] = await Promise.all([
+                supabase
+                  .from('messages')
+                  .select('chat_id, encrypted_content, attachment_type, audio_url, sent_at, sender_id, read_at')
+                  .in('chat_id', chatIds)
+                  .order('sent_at', { ascending: false }),
+                supabase
+                  .from('messages')
+                  .select('chat_id, id')
+                  .in('chat_id', chatIds)
+                  .neq('sender_id', user.id)
+                  .is('read_at', null)
+              ]);
+
+              const messagesByChat = new Map<string, any>();
+              allMessages.data?.forEach(msg => {
+                if (!messagesByChat.has(msg.chat_id)) {
+                  messagesByChat.set(msg.chat_id, msg);
+                }
+              });
+
+              const unreadByChat = new Map<string, number>();
+              allUnreadCounts.data?.forEach(msg => {
+                unreadByChat.set(msg.chat_id, (unreadByChat.get(msg.chat_id) || 0) + 1);
+              });
+
+              const validChats: Chat[] = [];
+              chatMembers.forEach((member) => {
+                const chatId = member.chats.id;
+                const chatMemb = member.chats.chat_members || [];
+
+                if (chatMemb.length === 2) {
+                  const memberIds = chatMemb.map((m: any) => m.user_id);
+                  if (memberIds[0] === memberIds[1]) return;
+                }
+
+                const lastMessage = messagesByChat.get(chatId);
+                const unreadCount = unreadByChat.get(chatId) || 0;
+
+                let chatData: Chat = {
+                  ...member.chats,
+                  last_message_content: '',
+                  updated_at: lastMessage?.sent_at || member.chats.updated_at,
+                  is_read: lastMessage ? (lastMessage.sender_id === user.id || !!lastMessage.read_at) : true,
+                  unread_count: unreadCount
+                };
+
+                if (lastMessage) {
+                  if (lastMessage.audio_url) {
+                    chatData.last_message_content = '🎤 Voice message';
+                  } else if (lastMessage.attachment_type?.startsWith('image/')) {
+                    chatData.last_message_content = '📷 Photo';
+                  } else if (lastMessage.attachment_type) {
+                    chatData.last_message_content = '📎 Attachment';
+                  } else {
+                    chatData.last_message_content = lastMessage.encrypted_content || 'Message';
+                  }
+                }
+
+                if (!member.chats.is_group) {
+                  const otherMember = chatMemb.find((m: any) => m.user_id !== user.id);
+                  if (otherMember?.profiles) {
+                    chatData.other_user = {
+                      id: otherMember.profiles.id,
+                      display_name: otherMember.profiles.display_name,
+                      handle: otherMember.profiles.handle,
+                      avatar_url: otherMember.profiles.avatar_url,
+                      is_verified: otherMember.profiles.is_verified,
+                      is_organization_verified: otherMember.profiles.is_organization_verified
+                    };
+                  }
+                }
+
+                validChats.push(chatData);
+              });
+
+              validChats.sort((a, b) => new Date(b.updated_at).getTime() - new Date(a.updated_at).getTime());
+              setChats(prev => [...prev, ...validChats]);
+            } catch (err) {
+              console.error('Error loading more chats:', err);
+            } finally {
+              setLoadingMore(false);
+            }
+          };
+          fetchMoreChats();
+        }
+      }
       
       lastScrollY.current = currentScrollY;
     };
@@ -305,7 +453,7 @@ const Chats = () => {
         scrollElement.removeEventListener('scroll', handleScroll);
       }
     };
-  }, [shouldCollapseStories, hideBottomNav]);
+  }, [shouldCollapseStories, hideBottomNav, hasMore, loadingMore, loading, chats.length, user]);
 
   if (loading && chats.length === 0) {
     return (
@@ -342,7 +490,8 @@ const Chats = () => {
             <p className="text-sm text-muted-foreground/70 mt-1">Try searching with different keywords</p>
           </div>
         ) : (
-          filteredChats.map((chat) => {
+          <>
+          {filteredChats.map((chat) => {
           const chatName = chat.is_group 
             ? (chat.name || 'Group Chat')
             : (chat.other_user?.display_name || 'User');
@@ -433,7 +582,13 @@ const Chats = () => {
               </div>
             </div>
           );
-        })
+        })}
+        {loadingMore && (
+          <div className="py-8 flex justify-center">
+            <CustomLoader size="sm" text="Loading more..." />
+          </div>
+        )}
+        </>
         )}
       </div>
 
