@@ -69,6 +69,18 @@ const Chats = () => {
   const [hideBottomNav, setHideBottomNav] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
 
+  const filteredChats = chats.filter((chat) => {
+    if (!searchQuery.trim()) return true;
+    const chatName = chat.is_group 
+      ? (chat.name || 'Group Chat')
+      : (chat.other_user?.display_name || 'User');
+    const lastMessage = chat.last_message_content || '';
+    return (
+      chatName.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      lastMessage.toLowerCase().includes(searchQuery.toLowerCase())
+    );
+  });
+
   useEffect(() => {
     if (!user) return;
 
@@ -280,19 +292,19 @@ const Chats = () => {
         className="flex-1 overflow-y-auto overscroll-contain scrollbar-thin pb-20"
         style={{ WebkitOverflowScrolling: 'touch' }}
       >
-        {chats
-          .filter((chat) => {
-            if (!searchQuery.trim()) return true;
-            const chatName = chat.is_group 
-              ? (chat.name || 'Group Chat')
-              : (chat.other_user?.display_name || 'User');
-            const lastMessage = chat.last_message_content || '';
-            return (
-              chatName.toLowerCase().includes(searchQuery.toLowerCase()) ||
-              lastMessage.toLowerCase().includes(searchQuery.toLowerCase())
-            );
-          })
-          .map((chat) => {
+        {searchQuery && (
+          <div className="px-4 py-2 text-sm text-muted-foreground bg-muted/30 border-b border-border">
+            {filteredChats.length} {filteredChats.length === 1 ? 'result' : 'results'} for "{searchQuery}"
+          </div>
+        )}
+        {filteredChats.length === 0 && searchQuery ? (
+          <div className="flex flex-col items-center justify-center py-12 px-4 text-center">
+            <Search className="h-12 w-12 text-muted-foreground/50 mb-3" />
+            <p className="text-muted-foreground font-medium">No chats found</p>
+            <p className="text-sm text-muted-foreground/70 mt-1">Try searching with different keywords</p>
+          </div>
+        ) : (
+          filteredChats.map((chat) => {
           const chatName = chat.is_group 
             ? (chat.name || 'Group Chat')
             : (chat.other_user?.display_name || 'User');
@@ -383,7 +395,8 @@ const Chats = () => {
               </div>
             </div>
           );
-        })}
+        })
+        )}
       </div>
 
       {/* Floating Action Button */}
