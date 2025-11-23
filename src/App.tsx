@@ -13,7 +13,7 @@ import { useDailyLogin } from "./hooks/useDailyLogin";
 import { useLanguageSync } from "./hooks/useLanguageSync";
 import { useScrollRestoration } from "./hooks/useScrollRestoration";
 import { usePushNotifications } from "./hooks/usePushNotifications";
-import { Skeleton } from "@/components/ui/skeleton";
+import { CustomLoader } from '@/components/ui/CustomLoader';
 
 // Eager load critical pages
 import Home from "./pages/Home";
@@ -103,12 +103,8 @@ const AppRoutes = () => {
 
   return (
     <Suspense fallback={
-      <div className="flex items-center justify-center min-h-screen p-4">
-        <div className="w-full max-w-md space-y-4">
-          <Skeleton className="h-12 w-full" />
-          <Skeleton className="h-64 w-full" />
-          <Skeleton className="h-12 w-full" />
-        </div>
+      <div className="flex items-center justify-center min-h-screen">
+        <CustomLoader size="lg" text="Loading..." />
       </div>
     }>
       <Routes>

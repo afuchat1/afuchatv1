@@ -4,7 +4,7 @@ import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/contexts/AuthContext';
 import { toast } from 'sonner';
 import { MessageSquare, Heart, Share, Ellipsis, Sparkles, Gift } from 'lucide-react';
-import { Skeleton } from '@/components/ui/skeleton';
+import { CustomLoader, InlineLoader } from '@/components/ui/CustomLoader';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/ui/tabs';
@@ -1993,13 +1993,8 @@ const Feed = () => {
   }, [posts]);
 
   const PostSkeleton = () => (
-    <div className="flex p-3 sm:p-4">
-      <Skeleton className="h-10 w-10 rounded-full mr-3 flex-shrink-0" />
-      <div className="flex-1 space-y-2">
-        <Skeleton className="h-4 w-1/3" />
-        <Skeleton className="h-3 w-full" />
-        <Skeleton className="h-3 w-4/5" />
-      </div>
+    <div className="flex items-center justify-center py-8">
+      <CustomLoader size="md" />
     </div>
   );
 
@@ -2083,10 +2078,7 @@ const Feed = () => {
               {/* Loading more indicator */}
               {loadingMore && (
                 <div className="py-8 flex justify-center">
-                  <div className="flex flex-col items-center gap-3">
-                    <Skeleton className="h-10 w-10 rounded-full" />
-                    <Skeleton className="h-3 w-32" />
-                  </div>
+                  <CustomLoader size="sm" text="Loading more..." />
                 </div>
               )}
 

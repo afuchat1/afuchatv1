@@ -6,7 +6,7 @@ import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { Search as SearchIcon, User, MessageSquare, TrendingUp } from 'lucide-react';
 import { useNavigate, useLocation } from 'react-router-dom';
-import { Skeleton } from '@/components/ui/skeleton';
+import { CustomLoader } from '@/components/ui/CustomLoader';
 import { toast } from 'sonner';
 import { useTranslation } from 'react-i18next';
 import { searchSchema } from '@/lib/validation';
@@ -55,17 +55,8 @@ const VerifiedBadge = ({ isVerified, isOrgVerified }: { isVerified?: boolean; is
 };
 
 const SearchSkeleton = () => (
-  <div className="space-y-3">
-    {[...Array(2)].map((_, i) => (
-      <div key={i} className="p-4 rounded-xl border border-border">
-        <div className="flex items-center space-x-3">
-          <Skeleton className="h-10 w-10 rounded-full" />
-          <div className="flex-1 space-y-2">
-            <Skeleton className="h-4 w-3/4" />
-          </div>
-        </div>
-      </div>
-    ))}
+  <div className="flex items-center justify-center py-8">
+    <CustomLoader size="md" text="Searching..." />
   </div>
 );
 
@@ -109,7 +100,9 @@ const TrendingSection = ({ onTrendClick }: { onTrendClick: (topic: string) => vo
         <h2 className="text-base font-bold text-foreground flex items-center mb-4">
           <TrendingUp className="h-5 w-5 mr-2 text-primary" /> {t('search.trendingNow')}
         </h2>
-        <Skeleton className="h-32 w-full rounded-xl" />
+        <div className="flex items-center justify-center py-8">
+          <CustomLoader size="sm" />
+        </div>
       </div>
     );
   }

@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react';
 import { useParams, useNavigate, Link } from 'react-router-dom';
 import { supabase } from '@/integrations/supabase/client';
-import { Skeleton } from '@/components/ui/skeleton';
+import { CustomLoader } from '@/components/ui/CustomLoader';
 import { ArrowLeft, User as UserIcon } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
@@ -409,15 +409,8 @@ const PostDetail = () => {
 
   if (loading) {
     return (
-      <div className="p-4 max-w-2xl mx-auto border-x border-border min-h-screen">
-        <div className="flex items-center gap-4 mb-6">
-          <Skeleton className="h-12 w-12 rounded-full" />
-          <div className="flex-1 space-y-2">
-            <Skeleton className="h-5 w-1/3" />
-            <Skeleton className="h-4 w-1/4" />
-          </div>
-        </div>
-        <Skeleton className="h-20 w-full mt-4" />
+      <div className="flex items-center justify-center min-h-screen">
+        <CustomLoader size="lg" text="Loading post..." />
       </div>
     );
   }

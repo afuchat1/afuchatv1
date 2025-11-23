@@ -8,7 +8,7 @@ import { toast } from 'sonner';
 import { ArrowLeft, MessageSquare, UserPlus, Pencil, Calendar, Lock, LogOut, Camera } from 'lucide-react';
 import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/ui/tabs';
 import { Separator } from '@/components/ui/separator';
-import { Skeleton } from '@/components/ui/skeleton';
+import { CustomLoader } from '@/components/ui/CustomLoader';
 import { Popover, PopoverTrigger, PopoverContent } from '@/components/ui/popover';
 import { useTranslation } from 'react-i18next';
 import { GradeBadge, type Grade } from '@/components/gamification/GradeBadge';
@@ -738,15 +738,8 @@ const Profile = ({ mustExist = false }: ProfileProps) => {
 
 	if (loading) {
 		return (
-			<div className="h-full flex flex-col">
-				<div className="relative h-36 bg-muted" />
-				<div className="p-4">
-					<div className="flex items-center justify-between">
-						<Skeleton className="h-24 w-24 sm:h-32 sm:w-32 rounded-full -mt-16 border-4 border-background" />
-					</div>
-					<Skeleton className="h-6 w-1/2 mt-4" />
-					<Skeleton className="h-4 w-1/4 mt-2" />
-				</div>
+			<div className="h-full flex items-center justify-center">
+				<CustomLoader size="lg" text={t('common.loading')} />
 			</div>
 		);
 	}

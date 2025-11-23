@@ -6,7 +6,7 @@ import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
-import { Skeleton } from '@/components/ui/skeleton';
+import { CustomLoader } from '@/components/ui/CustomLoader';
 import { ArrowLeft, Send, User, Phone, Video, MoreVertical, Check, MessageSquare, HelpCircle, Info, Mic, MicOff, Play, Pause, Volume2, X, Smile, Paperclip } from 'lucide-react';
 import { toast } from 'sonner';
 import { messageSchema } from '@/lib/validation';
@@ -844,10 +844,7 @@ const ChatRoom = () => {
   if (loading) {
     return (
       <div className="flex-1 flex items-center justify-center bg-background min-h-screen">
-        <div className="flex flex-col items-center gap-3">
-          <Skeleton className="h-12 w-12 rounded-full" />
-          <Skeleton className="h-4 w-32" />
-        </div>
+        <CustomLoader size="lg" text="Loading chat..." />
       </div>
     );
   }

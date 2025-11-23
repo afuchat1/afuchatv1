@@ -3,7 +3,7 @@ import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/contexts/AuthContext';
 import { Menu, Search, Camera, CheckCheck, VolumeX, Pin } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
-import { Skeleton } from '@/components/ui/skeleton';
+import { CustomLoader } from '@/components/ui/CustomLoader';
 import NewChatDialog from '@/components/ui/NewChatDialog';
 import { Button } from '@/components/ui/button';
 import { ChatStoriesHeader } from '@/components/chat/ChatStoriesHeader';
@@ -258,18 +258,8 @@ const Chats = () => {
 
   if (loading) {
     return (
-      <div className="h-screen flex flex-col bg-background">
-        <div className="flex-1 p-4 space-y-3">
-          {[...Array(3)].map((_, i) => (
-            <div key={i} className="flex items-center gap-3 p-3">
-              <Skeleton className="h-14 w-14 rounded-full flex-shrink-0" />
-              <div className="flex-1 space-y-2">
-                <Skeleton className="h-4 w-3/4" />
-                <Skeleton className="h-3 w-full" />
-              </div>
-            </div>
-          ))}
-        </div>
+      <div className="h-screen flex items-center justify-center bg-background">
+        <CustomLoader size="lg" text="Loading chats..." />
       </div>
     );
   }

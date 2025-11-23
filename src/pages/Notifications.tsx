@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/contexts/AuthContext';
-import { Skeleton } from '@/components/ui/skeleton';
+import { CustomLoader } from '@/components/ui/CustomLoader';
 import { Link } from 'react-router-dom';
 import { Heart, MessageSquare, UserPlus } from 'lucide-react';
 import { cn } from '@/lib/utils';
@@ -170,17 +170,8 @@ const Notifications = () => {
   
   if (loading) {
     return (
-      <div className="h-full flex flex-col max-w-4xl mx-auto">
-        <div className="p-3 sm:p-4 space-y-3 sm:space-y-4">
-          {[...Array(3)].map((_, i) => (
-            <div key={i} className="flex items-center space-x-3 sm:space-x-4">
-              <Skeleton className="h-10 w-10 rounded-full flex-shrink-0" />
-              <div className="space-y-2 flex-1">
-                <Skeleton className="h-4 w-3/4" />
-              </div>
-            </div>
-          ))}
-        </div>
+      <div className="h-full flex items-center justify-center max-w-4xl mx-auto">
+        <CustomLoader size="lg" text="Loading notifications..." />
       </div>
     );
   }
