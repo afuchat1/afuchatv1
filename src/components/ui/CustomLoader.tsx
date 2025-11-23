@@ -42,10 +42,10 @@ export const CustomLoader = ({ size = 'md', className, text }: CustomLoaderProps
             initial="initial"
             animate="animate"
             transition={{
-              duration: 0.6,
+              duration: 1.2,
               repeat: Infinity,
               ease: "easeInOut",
-              delay: index * 0.15
+              delay: index * 0.25
             }}
           />
         ))}
