@@ -14,6 +14,7 @@ import { MobileMenuSheet } from '@/components/MobileMenuSheet';
 import { supabase } from '@/integrations/supabase/client';
 import { cn } from '@/lib/utils';
 import { useTranslation } from 'react-i18next';
+import { motion } from 'framer-motion';
 
 interface LayoutProps {
   children: ReactNode;
@@ -228,9 +229,15 @@ const Layout = ({ children }: LayoutProps) => {
 
       {/* Main Content */}
       <main className="lg:ml-64 xl:ml-72 min-h-screen pb-20 lg:pb-0">
-        <div className="max-w-2xl mx-auto border-x border-border min-h-screen">
+        <motion.div 
+          className="max-w-2xl mx-auto border-x border-border min-h-screen"
+          initial={{ opacity: 0, y: 10 }}
+          animate={{ opacity: 1, y: 0 }}
+          exit={{ opacity: 0, y: -10 }}
+          transition={{ duration: 0.2, ease: "easeOut" }}
+        >
           {children}
-        </div>
+        </motion.div>
       </main>
 
       {/* Mobile Bottom Navigation - Hidden in chat rooms */}

@@ -14,6 +14,8 @@ import { useLanguageSync } from "./hooks/useLanguageSync";
 import { useScrollRestoration } from "./hooks/useScrollRestoration";
 import { usePushNotifications } from "./hooks/usePushNotifications";
 import { CustomLoader } from '@/components/ui/CustomLoader';
+import { LoadingBar } from '@/components/LoadingBar';
+import { motion, AnimatePresence } from 'framer-motion';
 
 // Eager load critical pages
 import Home from "./pages/Home";
@@ -102,12 +104,19 @@ const AppRoutes = () => {
   usePushNotifications();
 
   return (
-    <Suspense fallback={
-      <div className="flex items-center justify-center min-h-screen">
-        <CustomLoader size="lg" text="Loading..." />
-      </div>
-    }>
-      <Routes>
+    <>
+      <LoadingBar />
+      <Suspense fallback={
+        <motion.div 
+          className="flex items-center justify-center min-h-screen"
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          exit={{ opacity: 0 }}
+        >
+          <CustomLoader size="lg" text="Loading..." />
+        </motion.div>
+      }>
+        <Routes>
       <Route path="/" element={<Home />} />
       <Route path="/auth" element={<Welcome />} />
       <Route path="/auth/signin" element={<SignIn />} />
@@ -183,7 +192,8 @@ const AppRoutes = () => {
       <Route path="/user-not-found" element={<UserNotFound />} />
       <Route path="*" element={<NotFound />} />
     </Routes>
-    </Suspense>
+      </Suspense>
+    </>
   );
 };
 
@@ -197,7 +207,9 @@ const App = () => (
               <Toaster />
               <Sonner />
               <BrowserRouter future={{ v7_startTransition: true }}>
-                <AppRoutes />
+                <AnimatePresence mode="wait">
+                  <AppRoutes />
+                </AnimatePresence>
                 <SettingsSheet />
               </BrowserRouter>
             </TooltipProvider>
