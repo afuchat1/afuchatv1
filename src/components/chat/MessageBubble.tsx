@@ -69,6 +69,9 @@ interface MessageBubbleProps {
   onToggleAudio: () => void;
   audioPlayerState: { isPlaying: boolean };
   onEdit?: (messageId: string, newContent: string) => void;
+  bubbleStyle?: 'rounded' | 'square' | 'minimal';
+  chatTheme?: string;
+  showReadReceipts?: boolean;
 }
 
 export const MessageBubble = ({
@@ -81,7 +84,10 @@ export const MessageBubble = ({
   onReaction,
   onToggleAudio,
   audioPlayerState,
-  onEdit
+  onEdit,
+  bubbleStyle = 'rounded',
+  chatTheme = 'teal',
+  showReadReceipts = true,
 }: MessageBubbleProps) => {
   const [lightboxOpen, setLightboxOpen] = useState(false);
   const time = new Date(message.sent_at).toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' });
@@ -89,12 +95,37 @@ export const MessageBubble = ({
   const hasAttachment = !!message.attachment_url;
   
   // Check read status for own messages
-  const allRead = isOwn && message.message_status && message.message_status.every(s => s.read_at);
-  const anyDelivered = isOwn && message.message_status && message.message_status.some(s => s.delivered_at);
+  const allRead = showReadReceipts && isOwn && message.message_status && message.message_status.every(s => s.read_at);
+  const anyDelivered = showReadReceipts && isOwn && message.message_status && message.message_status.some(s => s.delivered_at);
   
   // Check if message can be edited (within 15 minutes)
   const canEdit = isOwn && !isVoice && !hasAttachment && message.sent_at && 
     (Date.now() - new Date(message.sent_at).getTime()) < 15 * 60 * 1000;
+
+  // Dynamic bubble border radius based on style
+  const getBubbleRadius = () => {
+    if (bubbleStyle === 'square') return 'rounded-md';
+    if (bubbleStyle === 'minimal') return 'rounded-sm';
+    
+    // Default rounded style
+    if (isLastInGroup) {
+      return isOwn ? 'rounded-2xl rounded-br-md' : 'rounded-2xl rounded-bl-md';
+    }
+    return 'rounded-2xl';
+  };
+
+  // Theme color mapping
+  const getThemeColor = () => {
+    const themes: Record<string, string> = {
+      teal: 'hsl(174, 72%, 42%)',
+      purple: 'hsl(271, 76%, 53%)',
+      blue: 'hsl(217, 91%, 60%)',
+      pink: 'hsl(340, 82%, 52%)',
+      green: 'hsl(142, 76%, 36%)',
+      orange: 'hsl(24, 95%, 53%)',
+    };
+    return themes[chatTheme] || themes.teal;
+  };
 
   // Swipe-to-reply gesture
   const handleDragEnd = (event: any, info: any) => {
@@ -177,7 +208,7 @@ export const MessageBubble = ({
   };
   
   const ReadStatus = () => {
-    if (!isOwn) return null;
+    if (!isOwn || !showReadReceipts) return null;
     
     if (allRead) {
       return <CheckCheck className="h-3.5 w-3.5 text-accent" />;
@@ -217,15 +248,10 @@ export const MessageBubble = ({
             <div
               className={`${
                 isOwn
-                  ? 'bg-primary text-primary-foreground shadow-sm'
+                  ? 'text-primary-foreground shadow-sm'
                   : 'bg-muted text-foreground shadow-sm'
-              } ${
-                isLastInGroup
-                  ? (isOwn 
-                      ? 'rounded-2xl rounded-br-md' 
-                      : 'rounded-2xl rounded-bl-md')
-                  : 'rounded-2xl'
-              }`}
+              } ${getBubbleRadius()}`}
+              style={isOwn ? { backgroundColor: getThemeColor() } : {}}
             >
               {/* --- Reply Preview --- */}
               {repliedMessage && (

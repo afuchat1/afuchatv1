@@ -22,6 +22,7 @@ import EmojiPicker, { EmojiClickData } from 'emoji-picker-react';
 import { Dialog, DialogContent, DialogTrigger } from '@/components/ui/dialog';
 import { UserAvatar } from '@/components/avatar/UserAvatar';
 import { VerifiedBadge } from '@/components/VerifiedBadge';
+import { useChatPreferences } from '@/hooks/useChatPreferences';
 
 interface Message {
   id: string;
@@ -100,6 +101,7 @@ const ChatRoom = () => {
   const { user } = useAuth();
   const navigate = useNavigate();
   const { t } = useTranslation();
+  const { preferences: chatPreferences, loading: prefsLoading } = useChatPreferences();
   const [messages, setMessages] = useState<Message[]>([]);
   const [redEnvelopes, setRedEnvelopes] = useState<RedEnvelope[]>([]);
   const [newMessage, setNewMessage] = useState('');
@@ -910,15 +912,24 @@ const ChatRoom = () => {
           </div>
         </div>
 
-        {/* Messages with WhatsApp decorative background */}
+        {/* Messages with customizable background */}
         <div 
           className="flex-1 overflow-y-auto px-3 py-2" 
           style={{ 
             paddingBottom: '120px',
-            background: 'linear-gradient(to bottom, hsl(var(--background)) 0%, hsl(var(--muted)/0.3) 100%)',
-            backgroundImage: `
-              url("data:image/svg+xml,%3Csvg width='60' height='60' viewBox='0 0 60 60' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='M30 0l30 30-30 30L0 30z' fill='none' stroke='%23ffffff' stroke-width='0.5' opacity='0.03'/%3E%3C/svg%3E")
-            `
+            fontSize: `${chatPreferences.fontSize}px`,
+            ...(chatPreferences.wallpaper === 'default' ? {
+              background: 'linear-gradient(to bottom, hsl(var(--background)) 0%, hsl(var(--muted)/0.3) 100%)',
+              backgroundImage: `url("data:image/svg+xml,%3Csvg width='60' height='60' viewBox='0 0 60 60' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='M30 0l30 30-30 30L0 30z' fill='none' stroke='%23ffffff' stroke-width='0.5' opacity='0.03'/%3E%3C/svg%3E")`
+            } : chatPreferences.wallpaper === 'waves' ? {
+              background: 'linear-gradient(135deg, hsl(var(--primary)/0.05) 0%, hsl(var(--accent)/0.05) 50%, hsl(var(--background)) 100%)'
+            } : chatPreferences.wallpaper === 'sunset' ? {
+              background: 'linear-gradient(135deg, rgba(251, 146, 60, 0.1) 0%, rgba(236, 72, 153, 0.1) 50%, rgba(168, 85, 247, 0.1) 100%)'
+            } : chatPreferences.wallpaper === 'forest' ? {
+              background: 'linear-gradient(135deg, rgba(34, 197, 94, 0.1) 0%, rgba(16, 185, 129, 0.1) 50%, rgba(20, 184, 166, 0.1) 100%)'
+            } : chatPreferences.wallpaper === 'midnight' ? {
+              background: 'linear-gradient(135deg, rgba(30, 58, 138, 0.15) 0%, rgba(88, 28, 135, 0.15) 50%, rgba(157, 23, 77, 0.15) 100%)'
+            } : {})
           }}
         >
           {messages.length === 0 && redEnvelopes.length === 0 ? (
@@ -1007,6 +1018,9 @@ const ChatRoom = () => {
                       onToggleAudio={() => message.audio_url && toggleAudio(message.id, message.audio_url)}
                       audioPlayerState={audioPlayers[message.id] || { isPlaying: false }}
                       onEdit={handleEditMessage}
+                      bubbleStyle={chatPreferences.bubbleStyle as 'rounded' | 'square' | 'minimal'}
+                      chatTheme={chatPreferences.chatTheme}
+                      showReadReceipts={chatPreferences.readReceipts}
                     />
                   );
                 });
