@@ -219,10 +219,12 @@ const Chats = () => {
       
       const currentScrollY = scrollRef.current.scrollTop;
       
-      // Collapse stories when scrolling down past 50px
-      if (currentScrollY > 50) {
+      // Collapse stories when scrolling down past 30px
+      if (currentScrollY > 30 && !shouldCollapseStories) {
         setShouldCollapseStories(true);
-      } else {
+      } 
+      // Expand stories when scrolling back to top
+      else if (currentScrollY <= 30 && shouldCollapseStories) {
         setShouldCollapseStories(false);
       }
       
@@ -239,9 +241,16 @@ const Chats = () => {
     };
 
     const scrollElement = scrollRef.current;
-    scrollElement?.addEventListener('scroll', handleScroll);
-    return () => scrollElement?.removeEventListener('scroll', handleScroll);
-  }, []);
+    if (scrollElement) {
+      scrollElement.addEventListener('scroll', handleScroll, { passive: true });
+    }
+    
+    return () => {
+      if (scrollElement) {
+        scrollElement.removeEventListener('scroll', handleScroll);
+      }
+    };
+  }, [shouldCollapseStories]);
 
   if (loading) {
     return (
@@ -263,12 +272,12 @@ const Chats = () => {
   }
 
   return (
-    <div className="h-screen flex flex-col bg-background">
+    <div className="h-screen flex flex-col bg-background overflow-hidden">
       {/* Stories Header - Collapses on scroll down */}
       <ChatStoriesHeader shouldCollapse={shouldCollapseStories} />
 
-      {/* Chat List */}
-      <div ref={scrollRef} className="flex-1 overflow-y-auto">
+      {/* Chat List - This is the scrollable container */}
+      <div ref={scrollRef} className="flex-1 overflow-y-auto overscroll-contain">
         {chats.map((chat) => {
           const chatName = chat.is_group 
             ? (chat.name || 'Group Chat')

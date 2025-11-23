@@ -127,7 +127,11 @@ export const ChatStoriesHeader = ({ shouldCollapse = false }: ChatStoriesHeaderP
   };
 
   return (
-    <div className="sticky top-0 z-50 bg-background transition-all duration-300" style={{ height: isCollapsed ? '0px' : 'auto', overflow: 'hidden' }}>
+    <div className="sticky top-0 z-50 bg-background transition-all duration-300 ease-out" style={{ 
+      maxHeight: isCollapsed ? '0px' : '500px',
+      opacity: isCollapsed ? 0 : 1,
+      overflow: 'hidden'
+    }}>
       {/* Header with Menu, Title, and Search */}
       <div className="flex items-center justify-between px-4 h-16">
         <button className="p-2">
@@ -140,7 +144,7 @@ export const ChatStoriesHeader = ({ shouldCollapse = false }: ChatStoriesHeaderP
       </div>
 
       {/* Stories horizontal scroll */}
-      <div className="overflow-x-auto scrollbar-hide px-4 py-4">
+      <div className="overflow-x-auto scrollbar-hide px-4 pb-4">
         <div className="flex gap-5">
           {/* My Story */}
           <div
