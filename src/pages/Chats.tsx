@@ -227,8 +227,9 @@ const Chats = () => {
       const atTop = currentScrollY <= 10;
       setIsAtTop(atTop);
 
-      // At bottom when within 40px of end
-      const atBottom = scrollHeight - (currentScrollY + clientHeight) <= 40;
+      // At bottom when within 150px of end (more forgiving)
+      const distanceFromBottom = scrollHeight - (currentScrollY + clientHeight);
+      const atBottom = distanceFromBottom <= 150;
       setIsAtBottom(atBottom);
       
       // Determine scroll direction
@@ -259,7 +260,8 @@ const Chats = () => {
       const scrollHeight = scrollElement.scrollHeight;
       const clientHeight = scrollElement.clientHeight;
       setIsAtTop(currentScrollY <= 10);
-      setIsAtBottom(scrollHeight - (currentScrollY + clientHeight) <= 40);
+      const distanceFromBottom = scrollHeight - (currentScrollY + clientHeight);
+      setIsAtBottom(distanceFromBottom <= 150);
     }
 
     return () => scrollElement?.removeEventListener('scroll', handleScroll);

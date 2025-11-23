@@ -31,11 +31,11 @@ export const ChatStoriesHeader = ({ isAtTop = true, isAtBottom = false, scrollDi
   // Handle expand/collapse based on scroll position from Chats
   useEffect(() => {
     if (storyUsers.length > 0) {
-      // Expand when user scrolls to bottom of chat list
-      if (isAtBottom && scrollDirection === 'down') {
+      // Expand whenever list is considered at bottom
+      if (isAtBottom) {
         setIsExpanded(true);
       }
-      // Collapse once user starts scrolling up from bottom
+      // Collapse once user scrolls up away from bottom
       else if (!isAtBottom && scrollDirection === 'up' && isExpanded) {
         setIsExpanded(false);
       }
