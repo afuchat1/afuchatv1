@@ -307,21 +307,6 @@ export const MessageBubble = ({
         
         {/* --- Message Container --- */}
         <div className="flex flex-col min-w-0">
-          {/* --- Name (for incoming, non-grouped) --- */}
-          {!isOwn && !isGrouped && (
-            <div className="flex items-center gap-0.5 mb-1 px-1">
-              <span className="text-xs font-medium text-primary">
-                {message.profiles?.display_name || 'User'}
-              </span>
-              <VerifiedBadge
-                isVerified={message.profiles?.is_verified || false}
-                isOrgVerified={message.profiles?.is_organization_verified || false}
-                isAffiliate={message.profiles?.is_affiliate || false}
-                size="sm"
-              />
-            </div>
-          )}
-          
           <div className={`flex items-end gap-2 ${isOwn ? 'flex-row-reverse' : 'flex-row'}`}>
             {/* --- Message Bubble --- */}
             <div
