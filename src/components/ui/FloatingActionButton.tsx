@@ -13,6 +13,8 @@ interface FabAction {
 
 const FloatingActionButton = () => {
   const [isOpen, setIsOpen] = useState(false);
+  const [isScrollingDown, setIsScrollingDown] = useState(false);
+  const [lastScrollY, setLastScrollY] = useState(0);
   const navigate = useNavigate();
   const location = useLocation();
 
@@ -20,6 +22,24 @@ const FloatingActionButton = () => {
   useEffect(() => {
     setIsOpen(false);
   }, [location.pathname]);
+
+  // Handle scroll to hide/show FAB
+  useEffect(() => {
+    const handleScroll = () => {
+      const currentScrollY = window.scrollY;
+      
+      if (currentScrollY > lastScrollY && currentScrollY > 100) {
+        setIsScrollingDown(true);
+      } else {
+        setIsScrollingDown(false);
+      }
+      
+      setLastScrollY(currentScrollY);
+    };
+
+    window.addEventListener('scroll', handleScroll, { passive: true });
+    return () => window.removeEventListener('scroll', handleScroll);
+  }, [lastScrollY]);
 
   const handleActionClick = (action: () => void) => {
     setIsOpen(false);
@@ -44,19 +64,19 @@ const FloatingActionButton = () => {
       icon: <MessageCircle className="h-6 w-6" />,
       label: 'New Post',
       onClick: () => handleActionClick(handleNewPost),
-      color: 'bg-blue-500'
+      color: 'bg-primary'
     },
     {
       icon: <Send className="h-6 w-6" />,
       label: 'Transfer Nexa',
       onClick: () => handleActionClick(() => navigate('/transfer')),
-      color: 'bg-green-500'
+      color: 'bg-accent'
     },
     {
       icon: <Gamepad2 className="h-6 w-6" />,
       label: 'Play Games',
       onClick: () => handleActionClick(() => navigate('/games')),
-      color: 'bg-purple-500'
+      color: 'bg-primary'
     }
   ];
 
@@ -71,12 +91,15 @@ const FloatingActionButton = () => {
       )}
 
       {/* FAB Container */}
-      <div className="fixed bottom-20 right-6 z-50">
+      <div className={cn(
+        "fixed bottom-20 right-6 z-50 transition-transform duration-300",
+        isScrollingDown ? "translate-y-32" : "translate-y-0"
+      )}>
         {!isOpen ? (
           /* Main FAB Button */
           <Button
             size="icon"
-            className="h-14 w-14 rounded-full shadow-2xl transition-all bg-blue-500 hover:bg-blue-600 hover:scale-110"
+            className="h-14 w-14 rounded-full shadow-2xl transition-all bg-primary hover:bg-primary/90 hover:scale-110 text-primary-foreground"
             onClick={() => setIsOpen(true)}
           >
             <Plus className="h-6 w-6" />
@@ -91,11 +114,11 @@ const FloatingActionButton = () => {
                 className="flex items-center gap-4 animate-scale-in group"
                 style={{ animationDelay: `${index * 50}ms` }}
               >
-                <span className="text-white text-lg font-semibold whitespace-nowrap">
+                <span className="text-foreground text-lg font-semibold whitespace-nowrap bg-card px-3 py-1 rounded-full shadow-lg">
                   {action.label}
                 </span>
                 <div className={cn(
-                  "h-14 w-14 rounded-full shadow-xl flex items-center justify-center text-white transition-transform group-hover:scale-110",
+                  "h-14 w-14 rounded-full shadow-xl flex items-center justify-center text-primary-foreground transition-transform group-hover:scale-110",
                   action.color
                 )}>
                   {action.icon}
