@@ -8,6 +8,17 @@
   .animate-spin-slow {
     animation: spin 3s linear infinite;
   }
+  
+  /* Smooth scrolling */
+  .smooth-scroll {
+    scroll-behavior: smooth;
+  }
+  
+  /* Hardware acceleration */
+  .gpu-accelerated {
+    transform: translateZ(0);
+    will-change: transform, opacity;
+  }
 }
 
 /* AfuChat Design System - Optimized for low-bandwidth, high readability
@@ -120,7 +131,7 @@ All colors MUST be HSL.
     @apply border-0;
   }
   body {
-    @apply bg-background text-foreground;
+    @apply bg-background text-foreground smooth-scroll;
     font-family: 'Inter', sans-serif;
     -webkit-font-smoothing: antialiased;
     -moz-osx-font-smoothing: grayscale;
@@ -128,11 +139,19 @@ All colors MUST be HSL.
   
   /* Performance: reduce animations on low-end devices */
   @media (prefers-reduced-motion: reduce) {
-    * {
+    *,
+    *::before,
+    *::after {
       animation-duration: 0.01ms !important;
       animation-iteration-count: 1 !important;
       transition-duration: 0.01ms !important;
+      scroll-behavior: auto !important;
     }
+  }
+  
+  /* Optimize rendering */
+  img, video {
+    @apply gpu-accelerated;
   }
 }
 
