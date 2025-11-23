@@ -128,86 +128,6 @@ export const MessageBubble = ({
   // In a real app, this might be fetched or passed in
   const repliedMessage = message.reply_to_message;
 
-  const MessageContent = () => (
-    <div className="flex flex-col">
-      {/* --- Reply Preview --- */}
-      {repliedMessage && (
-        <div className={`px-3 py-2 mb-1 border-l-2 ${
-          isOwn ? 'border-primary-foreground/40 bg-primary-foreground/10' : 'border-primary bg-muted/50'
-        }`}>
-          <div className="flex flex-col min-w-0">
-            <span className={`text-xs truncate ${
-              isOwn ? 'text-primary-foreground/80' : 'text-muted-foreground'
-            }`}>
-              {repliedMessage.audio_url ? '🎤 Voice message' : repliedMessage.encrypted_content}
-            </span>
-          </div>
-        </div>
-      )}
-      
-      {/* --- Main Content (Text or Voice or Attachment) --- */}
-      {hasAttachment ? (
-        <div className="p-2">
-          <AttachmentPreview
-            url={message.attachment_url!}
-            type={message.attachment_type || ''}
-            name={message.attachment_name || 'Attachment'}
-            size={message.attachment_size}
-            isOwn={isOwn}
-            onDownload={message.attachment_type?.startsWith('image/') 
-              ? () => setLightboxOpen(true)
-              : handleDownload
-            }
-          />
-          {message.encrypted_content && (
-            <div className="px-2 py-2 mt-1">
-              <p className="text-[15px] leading-relaxed whitespace-pre-wrap break-words">
-                {message.encrypted_content}
-              </p>
-            </div>
-          )}
-        </div>
-      ) : isVoice ? (
-        <div className="flex items-center gap-3 px-3 py-2">
-          <Button
-            variant="ghost"
-            size="icon"
-            className={`h-9 w-9 rounded-full flex-shrink-0 ${
-              isOwn ? 'hover:bg-primary-foreground/20' : 'hover:bg-primary/10'
-            }`}
-            onClick={onToggleAudio}
-          >
-            {audioPlayerState?.isPlaying ? (
-              <Pause className="h-4 w-4" />
-            ) : (
-              <Play className="h-4 w-4 ml-0.5" />
-            )}
-          </Button>
-          <div className="flex items-center gap-2 flex-1">
-            <div className="h-1 flex-1 bg-current opacity-20 rounded-full">
-              <div className="h-full w-1/3 bg-current opacity-60 rounded-full" />
-            </div>
-            <span className="text-xs opacity-60">0:42</span>
-          </div>
-        </div>
-      ) : (
-        <div className="px-3 py-2">
-          <p className="text-[15px] leading-relaxed whitespace-pre-wrap break-words">
-            {message.encrypted_content}
-          </p>
-        </div>
-      )}
-      
-      {/* --- Timestamp & Status --- */}
-      <div className={`flex items-center justify-end gap-1 px-3 pb-1.5 ${isVoice ? 'mt-0' : '-mt-1'}`}>
-        {message.edited_at && (
-          <span className="text-[11px] opacity-50">edited</span>
-        )}
-        <span className="text-[11px] opacity-60">{time}</span>
-        <ReadStatus />
-      </div>
-    </div>
-  );
 
   const ReactionButton = () => (
     <Popover>
@@ -307,7 +227,82 @@ export const MessageBubble = ({
                   : 'rounded-2xl'
               }`}
             >
-              <MessageContent />
+              {/* --- Reply Preview --- */}
+              {repliedMessage && (
+                <div className={`px-3 py-2 mb-1 border-l-2 ${
+                  isOwn ? 'border-primary-foreground/40 bg-primary-foreground/10' : 'border-primary bg-muted/50'
+                }`}>
+                  <div className="flex flex-col min-w-0">
+                    <span className={`text-xs truncate ${
+                      isOwn ? 'text-primary-foreground/80' : 'text-muted-foreground'
+                    }`}>
+                      {repliedMessage.audio_url ? '🎤 Voice message' : repliedMessage.encrypted_content}
+                    </span>
+                  </div>
+                </div>
+              )}
+              
+              {/* --- Main Content (Text or Voice or Attachment) --- */}
+              {hasAttachment ? (
+                <div className="p-2">
+                  <AttachmentPreview
+                    url={message.attachment_url!}
+                    type={message.attachment_type || ''}
+                    name={message.attachment_name || 'Attachment'}
+                    size={message.attachment_size}
+                    isOwn={isOwn}
+                    onDownload={message.attachment_type?.startsWith('image/') 
+                      ? () => setLightboxOpen(true)
+                      : handleDownload
+                    }
+                  />
+                  {message.encrypted_content && (
+                    <div className="px-2 py-2 mt-1">
+                      <p className="text-[15px] leading-relaxed whitespace-pre-wrap break-words">
+                        {message.encrypted_content}
+                      </p>
+                    </div>
+                  )}
+                </div>
+              ) : isVoice ? (
+                <div className="flex items-center gap-3 px-3 py-2">
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    className={`h-9 w-9 rounded-full flex-shrink-0 ${
+                      isOwn ? 'hover:bg-primary-foreground/20' : 'hover:bg-primary/10'
+                    }`}
+                    onClick={onToggleAudio}
+                  >
+                    {audioPlayerState?.isPlaying ? (
+                      <Pause className="h-4 w-4" />
+                    ) : (
+                      <Play className="h-4 w-4 ml-0.5" />
+                    )}
+                  </Button>
+                  <div className="flex items-center gap-2 flex-1">
+                    <div className="h-1 flex-1 bg-current opacity-20 rounded-full">
+                      <div className="h-full w-1/3 bg-current opacity-60 rounded-full" />
+                    </div>
+                    <span className="text-xs opacity-60">0:42</span>
+                  </div>
+                </div>
+              ) : (
+                <div className="px-3 py-2">
+                  <p className="text-[15px] leading-relaxed whitespace-pre-wrap break-words">
+                    {message.encrypted_content}
+                  </p>
+                </div>
+              )}
+              
+              {/* --- Timestamp & Status --- */}
+              <div className={`flex items-center justify-end gap-1 px-3 pb-1.5 ${isVoice ? 'mt-0' : '-mt-1'}`}>
+                {message.edited_at && (
+                  <span className="text-[11px] opacity-50">edited</span>
+                )}
+                <span className="text-[11px] opacity-60">{time}</span>
+                <ReadStatus />
+              </div>
             </div>
             
             {/* --- Action Buttons --- */}
