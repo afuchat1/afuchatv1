@@ -14,7 +14,21 @@ import {
   Globe,
   Star,
   ChevronRight,
-  Archive
+  Archive,
+  Palette,
+  Image,
+  Type,
+  Wallpaper,
+  Download,
+  Volume2,
+  Video,
+  Folder,
+  Tag,
+  Lock,
+  Eye,
+  Clock,
+  Trash2,
+  Pin
 } from 'lucide-react';
 import {
   Sheet,
@@ -89,21 +103,51 @@ export const ChatMenuDrawer = ({ isOpen, onClose }: ChatMenuDrawerProps) => {
         { icon: MessageSquare, label: 'All Chats', path: '/chats', color: 'text-blue-500' },
         { icon: Archive, label: 'Archived', path: '/archived-chats', color: 'text-gray-500' },
         { icon: Star, label: 'Favorites', path: '/favorite-chats', color: 'text-yellow-500' },
+        { icon: Pin, label: 'Pinned', path: '/pinned-chats', color: 'text-purple-500' },
         { icon: Users, label: 'New Group', path: '/new-group', color: 'text-green-500' },
+        { icon: Folder, label: 'Chat Folders', path: '/chat-folders', color: 'text-orange-500' },
+        { icon: Tag, label: 'Labels', path: '/chat-labels', color: 'text-pink-500' },
       ]
     },
     {
-      title: 'Chat Settings',
+      title: 'Chat Appearance',
       items: [
-        { icon: Bell, label: 'Notifications', path: '/settings?tab=notifications', color: 'text-foreground' },
-        { icon: Shield, label: 'Privacy', path: '/settings?tab=security', color: 'text-foreground' },
+        { icon: Palette, label: 'Chat Themes', path: '/chat-themes', color: 'text-indigo-500' },
+        { icon: Wallpaper, label: 'Wallpapers', path: '/chat-wallpapers', color: 'text-cyan-500' },
+        { icon: Image, label: 'Bubble Style', path: '/chat-bubble-style', color: 'text-teal-500' },
+        { icon: Type, label: 'Font Size', path: '/chat-font-settings', color: 'text-amber-500' },
+      ]
+    },
+    {
+      title: 'Chat Customization',
+      items: [
+        { icon: Volume2, label: 'Chat Sounds', path: '/chat-sounds', color: 'text-red-500' },
+        { icon: Download, label: 'Auto-Download', path: '/chat-auto-download', color: 'text-emerald-500' },
+        { icon: Video, label: 'Media Quality', path: '/chat-media-quality', color: 'text-violet-500' },
+        { icon: Clock, label: 'Message Timer', path: '/chat-message-timer', color: 'text-rose-500' },
+      ]
+    },
+    {
+      title: 'Privacy & Storage',
+      items: [
+        { icon: Lock, label: 'Chat Lock', path: '/chat-lock', color: 'text-foreground' },
+        { icon: Eye, label: 'Read Receipts', path: '/chat-read-receipts', color: 'text-foreground' },
+        { icon: Shield, label: 'Privacy Settings', path: '/settings?tab=security', color: 'text-foreground' },
+        { icon: Trash2, label: 'Clear Chat Data', path: '/chat-clear-data', color: 'text-destructive' },
+      ]
+    },
+    {
+      title: 'Notifications',
+      items: [
+        { icon: Bell, label: 'Notification Settings', path: '/settings?tab=notifications', color: 'text-foreground' },
         { icon: Globe, label: 'Data & Storage', path: '/settings?tab=data', color: 'text-foreground' },
       ]
     },
     {
       title: 'Support',
       items: [
-        { icon: HelpCircle, label: 'Help', path: '/support', color: 'text-foreground' },
+        { icon: HelpCircle, label: 'Help Center', path: '/support', color: 'text-foreground' },
+        { icon: Settings, label: 'Chat Settings', path: '/settings', color: 'text-foreground' },
       ]
     }
   ];
