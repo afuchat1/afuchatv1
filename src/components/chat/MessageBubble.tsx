@@ -62,6 +62,7 @@ interface MessageBubbleProps {
   message: Message;
   isOwn: boolean;
   isGrouped: boolean; // Is it part of a group of messages?
+  isLastInGroup: boolean; // Is it the last message in a group?
   isOnline: boolean; // (Simulated)
   onReply: (message: Message) => void;
   onReaction: (messageId: string, emoji: string) => void;
@@ -74,6 +75,7 @@ export const MessageBubble = ({
   message,
   isOwn,
   isGrouped,
+  isLastInGroup,
   isOnline,
   onReply,
   onReaction,
@@ -277,7 +279,9 @@ export const MessageBubble = ({
       dragConstraints={{ left: isOwn ? -100 : 0, right: isOwn ? 0 : 100 }}
       dragElastic={0.1}
       onDragEnd={handleDragEnd}
-      className={`flex w-full mb-1 group ${isOwn ? 'justify-end' : 'justify-start'} relative`}
+      className={`flex w-full group ${isOwn ? 'justify-end' : 'justify-start'} relative ${
+        isLastInGroup ? 'mb-2' : 'mb-0.5'
+      }`}
     >
       {/* Swipe Reply Indicator */}
       <motion.div 
@@ -292,12 +296,12 @@ export const MessageBubble = ({
         
         {/* --- Avatar --- */}
         {!isOwn && (
-          isGrouped ? (
-            <div className="w-8 flex-shrink-0" />
-          ) : (
+          isLastInGroup ? (
             <div className="mb-0.5">
               <Avatar name={message.profiles?.display_name || 'User'} userId={message.sender_id} />
             </div>
+          ) : (
+            <div className="w-8 flex-shrink-0" />
           )
         )}
         
@@ -326,11 +330,11 @@ export const MessageBubble = ({
                   ? 'bg-primary text-primary-foreground'
                   : 'bg-card text-foreground'
               } ${
-                isGrouped
-                  ? 'rounded-2xl'
-                  : isOwn 
-                    ? 'rounded-2xl rounded-br-sm' 
-                    : 'rounded-2xl rounded-bl-sm'
+                isLastInGroup
+                  ? (isOwn 
+                      ? 'rounded-2xl rounded-br-sm' 
+                      : 'rounded-2xl rounded-bl-sm')
+                  : 'rounded-2xl'
               }`}
             >
               <MessageContent />
