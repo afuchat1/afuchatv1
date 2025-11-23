@@ -1017,6 +1017,9 @@ const Feed = () => {
   const [posts, setPosts] = useState<Post[]>([]);
   const [followingPosts, setFollowingPosts] = useState<Post[]>([]);
   const [loading, setLoading] = useState(true);
+  const [loadingMore, setLoadingMore] = useState(false);
+  const [hasMore, setHasMore] = useState(true);
+  const [currentPage, setCurrentPage] = useState(0);
   const [activeTab, setActiveTab] = useState<'foryou' | 'following'>('foryou');
   const [newPostsCount, setNewPostsCount] = useState(0);
   const [userProfile, setUserProfile] = useState<{ display_name: string; avatar_url: string | null } | null>(null);
@@ -1029,10 +1032,22 @@ const Feed = () => {
   const [editPost, setEditPost] = useState<Post | null>(null);
   const [isDeleting, setIsDeleting] = useState(false);
 
+  // Shuffle function for randomizing posts
+  const shuffleArray = <T,>(array: T[]): T[] => {
+    const shuffled = [...array];
+    for (let i = shuffled.length - 1; i > 0; i--) {
+      const j = Math.floor(Math.random() * (i + 1));
+      [shuffled[i], shuffled[j]] = [shuffled[j], shuffled[i]];
+    }
+    return shuffled;
+  };
+
   // Load cached data immediately on mount
   useEffect(() => {
-    // Always fetch fresh data on mount - don't use stale cache
-    fetchPosts();
+    // Fetch fresh data on mount
+    setCurrentPage(0);
+    setHasMore(true);
+    fetchPosts(0, true);
     
     const cachedTab = sessionStorage.getItem('feedActiveTab');
     if (cachedTab) {
@@ -1056,7 +1071,9 @@ const Feed = () => {
         });
       
       // Refetch posts to get correct has_liked status
-      fetchPosts();
+      setCurrentPage(0);
+      setHasMore(true);
+      fetchPosts(0, true);
     }
   }, [user]);
 
@@ -1091,26 +1108,6 @@ const Feed = () => {
       }
     }
   }, [posts.length]);
-
-  // Save scroll position continuously
-  useEffect(() => {
-    const handleScroll = () => {
-      if (feedRef.current) {
-        sessionStorage.setItem('feedScrollPosition', feedRef.current.scrollTop.toString());
-      }
-    };
-
-    const currentRef = feedRef.current;
-    if (currentRef) {
-      currentRef.addEventListener('scroll', handleScroll);
-    }
-
-    return () => {
-      if (currentRef) {
-        currentRef.removeEventListener('scroll', handleScroll);
-      }
-    };
-  }, []);
 
   const addReply = useCallback((postId: string, newReply: Reply) => {
     const updateWithReply = (cur: Post[]) =>
@@ -1341,10 +1338,19 @@ const Feed = () => {
 
 
 
-  const fetchPosts = useCallback(async () => {
-    console.log('[Feed] fetchPosts: Starting fetch...');
-    setLoading(true);
+  const fetchPosts = useCallback(async (page: number = 0, isInitial: boolean = false) => {
+    console.log('[Feed] fetchPosts: Starting fetch...', { page, isInitial });
+    if (isInitial) {
+      setLoading(true);
+    } else {
+      setLoadingMore(true);
+    }
+    
     try {
+      const POSTS_PER_PAGE = 50;
+      const from = page * POSTS_PER_PAGE;
+      const to = from + POSTS_PER_PAGE - 1;
+
       // Fetch all posts for "For You" tab
       let { data: postData, error: postsError } = await supabase
         .from('posts')
@@ -1355,7 +1361,7 @@ const Feed = () => {
           post_link_previews(url, title, description, image_url, site_name)
         `)
         .order('created_at', { ascending: false })
-        .limit(50);
+        .range(from, to);
 
       console.log('[Feed] fetchPosts: Posts query result:', { postData, postsError });
       
@@ -1364,6 +1370,9 @@ const Feed = () => {
         throw postsError;
       }
       if (!postData) postData = [];
+
+      // Check if we have more posts to load
+      setHasMore(postData.length === POSTS_PER_PAGE);
 
       // Fetch following posts if user is logged in
       let followingPostData: any[] = [];
@@ -1385,7 +1394,7 @@ const Feed = () => {
             `)
             .in('author_id', followingIds)
             .order('created_at', { ascending: false })
-            .limit(50);
+            .range(from, to);
 
           followingPostData = followingPostsData || [];
         }
@@ -1510,11 +1519,20 @@ const Feed = () => {
         } as Post;
       });
 
-      console.log('[Feed] fetchPosts: Final posts count:', finalPosts.length);
-      console.log('[Feed] fetchPosts: Following posts count:', finalFollowingPosts.length);
+      // Randomize posts to ensure variety
+      const shuffledPosts = shuffleArray(finalPosts);
+      const shuffledFollowingPosts = shuffleArray(finalFollowingPosts);
+
+      console.log('[Feed] fetchPosts: Final posts count:', shuffledPosts.length);
+      console.log('[Feed] fetchPosts: Following posts count:', shuffledFollowingPosts.length);
       
-      setPosts(finalPosts);
-      setFollowingPosts(finalFollowingPosts);
+      if (isInitial) {
+        setPosts(shuffledPosts);
+        setFollowingPosts(shuffledFollowingPosts);
+      } else {
+        setPosts(prev => [...prev, ...shuffledPosts]);
+        setFollowingPosts(prev => [...prev, ...shuffledFollowingPosts]);
+      }
     } catch (err) {
       console.error('[Feed] fetchPosts: Critical error:', err);
       if (err instanceof Error) {
@@ -1524,13 +1542,55 @@ const Feed = () => {
         toast.error('Could not fetch feed. Please try again.');
       }
       // Set empty arrays to show "no posts" message instead of infinite loading
-      setPosts([]);
-      setFollowingPosts([]);
+      if (isInitial) {
+        setPosts([]);
+        setFollowingPosts([]);
+      }
+      setHasMore(false);
     } finally {
       console.log('[Feed] fetchPosts: Setting loading to false');
       setLoading(false);
+      setLoadingMore(false);
     }
   }, [user]);
+
+  // Save scroll position and detect bottom for pagination
+  useEffect(() => {
+    const handleScroll = () => {
+      if (feedRef.current) {
+        sessionStorage.setItem('feedScrollPosition', feedRef.current.scrollTop.toString());
+        
+        // Check if near bottom for pagination
+        const { scrollTop, scrollHeight, clientHeight } = feedRef.current;
+        const isNearBottom = scrollTop + clientHeight >= scrollHeight - 300;
+        
+        if (isNearBottom && !loadingMore && hasMore && !loading) {
+          const nextPage = currentPage + 1;
+          setCurrentPage(nextPage);
+          setLoadingMore(true);
+          // Trigger pagination by updating page state
+        }
+      }
+    };
+
+    const currentRef = feedRef.current;
+    if (currentRef) {
+      currentRef.addEventListener('scroll', handleScroll);
+    }
+
+    return () => {
+      if (currentRef) {
+        currentRef.removeEventListener('scroll', handleScroll);
+      }
+    };
+  }, [loadingMore, hasMore, loading, currentPage]);
+
+  // Trigger fetch when currentPage changes (for pagination)
+  useEffect(() => {
+    if (currentPage > 0 && loadingMore) {
+      fetchPosts(currentPage, false);
+    }
+  }, [currentPage, fetchPosts]);
 
   // Listen for optimistic post events
   useEffect(() => {
@@ -1957,7 +2017,9 @@ const Feed = () => {
   const currentPosts = activeTab === 'foryou' ? posts : followingPosts;
 
   const handleLoadNewPosts = () => {
-    fetchPosts();
+    setCurrentPage(0);
+    setHasMore(true);
+    fetchPosts(0, true);
     setNewPostsCount(0);
     if (feedRef.current) {
       feedRef.current.scrollTop = 0;
@@ -2000,22 +2062,41 @@ const Feed = () => {
                 : t('feed.noPostsYet')}
             </div>
           ) : (
-            currentPosts.map((post) => (
-              <PostCard
-                key={post.id}
-                post={post}
-                addReply={addReply}
-                user={user as AuthUser | null}
-                navigate={navigate}
-                onAcknowledge={handleAcknowledge}
-                onDeletePost={handleDeletePost}
-                onReportPost={handleReportPost}
-                onEditPost={handleEditPost}
-                userProfile={userProfile}
-                expandedPosts={expandedPosts}
-                setExpandedPosts={setExpandedPosts}
-              />
-            ))
+            <>
+              {currentPosts.map((post) => (
+                <PostCard
+                  key={post.id}
+                  post={post}
+                  addReply={addReply}
+                  user={user as AuthUser | null}
+                  navigate={navigate}
+                  onAcknowledge={handleAcknowledge}
+                  onDeletePost={handleDeletePost}
+                  onReportPost={handleReportPost}
+                  onEditPost={handleEditPost}
+                  userProfile={userProfile}
+                  expandedPosts={expandedPosts}
+                  setExpandedPosts={setExpandedPosts}
+                />
+              ))}
+              
+              {/* Loading more indicator */}
+              {loadingMore && (
+                <div className="py-8 flex justify-center">
+                  <div className="flex flex-col items-center gap-3">
+                    <Skeleton className="h-10 w-10 rounded-full" />
+                    <Skeleton className="h-3 w-32" />
+                  </div>
+                </div>
+              )}
+              
+              {/* End of feed indicator */}
+              {!hasMore && currentPosts.length > 0 && (
+                <div className="py-8 text-center text-muted-foreground text-sm">
+                  {t('feed.noMorePosts') || 'You\'ve reached the end'}
+                </div>
+              )}
+            </>
           )}
         </TabsContent>
       </Tabs>
