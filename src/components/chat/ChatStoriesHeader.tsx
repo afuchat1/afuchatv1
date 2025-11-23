@@ -137,9 +137,7 @@ export const ChatStoriesHeader = ({ shouldCollapse = false, onToggleCollapse }: 
 
   return (
     <div
-      className={`sticky top-0 z-50 bg-background transition-all duration-300 ease-in-out ${
-        isCollapsed ? 'shadow-sm' : ''
-      }`}
+      className="sticky top-0 z-50 bg-background transition-all duration-300 ease-in-out"
     >
       {/* Header - tap middle section to expand when collapsed */}
       <div className="flex items-center justify-between px-4 h-16">
