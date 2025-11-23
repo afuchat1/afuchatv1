@@ -55,7 +55,7 @@ const VerifiedBadge = ({ isVerified, isOrgVerified }: { isVerified?: boolean; is
 };
 
 const SearchSkeleton = () => (
-  <div className="flex items-center justify-center py-8">
+  <div className="flex items-center justify-center min-h-[60vh]">
     <CustomLoader size="md" text="Searching..." />
   </div>
 );
