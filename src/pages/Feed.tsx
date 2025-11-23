@@ -1562,13 +1562,12 @@ const Feed = () => {
         
         // Check if near bottom for pagination
         const { scrollTop, scrollHeight, clientHeight } = feedRef.current;
-        const isNearBottom = scrollTop + clientHeight >= scrollHeight - 300;
+        const isNearBottom = scrollTop + clientHeight >= scrollHeight - 200;
         
         if (isNearBottom && !loadingMore && hasMore && !loading) {
-          const nextPage = currentPage + 1;
-          setCurrentPage(nextPage);
           setLoadingMore(true);
-          // Trigger pagination by updating page state
+          fetchPosts(currentPage + 1, false);
+          setCurrentPage(prev => prev + 1);
         }
       }
     };
@@ -1583,14 +1582,7 @@ const Feed = () => {
         currentRef.removeEventListener('scroll', handleScroll);
       }
     };
-  }, [loadingMore, hasMore, loading, currentPage]);
-
-  // Trigger fetch when currentPage changes (for pagination)
-  useEffect(() => {
-    if (currentPage > 0 && loadingMore) {
-      fetchPosts(currentPage, false);
-    }
-  }, [currentPage, fetchPosts]);
+  }, [loadingMore, hasMore, loading, currentPage, fetchPosts]);
 
   // Listen for optimistic post events
   useEffect(() => {
