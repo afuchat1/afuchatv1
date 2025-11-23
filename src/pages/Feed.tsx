@@ -1369,15 +1369,15 @@ const Feed = () => {
       setLoadingMore(true);
     }
     
-    // Set a timeout to prevent endless loading
+    // Set a timeout to prevent endless loading (30 seconds)
     const loadingTimeout = setTimeout(() => {
       if (isInitial) {
         setLoading(false);
-        toast.error('Loading is taking longer than expected. Please refresh.');
+        toast.error('Loading is taking longer than expected. Please check your connection.');
       } else {
         setLoadingMore(false);
       }
-    }, 10000); // 10 second timeout
+    }, 30000); // 30 second timeout
     
     try {
       const POSTS_PER_PAGE = 50;
