@@ -67,6 +67,7 @@ const Chats = () => {
   const lastScrollY = useRef(0);
   const [shouldCollapseStories, setShouldCollapseStories] = useState(true);
   const [hideBottomNav, setHideBottomNav] = useState(false);
+  const [searchQuery, setSearchQuery] = useState('');
 
   useEffect(() => {
     if (!user) return;
@@ -270,6 +271,7 @@ const Chats = () => {
       <ChatStoriesHeader 
         shouldCollapse={shouldCollapseStories} 
         onToggleCollapse={setShouldCollapseStories}
+        onSearch={setSearchQuery}
       />
 
       {/* Chat List Container - Main scrollable area */}
@@ -278,7 +280,19 @@ const Chats = () => {
         className="flex-1 overflow-y-auto overscroll-contain scrollbar-thin pb-20"
         style={{ WebkitOverflowScrolling: 'touch' }}
       >
-        {chats.map((chat) => {
+        {chats
+          .filter((chat) => {
+            if (!searchQuery.trim()) return true;
+            const chatName = chat.is_group 
+              ? (chat.name || 'Group Chat')
+              : (chat.other_user?.display_name || 'User');
+            const lastMessage = chat.last_message_content || '';
+            return (
+              chatName.toLowerCase().includes(searchQuery.toLowerCase()) ||
+              lastMessage.toLowerCase().includes(searchQuery.toLowerCase())
+            );
+          })
+          .map((chat) => {
           const chatName = chat.is_group 
             ? (chat.name || 'Group Chat')
             : (chat.other_user?.display_name || 'User');

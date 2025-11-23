@@ -2,7 +2,8 @@ import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/contexts/AuthContext';
-import { Plus, Menu, Search } from 'lucide-react';
+import { Plus, Menu, Search, X } from 'lucide-react';
+import { Input } from '@/components/ui/input';
 
 interface StoryUser {
   user_id: string;
@@ -15,9 +16,10 @@ interface StoryUser {
 interface ChatStoriesHeaderProps {
   shouldCollapse?: boolean;
   onToggleCollapse?: (collapsed: boolean) => void;
+  onSearch?: (query: string) => void;
 }
 
-export const ChatStoriesHeader = ({ shouldCollapse = false, onToggleCollapse }: ChatStoriesHeaderProps) => {
+export const ChatStoriesHeader = ({ shouldCollapse = false, onToggleCollapse, onSearch }: ChatStoriesHeaderProps) => {
   const { user } = useAuth();
   const navigate = useNavigate();
   const [storyUsers, setStoryUsers] = useState<StoryUser[]>([]);
@@ -27,6 +29,8 @@ export const ChatStoriesHeader = ({ shouldCollapse = false, onToggleCollapse }: 
   } | null>(null);
   const [loading, setLoading] = useState(true);
   const [isCollapsed, setIsCollapsed] = useState(false);
+  const [isSearchOpen, setIsSearchOpen] = useState(false);
+  const [searchQuery, setSearchQuery] = useState('');
 
   useEffect(() => {
     setIsCollapsed(shouldCollapse);
@@ -135,56 +139,97 @@ export const ChatStoriesHeader = ({ shouldCollapse = false, onToggleCollapse }: 
     }
   };
 
+  const handleSearchToggle = () => {
+    setIsSearchOpen(!isSearchOpen);
+    if (isSearchOpen) {
+      setSearchQuery('');
+      onSearch?.('');
+    }
+  };
+
+  const handleSearchChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const query = e.target.value;
+    setSearchQuery(query);
+    onSearch?.(query);
+  };
+
   return (
     <div className="sticky top-0 z-50 bg-background border-b border-border">
       {/* Header - tap middle section to expand when collapsed */}
       <div className="flex items-center justify-between px-4 h-16">
-        <button className="p-2 hover:bg-muted/20 rounded-full transition-colors">
-          <Menu className="h-7 w-7 text-foreground" />
-        </button>
-
-        {/* Compact overlapping bubbles - ONLY visible when collapsed */}
-        {isCollapsed && (
-          <button
-            type="button"
-            onClick={handleHeaderExpandClick}
-            className="flex items-center gap-3 overflow-hidden animate-fade-in focus:outline-none"
-          >
-            <div className="flex items-center -space-x-2">
-              {storyUsers.slice(0, 3).map((storyUser, index) => (
-                <div
-                  key={storyUser.user_id}
-                  className="h-9 w-9 rounded-full border-2 border-background bg-gradient-to-br from-cyan-400 via-teal-400 to-green-500 flex items-center justify-center overflow-hidden cursor-pointer hover:scale-110 transition-transform"
-                  style={{ zIndex: 3 - index }}
-                >
-                  {storyUser.avatar_url ? (
-                    <img
-                      src={storyUser.avatar_url}
-                      alt={storyUser.display_name}
-                      className="h-full w-full object-cover"
-                    />
-                  ) : (
-                    <span className="text-xs font-semibold text-primary-foreground">
-                      {storyUser.display_name?.charAt(0).toUpperCase()}
-                    </span>
-                  )}
-                </div>
-              ))}
-            </div>
-            <h1 className="text-lg font-semibold text-foreground">
-              {storyUsers.length} {storyUsers.length === 1 ? 'Story' : 'Stories'}
-            </h1>
+        {!isSearchOpen && (
+          <button className="p-2 hover:bg-muted/20 rounded-full transition-colors">
+            <Menu className="h-7 w-7 text-foreground" />
           </button>
         )}
 
-        {/* Title when expanded */}
-        {!isCollapsed && (
-          <h1 className="text-xl font-semibold text-foreground animate-fade-in">AfuChat</h1>
-        )}
+        {/* Search Bar */}
+        {isSearchOpen ? (
+          <div className="flex items-center gap-2 flex-1">
+            <Input
+              type="text"
+              placeholder="Search chats..."
+              value={searchQuery}
+              onChange={handleSearchChange}
+              className="flex-1 h-10"
+              autoFocus
+            />
+            <button 
+              onClick={handleSearchToggle}
+              className="p-2 hover:bg-muted/20 rounded-full transition-colors"
+            >
+              <X className="h-6 w-6 text-foreground" />
+            </button>
+          </div>
+        ) : (
+          <>
+            {/* Compact overlapping bubbles - ONLY visible when collapsed */}
+            {isCollapsed && (
+              <button
+                type="button"
+                onClick={handleHeaderExpandClick}
+                className="flex items-center gap-3 overflow-hidden animate-fade-in focus:outline-none"
+              >
+                <div className="flex items-center -space-x-2">
+                  {storyUsers.slice(0, 3).map((storyUser, index) => (
+                    <div
+                      key={storyUser.user_id}
+                      className="h-9 w-9 rounded-full border-2 border-background bg-gradient-to-br from-cyan-400 via-teal-400 to-green-500 flex items-center justify-center overflow-hidden cursor-pointer hover:scale-110 transition-transform"
+                      style={{ zIndex: 3 - index }}
+                    >
+                      {storyUser.avatar_url ? (
+                        <img
+                          src={storyUser.avatar_url}
+                          alt={storyUser.display_name}
+                          className="h-full w-full object-cover"
+                        />
+                      ) : (
+                        <span className="text-xs font-semibold text-primary-foreground">
+                          {storyUser.display_name?.charAt(0).toUpperCase()}
+                        </span>
+                      )}
+                    </div>
+                  ))}
+                </div>
+                <h1 className="text-lg font-semibold text-foreground">
+                  {storyUsers.length} {storyUsers.length === 1 ? 'Story' : 'Stories'}
+                </h1>
+              </button>
+            )}
 
-        <button className="p-2 hover:bg-muted/20 rounded-full transition-colors">
-          <Search className="h-6 w-6 text-foreground" />
-        </button>
+            {/* Title when expanded */}
+            {!isCollapsed && (
+              <h1 className="text-xl font-semibold text-foreground animate-fade-in">AfuChat</h1>
+            )}
+
+            <button 
+              onClick={handleSearchToggle}
+              className="p-2 hover:bg-muted/20 rounded-full transition-colors"
+            >
+              <Search className="h-6 w-6 text-foreground" />
+            </button>
+          </>
+        )}
       </div>
 
       {/* Stories horizontal scroll - slides closed when collapsed */}
