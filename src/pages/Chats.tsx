@@ -227,9 +227,13 @@ const Chats = () => {
 
     fetchChats();
 
+    // Real-time subscription
     const channel = supabase
       .channel('chat-updates')
       .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'messages' }, () => {
+        fetchChats();
+      })
+      .on('postgres_changes', { event: 'UPDATE', schema: 'public', table: 'messages' }, () => {
         fetchChats();
       })
       .subscribe();

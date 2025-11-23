@@ -135,7 +135,17 @@ const Notifications = () => {
     if (!user) return;
 
     const fetchNotifications = async () => {
-      setLoading(true);
+      // Load cached notifications first
+      const cachedNotifications = sessionStorage.getItem('cachedNotifications');
+      if (cachedNotifications) {
+        try {
+          setNotifications(JSON.parse(cachedNotifications));
+          setLoading(false);
+        } catch (e) {
+          console.error('Failed to parse cached notifications:', e);
+        }
+      }
+
       try {
         const { data, error } = await supabase
           .from('notifications' as any)
@@ -149,13 +159,12 @@ const Notifications = () => {
 
         if (error) {
           console.error('Error fetching notifications:', error);
-          toast.error('Failed to load notifications');
         } else {
           setNotifications((data as any) || []);
+          sessionStorage.setItem('cachedNotifications', JSON.stringify(data));
         }
       } catch (err) {
         console.error('Unexpected error:', err);
-        toast.error('An error occurred while fetching notifications');
       } finally {
         setLoading(false);
       }
@@ -163,12 +172,23 @@ const Notifications = () => {
 
     fetchNotifications();
 
+    // Real-time subscription
+    const channel = supabase
+      .channel('notifications-updates')
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'notifications', filter: `user_id=eq.${user.id}` }, () => {
+        fetchNotifications();
+      })
+      .subscribe();
+
     const timer = setTimeout(markAsRead, 1500); 
-    return () => clearTimeout(timer);
+    return () => {
+      clearTimeout(timer);
+      supabase.removeChannel(channel);
+    };
 
   }, [user]);
   
-  if (loading) {
+  if (loading && notifications.length === 0) {
     return (
       <div className="h-full flex items-center justify-center max-w-4xl mx-auto">
         <CustomLoader size="lg" text="Loading notifications..." />

@@ -526,6 +526,17 @@ const Profile = ({ mustExist = false }: ProfileProps) => {
 	const fetchUserPosts = useCallback(async (id: string) => {
 		if (!id) return;
 
+		// Load cached posts first
+		const cacheKey = `cachedProfilePosts_${id}`;
+		const cachedPosts = sessionStorage.getItem(cacheKey);
+		if (cachedPosts) {
+			try {
+				setPosts(JSON.parse(cachedPosts));
+			} catch (e) {
+				console.error('Failed to parse cached posts:', e);
+			}
+		}
+
 		if (profile?.is_private && user?.id !== id) {
 			setPosts([]);
 			return;
@@ -555,11 +566,13 @@ const Profile = ({ mustExist = false }: ProfileProps) => {
 			.limit(20);
 
 		if (!error && data) {
-			setPosts(data.map(p => ({
+			const processedPosts = data.map(p => ({
 				...p,
 				acknowledgment_count: Math.floor(Math.random() * 100),
 				reply_count: Math.floor(Math.random() * 10),
-			} as Post)));
+			} as Post));
+			setPosts(processedPosts);
+			sessionStorage.setItem(cacheKey, JSON.stringify(processedPosts));
 		} else {
 			setPosts([]);
 		}
@@ -579,6 +592,22 @@ const Profile = ({ mustExist = false }: ProfileProps) => {
 			}
 		}
 	}, [profileId, user, fetchUserPosts, fetchFollowCounts, checkFollowStatus]);
+
+	// Real-time subscription for posts
+	useEffect(() => {
+		if (!profileId) return;
+
+		const channel = supabase
+			.channel('profile-posts-updates')
+			.on('postgres_changes', { event: '*', schema: 'public', table: 'posts', filter: `author_id=eq.${profileId}` }, () => {
+				fetchUserPosts(profileId);
+			})
+			.subscribe();
+
+		return () => {
+			supabase.removeChannel(channel);
+		};
+	}, [profileId, fetchUserPosts]);
 
 	useEffect(() => {
 		if (user) {
