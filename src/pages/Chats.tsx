@@ -280,7 +280,7 @@ const Chats = () => {
       {/* Chat List Container - Main scrollable area */}
       <div 
         ref={scrollRef} 
-        className="flex-1 overflow-y-auto overscroll-contain scrollbar-thin"
+        className="flex-1 overflow-y-auto overscroll-contain scrollbar-thin pb-20"
         style={{ WebkitOverflowScrolling: 'touch' }}
       >
         {chats.map((chat) => {
