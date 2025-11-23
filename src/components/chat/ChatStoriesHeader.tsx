@@ -14,9 +14,10 @@ interface StoryUser {
 
 interface ChatStoriesHeaderProps {
   shouldCollapse?: boolean;
+  onToggleCollapse?: (collapsed: boolean) => void;
 }
 
-export const ChatStoriesHeader = ({ shouldCollapse = false }: ChatStoriesHeaderProps) => {
+export const ChatStoriesHeader = ({ shouldCollapse = false, onToggleCollapse }: ChatStoriesHeaderProps) => {
   const { user } = useAuth();
   const navigate = useNavigate();
   const [storyUsers, setStoryUsers] = useState<StoryUser[]>([]);
@@ -128,13 +129,19 @@ export const ChatStoriesHeader = ({ shouldCollapse = false }: ChatStoriesHeaderP
     navigate('/moments');
   };
 
+  const handleHeaderExpandClick = () => {
+    if (isCollapsed && onToggleCollapse) {
+      onToggleCollapse(false);
+    }
+  };
+
   return (
     <div
       className={`sticky top-0 z-50 bg-background border-b border-border/10 transition-all duration-300 ease-in-out ${
         isCollapsed ? 'shadow-sm' : ''
       }`}
     >
-      {/* Header - shows compact bubbles ONLY when collapsed */}
+      {/* Header - tap middle section to expand when collapsed */}
       <div className="flex items-center justify-between px-4 h-16">
         <button className="p-2 hover:bg-muted/20 rounded-full transition-colors">
           <Menu className="h-7 w-7 text-foreground" />
@@ -142,12 +149,15 @@ export const ChatStoriesHeader = ({ shouldCollapse = false }: ChatStoriesHeaderP
 
         {/* Compact overlapping bubbles - ONLY visible when collapsed */}
         {isCollapsed && (
-          <div className="flex items-center gap-3 overflow-hidden animate-fade-in">
+          <button
+            type="button"
+            onClick={handleHeaderExpandClick}
+            className="flex items-center gap-3 overflow-hidden animate-fade-in focus:outline-none"
+          >
             <div className="flex items-center -space-x-2">
               {storyUsers.slice(0, 3).map((storyUser, index) => (
                 <div
                   key={storyUser.user_id}
-                  onClick={() => handleStoryClick(storyUser.user_id)}
                   className="h-9 w-9 rounded-full border-2 border-background bg-gradient-to-br from-cyan-400 via-teal-400 to-green-500 flex items-center justify-center overflow-hidden cursor-pointer hover:scale-110 transition-transform"
                   style={{ zIndex: 3 - index }}
                 >
@@ -168,7 +178,7 @@ export const ChatStoriesHeader = ({ shouldCollapse = false }: ChatStoriesHeaderP
             <h1 className="text-lg font-semibold text-foreground">
               {storyUsers.length} {storyUsers.length === 1 ? 'Story' : 'Stories'}
             </h1>
-          </div>
+          </button>
         )}
 
         {/* Title when expanded */}

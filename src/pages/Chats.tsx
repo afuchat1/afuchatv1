@@ -66,7 +66,6 @@ const Chats = () => {
   const scrollRef = useRef<HTMLDivElement>(null);
   const lastScrollY = useRef(0);
   const [shouldCollapseStories, setShouldCollapseStories] = useState(true); // Start collapsed
-  const touchStartY = useRef(0);
 
   useEffect(() => {
     if (!user) return;
@@ -222,16 +221,11 @@ const Chats = () => {
       const currentScrollY = scrollElement.scrollTop;
       const scrollingDown = currentScrollY > lastScrollY.current;
       
-      // Expand stories when at the top (scrollTop <= 5) and trying to scroll up
-      if (currentScrollY <= 5 && !scrollingDown && shouldCollapseStories) {
-        setShouldCollapseStories(false);
-      }
-      
-      // Collapse when scrolling down past threshold
+      // Collapse stories when user scrolls down past threshold
       if (scrollingDown && currentScrollY > 30 && !shouldCollapseStories) {
         setShouldCollapseStories(true);
       }
-      
+
       // FAB visibility
       if (currentScrollY < 10) {
         setShowFab(true);
@@ -244,36 +238,14 @@ const Chats = () => {
       lastScrollY.current = currentScrollY;
     };
 
-    const handleTouchStart = (e: TouchEvent) => {
-      touchStartY.current = e.touches[0].clientY;
-    };
-
-    const handleTouchMove = (e: TouchEvent) => {
-      if (!scrollRef.current) return;
-      
-      const scrollElement = scrollRef.current;
-      const currentScrollY = scrollElement.scrollTop;
-      const touchY = e.touches[0].clientY;
-      const touchDelta = touchY - touchStartY.current;
-      
-      // Expand when at top and pulling down (touch moving down = positive delta)
-      if (currentScrollY === 0 && touchDelta > 10 && shouldCollapseStories) {
-        setShouldCollapseStories(false);
-      }
-    };
-
     const scrollElement = scrollRef.current;
     if (scrollElement) {
       scrollElement.addEventListener('scroll', handleScroll, { passive: true });
-      scrollElement.addEventListener('touchstart', handleTouchStart, { passive: true });
-      scrollElement.addEventListener('touchmove', handleTouchMove, { passive: true });
     }
     
     return () => {
       if (scrollElement) {
         scrollElement.removeEventListener('scroll', handleScroll);
-        scrollElement.removeEventListener('touchstart', handleTouchStart);
-        scrollElement.removeEventListener('touchmove', handleTouchMove);
       }
     };
   }, [shouldCollapseStories]);
@@ -299,8 +271,11 @@ const Chats = () => {
 
   return (
     <div className="h-screen flex flex-col bg-background relative overflow-hidden">
-      {/* Stories Header - Sticky, collapses on scroll */}
-      <ChatStoriesHeader shouldCollapse={shouldCollapseStories} />
+      {/* Stories Header - Collapses on scroll down, expands when tapped */}
+      <ChatStoriesHeader 
+        shouldCollapse={shouldCollapseStories} 
+        onToggleCollapse={setShouldCollapseStories}
+      />
 
       {/* Chat List Container - Main scrollable area */}
       <div 
