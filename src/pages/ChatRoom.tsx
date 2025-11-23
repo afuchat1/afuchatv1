@@ -827,8 +827,75 @@ const ChatRoom = () => {
   return (
     <TooltipProvider delayDuration={200}>
       <div className="h-dvh flex flex-col bg-background overflow-hidden">
-        {/* Messages - Telegram background */}
-        <div className="flex-1 overflow-y-auto px-4 py-4 telegram-bg" style={{ paddingBottom: '120px' }}>
+        {/* WhatsApp-style Header */}
+        <div className="flex items-center gap-3 px-2 py-2 bg-card border-b border-border">
+          <Button
+            variant="ghost"
+            size="icon"
+            className="h-10 w-10 rounded-full"
+            onClick={handleBack}
+          >
+            <ArrowLeft className="h-5 w-5" />
+          </Button>
+          
+          <div className="flex items-center gap-3 flex-1 min-w-0">
+            <UserAvatar 
+              userId={otherUser?.id || 'unknown'}
+              avatarUrl={otherUser?.avatar_url} 
+              name={otherUser?.display_name || chatInfo?.name || 'Chat'} 
+              size={40}
+            />
+            <div className="flex-1 min-w-0">
+              <div className="flex items-center gap-1">
+                <h2 className="font-semibold text-base truncate">
+                  {otherUser?.display_name || chatInfo?.name || 'Chat'}
+                </h2>
+                {otherUser && (
+                  <VerifiedBadge
+                    isVerified={otherUser.is_verified || false}
+                    isOrgVerified={otherUser.is_organization_verified || false}
+                    isAffiliate={otherUser.is_affiliate || false}
+                    size="sm"
+                  />
+                )}
+              </div>
+              {otherUser && (
+                <p className="text-xs text-muted-foreground">
+                  {online ? 'online' : otherUser.last_seen ? `last seen at ${new Date(otherUser.last_seen).toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', hour12: false })}` : 'offline'}
+                </p>
+              )}
+            </div>
+          </div>
+
+          <div className="flex items-center gap-1">
+            <Button
+              variant="ghost"
+              size="icon"
+              className="h-10 w-10 rounded-full"
+            >
+              <Phone className="h-5 w-5" />
+            </Button>
+            <Button
+              variant="ghost"
+              size="icon"
+              className="h-10 w-10 rounded-full"
+            >
+              <MoreVertical className="h-5 w-5" />
+            </Button>
+          </div>
+        </div>
+
+        {/* Messages with WhatsApp decorative background */}
+        <div 
+          className="flex-1 overflow-y-auto px-3 py-2" 
+          style={{ 
+            paddingBottom: '120px',
+            background: 'linear-gradient(to bottom, hsl(var(--background)) 0%, hsl(var(--muted)/0.3) 100%)',
+            backgroundImage: `
+              url("data:image/svg+xml,%3Csvg width='60' height='60' viewBox='0 0 60 60' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='M30 0l30 30-30 30L0 30z' fill='none' stroke='%23ffffff' stroke-width='0.5' opacity='0.03'/%3E%3C/svg%3E")
+            `
+          }}
+        >
           {messages.length === 0 && redEnvelopes.length === 0 ? (
             <div className="flex flex-col items-center justify-center h-full text-center space-y-3 px-4">
               <MessageSquare className="h-14 w-14 text-muted-foreground/40" />
@@ -921,7 +988,7 @@ const ChatRoom = () => {
 
         {/* Reply Preview */}
         {replyToMessage && !selectedFile && (
-          <div className="fixed bottom-[68px] left-0 right-0 z-20 bg-card px-4 py-3">
+          <div className="fixed bottom-[60px] left-0 right-0 z-20 bg-card border-t border-border px-4 py-2">
             <div className="flex items-center gap-3">
               <div className="w-1 h-10 bg-primary rounded-full" />
               <div className="flex-1 min-w-0">
@@ -952,8 +1019,8 @@ const ChatRoom = () => {
           />
         )}
 
-        {/* Input: Telegram style */}
-        <div className="fixed bottom-0 left-0 right-0 z-20 bg-card px-3 py-2 pb-[env(safe-area-inset-bottom)]">
+        {/* Input: WhatsApp style */}
+        <div className="fixed bottom-0 left-0 right-0 z-20 bg-card border-t border-border px-2 py-2 pb-[env(safe-area-inset-bottom)]">
           <input
             ref={fileInputRef}
             type="file"
@@ -961,9 +1028,9 @@ const ChatRoom = () => {
             accept="image/*,.pdf,.doc,.docx,.txt"
             onChange={handleFileSelect}
           />
-          <form onSubmit={(e) => { e.preventDefault(); handleSend(); }} className="flex items-center gap-1.5">
+          <form onSubmit={(e) => { e.preventDefault(); handleSend(); }} className="flex items-center gap-2">
             {recording ? (
-              <div className="flex-1 flex items-center gap-3 px-4 py-3 bg-destructive/10 rounded-3xl">
+              <div className="flex-1 flex items-center gap-3 px-4 py-2.5 bg-card rounded-full border border-border">
                 <div className="flex items-center gap-2 flex-1">
                   <div className="w-2 h-2 bg-destructive rounded-full animate-pulse" />
                   <span className="text-sm text-destructive font-medium">Recording...</span>
@@ -980,7 +1047,7 @@ const ChatRoom = () => {
                 </Button>
               </div>
             ) : audioBlob ? (
-              <div className="flex-1 flex items-center gap-3 px-4 py-3 bg-primary/10 rounded-3xl">
+              <div className="flex-1 flex items-center gap-3 px-4 py-2.5 bg-card rounded-full border border-border">
                 <Volume2 className="h-5 w-5 text-primary" />
                 <span className="text-sm text-primary font-medium flex-1">Voice message ready</span>
                 <Button
@@ -996,47 +1063,59 @@ const ChatRoom = () => {
               </div>
             ) : (
               <>
-                {!newMessage.trim() && (
-                  <Dialog open={emojiPickerOpen} onOpenChange={setEmojiPickerOpen}>
-                    <DialogTrigger asChild>
-                      <Button
-                        type="button"
-                        variant="ghost"
-                        size="icon"
-                        className="h-11 w-11 rounded-full hover:bg-muted/30 text-muted-foreground flex-shrink-0"
-                      >
-                        <Smile className="h-6 w-6" />
-                      </Button>
-                    </DialogTrigger>
-                    <DialogContent className="p-0 border-none bg-transparent shadow-none max-w-full w-auto">
-                      <EmojiPicker
-                        onEmojiClick={(emojiData: EmojiClickData) => {
-                          setNewMessage(prev => prev + emojiData.emoji);
-                          setEmojiPickerOpen(false);
-                        }}
-                        searchDisabled
-                        skinTonesDisabled
-                        previewConfig={{ showPreview: false }}
-                      />
-                    </DialogContent>
-                  </Dialog>
-                )}
-                <Input
-                  value={newMessage}
-                  onChange={(e) => handleInputChange(e.target.value)}
-                  onKeyDown={(e) => e.key === 'Enter' && !e.shiftKey && (e.preventDefault(), handleSend())}
-                  placeholder={selectedFile ? 'Add a caption...' : 'Message'}
-                  className="flex-1 bg-secondary border-none rounded-xl px-4 py-2.5 h-11 text-[15px] placeholder:text-muted-foreground/60 focus-visible:ring-0"
-                  disabled={sending}
-                />
+                <Dialog open={emojiPickerOpen} onOpenChange={setEmojiPickerOpen}>
+                  <DialogTrigger asChild>
+                    <Button
+                      type="button"
+                      variant="ghost"
+                      size="icon"
+                      className="h-10 w-10 rounded-full hover:bg-muted text-muted-foreground flex-shrink-0"
+                    >
+                      <Smile className="h-5 w-5" />
+                    </Button>
+                  </DialogTrigger>
+                  <DialogContent className="p-0 border-none bg-transparent shadow-none max-w-full w-auto">
+                    <EmojiPicker
+                      onEmojiClick={(emojiData: EmojiClickData) => {
+                        setNewMessage(prev => prev + emojiData.emoji);
+                        setEmojiPickerOpen(false);
+                      }}
+                      searchDisabled
+                      skinTonesDisabled
+                      previewConfig={{ showPreview: false }}
+                    />
+                  </DialogContent>
+                </Dialog>
+                
+                <div className="flex-1 bg-card rounded-full border border-border flex items-center px-3 gap-2">
+                  <Input
+                    value={newMessage}
+                    onChange={(e) => handleInputChange(e.target.value)}
+                    onKeyDown={(e) => e.key === 'Enter' && !e.shiftKey && (e.preventDefault(), handleSend())}
+                    placeholder={selectedFile ? 'Add a caption...' : 'Message'}
+                    className="flex-1 bg-transparent border-none h-10 text-[15px] placeholder:text-muted-foreground/60 focus-visible:ring-0 px-0"
+                    disabled={sending}
+                  />
+                  {!newMessage.trim() && !selectedFile && (
+                    <Button
+                      type="button"
+                      variant="ghost"
+                      size="icon"
+                      className="h-8 w-8 rounded-full hover:bg-muted text-muted-foreground flex-shrink-0 p-0"
+                      onClick={() => fileInputRef.current?.click()}
+                    >
+                      <Paperclip className="h-5 w-5" />
+                    </Button>
+                  )}
+                </div>
                 {(newMessage.trim() || selectedFile) ? (
                   <Button
                     type="submit"
                     size="icon"
-                    className="h-11 w-11 rounded-full bg-primary hover:bg-primary/90 text-primary-foreground flex-shrink-0"
+                    className="h-10 w-10 rounded-full bg-primary hover:bg-primary/90 text-primary-foreground flex-shrink-0"
                     disabled={sending || uploadingFile}
                   >
-                    {(sending || uploadingFile) ? <Send className="h-5 w-5 opacity-50" /> : <Send className="h-5 w-5" />}
+                    {(sending || uploadingFile) ? <Send className="h-4 w-4 opacity-50" /> : <Send className="h-4 w-4" />}
                   </Button>
                 ) : (
                   <>
@@ -1050,19 +1129,10 @@ const ChatRoom = () => {
                       type="button"
                       variant="ghost"
                       size="icon"
-                      className="h-11 w-11 rounded-full hover:bg-muted/30 text-muted-foreground flex-shrink-0"
-                      onClick={() => fileInputRef.current?.click()}
-                    >
-                      <Paperclip className="h-6 w-6" />
-                    </Button>
-                    <Button
-                      type="button"
-                      variant="ghost"
-                      size="icon"
-                      className="h-11 w-11 rounded-full hover:bg-muted/30 text-muted-foreground flex-shrink-0"
+                      className="h-10 w-10 rounded-full hover:bg-muted text-primary flex-shrink-0"
                       onClick={startRecording}
                     >
-                      <Mic className="h-6 w-6" />
+                      <Mic className="h-5 w-5" />
                     </Button>
                   </>
                 )}

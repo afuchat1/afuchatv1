@@ -13,8 +13,8 @@ export const DateDivider = ({ date }: { date: string | Date }) => {
   }
 
   return (
-    <div className="flex items-center justify-center py-4">
-      <div className="bg-muted px-3 py-1 rounded-full text-xs font-semibold text-muted-foreground">
+    <div className="flex items-center justify-center py-3">
+      <div className="bg-card/90 backdrop-blur-sm shadow-sm px-3 py-1.5 rounded-lg text-xs font-medium text-foreground/70">
         {content}
       </div>
     </div>

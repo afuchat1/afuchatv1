@@ -131,17 +131,17 @@ export const MessageBubble = ({
       {/* --- Reply Preview --- */}
       {repliedMessage && (
         <div className={`flex items-start gap-2 px-3 py-2 mb-1 border-l-2 ${
-          isOwn ? 'border-primary-foreground/30 bg-primary/10' : 'border-primary bg-muted/50'
+          isOwn ? 'border-white/40 bg-white/10' : 'border-primary bg-muted/50'
         }`}>
           <Reply className="h-3 w-3 mt-0.5 flex-shrink-0 opacity-60" />
           <div className="flex flex-col min-w-0 flex-1">
             <span className={`text-xs font-medium truncate ${
-              isOwn ? 'text-primary-foreground' : 'text-primary'
+              isOwn ? 'text-white' : 'text-primary'
             }`}>
               {repliedMessage.profiles?.display_name || 'User'}
             </span>
             <span className={`text-xs truncate ${
-              isOwn ? 'text-primary-foreground/70' : 'text-muted-foreground'
+              isOwn ? 'text-white/80' : 'text-muted-foreground'
             }`}>
               {repliedMessage.audio_url ? '🎤 Voice message' : repliedMessage.encrypted_content}
             </span>
@@ -177,7 +177,7 @@ export const MessageBubble = ({
             variant="ghost"
             size="icon"
             className={`h-9 w-9 rounded-full flex-shrink-0 ${
-              isOwn ? 'hover:bg-primary-foreground/20' : 'hover:bg-primary/10'
+              isOwn ? 'hover:bg-white/20' : 'hover:bg-primary/10'
             }`}
             onClick={onToggleAudio}
           >
@@ -321,16 +321,16 @@ export const MessageBubble = ({
           <div className={`flex items-end gap-2 ${isOwn ? 'flex-row-reverse' : 'flex-row'}`}>
             {/* --- Message Bubble --- */}
             <div
-              className={`relative ${
+              className={`relative shadow-sm ${
                 isOwn
-                  ? 'bg-primary text-primary-foreground'
-                  : 'bg-muted text-foreground'
+                  ? 'bg-[hsl(218,65%,60%)] text-white'
+                  : 'bg-card text-foreground'
               } ${
                 isGrouped
-                  ? 'rounded-3xl'
+                  ? 'rounded-2xl'
                   : isOwn 
-                    ? 'rounded-3xl rounded-br-md' 
-                    : 'rounded-3xl rounded-bl-md'
+                    ? 'rounded-2xl rounded-br-sm' 
+                    : 'rounded-2xl rounded-bl-sm'
               }`}
             >
               <MessageContent />
