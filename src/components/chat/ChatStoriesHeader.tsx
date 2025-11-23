@@ -30,12 +30,15 @@ export const ChatStoriesHeader = ({ scrollPosition = 0, isAtBottom = false, scro
 
   // Handle expand/collapse based on scroll
   useEffect(() => {
-    if (isAtBottom) {
-      setIsExpanded(true);
-    } else if (scrollDirection === 'up') {
-      setIsExpanded(false);
+    // Only expand if there are stories
+    if (storyUsers.length > 0) {
+      if (isAtBottom) {
+        setIsExpanded(true);
+      } else if (scrollDirection === 'up') {
+        setIsExpanded(false);
+      }
     }
-  }, [isAtBottom, scrollDirection]);
+  }, [isAtBottom, scrollDirection, storyUsers.length]);
 
   useEffect(() => {
     if (!user) return;
@@ -136,8 +139,6 @@ export const ChatStoriesHeader = ({ scrollPosition = 0, isAtBottom = false, scro
     navigate('/moments');
   };
 
-  if (loading) return null;
-
   const totalStories = storyUsers.reduce((sum, user) => sum + user.story_count, 0);
   const hasStories = storyUsers.length > 0;
 
@@ -146,7 +147,7 @@ export const ChatStoriesHeader = ({ scrollPosition = 0, isAtBottom = false, scro
       ref={headerRef}
       className="sticky top-0 z-50 bg-background transition-all duration-300"
       style={{
-        height: isExpanded ? '220px' : '80px',
+        height: isExpanded && hasStories ? '220px' : '80px',
       }}
     >
       {/* Collapsed view - single row */}
@@ -163,9 +164,9 @@ export const ChatStoriesHeader = ({ scrollPosition = 0, isAtBottom = false, scro
           <Menu className="h-7 w-7 text-foreground" />
         </button>
 
-        {/* Center: Overlapping avatars + count */}
+        {/* Center: App name or stories count */}
         <div className="flex items-center gap-3 flex-1 justify-center">
-          {hasStories && (
+          {hasStories ? (
             <>
               <div className="flex items-center -space-x-4">
                 {storyUsers.slice(0, 3).map((storyUser, index) => (
@@ -196,6 +197,8 @@ export const ChatStoriesHeader = ({ scrollPosition = 0, isAtBottom = false, scro
                 {totalStories} {totalStories === 1 ? 'Story' : 'Stories'}
               </span>
             </>
+          ) : (
+            <h1 className="text-xl font-semibold text-foreground">AfuChat</h1>
           )}
         </div>
 
