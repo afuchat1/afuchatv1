@@ -310,7 +310,7 @@ const Chats = () => {
                   <h3 className="font-semibold text-foreground truncate">
                     {chatName}
                   </h3>
-                  {chat.other_user?.is_verified && (
+                  {(chat.other_user?.is_verified || chat.other_user?.is_organization_verified) && (
                     <div className="h-4 w-4 rounded-full bg-primary flex items-center justify-center flex-shrink-0">
                       <CheckCheck className="h-2.5 w-2.5 text-primary-foreground" />
                     </div>
