@@ -144,11 +144,13 @@ const Chats = () => {
             .maybeSingle()
         );
 
-        // Batch fetch unread counts for all chats
+        // Batch fetch unread counts for all chats - only count messages that are:
+        // 1. Not sent by current user
+        // 2. Have not been read (read_at is null)
         const unreadPromises = chatIds.map(chatId =>
           supabase
             .from('messages')
-            .select('*', { count: 'exact', head: true })
+            .select('id', { count: 'exact', head: true })
             .eq('chat_id', chatId)
             .neq('sender_id', user.id)
             .is('read_at', null)
@@ -227,14 +229,25 @@ const Chats = () => {
 
     fetchChats();
 
-    // Real-time subscription
+    // Real-time subscription for new messages AND when messages are marked as read
     const channel = supabase
       .channel('chat-updates')
-      .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'messages' }, () => {
-        fetchChats();
+      .on('postgres_changes', { 
+        event: 'INSERT', 
+        schema: 'public', 
+        table: 'messages' 
+      }, () => {
+        fetchChats(); // Refresh to show new message
       })
-      .on('postgres_changes', { event: 'UPDATE', schema: 'public', table: 'messages' }, () => {
-        fetchChats();
+      .on('postgres_changes', { 
+        event: 'UPDATE', 
+        schema: 'public', 
+        table: 'messages' 
+      }, (payload) => {
+        // Only refresh if read_at was updated (message was read)
+        if (payload.new.read_at && !payload.old.read_at) {
+          fetchChats(); // Refresh to update unread counts
+        }
       })
       .subscribe();
 
