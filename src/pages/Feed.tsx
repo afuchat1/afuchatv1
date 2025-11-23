@@ -1046,15 +1046,36 @@ const Feed = () => {
 
   // Load cached data immediately on mount
   useEffect(() => {
-    // Fetch fresh data on mount
-    setCurrentPage(0);
-    setHasMore(true);
-    fetchPosts(0, true);
-    
+    // Try to load from cache first for instant display
+    const cachedPosts = sessionStorage.getItem('feedPosts');
+    const cachedFollowing = sessionStorage.getItem('feedFollowingPosts');
     const cachedTab = sessionStorage.getItem('feedActiveTab');
+    
+    if (cachedPosts) {
+      try {
+        setPosts(JSON.parse(cachedPosts));
+        setLoading(false); // Show cached content immediately
+      } catch (e) {
+        console.error('Failed to parse cached posts:', e);
+      }
+    }
+    
+    if (cachedFollowing) {
+      try {
+        setFollowingPosts(JSON.parse(cachedFollowing));
+      } catch (e) {
+        console.error('Failed to parse cached following posts:', e);
+      }
+    }
+    
     if (cachedTab) {
       setActiveTab(cachedTab as 'foryou' | 'following');
     }
+    
+    // Fetch fresh data in background
+    setCurrentPage(0);
+    setHasMore(true);
+    fetchPosts(0, true);
   }, []);
 
   // Fetch current user profile and refetch posts when user changes
@@ -1348,6 +1369,16 @@ const Feed = () => {
       setLoadingMore(true);
     }
     
+    // Set a timeout to prevent endless loading
+    const loadingTimeout = setTimeout(() => {
+      if (isInitial) {
+        setLoading(false);
+        toast.error('Loading is taking longer than expected. Please refresh.');
+      } else {
+        setLoadingMore(false);
+      }
+    }, 10000); // 10 second timeout
+    
     try {
       const POSTS_PER_PAGE = 50;
       const from = page * POSTS_PER_PAGE;
@@ -1551,6 +1582,7 @@ const Feed = () => {
       setHasMore(false);
     } finally {
       console.log('[Feed] fetchPosts: Setting loading to false');
+      clearTimeout(loadingTimeout); // Clear the timeout
       setLoading(false);
       setLoadingMore(false);
     }
@@ -1992,7 +2024,7 @@ const Feed = () => {
       }
   }, [posts]);
 
-  if (loading) {
+  if (loading && posts.length === 0 && followingPosts.length === 0) {
     return (
       <div className="flex items-center justify-center min-h-screen">
         <CustomLoader size="lg" text={t('common.loading') || 'Loading...'} />

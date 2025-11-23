@@ -8,6 +8,7 @@ import NewPostModal from '@/components/ui/NewPostModal';
 import FloatingActionButton from '@/components/ui/FloatingActionButton';
 import Layout from '@/components/Layout';
 import { useIsMobile } from '@/hooks/use-mobile';
+import { CustomLoader } from '@/components/ui/CustomLoader';
 
 const Home = () => {
   const { user } = useAuth();
@@ -69,7 +70,11 @@ const Home = () => {
   };
 
   if (checkingFollows) {
-    return null;
+    return (
+      <div className="flex items-center justify-center min-h-screen">
+        <CustomLoader size="lg" />
+      </div>
+    );
   }
 
   // Desktop: X-style wide layout without Layout wrapper
