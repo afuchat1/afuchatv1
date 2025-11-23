@@ -211,7 +211,7 @@ const ChatRoom = () => {
         (payload) => {
           supabase
             .from('profiles')
-            .select('display_name, handle, is_verified')
+            .select('display_name, handle, is_verified, is_organization_verified, is_affiliate, affiliated_business_id')
             .eq('id', payload.new.sender_id)
             .single()
             .then(async ({ data: profile, error }) => {
@@ -430,7 +430,7 @@ const ChatRoom = () => {
       .from('messages')
       .select(`
         *,
-        profiles(display_name, handle, is_verified),
+        profiles(display_name, handle, is_verified, is_organization_verified, is_affiliate, affiliated_business_id),
         message_reactions(reaction, user_id),
         message_status(read_at, delivered_at, user_id),
         reply_to_message:messages!reply_to_message_id(
