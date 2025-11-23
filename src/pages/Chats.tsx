@@ -65,9 +65,6 @@ const Chats = () => {
   const [showFab, setShowFab] = useState(true);
   const scrollRef = useRef<HTMLDivElement>(null);
   const lastScrollY = useRef(0);
-  const [scrollDirection, setScrollDirection] = useState<'up' | 'down'>('down');
-  const [isAtTop, setIsAtTop] = useState(true);
-  const [isAtBottom, setIsAtBottom] = useState(false);
 
   useEffect(() => {
     if (!user) return;
@@ -220,26 +217,8 @@ const Chats = () => {
       if (!scrollRef.current) return;
       
       const currentScrollY = scrollRef.current.scrollTop;
-      const scrollHeight = scrollRef.current.scrollHeight;
-      const clientHeight = scrollRef.current.clientHeight;
       
-      // At top when close to scrollTop 0
-      const atTop = currentScrollY <= 10;
-      setIsAtTop(atTop);
-
-      // At bottom when within 150px of end (more forgiving)
-      const distanceFromBottom = scrollHeight - (currentScrollY + clientHeight);
-      const atBottom = distanceFromBottom <= 150;
-      setIsAtBottom(atBottom);
-      
-      // Determine scroll direction
-      if (currentScrollY > lastScrollY.current) {
-        setScrollDirection('down');
-      } else if (currentScrollY < lastScrollY.current) {
-        setScrollDirection('up');
-      }
-      
-      // FAB visibility (unchanged)
+      // FAB visibility
       if (currentScrollY < 10) {
         setShowFab(true);
       } else if (currentScrollY > lastScrollY.current && currentScrollY > 50) {
@@ -253,17 +232,6 @@ const Chats = () => {
 
     const scrollElement = scrollRef.current;
     scrollElement?.addEventListener('scroll', handleScroll);
-
-    // Initial top/bottom state
-    if (scrollElement) {
-      const currentScrollY = scrollElement.scrollTop;
-      const scrollHeight = scrollElement.scrollHeight;
-      const clientHeight = scrollElement.clientHeight;
-      setIsAtTop(currentScrollY <= 10);
-      const distanceFromBottom = scrollHeight - (currentScrollY + clientHeight);
-      setIsAtBottom(distanceFromBottom <= 150);
-    }
-
     return () => scrollElement?.removeEventListener('scroll', handleScroll);
   }, []);
 
@@ -288,12 +256,8 @@ const Chats = () => {
 
   return (
     <div className="h-screen flex flex-col bg-background">
-      {/* Stories Header - Expandable */}
-      <ChatStoriesHeader 
-        isAtTop={isAtTop}
-        isAtBottom={isAtBottom}
-        scrollDirection={scrollDirection}
-      />
+      {/* Stories Header - Always Expanded */}
+      <ChatStoriesHeader />
 
       {/* Chat List */}
       <div ref={scrollRef} className="flex-1 overflow-y-auto">
