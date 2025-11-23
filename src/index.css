@@ -16,102 +16,102 @@ All colors MUST be HSL.
 
 @layer base {
   :root {
-    /* Brand Cyan Primary - #1B9AAA */
-    --primary: 191 75% 45%;
+    /* Vibrant Teal Primary - Distinctive brand color */
+    --primary: 174 72% 42%;
     --primary-foreground: 0 0% 100%;
     
-    /* Bright Cyan Accent - #17869B */
-    --accent: 191 75% 40%;
+    /* Electric Purple Accent - Bold contrast */
+    --accent: 271 76% 53%;
     --accent-foreground: 0 0% 100%;
     
-    /* High contrast backgrounds */
+    /* Clean white backgrounds */
     --background: 0 0% 100%;
-    --foreground: 0 0% 0%;
+    --foreground: 220 13% 13%;
     
-    /* Muted for secondary elements */
-    --muted: 0 0% 95%;
-    --muted-foreground: 0 0% 40%;
+    /* Soft neutral muted */
+    --muted: 220 14% 96%;
+    --muted-foreground: 220 9% 46%;
     
-    /* Card backgrounds */
+    /* Card with subtle elevation */
     --card: 0 0% 100%;
-    --card-foreground: 0 0% 0%;
+    --card-foreground: 220 13% 13%;
     
-    /* Popover backgrounds */
+    /* Popover clean */
     --popover: 0 0% 100%;
-    --popover-foreground: 0 0% 0%;
+    --popover-foreground: 220 13% 13%;
     
-    /* Borders */
-    --border: 0 0% 90%;
-    --input: 0 0% 90%;
-    --ring: 180 100% 20%;
+    /* Refined borders */
+    --border: 220 13% 91%;
+    --input: 220 13% 91%;
+    --ring: 174 72% 42%;
     
-    /* Secondary button variant */
-    --secondary: 0 0% 95%;
-    --secondary-foreground: 0 0% 10%;
+    /* Secondary warm gray */
+    --secondary: 24 10% 95%;
+    --secondary-foreground: 220 13% 13%;
     
-    /* Destructive actions */
-    --destructive: 0 84% 60%;
+    /* Bold destructive */
+    --destructive: 0 72% 51%;
     --destructive-foreground: 0 0% 100%;
     
-    --radius: 0.375rem;
+    --radius: 0.5rem;
     
-    /* Sidebar (not used but needed for compatibility) */
-    --sidebar-background: 0 0% 98%;
-    --sidebar-foreground: 0 0% 20%;
-    --sidebar-primary: 180 100% 20%;
+    /* Sidebar */
+    --sidebar-background: 220 14% 98%;
+    --sidebar-foreground: 220 13% 13%;
+    --sidebar-primary: 174 72% 42%;
     --sidebar-primary-foreground: 0 0% 100%;
-    --sidebar-accent: 158 100% 50%;
-    --sidebar-accent-foreground: 180 100% 10%;
-    --sidebar-border: 0 0% 90%;
-    --sidebar-ring: 180 100% 20%;
+    --sidebar-accent: 271 76% 53%;
+    --sidebar-accent-foreground: 0 0% 100%;
+    --sidebar-border: 220 13% 91%;
+    --sidebar-ring: 174 72% 42%;
   }
 
   .dark {
-    /* Blue/Cyan brand colors */
-    --primary: 191 75% 50%; /* Cyan for outgoing messages */
-    --primary-foreground: 0 0% 100%;
+    /* Vibrant Teal Primary - Glows in dark mode */
+    --primary: 174 72% 48%;
+    --primary-foreground: 220 13% 13%;
     
-    /* Accent */
-    --accent: 191 75% 45%;
-    --accent-foreground: 0 0% 100%;
+    /* Electric Purple Accent - Pops against dark */
+    --accent: 271 76% 60%;
+    --accent-foreground: 220 13% 13%;
     
-    /* Dark Telegram backgrounds */
-    --background: 212 35% 9%; /* Very dark blue-grey #0E1621 */
-    --foreground: 0 0% 100%;
+    /* Rich dark backgrounds */
+    --background: 222 47% 11%;
+    --foreground: 210 40% 98%;
     
-    /* Message bubble colors */
-    --muted: 210 15% 20%; /* Dark grey for incoming messages #2F3A42 */
-    --muted-foreground: 0 0% 75%;
+    /* Message bubbles - elevated dark */
+    --muted: 217 33% 17%;
+    --muted-foreground: 215 20% 65%;
     
-    /* Card/Header colors */
-    --card: 210 25% 15%; /* Darker header #1C2A35 */
-    --card-foreground: 0 0% 100%;
+    /* Card elevated surface */
+    --card: 222 47% 14%;
+    --card-foreground: 210 40% 98%;
     
-    --popover: 210 25% 15%;
-    --popover-foreground: 0 0% 100%;
+    --popover: 222 47% 14%;
+    --popover-foreground: 210 40% 98%;
     
-    /* Borders - subtle */
-    --border: 210 20% 18%;
-    --input: 210 20% 18%;
-    --ring: 191 75% 50%;
+    /* Subtle borders */
+    --border: 217 33% 21%;
+    --input: 217 33% 21%;
+    --ring: 174 72% 48%;
     
-    /* Secondary */
-    --secondary: 210 15% 22%;
-    --secondary-foreground: 0 0% 100%;
+    /* Secondary surface */
+    --secondary: 217 33% 19%;
+    --secondary-foreground: 210 40% 98%;
     
-    /* Destructive */
-    --destructive: 0 84% 60%;
+    /* Destructive bright */
+    --destructive: 0 72% 55%;
     --destructive-foreground: 0 0% 100%;
     
     /* Sidebar */
-    --sidebar-background: 210 25% 15%;
-    --sidebar-foreground: 0 0% 90%;
-    --sidebar-primary: 191 75% 50%;
-    --sidebar-primary-foreground: 0 0% 100%;
-    --sidebar-accent: 191 75% 45%;
-    --sidebar-accent-foreground: 0 0% 100%;
-    --sidebar-border: 210 20% 18%;
-    --sidebar-ring: 191 75% 50%;
+    --sidebar-background: 222 47% 14%;
+    --sidebar-foreground: 210 40% 98%;
+    --sidebar-primary: 174 72% 48%;
+    --sidebar-primary-foreground: 220 13% 13%;
+    --sidebar-accent: 271 76% 60%;
+    --sidebar-accent-foreground: 220 13% 13%;
+    --sidebar-border: 217 33% 21%;
+    --sidebar-ring: 174 72% 48%;
   }
 }
 
