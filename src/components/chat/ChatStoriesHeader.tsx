@@ -3,7 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/contexts/AuthContext';
 import { cn } from '@/lib/utils';
-import { Plus } from 'lucide-react';
+import { Plus, Menu, Search } from 'lucide-react';
 
 interface StoryUser {
   user_id: string;
@@ -158,6 +158,21 @@ export const ChatStoriesHeader = () => {
         paddingBottom: `${16 + expandProgress * 8}px`,
       }}
     >
+      {/* Top navigation bar like Telegram */}
+      <div className="flex items-center justify-between px-4 pb-3">
+        <button className="p-1 rounded-full text-foreground/80">
+          <Menu className="h-5 w-5" />
+        </button>
+        <h1 className="text-xl font-bold text-foreground">
+          {isExpanded
+            ? 'Telegram'
+            : `${totalStories || 0} ${totalStories === 1 ? 'Story' : 'Stories'}`}
+        </h1>
+        <button className="p-1 rounded-full text-foreground/80">
+          <Search className="h-5 w-5" />
+        </button>
+      </div>
+
       <div
         style={{
           height: `${80 + expandProgress * 80}px`,
