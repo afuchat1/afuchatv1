@@ -130,29 +130,31 @@ export const ChatStoriesHeader = ({ shouldCollapse = false }: ChatStoriesHeaderP
 
   return (
     <div
-      className={`sticky top-0 z-50 bg-background transition-all duration-300 ease-out ${
+      className={`sticky top-0 z-50 bg-background border-b border-border/10 transition-all duration-300 ease-in-out ${
         isCollapsed ? 'shadow-sm' : ''
       }`}
     >
       {/* Header with compact stories summary, Telegram-style */}
       <div className="flex items-center justify-between px-4 h-16">
-        <button className="p-2">
+        <button className="p-2 hover:bg-muted/20 rounded-full transition-colors">
           <Menu className="h-7 w-7 text-foreground" />
         </button>
 
         <div className="flex items-center gap-3 overflow-hidden">
-          {/* Overlapping story bubbles when collapsed, regular spacing when expanded */}
+          {/* Overlapping story bubbles when collapsed */}
           <div
-            className={`flex items-center transition-all duration-300 ease-out ${
-              isCollapsed ? 'gap-[-8px] mr-1' : 'gap-3'
+            className={`flex items-center transition-all duration-300 ease-in-out ${
+              isCollapsed ? '-space-x-2' : 'gap-3'
             }`}
           >
-            {storyUsers.slice(0, 3).map((storyUser) => (
+            {storyUsers.slice(0, 3).map((storyUser, index) => (
               <div
                 key={storyUser.user_id}
-                className={`rounded-full border-2 border-background bg-gradient-to-br from-cyan-400 via-teal-400 to-green-500 flex items-center justify-center overflow-hidden transition-all duration-300 ease-out ${
-                  isCollapsed ? 'h-9 w-9 -ml-2 first:ml-0' : 'h-11 w-11'
+                onClick={() => handleStoryClick(storyUser.user_id)}
+                className={`rounded-full border-2 border-background bg-gradient-to-br from-cyan-400 via-teal-400 to-green-500 flex items-center justify-center overflow-hidden transition-all duration-300 ease-in-out cursor-pointer hover:scale-110 ${
+                  isCollapsed ? 'h-9 w-9' : 'h-11 w-11'
                 }`}
+                style={{ zIndex: 3 - index }}
               >
                 {storyUser.avatar_url ? (
                   <img
@@ -174,75 +176,77 @@ export const ChatStoriesHeader = ({ shouldCollapse = false }: ChatStoriesHeaderP
           </h1>
         </div>
 
-        <button className="p-2">
+        <button className="p-2 hover:bg-muted/20 rounded-full transition-colors">
           <Search className="h-6 w-6 text-foreground" />
         </button>
       </div>
 
-      {/* Stories horizontal scroll - slides closed when collapsed instead of fully disappearing */}
+      {/* Stories horizontal scroll - slides closed when collapsed */}
       <div
-        className={`overflow-x-auto scrollbar-hide px-4 transition-all duration-300 ease-out ${
+        className={`overflow-hidden transition-all duration-300 ease-in-out ${
           isCollapsed
-            ? 'pb-1 max-h-0 opacity-0 pointer-events-none'
-            : 'pb-4 max-h-[140px] opacity-100'
+            ? 'max-h-0 opacity-0'
+            : 'max-h-[140px] opacity-100'
         }`}
       >
-        <div className="flex gap-5">
-          {/* My Story */}
-          <div
-            onClick={handleCreateStory}
-            className="flex-shrink-0 cursor-pointer flex flex-col items-center gap-2 hover-scale"
-          >
-            <div className="relative">
-              {currentUserProfile?.avatar_url ? (
-                <img
-                  src={currentUserProfile.avatar_url}
-                  alt="My Story"
-                  className="h-[72px] w-[72px] rounded-full object-cover border-2 border-border"
-                />
-              ) : (
-                <div className="h-[72px] w-[72px] rounded-full bg-muted flex items-center justify-center border-2 border-border">
-                  <span className="text-xl font-semibold text-muted-foreground">
-                    {currentUserProfile?.display_name?.charAt(0).toUpperCase() || 'M'}
-                  </span>
-                </div>
-              )}
-              <div className="absolute bottom-0 right-0 h-6 w-6 rounded-full bg-primary flex items-center justify-center border-2 border-background shadow-md">
-                <Plus className="h-4 w-4 text-primary-foreground" />
-              </div>
-            </div>
-            <p className="text-xs text-center font-medium text-foreground w-20 truncate story-link">
-              My Story
-            </p>
-          </div>
-
-          {/* Other stories */}
-          {storyUsers.map((storyUser) => (
+        <div className="overflow-x-auto scrollbar-hide px-4 pb-4">
+          <div className="flex gap-5">
+            {/* My Story */}
             <div
-              key={storyUser.user_id}
-              onClick={() => handleStoryClick(storyUser.user_id)}
+              onClick={handleCreateStory}
               className="flex-shrink-0 cursor-pointer flex flex-col items-center gap-2 hover-scale"
             >
-              <div className="p-[3px] rounded-full bg-gradient-to-br from-cyan-400 via-teal-400 to-green-500">
-                {storyUser.avatar_url ? (
+              <div className="relative">
+                {currentUserProfile?.avatar_url ? (
                   <img
-                    src={storyUser.avatar_url}
-                    alt={storyUser.display_name}
-                    className="h-[72px] w-[72px] rounded-full object-cover border-[3px] border-background"
+                    src={currentUserProfile.avatar_url}
+                    alt="My Story"
+                    className="h-[72px] w-[72px] rounded-full object-cover border-2 border-border"
                   />
                 ) : (
-                  <div className="h-[72px] w-[72px] rounded-full bg-primary flex items-center justify-center border-[3px] border-background">
-                    <span className="text-xl font-semibold text-primary-foreground">
-                      {storyUser.display_name?.charAt(0).toUpperCase()}
+                  <div className="h-[72px] w-[72px] rounded-full bg-muted flex items-center justify-center border-2 border-border">
+                    <span className="text-xl font-semibold text-muted-foreground">
+                      {currentUserProfile?.display_name?.charAt(0).toUpperCase() || 'M'}
                     </span>
                   </div>
                 )}
+                <div className="absolute bottom-0 right-0 h-6 w-6 rounded-full bg-primary flex items-center justify-center border-2 border-background shadow-md">
+                  <Plus className="h-4 w-4 text-primary-foreground" />
+                </div>
               </div>
-              <p className="text-xs text-center font-medium text-foreground w-20 truncate story-link">
-                {storyUser.display_name}
+              <p className="text-xs text-center font-medium text-foreground w-20 truncate">
+                My Story
               </p>
             </div>
-          ))}
+
+            {/* Other stories */}
+            {storyUsers.map((storyUser) => (
+              <div
+                key={storyUser.user_id}
+                onClick={() => handleStoryClick(storyUser.user_id)}
+                className="flex-shrink-0 cursor-pointer flex flex-col items-center gap-2 hover-scale"
+              >
+                <div className="p-[3px] rounded-full bg-gradient-to-br from-cyan-400 via-teal-400 to-green-500">
+                  {storyUser.avatar_url ? (
+                    <img
+                      src={storyUser.avatar_url}
+                      alt={storyUser.display_name}
+                      className="h-[72px] w-[72px] rounded-full object-cover border-[3px] border-background"
+                    />
+                  ) : (
+                    <div className="h-[72px] w-[72px] rounded-full bg-primary flex items-center justify-center border-[3px] border-background">
+                      <span className="text-xl font-semibold text-primary-foreground">
+                        {storyUser.display_name?.charAt(0).toUpperCase()}
+                      </span>
+                    </div>
+                  )}
+                </div>
+                <p className="text-xs text-center font-medium text-foreground w-20 truncate">
+                  {storyUser.display_name}
+                </p>
+              </div>
+            ))}
+          </div>
         </div>
       </div>
     </div>

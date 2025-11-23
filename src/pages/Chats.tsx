@@ -218,22 +218,23 @@ const Chats = () => {
       if (!scrollRef.current) return;
       
       const currentScrollY = scrollRef.current.scrollTop;
+      const scrollingDown = currentScrollY > lastScrollY.current;
       
-      // Collapse stories when scrolling down past 30px
-      if (currentScrollY > 30 && !shouldCollapseStories) {
+      // Collapse stories when scrolling down past threshold
+      if (currentScrollY > 50 && scrollingDown && !shouldCollapseStories) {
         setShouldCollapseStories(true);
       } 
-      // Expand stories when scrolling back to top
-      else if (currentScrollY <= 30 && shouldCollapseStories) {
+      // Expand stories when at the very top
+      else if (currentScrollY <= 10 && shouldCollapseStories) {
         setShouldCollapseStories(false);
       }
       
-      // FAB visibility
+      // FAB visibility based on scroll position
       if (currentScrollY < 10) {
         setShowFab(true);
-      } else if (currentScrollY > lastScrollY.current && currentScrollY > 50) {
+      } else if (scrollingDown && currentScrollY > 50) {
         setShowFab(false);
-      } else if (currentScrollY < lastScrollY.current) {
+      } else if (!scrollingDown) {
         setShowFab(true);
       }
       
@@ -272,12 +273,16 @@ const Chats = () => {
   }
 
   return (
-    <div className="h-screen flex flex-col bg-background overflow-hidden">
-      {/* Stories Header - Collapses on scroll down */}
+    <div className="h-screen flex flex-col bg-background relative overflow-hidden">
+      {/* Stories Header - Sticky, collapses on scroll */}
       <ChatStoriesHeader shouldCollapse={shouldCollapseStories} />
 
-      {/* Chat List - This is the scrollable container */}
-      <div ref={scrollRef} className="flex-1 overflow-y-auto overscroll-contain">
+      {/* Chat List Container - Main scrollable area */}
+      <div 
+        ref={scrollRef} 
+        className="flex-1 overflow-y-auto overscroll-contain scrollbar-thin"
+        style={{ WebkitOverflowScrolling: 'touch' }}
+      >
         {chats.map((chat) => {
           const chatName = chat.is_group 
             ? (chat.name || 'Group Chat')
@@ -287,7 +292,7 @@ const Chats = () => {
             <div
                key={chat.id}
                onClick={() => navigate(`/chat/${chat.id}`)}
-               className="flex items-center gap-3 px-4 py-3 hover:bg-muted/10 cursor-pointer transition-colors"
+               className="flex items-center gap-3 px-4 py-3 hover:bg-muted/10 active:bg-muted/20 cursor-pointer transition-colors border-b border-border/5"
              >
               {/* Avatar with Story Ring */}
               <div className="relative flex-shrink-0">
@@ -356,12 +361,12 @@ const Chats = () => {
         })}
       </div>
 
-      {/* FAB */}
+      {/* Floating Action Button */}
       <Button
         size="lg"
         onClick={() => setIsNewChatDialogOpen(true)}
-        className={`fixed bottom-20 right-6 h-14 w-14 rounded-full shadow-lg bg-primary hover:bg-primary/90 transition-all duration-300 z-50 ${
-          showFab ? 'translate-y-0 opacity-100' : 'translate-y-20 opacity-0 pointer-events-none'
+        className={`fixed bottom-20 right-6 h-14 w-14 rounded-full shadow-lg bg-primary hover:bg-primary/90 active:scale-95 transition-all duration-300 z-50 ${
+          showFab ? 'translate-y-0 opacity-100 scale-100' : 'translate-y-20 opacity-0 scale-90 pointer-events-none'
         }`}
       >
         <Camera className="h-6 w-6" />
