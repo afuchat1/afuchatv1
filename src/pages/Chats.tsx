@@ -62,7 +62,6 @@ const Chats = () => {
   const [chats, setChats] = useState<Chat[]>([]);
   const [loading, setLoading] = useState(true);
   const [isNewChatDialogOpen, setIsNewChatDialogOpen] = useState(false);
-  const [activeTab, setActiveTab] = useState('all');
   const [showFab, setShowFab] = useState(true);
   const scrollRef = useRef<HTMLDivElement>(null);
   const lastScrollY = useRef(0);
@@ -254,8 +253,6 @@ const Chats = () => {
     return () => scrollElement?.removeEventListener('scroll', handleScroll);
   }, []);
 
-  const totalUnread = chats.reduce((sum, chat) => sum + (chat.unread_count || 0), 0);
-
   if (loading) {
     return (
       <div className="h-screen flex flex-col bg-background">
@@ -283,50 +280,6 @@ const Chats = () => {
         isAtBottom={isAtBottom}
         scrollDirection={scrollDirection}
       />
-
-      {/* Tabs */}
-      <div className="bg-card px-4 py-2 flex items-center gap-6 border-b border-border">
-        <button
-          onClick={() => setActiveTab('all')}
-          className={`text-sm font-medium pb-2 transition-colors relative ${
-            activeTab === 'all' ? 'text-primary' : 'text-muted-foreground'
-          }`}
-        >
-          All Chats
-          {activeTab === 'all' && (
-            <div className="absolute bottom-0 left-0 right-0 h-0.5 bg-primary" />
-          )}
-        </button>
-        <button
-          onClick={() => setActiveTab('bots')}
-          className={`text-sm font-medium pb-2 transition-colors ${
-            activeTab === 'bots' ? 'text-primary' : 'text-muted-foreground'
-          }`}
-        >
-          Bots
-        </button>
-        <button
-          onClick={() => setActiveTab('personal')}
-          className={`text-sm font-medium pb-2 transition-colors ${
-            activeTab === 'personal' ? 'text-primary' : 'text-muted-foreground'
-          }`}
-        >
-          Personal
-        </button>
-        <button
-          onClick={() => setActiveTab('unread')}
-          className={`text-sm font-medium pb-2 transition-colors flex items-center gap-2 ${
-            activeTab === 'unread' ? 'text-primary' : 'text-muted-foreground'
-          }`}
-        >
-          Unread
-          {totalUnread > 0 && (
-            <span className="bg-muted text-muted-foreground rounded-full px-2 py-0.5 text-xs font-semibold">
-              {totalUnread}
-            </span>
-          )}
-        </button>
-      </div>
 
       {/* Chat List */}
       <div ref={scrollRef} className="flex-1 overflow-y-auto">
