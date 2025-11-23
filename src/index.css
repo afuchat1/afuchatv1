@@ -16,102 +16,102 @@ All colors MUST be HSL.
 
 @layer base {
   :root {
-    /* Vibrant Teal Primary - Distinctive brand color */
-    --primary: 174 72% 42%;
+    /* Telegram Sky Blue Primary */
+    --primary: 207 90% 54%;
     --primary-foreground: 0 0% 100%;
     
-    /* Electric Purple Accent - Bold contrast */
-    --accent: 271 76% 53%;
+    /* Lighter Sky Blue Accent */
+    --accent: 200 100% 60%;
     --accent-foreground: 0 0% 100%;
     
     /* Clean white backgrounds */
     --background: 0 0% 100%;
-    --foreground: 220 13% 13%;
+    --foreground: 0 0% 13%;
     
-    /* Soft neutral muted */
-    --muted: 220 14% 96%;
-    --muted-foreground: 220 9% 46%;
+    /* Soft blue-gray muted */
+    --muted: 210 20% 96%;
+    --muted-foreground: 215 16% 47%;
     
     /* Card with subtle elevation */
     --card: 0 0% 100%;
-    --card-foreground: 220 13% 13%;
+    --card-foreground: 0 0% 13%;
     
     /* Popover clean */
     --popover: 0 0% 100%;
-    --popover-foreground: 220 13% 13%;
+    --popover-foreground: 0 0% 13%;
     
     /* Refined borders */
-    --border: 220 13% 91%;
-    --input: 220 13% 91%;
-    --ring: 174 72% 42%;
+    --border: 214 32% 91%;
+    --input: 214 32% 91%;
+    --ring: 207 90% 54%;
     
-    /* Secondary warm gray */
-    --secondary: 24 10% 95%;
-    --secondary-foreground: 220 13% 13%;
+    /* Secondary light gray */
+    --secondary: 210 20% 96%;
+    --secondary-foreground: 0 0% 13%;
     
-    /* Bold destructive */
-    --destructive: 0 72% 51%;
+    /* Destructive red */
+    --destructive: 0 84% 60%;
     --destructive-foreground: 0 0% 100%;
     
     --radius: 0.5rem;
     
     /* Sidebar */
-    --sidebar-background: 220 14% 98%;
-    --sidebar-foreground: 220 13% 13%;
-    --sidebar-primary: 174 72% 42%;
+    --sidebar-background: 210 20% 98%;
+    --sidebar-foreground: 0 0% 13%;
+    --sidebar-primary: 207 90% 54%;
     --sidebar-primary-foreground: 0 0% 100%;
-    --sidebar-accent: 271 76% 53%;
+    --sidebar-accent: 200 100% 60%;
     --sidebar-accent-foreground: 0 0% 100%;
-    --sidebar-border: 220 13% 91%;
-    --sidebar-ring: 174 72% 42%;
+    --sidebar-border: 214 32% 91%;
+    --sidebar-ring: 207 90% 54%;
   }
 
   .dark {
-    /* Vibrant Teal Primary - Glows in dark mode */
-    --primary: 174 72% 48%;
-    --primary-foreground: 220 13% 13%;
+    /* Telegram Sky Blue - Glows in dark */
+    --primary: 207 90% 61%;
+    --primary-foreground: 0 0% 100%;
     
-    /* Electric Purple Accent - Pops against dark */
-    --accent: 271 76% 60%;
-    --accent-foreground: 220 13% 13%;
+    /* Lighter accent for dark mode */
+    --accent: 200 100% 65%;
+    --accent-foreground: 0 0% 100%;
     
-    /* Rich dark backgrounds */
-    --background: 222 47% 11%;
-    --foreground: 210 40% 98%;
+    /* Dark blue-gray backgrounds */
+    --background: 216 28% 7%;
+    --foreground: 213 31% 91%;
     
-    /* Message bubbles - elevated dark */
-    --muted: 217 33% 17%;
-    --muted-foreground: 215 20% 65%;
+    /* Message bubbles - darker blue */
+    --muted: 215 28% 17%;
+    --muted-foreground: 217 20% 70%;
     
     /* Card elevated surface */
-    --card: 222 47% 14%;
-    --card-foreground: 210 40% 98%;
+    --card: 215 27% 12%;
+    --card-foreground: 213 31% 91%;
     
-    --popover: 222 47% 14%;
-    --popover-foreground: 210 40% 98%;
+    --popover: 215 27% 12%;
+    --popover-foreground: 213 31% 91%;
     
-    /* Subtle borders */
-    --border: 217 33% 21%;
-    --input: 217 33% 21%;
-    --ring: 174 72% 48%;
+    /* Subtle blue borders */
+    --border: 215 25% 20%;
+    --input: 215 25% 20%;
+    --ring: 207 90% 61%;
     
     /* Secondary surface */
-    --secondary: 217 33% 19%;
-    --secondary-foreground: 210 40% 98%;
+    --secondary: 215 28% 15%;
+    --secondary-foreground: 213 31% 91%;
     
-    /* Destructive bright */
-    --destructive: 0 72% 55%;
+    /* Destructive */
+    --destructive: 0 84% 60%;
     --destructive-foreground: 0 0% 100%;
     
     /* Sidebar */
-    --sidebar-background: 222 47% 14%;
-    --sidebar-foreground: 210 40% 98%;
-    --sidebar-primary: 174 72% 48%;
-    --sidebar-primary-foreground: 220 13% 13%;
-    --sidebar-accent: 271 76% 60%;
-    --sidebar-accent-foreground: 220 13% 13%;
-    --sidebar-border: 217 33% 21%;
-    --sidebar-ring: 174 72% 48%;
+    --sidebar-background: 215 27% 12%;
+    --sidebar-foreground: 213 31% 91%;
+    --sidebar-primary: 207 90% 61%;
+    --sidebar-primary-foreground: 0 0% 100%;
+    --sidebar-accent: 200 100% 65%;
+    --sidebar-accent-foreground: 0 0% 100%;
+    --sidebar-border: 215 25% 20%;
+    --sidebar-ring: 207 90% 61%;
   }
 }
 
