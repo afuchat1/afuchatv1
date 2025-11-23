@@ -66,6 +66,9 @@ const Chats = () => {
   const [showFab, setShowFab] = useState(true);
   const scrollRef = useRef<HTMLDivElement>(null);
   const lastScrollY = useRef(0);
+  const [scrollPosition, setScrollPosition] = useState(0);
+  const [isAtBottom, setIsAtBottom] = useState(false);
+  const [scrollDirection, setScrollDirection] = useState<'up' | 'down'>('down');
 
   useEffect(() => {
     if (!user) return;
@@ -218,7 +221,23 @@ const Chats = () => {
       if (!scrollRef.current) return;
       
       const currentScrollY = scrollRef.current.scrollTop;
+      const scrollHeight = scrollRef.current.scrollHeight;
+      const clientHeight = scrollRef.current.clientHeight;
       
+      // Check if at bottom (within 50px threshold)
+      const atBottom = scrollHeight - (currentScrollY + clientHeight) < 50;
+      setIsAtBottom(atBottom);
+      
+      // Determine scroll direction
+      if (currentScrollY > lastScrollY.current) {
+        setScrollDirection('down');
+      } else if (currentScrollY < lastScrollY.current) {
+        setScrollDirection('up');
+      }
+      
+      setScrollPosition(currentScrollY);
+      
+      // FAB visibility
       if (currentScrollY < 10) {
         setShowFab(true);
       } else if (currentScrollY > lastScrollY.current && currentScrollY > 50) {
@@ -259,7 +278,11 @@ const Chats = () => {
   return (
     <div className="h-screen flex flex-col bg-background">
       {/* Stories Header - Expandable */}
-      <ChatStoriesHeader />
+      <ChatStoriesHeader 
+        scrollPosition={scrollPosition}
+        isAtBottom={isAtBottom}
+        scrollDirection={scrollDirection}
+      />
 
       {/* Tabs */}
       <div className="bg-card px-4 py-2 flex items-center gap-6 border-b border-border">

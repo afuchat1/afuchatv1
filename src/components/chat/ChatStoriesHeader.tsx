@@ -13,18 +13,29 @@ interface StoryUser {
   story_count: number;
 }
 
-export const ChatStoriesHeader = () => {
+interface ChatStoriesHeaderProps {
+  scrollPosition?: number;
+  isAtBottom?: boolean;
+  scrollDirection?: 'up' | 'down';
+}
+
+export const ChatStoriesHeader = ({ scrollPosition = 0, isAtBottom = false, scrollDirection = 'down' }: ChatStoriesHeaderProps) => {
   const { user } = useAuth();
   const navigate = useNavigate();
   const [storyUsers, setStoryUsers] = useState<StoryUser[]>([]);
   const [currentUserProfile, setCurrentUserProfile] = useState<{ avatar_url: string | null; display_name: string } | null>(null);
   const [loading, setLoading] = useState(true);
-  const [expandProgress, setExpandProgress] = useState(0);
-  const [startY, setStartY] = useState(0);
-  const [startX, setStartX] = useState(0);
-  const [isDragging, setIsDragging] = useState(false);
-  const [isHorizontalScroll, setIsHorizontalScroll] = useState(false);
+  const [isExpanded, setIsExpanded] = useState(false);
   const headerRef = useRef<HTMLDivElement>(null);
+
+  // Handle expand/collapse based on scroll
+  useEffect(() => {
+    if (isAtBottom) {
+      setIsExpanded(true);
+    } else if (scrollDirection === 'up') {
+      setIsExpanded(false);
+    }
+  }, [isAtBottom, scrollDirection]);
 
   useEffect(() => {
     if (!user) return;
@@ -120,46 +131,6 @@ export const ChatStoriesHeader = () => {
     navigate(`/moments?user=${userId}`);
   };
 
-  const handleTouchStart = (e: React.TouchEvent) => {
-    setStartY(e.touches[0].clientY);
-    setStartX(e.touches[0].clientX);
-    setIsDragging(true);
-    setIsHorizontalScroll(false);
-  };
-
-  const handleTouchMove = (e: React.TouchEvent) => {
-    if (!isDragging) return;
-    
-    const deltaY = e.touches[0].clientY - startY;
-    const deltaX = Math.abs(e.touches[0].clientX - startX);
-    
-    // If horizontal movement is greater, it's horizontal scrolling
-    if (deltaX > Math.abs(deltaY) && deltaX > 10) {
-      setIsHorizontalScroll(true);
-      return;
-    }
-    
-    // Only handle vertical swipe if not horizontal scrolling
-    if (!isHorizontalScroll && expandProgress < 1) {
-      if (deltaY > 0) {
-        e.preventDefault(); // Prevent browser pull-to-refresh
-        const progress = Math.min(deltaY / 150, 1);
-        setExpandProgress(progress);
-      }
-    }
-  };
-
-  const handleTouchEnd = () => {
-    if (!isHorizontalScroll) {
-      if (expandProgress < 0.5) {
-        setExpandProgress(0);
-      } else {
-        setExpandProgress(1);
-      }
-    }
-    setIsDragging(false);
-    setIsHorizontalScroll(false);
-  };
 
   const handleCreateStory = () => {
     navigate('/moments');
@@ -168,15 +139,13 @@ export const ChatStoriesHeader = () => {
   if (loading) return null;
 
   const totalStories = storyUsers.reduce((sum, user) => sum + user.story_count, 0);
-  const isExpanded = expandProgress > 0.5;
   const hasStories = storyUsers.length > 0;
 
   return (
     <div
       ref={headerRef}
-      className="sticky top-0 z-50 bg-background border-b border-border"
+      className="sticky top-0 z-50 bg-background border-b border-border transition-all duration-300"
       style={{
-        transition: isDragging ? 'none' : 'height 0.3s ease-out',
         height: isExpanded ? '200px' : '80px',
       }}
     >
@@ -195,12 +164,7 @@ export const ChatStoriesHeader = () => {
         </button>
 
         {/* Center: Overlapping avatars + count */}
-        <div 
-          className="flex items-center gap-3 flex-1 justify-center"
-          onTouchStart={handleTouchStart}
-          onTouchMove={handleTouchMove}
-          onTouchEnd={handleTouchEnd}
-        >
+        <div className="flex items-center gap-3 flex-1 justify-center">
           {hasStories && (
             <>
               <div className="flex items-center -space-x-3">
@@ -249,9 +213,6 @@ export const ChatStoriesHeader = () => {
           pointerEvents: isExpanded ? 'auto' : 'none',
           transition: 'opacity 0.2s',
         }}
-        onTouchStart={handleTouchStart}
-        onTouchMove={handleTouchMove}
-        onTouchEnd={handleTouchEnd}
       >
         {/* Top bar */}
         <div className="flex items-center justify-between px-4 h-16">
