@@ -226,14 +226,14 @@ const Layout = ({ children }: LayoutProps) => {
       {/* Mobile Bottom Navigation - Hidden in chat rooms */}
       {!isChatRoom && (
         <nav className={cn(
-          "lg:hidden fixed bottom-0 left-0 right-0 bg-background/95 backdrop-blur-sm border-t border-border z-50 transition-transform duration-300 safe-area-inset-bottom",
+          "lg:hidden fixed bottom-0 left-0 right-0 bg-background/95 backdrop-blur-sm z-50 transition-transform duration-300 safe-area-inset-bottom",
           isScrollingDown ? "translate-y-full" : "translate-y-0"
         )}>
-          <div className="flex justify-around items-center h-16 px-2 pb-safe">
+          <div className="flex justify-around items-center px-2 py-2 pb-safe">
             <Link
               to="/"
               className={cn(
-                "flex flex-col items-center justify-center flex-1 h-full transition-colors",
+                "flex flex-col items-center justify-center gap-1 flex-1 py-1.5 transition-colors",
                 isActive('/') ? "text-primary" : "text-muted-foreground"
               )}
             >
@@ -241,12 +241,13 @@ const Layout = ({ children }: LayoutProps) => {
                 "h-6 w-6",
                 isActive('/') && "fill-current"
               )} />
+              <span className="text-[10px] font-medium">{t('common.home')}</span>
             </Link>
             
             <Link
               to="/search"
               className={cn(
-                "flex flex-col items-center justify-center flex-1 h-full transition-colors",
+                "flex flex-col items-center justify-center gap-1 flex-1 py-1.5 transition-colors",
                 isActive('/search') ? "text-primary" : "text-muted-foreground"
               )}
             >
@@ -254,6 +255,7 @@ const Layout = ({ children }: LayoutProps) => {
                 "h-6 w-6",
                 isActive('/search') && "fill-current"
               )} />
+              <span className="text-[10px] font-medium">{t('search.title')}</span>
             </Link>
             
             <MobileMenuSheet />
@@ -261,7 +263,7 @@ const Layout = ({ children }: LayoutProps) => {
             <Link
               to="/chats"
               className={cn(
-                "flex flex-col items-center justify-center flex-1 h-full transition-colors",
+                "flex flex-col items-center justify-center gap-1 flex-1 py-1.5 transition-colors",
                 isActive('/chats') ? "text-primary" : "text-muted-foreground"
               )}
             >
@@ -269,12 +271,13 @@ const Layout = ({ children }: LayoutProps) => {
                 "h-6 w-6",
                 isActive('/chats') && "fill-current"
               )} />
+              <span className="text-[10px] font-medium">{t('common.messages')}</span>
             </Link>
             
             <Link
               to={user ? `/${user.id}` : '/auth'}
               className={cn(
-                "flex flex-col items-center justify-center flex-1 h-full transition-colors",
+                "flex flex-col items-center justify-center gap-1 flex-1 py-1.5 transition-colors",
                 isActive(user ? `/${user.id}` : '/auth') ? "text-primary" : "text-muted-foreground"
               )}
             >
@@ -282,6 +285,7 @@ const Layout = ({ children }: LayoutProps) => {
                 "h-6 w-6",
                 isActive(user ? `/${user.id}` : '/auth') && "fill-current"
               )} />
+              <span className="text-[10px] font-medium">{t('common.profile')}</span>
             </Link>
           </div>
         </nav>
