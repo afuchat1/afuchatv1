@@ -223,8 +223,8 @@ const Chats = () => {
       const scrollHeight = scrollRef.current.scrollHeight;
       const clientHeight = scrollRef.current.clientHeight;
       
-      // Check if at bottom (within 50px threshold)
-      const atBottom = scrollHeight - (currentScrollY + clientHeight) < 50;
+      // Check if at bottom (within 100px threshold for easier triggering)
+      const atBottom = scrollHeight - (currentScrollY + clientHeight) < 100;
       setIsAtBottom(atBottom);
       
       // Determine scroll direction
@@ -250,6 +250,15 @@ const Chats = () => {
 
     const scrollElement = scrollRef.current;
     scrollElement?.addEventListener('scroll', handleScroll);
+    
+    // Check initial position
+    if (scrollElement) {
+      const scrollHeight = scrollElement.scrollHeight;
+      const clientHeight = scrollElement.clientHeight;
+      const atBottom = scrollHeight - clientHeight < 100;
+      setIsAtBottom(atBottom);
+    }
+    
     return () => scrollElement?.removeEventListener('scroll', handleScroll);
   }, []);
 

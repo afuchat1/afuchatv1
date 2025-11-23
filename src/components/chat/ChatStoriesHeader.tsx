@@ -32,13 +32,13 @@ export const ChatStoriesHeader = ({ scrollPosition = 0, isAtBottom = false, scro
   useEffect(() => {
     // Only expand if there are stories
     if (storyUsers.length > 0) {
-      if (isAtBottom) {
+      if (isAtBottom && scrollDirection === 'down') {
         setIsExpanded(true);
-      } else if (scrollDirection === 'up') {
+      } else if (scrollDirection === 'up' && isExpanded) {
         setIsExpanded(false);
       }
     }
-  }, [isAtBottom, scrollDirection, storyUsers.length]);
+  }, [isAtBottom, scrollDirection, storyUsers.length, isExpanded]);
 
   useEffect(() => {
     if (!user) return;
