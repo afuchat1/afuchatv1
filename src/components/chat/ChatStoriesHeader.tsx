@@ -157,23 +157,31 @@ export const ChatStoriesHeader = ({ shouldCollapse = false, onToggleCollapse, on
     <div className="sticky top-0 z-50 bg-background border-b border-border">
       {/* Header - tap middle section to expand when collapsed */}
       <div className="flex items-center justify-between px-4 h-16">
-        {!isSearchOpen && (
-          <button className="p-2 hover:bg-muted/20 rounded-full transition-colors">
-            <Menu className="h-7 w-7 text-foreground" />
-          </button>
-        )}
-
         {/* Search Bar */}
         {isSearchOpen ? (
-          <div className="flex items-center gap-2 flex-1">
-            <Input
-              type="text"
-              placeholder="Search chats..."
-              value={searchQuery}
-              onChange={handleSearchChange}
-              className="flex-1 h-10"
-              autoFocus
-            />
+          <div className="flex items-center gap-3 flex-1 animate-fade-in">
+            <div className="flex items-center gap-2 flex-1 bg-muted/30 rounded-full px-4 py-2 border border-border/50 focus-within:border-primary/50 transition-colors">
+              <Search className="h-5 w-5 text-muted-foreground" />
+              <Input
+                type="text"
+                placeholder="Search chats..."
+                value={searchQuery}
+                onChange={handleSearchChange}
+                className="flex-1 border-0 bg-transparent focus-visible:ring-0 focus-visible:ring-offset-0 placeholder:text-muted-foreground/70 h-8 px-0"
+                autoFocus
+              />
+              {searchQuery && (
+                <button 
+                  onClick={() => {
+                    setSearchQuery('');
+                    onSearch?.('');
+                  }}
+                  className="p-1 hover:bg-muted/50 rounded-full transition-colors"
+                >
+                  <X className="h-4 w-4 text-muted-foreground" />
+                </button>
+              )}
+            </div>
             <button 
               onClick={handleSearchToggle}
               className="p-2 hover:bg-muted/20 rounded-full transition-colors"
@@ -183,6 +191,10 @@ export const ChatStoriesHeader = ({ shouldCollapse = false, onToggleCollapse, on
           </div>
         ) : (
           <>
+            <button className="p-2 hover:bg-muted/20 rounded-full transition-colors">
+              <Menu className="h-7 w-7 text-foreground" />
+            </button>
+
             {/* Compact overlapping bubbles - ONLY visible when collapsed */}
             {isCollapsed && (
               <button
@@ -224,7 +236,7 @@ export const ChatStoriesHeader = ({ shouldCollapse = false, onToggleCollapse, on
 
             <button 
               onClick={handleSearchToggle}
-              className="p-2 hover:bg-muted/20 rounded-full transition-colors"
+              className="p-2 hover:bg-muted/20 rounded-full transition-all hover:scale-110 active:scale-95"
             >
               <Search className="h-6 w-6 text-foreground" />
             </button>
