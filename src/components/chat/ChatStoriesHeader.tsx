@@ -148,170 +148,141 @@ export const ChatStoriesHeader = () => {
   return (
     <div
       ref={headerRef}
-      className="sticky top-0 z-50 transition-all duration-300 ease-out bg-background/95 backdrop-blur-sm touch-pan-x pb-2"
-      onTouchStart={handleTouchStart}
-      onTouchMove={handleTouchMove}
-      onTouchEnd={handleTouchEnd}
+      className="sticky top-0 z-50 bg-background border-b border-border"
       style={{
-        paddingLeft: `${24 - expandProgress * 24}px`,
-        paddingRight: `${24 - expandProgress * 24}px`,
-        paddingBottom: `${16 + expandProgress * 8}px`,
+        transition: isDragging ? 'none' : 'height 0.3s ease-out',
+        height: isExpanded ? '200px' : '80px',
       }}
     >
-      {/* Top navigation bar like Telegram */}
-      <div className="flex items-center justify-between px-4 pb-3">
-        <button className="p-1 rounded-full text-foreground/80">
-          <Menu className="h-5 w-5" />
-        </button>
-        <h1 className="text-xl font-bold text-foreground">
-          {isExpanded
-            ? 'Telegram'
-            : `${totalStories || 0} ${totalStories === 1 ? 'Story' : 'Stories'}`}
-        </h1>
-        <button className="p-1 rounded-full text-foreground/80">
-          <Search className="h-5 w-5" />
-        </button>
-      </div>
-
+      {/* Collapsed view - single row */}
       <div
+        className="flex items-center justify-between px-4 h-20"
         style={{
-          height: `${80 + expandProgress * 80}px`,
-          overflow: 'hidden',
-          transition: isDragging ? 'none' : 'all 0.3s ease-out',
+          opacity: isExpanded ? 0 : 1,
+          pointerEvents: isExpanded ? 'none' : 'auto',
+          transition: 'opacity 0.2s',
         }}
       >
-        {/* Collapsed content */}
-        <div
-          style={{
-            opacity: 1 - expandProgress,
-            transform: `translateY(${expandProgress * -20}px)`,
-            transition: isDragging ? 'none' : 'all 0.3s ease-out',
-          }}
+        {/* Left: Menu */}
+        <button className="p-2">
+          <Menu className="h-6 w-6 text-foreground" />
+        </button>
+
+        {/* Center: Overlapping avatars + count */}
+        <div 
+          className="flex items-center gap-3 flex-1 justify-center"
+          onTouchStart={handleTouchStart}
+          onTouchMove={handleTouchMove}
+          onTouchEnd={handleTouchEnd}
         >
-          <div className="flex items-center gap-4 px-6">
-            {hasStories ? (
-              <>
-                <div className="flex items-center -space-x-3">
-                  {storyUsers.slice(0, 4).map((storyUser, index) => (
-                    <div
-                      key={storyUser.user_id}
-                      onClick={() => handleStoryClick(storyUser.user_id)}
-                      className={cn(
-                        "relative cursor-pointer transition-all duration-200 hover:scale-110 hover:z-10",
-                        index === 0 ? "z-40" : index === 1 ? "z-30" : index === 2 ? "z-20" : "z-10"
-                      )}
-                      style={{ 
-                        transform: `translateX(${index * 2}px)`,
-                      }}
-                    >
-                      <div className="p-[2.5px] rounded-full bg-gradient-to-tr from-cyan-400 to-teal-500">
-                        {storyUser.avatar_url ? (
-                          <img
-                            src={storyUser.avatar_url}
-                            alt={storyUser.display_name}
-                            className="h-14 w-14 rounded-full object-cover border-[3px] border-background"
-                          />
-                        ) : (
-                          <div className="h-14 w-14 rounded-full bg-gradient-to-br from-primary to-primary/80 flex items-center justify-center border-[3px] border-background">
-                            <span className="text-lg font-semibold text-white">
-                              {storyUser.display_name?.charAt(0).toUpperCase()}
-                            </span>
-                          </div>
-                        )}
-                      </div>
-                    </div>
-                  ))}
-                </div>
-
-                <div className="flex flex-col">
-                  <h2 className="text-xl font-bold text-foreground">
-                    {totalStories} {totalStories === 1 ? 'Story' : 'Stories'}
-                  </h2>
-                  <p className="text-xs text-muted-foreground">
-                    Swipe down to expand
-                  </p>
-                </div>
-              </>
-            ) : (
-              <div
-                onClick={handleCreateStory}
-                className="flex items-center gap-3 cursor-pointer"
-              >
-                <div className="h-14 w-14 rounded-full bg-gradient-to-br from-primary/20 to-primary/10 flex items-center justify-center border-2 border-dashed border-primary/50">
-                  <Plus className="h-6 w-6 text-primary" />
-                </div>
-                <div className="flex flex-col">
-                  <h2 className="text-base font-bold text-foreground">Create Story</h2>
-                  <p className="text-xs text-muted-foreground">Share a moment</p>
-                </div>
-              </div>
-            )}
-          </div>
-        </div>
-
-        {/* Expanded content */}
-        <div
-          style={{
-            opacity: expandProgress,
-            transform: `translateY(${(1 - expandProgress) * 20}px)`,
-            transition: isDragging ? 'none' : 'all 0.3s ease-out',
-            position: 'absolute',
-            top: 0,
-            left: 0,
-            right: 0,
-          }}
-        >
-          <div className="space-y-4">
-            <div className="px-6 flex items-center justify-center">
-              <h2 className="text-2xl font-bold text-foreground">Telegram</h2>
-            </div>
-            
-            <div className="overflow-x-auto scrollbar-hide">
-              <div className="flex gap-4 px-6 pb-2">
-                {/* My Story / Create Story */}
-                <div
-                  onClick={handleCreateStory}
-                  className="flex-shrink-0 cursor-pointer transition-transform duration-200 hover:scale-105"
-                >
-                  <div className="relative">
-                    <div className="h-20 w-20 rounded-full bg-gradient-to-br from-muted to-muted/50 flex items-center justify-center border-2 border-dashed border-primary/50">
-                      <Plus className="h-8 w-8 text-primary" />
-                    </div>
-                  </div>
-                  <p className="text-xs text-center mt-2 font-medium truncate w-20">My Story</p>
-                </div>
-
-                {/* Other users' stories */}
-                {storyUsers.map((storyUser) => (
+          {hasStories && (
+            <>
+              <div className="flex items-center -space-x-3">
+                {storyUsers.slice(0, 3).map((storyUser, index) => (
                   <div
                     key={storyUser.user_id}
-                    onClick={() => handleStoryClick(storyUser.user_id)}
-                    className="flex-shrink-0 cursor-pointer transition-transform duration-200 hover:scale-105"
+                    className="relative"
+                    style={{ zIndex: 30 - index * 10 }}
                   >
-                    <div className="relative">
-                      <div className="p-[2.5px] rounded-full bg-gradient-to-tr from-cyan-400 to-teal-500">
-                        {storyUser.avatar_url ? (
-                          <img
-                            src={storyUser.avatar_url}
-                            alt={storyUser.display_name}
-                            className="h-20 w-20 rounded-full object-cover border-[3px] border-background"
-                          />
-                        ) : (
-                          <div className="h-20 w-20 rounded-full bg-gradient-to-br from-primary to-primary/80 flex items-center justify-center border-[3px] border-background">
-                            <span className="text-2xl font-semibold text-white">
-                              {storyUser.display_name?.charAt(0).toUpperCase()}
-                            </span>
-                          </div>
-                        )}
-                      </div>
+                    <div className="p-[2px] rounded-full bg-gradient-to-tr from-cyan-400 to-teal-500">
+                      {storyUser.avatar_url ? (
+                        <img
+                          src={storyUser.avatar_url}
+                          alt={storyUser.display_name}
+                          className="h-12 w-12 rounded-full object-cover border-2 border-background"
+                        />
+                      ) : (
+                        <div className="h-12 w-12 rounded-full bg-primary flex items-center justify-center border-2 border-background">
+                          <span className="text-sm font-semibold text-white">
+                            {storyUser.display_name?.charAt(0).toUpperCase()}
+                          </span>
+                        </div>
+                      )}
                     </div>
-                    <p className="text-xs text-center mt-2 font-medium truncate w-20">
-                      {storyUser.display_name}
-                    </p>
                   </div>
                 ))}
               </div>
+              <span className="text-xl font-semibold text-foreground">
+                {totalStories} {totalStories === 1 ? 'Story' : 'Stories'}
+              </span>
+            </>
+          )}
+        </div>
+
+        {/* Right: Search */}
+        <button className="p-2">
+          <Search className="h-6 w-6 text-foreground" />
+        </button>
+      </div>
+
+      {/* Expanded view */}
+      <div
+        className="absolute inset-0 bg-background"
+        style={{
+          opacity: isExpanded ? 1 : 0,
+          pointerEvents: isExpanded ? 'auto' : 'none',
+          transition: 'opacity 0.2s',
+        }}
+        onTouchStart={handleTouchStart}
+        onTouchMove={handleTouchMove}
+        onTouchEnd={handleTouchEnd}
+      >
+        {/* Top bar */}
+        <div className="flex items-center justify-between px-4 h-16">
+          <button className="p-2">
+            <Menu className="h-6 w-6 text-foreground" />
+          </button>
+          <h1 className="text-2xl font-bold text-foreground">AfuChat</h1>
+          <button className="p-2">
+            <Search className="h-6 w-6 text-foreground" />
+          </button>
+        </div>
+
+        {/* Stories horizontal scroll */}
+        <div className="overflow-x-auto scrollbar-hide px-4 pb-4">
+          <div className="flex gap-4">
+            {/* My Story */}
+            <div
+              onClick={handleCreateStory}
+              className="flex-shrink-0 cursor-pointer"
+            >
+              <div className="relative">
+                <div className="h-16 w-16 rounded-full bg-muted flex items-center justify-center">
+                  <div className="h-14 w-14 rounded-full bg-background flex items-center justify-center">
+                    <Plus className="h-6 w-6 text-primary" />
+                  </div>
+                </div>
+              </div>
+              <p className="text-xs text-center mt-1.5 font-medium w-16 truncate">My Story</p>
             </div>
+
+            {/* Other stories */}
+            {storyUsers.map((storyUser) => (
+              <div
+                key={storyUser.user_id}
+                onClick={() => handleStoryClick(storyUser.user_id)}
+                className="flex-shrink-0 cursor-pointer"
+              >
+                <div className="p-[2px] rounded-full bg-gradient-to-tr from-cyan-400 to-teal-500">
+                  {storyUser.avatar_url ? (
+                    <img
+                      src={storyUser.avatar_url}
+                      alt={storyUser.display_name}
+                      className="h-16 w-16 rounded-full object-cover border-2 border-background"
+                    />
+                  ) : (
+                    <div className="h-16 w-16 rounded-full bg-primary flex items-center justify-center border-2 border-background">
+                      <span className="text-lg font-semibold text-white">
+                        {storyUser.display_name?.charAt(0).toUpperCase()}
+                      </span>
+                    </div>
+                  )}
+                </div>
+                <p className="text-xs text-center mt-1.5 font-medium w-16 truncate">
+                  {storyUser.display_name}
+                </p>
+              </div>
+            ))}
           </div>
         </div>
       </div>
