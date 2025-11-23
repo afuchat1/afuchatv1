@@ -4,6 +4,7 @@ import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/contexts/AuthContext';
 import { Plus, Menu, Search, X } from 'lucide-react';
 import { Input } from '@/components/ui/input';
+import { ChatMenuDrawer } from './ChatMenuDrawer';
 
 interface StoryUser {
   user_id: string;
@@ -31,6 +32,7 @@ export const ChatStoriesHeader = ({ shouldCollapse = false, onToggleCollapse, on
   const [isCollapsed, setIsCollapsed] = useState(false);
   const [isSearchOpen, setIsSearchOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
+  const [isMenuOpen, setIsMenuOpen] = useState(false);
 
   useEffect(() => {
     setIsCollapsed(shouldCollapse);
@@ -154,7 +156,10 @@ export const ChatStoriesHeader = ({ shouldCollapse = false, onToggleCollapse, on
   };
 
   return (
-    <div className="sticky top-0 z-50 bg-background border-b border-border">
+    <>
+      <ChatMenuDrawer isOpen={isMenuOpen} onClose={() => setIsMenuOpen(false)} />
+      
+      <div className="sticky top-0 z-50 bg-background border-b border-border">
       {/* Header - tap middle section to expand when collapsed */}
       <div className="flex items-center justify-between px-4 h-16">
         {/* Search Bar */}
@@ -191,7 +196,10 @@ export const ChatStoriesHeader = ({ shouldCollapse = false, onToggleCollapse, on
           </div>
         ) : (
           <>
-            <button className="p-2 hover:bg-muted/20 rounded-full transition-colors">
+            <button 
+              onClick={() => setIsMenuOpen(true)}
+              className="p-2 hover:bg-muted/20 rounded-full transition-all hover:scale-110 active:scale-95"
+            >
               <Menu className="h-7 w-7 text-foreground" />
             </button>
 
@@ -312,6 +320,7 @@ export const ChatStoriesHeader = ({ shouldCollapse = false, onToggleCollapse, on
           </div>
         </div>
       </div>
-    </div>
+      </div>
+    </>
   );
 };
