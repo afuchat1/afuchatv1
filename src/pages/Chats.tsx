@@ -319,15 +319,23 @@ const Chats = () => {
               className="flex items-center gap-3 px-4 py-3 hover:bg-muted/20 cursor-pointer transition-colors"
             >
               {/* Avatar with Story Ring */}
-              {chat.other_user && (
-                <StoryAvatar
-                  userId={chat.other_user.id}
-                  avatarUrl={chat.other_user.avatar_url}
-                  name={chat.other_user.display_name}
-                  size="lg"
-                  showStoryRing={true}
-                />
-              )}
+              <div className="relative flex-shrink-0">
+                {chat.other_user ? (
+                  <StoryAvatar
+                    userId={chat.other_user.id}
+                    avatarUrl={chat.other_user.avatar_url}
+                    name={chat.other_user.display_name}
+                    size="lg"
+                    showStoryRing={true}
+                  />
+                ) : (
+                  <div className="h-14 w-14 rounded-full bg-muted flex items-center justify-center">
+                    <span className="text-xl font-semibold text-muted-foreground">
+                      {chatName.charAt(0).toUpperCase()}
+                    </span>
+                  </div>
+                )}
+              </div>
 
               {/* Chat info */}
               <div className="flex-1 min-w-0">
