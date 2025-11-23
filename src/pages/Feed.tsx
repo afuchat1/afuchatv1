@@ -1994,7 +1994,7 @@ const Feed = () => {
 
   if (loading) {
     return (
-      <div className="flex items-center justify-center h-full">
+      <div className="flex items-center justify-center min-h-screen">
         <CustomLoader size="lg" text={t('common.loading') || 'Loading...'} />
       </div>
     );
