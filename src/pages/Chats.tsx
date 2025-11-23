@@ -1,12 +1,12 @@
 import { useEffect, useState, useRef } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/contexts/AuthContext';
-import { Menu, Search, Camera, CheckCheck, Volume2, VolumeX, Pin } from 'lucide-react';
+import { Menu, Search, Camera, CheckCheck, VolumeX, Pin } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { Skeleton } from '@/components/ui/skeleton';
 import NewChatDialog from '@/components/ui/NewChatDialog';
-import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
+import { ChatStoriesHeader } from '@/components/chat/ChatStoriesHeader';
 
 interface Chat {
   id: string;
@@ -71,6 +71,7 @@ const Chats = () => {
 
     const fetchChats = async () => {
       try {
+        // Fetch all chat data in parallel with optimized queries
         const { data: chatMembers, error } = await supabase
           .from('chat_members')
           .select(`
@@ -81,80 +82,115 @@ const Chats = () => {
 
         if (error) throw error;
 
-        if (chatMembers && chatMembers.length > 0) {
-          const validChats: Chat[] = [];
-          
-          for (const member of chatMembers) {
-            if (!member.chats) continue;
-            
-            const chatId = member.chats.id;
-            
-            const { data: allMembers } = await supabase
-              .from('chat_members')
-              .select('user_id')
-              .eq('chat_id', chatId);
-            
-            if (allMembers && allMembers.length === 2) {
-              const memberIds = allMembers.map(m => m.user_id);
-              if (memberIds[0] === memberIds[1]) continue;
-            }
-            
-            const { data: lastMessage } = await supabase
-              .from('messages')
-              .select('encrypted_content, attachment_type, audio_url, sent_at, sender_id, read_at')
-              .eq('chat_id', chatId)
-              .order('sent_at', { ascending: false })
-              .limit(1)
-              .maybeSingle();
-            
-            let chatData: Chat = {
-              ...member.chats,
-              last_message_content: '',
-              updated_at: lastMessage?.sent_at || member.chats.updated_at,
-              is_read: lastMessage ? (lastMessage.sender_id === user.id || !!lastMessage.read_at) : true
-            };
-            
-            if (lastMessage) {
-              if (lastMessage.audio_url) {
-                chatData.last_message_content = '🎤 Voice message';
-              } else if (lastMessage.attachment_type?.startsWith('image/')) {
-                chatData.last_message_content = '📷 Photo';
-              } else if (lastMessage.attachment_type) {
-                chatData.last_message_content = '📎 Attachment';
-              } else {
-                chatData.last_message_content = lastMessage.encrypted_content || 'Message';
-              }
-            }
-            
-            if (!member.chats.is_group && allMembers) {
-              const otherUserId = allMembers.find(m => m.user_id !== user.id)?.user_id;
-              if (otherUserId) {
-                const { data: profile } = await supabase
-                  .from('profiles')
-                  .select('id, display_name, handle, avatar_url, is_verified, is_organization_verified')
-                  .eq('id', otherUserId)
-                  .maybeSingle();
-                
-                if (profile) {
-                  chatData.other_user = profile;
-                }
-              }
-            }
-            
-            const { count: unreadCount } = await supabase
-              .from('messages')
-              .select('*', { count: 'exact', head: true })
-              .eq('chat_id', chatId)
-              .neq('sender_id', user.id)
-              .is('read_at', null);
-            
-            chatData.unread_count = unreadCount || 0;
-            validChats.push(chatData);
-          }
-          
-          validChats.sort((a, b) => new Date(b.updated_at).getTime() - new Date(a.updated_at).getTime());
-          setChats(validChats);
+        if (!chatMembers || chatMembers.length === 0) {
+          setChats([]);
+          setLoading(false);
+          return;
         }
+
+        const chatIds = chatMembers.map(m => m.chats.id);
+
+        // Batch fetch all members for all chats
+        const { data: allChatMembers } = await supabase
+          .from('chat_members')
+          .select('chat_id, user_id')
+          .in('chat_id', chatIds);
+
+        // Batch fetch last messages for all chats
+        const messagesPromises = chatIds.map(chatId =>
+          supabase
+            .from('messages')
+            .select('encrypted_content, attachment_type, audio_url, sent_at, sender_id, read_at, chat_id')
+            .eq('chat_id', chatId)
+            .order('sent_at', { ascending: false })
+            .limit(1)
+            .maybeSingle()
+        );
+
+        // Batch fetch unread counts for all chats
+        const unreadPromises = chatIds.map(chatId =>
+          supabase
+            .from('messages')
+            .select('*', { count: 'exact', head: true })
+            .eq('chat_id', chatId)
+            .neq('sender_id', user.id)
+            .is('read_at', null)
+        );
+
+        const [messagesResults, unreadResults] = await Promise.all([
+          Promise.all(messagesPromises),
+          Promise.all(unreadPromises)
+        ]);
+
+        // Get unique other user IDs
+        const otherUserIds = new Set<string>();
+        chatMembers.forEach((member) => {
+          if (!member.chats.is_group) {
+            const members = allChatMembers?.filter(m => m.chat_id === member.chats.id);
+            const otherUserId = members?.find(m => m.user_id !== user.id)?.user_id;
+            if (otherUserId) otherUserIds.add(otherUserId);
+          }
+        });
+
+        // Batch fetch all profiles
+        const { data: profiles } = await supabase
+          .from('profiles')
+          .select('id, display_name, handle, avatar_url, is_verified, is_organization_verified')
+          .in('id', Array.from(otherUserIds));
+
+        const profileMap = new Map(profiles?.map(p => [p.id, p]));
+
+        // Build chat data
+        const validChats: Chat[] = [];
+        chatMembers.forEach((member, index) => {
+          const chatId = member.chats.id;
+          const members = allChatMembers?.filter(m => m.chat_id === chatId);
+
+          // Skip self-chats
+          if (members && members.length === 2) {
+            const memberIds = members.map(m => m.user_id);
+            if (memberIds[0] === memberIds[1]) return;
+          }
+
+          const lastMessageResult = messagesResults[index];
+          const unreadResult = unreadResults[index];
+          const lastMessage = lastMessageResult.data;
+
+          let chatData: Chat = {
+            ...member.chats,
+            last_message_content: '',
+            updated_at: lastMessage?.sent_at || member.chats.updated_at,
+            is_read: lastMessage ? (lastMessage.sender_id === user.id || !!lastMessage.read_at) : true,
+            unread_count: unreadResult.count || 0
+          };
+
+          if (lastMessage) {
+            if (lastMessage.audio_url) {
+              chatData.last_message_content = '🎤 Voice message';
+            } else if (lastMessage.attachment_type?.startsWith('image/')) {
+              chatData.last_message_content = '📷 Photo';
+            } else if (lastMessage.attachment_type) {
+              chatData.last_message_content = '📎 Attachment';
+            } else {
+              chatData.last_message_content = lastMessage.encrypted_content || 'Message';
+            }
+          }
+
+          if (!member.chats.is_group) {
+            const otherUserId = members?.find(m => m.user_id !== user.id)?.user_id;
+            if (otherUserId) {
+              const profile = profileMap.get(otherUserId);
+              if (profile) {
+                chatData.other_user = profile;
+              }
+            }
+          }
+
+          validChats.push(chatData);
+        });
+
+        validChats.sort((a, b) => new Date(b.updated_at).getTime() - new Date(a.updated_at).getTime());
+        setChats(validChats);
       } catch (err) {
         console.error('Error fetching chats:', err);
       } finally {
@@ -167,7 +203,7 @@ const Chats = () => {
     const channel = supabase
       .channel('chat-updates')
       .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'messages' }, () => {
-        fetchChats(); 
+        fetchChats();
       })
       .subscribe();
 
@@ -221,26 +257,8 @@ const Chats = () => {
 
   return (
     <div className="h-screen flex flex-col bg-background">
-      {/* Header */}
-      <div className="bg-card px-4 py-3 flex items-center justify-between border-b border-border">
-        <Button variant="ghost" size="icon" className="text-muted-foreground">
-          <Menu className="h-6 w-6" />
-        </Button>
-        
-        <div className="flex items-center gap-3">
-          {/* Stories avatars */}
-          <div className="flex items-center -space-x-2">
-            <div className="h-8 w-8 rounded-full bg-primary border-2 border-card" />
-            <div className="h-8 w-8 rounded-full bg-accent border-2 border-card" />
-            <div className="h-8 w-8 rounded-full bg-secondary border-2 border-card" />
-          </div>
-          <span className="text-foreground font-semibold text-lg">3 Stories</span>
-        </div>
-        
-        <Button variant="ghost" size="icon" className="text-muted-foreground">
-          <Search className="h-5 w-5" />
-        </Button>
-      </div>
+      {/* Stories Header - Expandable */}
+      <ChatStoriesHeader />
 
       {/* Tabs */}
       <div className="bg-card px-4 py-2 flex items-center gap-6 border-b border-border">
