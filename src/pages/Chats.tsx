@@ -66,6 +66,7 @@ const Chats = () => {
   const scrollRef = useRef<HTMLDivElement>(null);
   const lastScrollY = useRef(0);
   const [shouldCollapseStories, setShouldCollapseStories] = useState(true); // Start collapsed
+  const [hideBottomNav, setHideBottomNav] = useState(false);
 
   useEffect(() => {
     if (!user) return;
@@ -217,6 +218,13 @@ const Chats = () => {
         setShouldCollapseStories(true);
       }
 
+      // Hide bottom nav when scrolling down, show when scrolling up
+      if (scrollingDown && currentScrollY > 100) {
+        setHideBottomNav(true);
+      } else if (!scrollingDown && currentScrollY < lastScrollY.current - 10) {
+        setHideBottomNav(false);
+      }
+
       // FAB visibility
       if (currentScrollY < 10) {
         setShowFab(true);
@@ -234,12 +242,19 @@ const Chats = () => {
       scrollElement.addEventListener('scroll', handleScroll, { passive: true });
     }
     
+    // Dispatch custom event to hide/show bottom nav in Layout
+    const handleNavVisibility = () => {
+      window.dispatchEvent(new CustomEvent('chat-scroll-state', { detail: { hide: hideBottomNav } }));
+    };
+    
+    handleNavVisibility();
+    
     return () => {
       if (scrollElement) {
         scrollElement.removeEventListener('scroll', handleScroll);
       }
     };
-  }, [shouldCollapseStories]);
+  }, [shouldCollapseStories, hideBottomNav]);
 
   if (loading) {
     return (

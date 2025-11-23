@@ -345,6 +345,7 @@ const ReplyItem = ({ reply, navigate, handleViewProfile }: {
                       isAffiliate={reply.profiles.is_affiliate}
                       affiliateBusinessLogo={reply.profiles.affiliated_business?.avatar_url}
                       affiliateBusinessName={reply.profiles.affiliated_business?.display_name}
+                      size="sm"
                     />
                     {reply.profiles.is_business_mode && !reply.profiles.is_affiliate && (
                       <BusinessBadge size="sm" />
@@ -754,6 +755,7 @@ const PostCard = ({ post, addReply, user, navigate, onAcknowledge, onDeletePost,
               isAffiliate={post.profiles.is_affiliate}
               affiliateBusinessLogo={post.profiles.affiliated_business?.avatar_url}
               affiliateBusinessName={post.profiles.affiliated_business?.display_name}
+              size="sm"
             />
             {post.profiles.is_business_mode && !post.profiles.is_affiliate && (
               <BusinessBadge size="sm" />
