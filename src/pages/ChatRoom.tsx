@@ -949,7 +949,7 @@ const ChatRoom = () => {
                   const message = item as Message;
                   const isOwn = message.sender_id === user?.id;
                   
-                  // Look back in the itemsWithDividers array to find the previous message
+                  // Look back to find previous message from same sender
                   let prevMessage: Message | null = null;
                   for (let i = index - 1; i >= 0; i--) {
                     if (itemsWithDividers[i].type !== 'red_envelope' && itemsWithDividers[i].type !== 'date_divider' && 'sender_id' in itemsWithDividers[i]) {
@@ -959,12 +959,23 @@ const ChatRoom = () => {
                   }
                   const isGrouped = prevMessage?.sender_id === message.sender_id;
 
+                  // Look forward to find next message to determine if this is last in group
+                  let nextMessage: Message | null = null;
+                  for (let i = index + 1; i < itemsWithDividers.length; i++) {
+                    if (itemsWithDividers[i].type !== 'red_envelope' && itemsWithDividers[i].type !== 'date_divider' && 'sender_id' in itemsWithDividers[i]) {
+                      nextMessage = itemsWithDividers[i] as Message;
+                      break;
+                    }
+                  }
+                  const isLastInGroup = nextMessage?.sender_id !== message.sender_id;
+
                   return (
                     <MessageBubble
                       key={message.id}
                       message={message}
                       isOwn={isOwn}
                       isGrouped={isGrouped}
+                      isLastInGroup={isLastInGroup}
                       isOnline={online}
                       onReply={handleReply}
                       onReaction={handleReaction}
