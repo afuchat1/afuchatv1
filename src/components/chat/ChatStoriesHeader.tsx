@@ -12,12 +12,7 @@ interface StoryUser {
   story_count: number;
 }
 
-interface ChatStoriesHeaderProps {
-  shouldCollapse?: boolean;
-  onToggleCollapse?: (collapsed: boolean) => void;
-}
-
-export const ChatStoriesHeader = ({ shouldCollapse = false, onToggleCollapse }: ChatStoriesHeaderProps) => {
+export const ChatStoriesHeader = () => {
   const { user } = useAuth();
   const navigate = useNavigate();
   const [storyUsers, setStoryUsers] = useState<StoryUser[]>([]);
@@ -26,11 +21,6 @@ export const ChatStoriesHeader = ({ shouldCollapse = false, onToggleCollapse }: 
     display_name: string;
   } | null>(null);
   const [loading, setLoading] = useState(true);
-  const [isCollapsed, setIsCollapsed] = useState(false);
-
-  useEffect(() => {
-    setIsCollapsed(shouldCollapse);
-  }, [shouldCollapse]);
 
   useEffect(() => {
     if (!user) return;
@@ -129,74 +119,23 @@ export const ChatStoriesHeader = ({ shouldCollapse = false, onToggleCollapse }: 
     navigate('/moments');
   };
 
-  const handleHeaderExpandClick = () => {
-    if (isCollapsed && onToggleCollapse) {
-      onToggleCollapse(false);
-    }
-  };
-
   return (
-    <div
-      className="sticky top-0 z-50 bg-background transition-all duration-300 ease-in-out"
-    >
-      {/* Header - tap middle section to expand when collapsed */}
+    <div className="sticky top-0 z-50 bg-background border-b border-border">
+      {/* Header */}
       <div className="flex items-center justify-between px-4 h-16">
         <button className="p-2 hover:bg-muted/20 rounded-full transition-colors">
           <Menu className="h-7 w-7 text-foreground" />
         </button>
 
-        {/* Compact overlapping bubbles - ONLY visible when collapsed */}
-        {isCollapsed && (
-          <button
-            type="button"
-            onClick={handleHeaderExpandClick}
-            className="flex items-center gap-3 overflow-hidden animate-fade-in focus:outline-none"
-          >
-            <div className="flex items-center -space-x-2">
-              {storyUsers.slice(0, 3).map((storyUser, index) => (
-                <div
-                  key={storyUser.user_id}
-                  className="h-9 w-9 rounded-full border-2 border-background bg-gradient-to-br from-cyan-400 via-teal-400 to-green-500 flex items-center justify-center overflow-hidden cursor-pointer hover:scale-110 transition-transform"
-                  style={{ zIndex: 3 - index }}
-                >
-                  {storyUser.avatar_url ? (
-                    <img
-                      src={storyUser.avatar_url}
-                      alt={storyUser.display_name}
-                      className="h-full w-full object-cover"
-                    />
-                  ) : (
-                    <span className="text-xs font-semibold text-primary-foreground">
-                      {storyUser.display_name?.charAt(0).toUpperCase()}
-                    </span>
-                  )}
-                </div>
-              ))}
-            </div>
-            <h1 className="text-lg font-semibold text-foreground">
-              {storyUsers.length} {storyUsers.length === 1 ? 'Story' : 'Stories'}
-            </h1>
-          </button>
-        )}
-
-        {/* Title when expanded */}
-        {!isCollapsed && (
-          <h1 className="text-xl font-semibold text-foreground animate-fade-in">AfuChat</h1>
-        )}
+        <h1 className="text-xl font-semibold text-foreground">AfuChat</h1>
 
         <button className="p-2 hover:bg-muted/20 rounded-full transition-colors">
           <Search className="h-6 w-6 text-foreground" />
         </button>
       </div>
 
-      {/* Stories horizontal scroll - slides closed when collapsed */}
-      <div
-        className={`overflow-hidden transition-all duration-300 ease-in-out ${
-          isCollapsed
-            ? 'max-h-0 opacity-0'
-            : 'max-h-[140px] opacity-100'
-        }`}
-      >
+      {/* Stories horizontal scroll - always visible */}
+      <div className="overflow-hidden">
         <div className="overflow-x-auto scrollbar-hide px-4 pb-4">
           <div className="flex gap-5">
             {/* My Story */}

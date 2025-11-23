@@ -65,7 +65,6 @@ const Chats = () => {
   const [showFab, setShowFab] = useState(true);
   const scrollRef = useRef<HTMLDivElement>(null);
   const lastScrollY = useRef(0);
-  const [shouldCollapseStories, setShouldCollapseStories] = useState(true); // Start collapsed
   const [hideBottomNav, setHideBottomNav] = useState(false);
 
   useEffect(() => {
@@ -212,11 +211,6 @@ const Chats = () => {
       const scrollElement = scrollRef.current;
       const currentScrollY = scrollElement.scrollTop;
       const scrollingDown = currentScrollY > lastScrollY.current;
-      
-      // Collapse stories when user scrolls down past threshold
-      if (scrollingDown && currentScrollY > 30 && !shouldCollapseStories) {
-        setShouldCollapseStories(true);
-      }
 
       // Hide bottom nav when scrolling down, show when scrolling up
       if (scrollingDown && currentScrollY > 100) {
@@ -254,7 +248,7 @@ const Chats = () => {
         scrollElement.removeEventListener('scroll', handleScroll);
       }
     };
-  }, [shouldCollapseStories, hideBottomNav]);
+  }, [hideBottomNav]);
 
   if (loading) {
     return (
@@ -266,11 +260,8 @@ const Chats = () => {
 
   return (
     <div className="h-screen flex flex-col bg-background relative overflow-hidden">
-      {/* Stories Header - Collapses on scroll down, expands when tapped */}
-      <ChatStoriesHeader 
-        shouldCollapse={shouldCollapseStories} 
-        onToggleCollapse={setShouldCollapseStories}
-      />
+      {/* Stories Header - Fixed at top */}
+      <ChatStoriesHeader />
 
       {/* Chat List Container - Main scrollable area */}
       <div 
