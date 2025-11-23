@@ -181,9 +181,8 @@ export default function SuggestedUsers() {
     return (
       <div className="min-h-screen flex items-center justify-center">
         <div className="w-full max-w-md p-4 space-y-3">
-          <Skeleton className="h-24 w-full" />
-          <Skeleton className="h-24 w-full" />
-          <Skeleton className="h-24 w-full" />
+          <Skeleton className="h-20 w-full" />
+          <Skeleton className="h-20 w-full" />
         </div>
       </div>
     );

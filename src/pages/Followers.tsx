@@ -209,14 +209,12 @@ export default function Followers() {
       <div className="max-w-2xl mx-auto">
         {loading ? (
           <div className="space-y-1">
-            {[1, 2, 3, 4, 5].map((i) => (
+            {[1, 2, 3].map((i) => (
               <div key={i} className="flex items-center gap-3 p-4">
                 <Skeleton className="h-12 w-12 rounded-full" />
                 <div className="flex-1 space-y-2">
                   <Skeleton className="h-4 w-32" />
-                  <Skeleton className="h-3 w-24" />
                 </div>
-                <Skeleton className="h-9 w-24" />
               </div>
             ))}
           </div>

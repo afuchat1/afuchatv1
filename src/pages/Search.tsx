@@ -56,16 +56,15 @@ const VerifiedBadge = ({ isVerified, isOrgVerified }: { isVerified?: boolean; is
 
 const SearchSkeleton = () => (
   <div className="space-y-3">
-    {[...Array(5)].map((_, i) => (
-      <Card key={i} className="p-4 rounded-xl shadow-md animate-pulse">
+    {[...Array(2)].map((_, i) => (
+      <div key={i} className="p-4 rounded-xl border border-border">
         <div className="flex items-center space-x-3">
           <Skeleton className="h-10 w-10 rounded-full" />
           <div className="flex-1 space-y-2">
             <Skeleton className="h-4 w-3/4" />
-            <Skeleton className="h-3 w-1/2" />
           </div>
         </div>
-      </Card>
+      </div>
     ))}
   </div>
 );
@@ -110,7 +109,7 @@ const TrendingSection = ({ onTrendClick }: { onTrendClick: (topic: string) => vo
         <h2 className="text-base font-bold text-foreground flex items-center mb-4">
           <TrendingUp className="h-5 w-5 mr-2 text-primary" /> {t('search.trendingNow')}
         </h2>
-        <Skeleton className="h-40 w-full rounded-xl" />
+        <Skeleton className="h-32 w-full rounded-xl" />
       </div>
     );
   }

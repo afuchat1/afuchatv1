@@ -816,10 +816,9 @@ const ChatRoom = () => {
   if (loading) {
     return (
       <div className="flex-1 flex items-center justify-center bg-background min-h-screen">
-        <div className="w-full max-w-md p-4 space-y-3">
-          <Skeleton className="h-16 w-full" />
-          <Skeleton className="h-96 w-full" />
-          <Skeleton className="h-16 w-full" />
+        <div className="flex flex-col items-center gap-3">
+          <Skeleton className="h-12 w-12 rounded-full" />
+          <Skeleton className="h-4 w-32" />
         </div>
       </div>
     );

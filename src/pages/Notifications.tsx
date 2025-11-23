@@ -172,12 +172,11 @@ const Notifications = () => {
     return (
       <div className="h-full flex flex-col max-w-4xl mx-auto">
         <div className="p-3 sm:p-4 space-y-3 sm:space-y-4">
-          {[...Array(10)].map((_, i) => (
+          {[...Array(3)].map((_, i) => (
             <div key={i} className="flex items-center space-x-3 sm:space-x-4">
-              <Skeleton className="h-8 w-8 sm:h-10 sm:w-10 rounded-full flex-shrink-0" />
+              <Skeleton className="h-10 w-10 rounded-full flex-shrink-0" />
               <div className="space-y-2 flex-1">
-                <Skeleton className="h-3 sm:h-4 w-3/4 max-w-[250px]" />
-                <Skeleton className="h-3 sm:h-4 w-2/3 max-w-[200px]" />
+                <Skeleton className="h-4 w-3/4" />
               </div>
             </div>
           ))}

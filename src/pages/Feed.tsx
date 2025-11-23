@@ -1934,19 +1934,11 @@ const Feed = () => {
 
   const PostSkeleton = () => (
     <div className="flex p-3 sm:p-4">
-      <Skeleton className="h-8 w-8 sm:h-10 sm:w-10 rounded-full mr-2 sm:mr-3 flex-shrink-0" />
+      <Skeleton className="h-10 w-10 rounded-full mr-3 flex-shrink-0" />
       <div className="flex-1 space-y-2">
-        <div className="flex items-center">
-          <Skeleton className="h-3 sm:h-4 w-1/4 mr-2" />
-          <Skeleton className="h-2.5 sm:h-3 w-1/6" />
-        </div>
-        <Skeleton className="h-3 sm:h-4 w-full" />
-        <Skeleton className="h-3 sm:h-4 w-5/6" />
-        <div className="flex justify-between mt-3 gap-2">
-          <Skeleton className="h-3 sm:h-4 w-10 sm:w-12" />
-          <Skeleton className="h-3 sm:h-4 w-10 sm:w-12" />
-          <Skeleton className="h-3 sm:h-4 w-10 sm:w-12" />
-        </div>
+        <Skeleton className="h-4 w-1/3" />
+        <Skeleton className="h-3 w-full" />
+        <Skeleton className="h-3 w-4/5" />
       </div>
     </div>
   );
@@ -1955,7 +1947,7 @@ const Feed = () => {
   if (loading) {
     return (
       <div className="flex flex-col h-full">
-        {[...Array(5)].map((_, i) => (
+        {[...Array(3)].map((_, i) => (
           <PostSkeleton key={i} />
         ))}
       </div>
