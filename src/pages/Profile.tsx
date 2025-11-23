@@ -738,7 +738,7 @@ const Profile = ({ mustExist = false }: ProfileProps) => {
 
 	if (loading) {
 		return (
-			<div className="h-full flex items-center justify-center">
+			<div className="min-h-screen flex items-center justify-center">
 				<CustomLoader size="lg" text={t('common.loading')} />
 			</div>
 		);
