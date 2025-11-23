@@ -72,7 +72,7 @@ const Chats = () => {
 
     const fetchChats = async () => {
       try {
-        // Fetch all chat data with member profiles in a single query
+        // Fetch only 1-1 chat data with member profiles in a single query
         const { data: chatMembers, error } = await supabase
           .from('chat_members')
           .select(`
@@ -88,7 +88,8 @@ const Chats = () => {
               )
             )
           `)
-          .eq('user_id', user.id);
+          .eq('user_id', user.id)
+          .eq('chats.is_group', false);
 
         if (error) throw error;
 
