@@ -1,6 +1,8 @@
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '@/contexts/AuthContext';
 import { useTheme } from '@/contexts/ThemeContext';
+import { ChatSettingsSheet } from './ChatSettingsSheet';
+import { useState, useEffect } from 'react';
 import { 
   MessageSquare, 
   Users, 
@@ -41,7 +43,6 @@ import { Separator } from '@/components/ui/separator';
 import { Switch } from '@/components/ui/switch';
 import { toast } from 'sonner';
 import { supabase } from '@/integrations/supabase/client';
-import { useEffect, useState } from 'react';
 
 interface ChatMenuDrawerProps {
   isOpen: boolean;
@@ -57,6 +58,8 @@ export const ChatMenuDrawer = ({ isOpen, onClose }: ChatMenuDrawerProps) => {
     handle: string;
     avatar_url: string | null;
   } | null>(null);
+  const [settingsOpen, setSettingsOpen] = useState(false);
+  const [settingsTab, setSettingsTab] = useState<string>('appearance');
 
   useEffect(() => {
     if (user) {
@@ -92,6 +95,12 @@ export const ChatMenuDrawer = ({ isOpen, onClose }: ChatMenuDrawerProps) => {
     onClose();
   };
 
+  const handleSettingsOpen = (tab: string) => {
+    setSettingsTab(tab);
+    setSettingsOpen(true);
+    onClose();
+  };
+
   const toggleTheme = () => {
     setTheme(theme === 'dark' ? 'light' : 'dark');
   };
@@ -100,61 +109,62 @@ export const ChatMenuDrawer = ({ isOpen, onClose }: ChatMenuDrawerProps) => {
     {
       title: 'Chats',
       items: [
-        { icon: MessageSquare, label: 'All Chats', path: '/chats', color: 'text-blue-500' },
-        { icon: Archive, label: 'Archived', path: '/archived-chats', color: 'text-gray-500' },
-        { icon: Star, label: 'Favorites', path: '/favorite-chats', color: 'text-yellow-500' },
-        { icon: Pin, label: 'Pinned', path: '/pinned-chats', color: 'text-purple-500' },
-        { icon: Users, label: 'New Group', path: '/new-group', color: 'text-green-500' },
-        { icon: Folder, label: 'Chat Folders', path: '/chat-folders', color: 'text-orange-500' },
-        { icon: Tag, label: 'Labels', path: '/chat-labels', color: 'text-pink-500' },
+        { icon: MessageSquare, label: 'All Chats', action: () => handleNavigation('/chats'), color: 'text-blue-500' },
+        { icon: Archive, label: 'Archived', action: () => handleNavigation('/chats'), color: 'text-gray-500' },
+        { icon: Star, label: 'Favorites', action: () => handleNavigation('/chats'), color: 'text-yellow-500' },
+        { icon: Pin, label: 'Pinned', action: () => handleNavigation('/chats'), color: 'text-purple-500' },
+        { icon: Users, label: 'New Group', action: () => handleNavigation('/chats'), color: 'text-green-500' },
+        { icon: Folder, label: 'Chat Folders', action: () => handleNavigation('/chats'), color: 'text-orange-500' },
+        { icon: Tag, label: 'Labels', action: () => handleNavigation('/chats'), color: 'text-pink-500' },
       ]
     },
     {
       title: 'Chat Appearance',
       items: [
-        { icon: Palette, label: 'Chat Themes', path: '/chat-themes', color: 'text-indigo-500' },
-        { icon: Wallpaper, label: 'Wallpapers', path: '/chat-wallpapers', color: 'text-cyan-500' },
-        { icon: Image, label: 'Bubble Style', path: '/chat-bubble-style', color: 'text-teal-500' },
-        { icon: Type, label: 'Font Size', path: '/chat-font-settings', color: 'text-amber-500' },
+        { icon: Palette, label: 'Chat Themes', action: () => handleSettingsOpen('appearance'), color: 'text-indigo-500' },
+        { icon: Wallpaper, label: 'Wallpapers', action: () => handleSettingsOpen('appearance'), color: 'text-cyan-500' },
+        { icon: Image, label: 'Bubble Style', action: () => handleSettingsOpen('appearance'), color: 'text-teal-500' },
+        { icon: Type, label: 'Font Size', action: () => handleSettingsOpen('appearance'), color: 'text-amber-500' },
       ]
     },
     {
       title: 'Chat Customization',
       items: [
-        { icon: Volume2, label: 'Chat Sounds', path: '/chat-sounds', color: 'text-red-500' },
-        { icon: Download, label: 'Auto-Download', path: '/chat-auto-download', color: 'text-emerald-500' },
-        { icon: Video, label: 'Media Quality', path: '/chat-media-quality', color: 'text-violet-500' },
-        { icon: Clock, label: 'Message Timer', path: '/chat-message-timer', color: 'text-rose-500' },
+        { icon: Volume2, label: 'Chat Sounds', action: () => handleSettingsOpen('media'), color: 'text-red-500' },
+        { icon: Download, label: 'Auto-Download', action: () => handleSettingsOpen('media'), color: 'text-emerald-500' },
+        { icon: Video, label: 'Media Quality', action: () => handleSettingsOpen('media'), color: 'text-violet-500' },
+        { icon: Clock, label: 'Message Timer', action: () => handleSettingsOpen('media'), color: 'text-rose-500' },
       ]
     },
     {
       title: 'Privacy & Storage',
       items: [
-        { icon: Lock, label: 'Chat Lock', path: '/chat-lock', color: 'text-foreground' },
-        { icon: Eye, label: 'Read Receipts', path: '/chat-read-receipts', color: 'text-foreground' },
-        { icon: Shield, label: 'Privacy Settings', path: '/settings?tab=security', color: 'text-foreground' },
-        { icon: Trash2, label: 'Clear Chat Data', path: '/chat-clear-data', color: 'text-destructive' },
+        { icon: Lock, label: 'Chat Lock', action: () => handleSettingsOpen('privacy'), color: 'text-foreground' },
+        { icon: Eye, label: 'Read Receipts', action: () => handleSettingsOpen('privacy'), color: 'text-foreground' },
+        { icon: Shield, label: 'Privacy Settings', action: () => handleNavigation('/settings?tab=security'), color: 'text-foreground' },
+        { icon: Trash2, label: 'Clear Chat Data', action: () => handleSettingsOpen('privacy'), color: 'text-destructive' },
       ]
     },
     {
       title: 'Notifications',
       items: [
-        { icon: Bell, label: 'Notification Settings', path: '/settings?tab=notifications', color: 'text-foreground' },
-        { icon: Globe, label: 'Data & Storage', path: '/settings?tab=data', color: 'text-foreground' },
+        { icon: Bell, label: 'Notification Settings', action: () => handleNavigation('/settings?tab=notifications'), color: 'text-foreground' },
+        { icon: Globe, label: 'Data & Storage', action: () => handleNavigation('/settings?tab=data'), color: 'text-foreground' },
       ]
     },
     {
       title: 'Support',
       items: [
-        { icon: HelpCircle, label: 'Help Center', path: '/support', color: 'text-foreground' },
-        { icon: Settings, label: 'Chat Settings', path: '/settings', color: 'text-foreground' },
+        { icon: HelpCircle, label: 'Help Center', action: () => handleNavigation('/support'), color: 'text-foreground' },
+        { icon: Settings, label: 'Chat Settings', action: () => handleSettingsOpen('appearance'), color: 'text-foreground' },
       ]
     }
   ];
 
   return (
-    <Sheet open={isOpen} onOpenChange={onClose}>
-      <SheetContent side="left" className="w-80 p-0 overflow-y-auto">
+    <>
+      <Sheet open={isOpen} onOpenChange={onClose}>
+        <SheetContent side="left" className="w-80 p-0 overflow-y-auto bg-background/95 backdrop-blur-xl border-r border-border/50">
         <SheetHeader className="p-6 pb-4 space-y-4">
           {/* Profile Section */}
           <div 
@@ -199,12 +209,14 @@ export const ChatMenuDrawer = ({ isOpen, onClose }: ChatMenuDrawerProps) => {
                 {section.items.map((item) => (
                   <button
                     key={item.label}
-                    onClick={() => handleNavigation(item.path)}
-                    className="w-full flex items-center gap-3 px-3 py-2.5 rounded-lg hover:bg-muted/50 transition-colors group"
+                    onClick={item.action}
+                    className="w-full flex items-center gap-3 px-3 py-2.5 rounded-lg hover:bg-accent/10 active:scale-[0.98] transition-all group animate-fade-in"
                   >
-                    <item.icon className={`h-5 w-5 ${item.color} group-hover:scale-110 transition-transform`} />
-                    <span className="font-medium text-sm">{item.label}</span>
-                    <ChevronRight className="h-4 w-4 ml-auto text-muted-foreground opacity-0 group-hover:opacity-100 transition-opacity" />
+                    <div className={`p-1.5 rounded-md ${item.color} bg-current/10 group-hover:scale-110 transition-transform`}>
+                      <item.icon className={`h-4 w-4 ${item.color}`} />
+                    </div>
+                    <span className="font-medium text-sm flex-1 text-left">{item.label}</span>
+                    <ChevronRight className="h-4 w-4 text-muted-foreground opacity-0 group-hover:opacity-100 group-hover:translate-x-1 transition-all" />
                   </button>
                 ))}
               </div>
@@ -216,13 +228,22 @@ export const ChatMenuDrawer = ({ isOpen, onClose }: ChatMenuDrawerProps) => {
           {/* Logout Button */}
           <button
             onClick={handleLogout}
-            className="w-full flex items-center gap-3 px-3 py-2.5 rounded-lg hover:bg-destructive/10 text-destructive transition-colors group"
+            className="w-full flex items-center gap-3 px-3 py-2.5 rounded-lg hover:bg-destructive/10 text-destructive active:scale-[0.98] transition-all group"
           >
-            <LogOut className="h-5 w-5 group-hover:scale-110 transition-transform" />
+            <div className="p-1.5 rounded-md bg-destructive/10 group-hover:scale-110 transition-transform">
+              <LogOut className="h-4 w-4" />
+            </div>
             <span className="font-medium text-sm">Log Out</span>
           </button>
         </div>
       </SheetContent>
     </Sheet>
+
+    <ChatSettingsSheet 
+      isOpen={settingsOpen} 
+      onClose={() => setSettingsOpen(false)} 
+      defaultTab={settingsTab}
+    />
+    </>
   );
 };
