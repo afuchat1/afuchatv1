@@ -210,10 +210,10 @@ export const MessageBubble = ({
           <div className={`flex items-end gap-2 ${isOwn ? 'flex-row-reverse' : 'flex-row'}`}>
             {/* --- Message Bubble --- */}
             <div
-              className={`shadow-sm ${
+              className={`shadow-md ${
                 isOwn
                   ? 'bg-primary text-primary-foreground'
-                  : 'bg-card text-foreground'
+                  : 'bg-card text-card-foreground border border-border/50'
               } ${
                 isLastInGroup
                   ? (isOwn 
