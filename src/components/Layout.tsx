@@ -31,6 +31,7 @@ const Layout = ({ children }: LayoutProps) => {
   const [isAffiliate, setIsAffiliate] = useState(false);
   const [isScrollingDown, setIsScrollingDown] = useState(false);
   const [lastScrollY, setLastScrollY] = useState(0);
+  const [chatScrollHide, setChatScrollHide] = useState(false);
 
   useEffect(() => {
     if (user) {
@@ -51,8 +52,17 @@ const Layout = ({ children }: LayoutProps) => {
       setLastScrollY(currentScrollY);
     };
 
+    const handleChatScroll = (e: CustomEvent) => {
+      setChatScrollHide(e.detail.hide);
+    };
+
     window.addEventListener('scroll', handleScroll, { passive: true });
-    return () => window.removeEventListener('scroll', handleScroll);
+    window.addEventListener('chat-scroll-state' as any, handleChatScroll as any);
+    
+    return () => {
+      window.removeEventListener('scroll', handleScroll);
+      window.removeEventListener('chat-scroll-state' as any, handleChatScroll as any);
+    };
   }, [lastScrollY]);
 
   const checkAdminStatus = async () => {
@@ -217,7 +227,7 @@ const Layout = ({ children }: LayoutProps) => {
       </aside>
 
       {/* Main Content */}
-      <main className="lg:ml-64 xl:ml-72 min-h-screen">
+      <main className="lg:ml-64 xl:ml-72 min-h-screen pb-20 lg:pb-0">
         <div className="max-w-2xl mx-auto border-x border-border min-h-screen">
           {children}
         </div>
@@ -226,8 +236,8 @@ const Layout = ({ children }: LayoutProps) => {
       {/* Mobile Bottom Navigation - Hidden in chat rooms */}
       {!isChatRoom && (
         <nav className={cn(
-          "lg:hidden fixed bottom-0 left-0 right-0 bg-background/95 backdrop-blur-sm z-50 transition-transform duration-300 safe-area-inset-bottom",
-          isScrollingDown ? "translate-y-full" : "translate-y-0"
+          "lg:hidden fixed bottom-0 left-0 right-0 bg-background/95 backdrop-blur-sm border-t border-border z-50 transition-transform duration-300 safe-area-inset-bottom",
+          (isScrollingDown || chatScrollHide) ? "translate-y-full" : "translate-y-0"
         )}>
           <div className="flex justify-around items-center px-2 py-2 pb-safe">
             <Link
