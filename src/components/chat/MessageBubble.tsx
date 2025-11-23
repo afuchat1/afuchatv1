@@ -1,4 +1,3 @@
-import { motion } from 'framer-motion';
 import { Check, CheckCheck, Play, Pause, Volume2, Smile, Reply, Pencil, FileText, Download, Image as ImageIcon } from 'lucide-react';
 import { Avatar } from './Avatar';
 import { Badge } from '@/components/ui/badge';
@@ -188,11 +187,7 @@ export const MessageBubble = ({
   };
 
   return (
-    <motion.div
-      drag="x"
-      dragConstraints={{ left: isOwn ? -100 : 0, right: isOwn ? 0 : 100 }}
-      dragElastic={0.1}
-      onDragEnd={handleDragEnd}
+    <div
       className={`flex w-full group ${isOwn ? 'justify-end' : 'justify-start'} relative ${
         isLastInGroup ? 'mb-2' : 'mb-0.5'
       }`}
@@ -215,7 +210,7 @@ export const MessageBubble = ({
           <div className={`flex items-end gap-2 ${isOwn ? 'flex-row-reverse' : 'flex-row'}`}>
             {/* --- Message Bubble --- */}
             <div
-              className={`relative shadow-sm ${
+              className={`shadow-sm ${
                 isOwn
                   ? 'bg-primary text-primary-foreground'
                   : 'bg-card text-foreground'
@@ -341,6 +336,6 @@ export const MessageBubble = ({
           onClose={() => setLightboxOpen(false)}
         />
       )}
-    </motion.div>
+    </div>
   );
 };
