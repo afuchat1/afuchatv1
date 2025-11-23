@@ -32,36 +32,32 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     const recordUserSession = async (session: Session) => {
       if (!session?.user || !session?.access_token) return;
       
-      try {
-        // Get browser info
-        const userAgent = navigator.userAgent;
-        const browser = userAgent.includes('Chrome') ? 'Chrome' 
-          : userAgent.includes('Firefox') ? 'Firefox'
-          : userAgent.includes('Safari') ? 'Safari'
-          : 'Unknown';
-        
-        const deviceName = /Mobile|Android|iPhone|iPad/.test(userAgent) 
-          ? 'Mobile Device' 
-          : 'Desktop';
+      // Fire and forget - don't block user experience on tracking failures
+      const userAgent = navigator.userAgent;
+      const browser = userAgent.includes('Chrome') ? 'Chrome' 
+        : userAgent.includes('Firefox') ? 'Firefox'
+        : userAgent.includes('Safari') ? 'Safari'
+        : 'Unknown';
+      
+      const deviceName = /Mobile|Android|iPhone|iPad/.test(userAgent) 
+        ? 'Mobile Device' 
+        : 'Desktop';
 
-        // Record login history
-        await supabase.rpc('record_login_attempt', {
-          p_user_id: session.user.id,
-          p_success: true,
-          p_user_agent: userAgent
-        });
+      // Record login history in background
+      Promise.resolve(supabase.rpc('record_login_attempt', {
+        p_user_id: session.user.id,
+        p_success: true,
+        p_user_agent: userAgent
+      })).catch(err => console.warn('Login tracking failed:', err));
 
-        // Create/update active session
-        await supabase.rpc('upsert_active_session', {
-          p_user_id: session.user.id,
-          p_session_token: session.access_token,
-          p_device_name: deviceName,
-          p_browser: browser,
-          p_expires_at: session.expires_at ? new Date(session.expires_at * 1000).toISOString() : null
-        });
-      } catch (error) {
-        console.error('Error recording session:', error);
-      }
+      // Create/update active session in background
+      Promise.resolve(supabase.rpc('upsert_active_session', {
+        p_user_id: session.user.id,
+        p_session_token: session.access_token,
+        p_device_name: deviceName,
+        p_browser: browser,
+        p_expires_at: session.expires_at ? new Date(session.expires_at * 1000).toISOString() : null
+      })).catch(err => console.warn('Session tracking failed:', err));
     };
 
     // Set up auth state listener FIRST to catch all events

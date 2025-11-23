@@ -8,6 +8,7 @@ import NewChatDialog from '@/components/ui/NewChatDialog';
 import { Button } from '@/components/ui/button';
 import { ChatStoriesHeader } from '@/components/chat/ChatStoriesHeader';
 import { StoryAvatar } from '@/components/moments/StoryAvatar';
+import { toast } from 'sonner';
 
 interface Chat {
   id: string;
@@ -85,6 +86,23 @@ const Chats = () => {
     if (!user) return;
 
     const fetchChats = async () => {
+      // Try to load cached chats first for instant display
+      const cachedChats = sessionStorage.getItem('cachedChats');
+      if (cachedChats) {
+        try {
+          setChats(JSON.parse(cachedChats));
+          setLoading(false); // Show cached content immediately
+        } catch (e) {
+          console.error('Failed to parse cached chats:', e);
+        }
+      }
+      
+      // Set a timeout to prevent endless loading
+      const loadingTimeout = setTimeout(() => {
+        setLoading(false);
+        toast.error('Loading is taking longer than expected. Please refresh.');
+      }, 10000); // 10 second timeout
+      
       try {
         // Fetch only 1-1 chat data with member profiles in a single query
         const { data: chatMembers, error } = await supabase
@@ -197,9 +215,12 @@ const Chats = () => {
 
         validChats.sort((a, b) => new Date(b.updated_at).getTime() - new Date(a.updated_at).getTime());
         setChats(validChats);
+        // Cache the chats for instant loading next time
+        sessionStorage.setItem('cachedChats', JSON.stringify(validChats));
       } catch (err) {
         console.error('Error fetching chats:', err);
       } finally {
+        clearTimeout(loadingTimeout); // Clear the timeout
         setLoading(false);
       }
     };
@@ -269,7 +290,7 @@ const Chats = () => {
     };
   }, [shouldCollapseStories, hideBottomNav]);
 
-  if (loading) {
+  if (loading && chats.length === 0) {
     return (
       <div className="h-screen flex items-center justify-center bg-background">
         <CustomLoader size="lg" text="Loading chats..." />
