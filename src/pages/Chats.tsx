@@ -97,11 +97,11 @@ const Chats = () => {
         }
       }
       
-      // Set a timeout to prevent endless loading
+      // Set a timeout to prevent endless loading (30 seconds)
       const loadingTimeout = setTimeout(() => {
         setLoading(false);
-        toast.error('Loading is taking longer than expected. Please refresh.');
-      }, 10000); // 10 second timeout
+        toast.error('Loading is taking longer than expected. Please check your connection.');
+      }, 30000); // 30 second timeout
       
       try {
         // Fetch only 1-1 chat data with member profiles in a single query
