@@ -269,6 +269,62 @@ export type Database = {
           },
         ]
       }
+      chat_preferences: {
+        Row: {
+          auto_download: boolean | null
+          bubble_style: string | null
+          chat_lock: boolean | null
+          chat_theme: string | null
+          created_at: string | null
+          font_size: number | null
+          id: string
+          media_quality: string | null
+          read_receipts: boolean | null
+          sounds_enabled: boolean | null
+          updated_at: string | null
+          user_id: string
+          wallpaper: string | null
+        }
+        Insert: {
+          auto_download?: boolean | null
+          bubble_style?: string | null
+          chat_lock?: boolean | null
+          chat_theme?: string | null
+          created_at?: string | null
+          font_size?: number | null
+          id?: string
+          media_quality?: string | null
+          read_receipts?: boolean | null
+          sounds_enabled?: boolean | null
+          updated_at?: string | null
+          user_id: string
+          wallpaper?: string | null
+        }
+        Update: {
+          auto_download?: boolean | null
+          bubble_style?: string | null
+          chat_lock?: boolean | null
+          chat_theme?: string | null
+          created_at?: string | null
+          font_size?: number | null
+          id?: string
+          media_quality?: string | null
+          read_receipts?: boolean | null
+          sounds_enabled?: boolean | null
+          updated_at?: string | null
+          user_id?: string
+          wallpaper?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "chat_preferences_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: true
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       chats: {
         Row: {
           created_at: string | null

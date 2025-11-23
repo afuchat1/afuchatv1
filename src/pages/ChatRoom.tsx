@@ -852,8 +852,8 @@ const ChatRoom = () => {
   return (
     <TooltipProvider delayDuration={200}>
       <div className="h-dvh flex flex-col bg-background overflow-hidden">
-        {/* WhatsApp-style Header */}
-        <div className="flex items-center gap-3 px-2 py-2 bg-card border-b border-border">
+        {/* WhatsApp-style Header - Sticky */}
+        <div className="sticky top-0 z-50 flex items-center gap-3 px-2 py-2 bg-card/95 backdrop-blur-xl border-b border-border shadow-sm">
           <Button
             variant="ghost"
             size="icon"

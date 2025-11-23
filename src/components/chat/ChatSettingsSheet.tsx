@@ -1,4 +1,7 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
+import { useAuth } from '@/contexts/AuthContext';
+import { supabase } from '@/integrations/supabase/client';
+import { toast } from 'sonner';
 import {
   Sheet,
   SheetContent,
@@ -35,6 +38,8 @@ interface ChatSettingsSheetProps {
 }
 
 export const ChatSettingsSheet = ({ isOpen, onClose, defaultTab = 'appearance' }: ChatSettingsSheetProps) => {
+  const { user } = useAuth();
+  const [loading, setLoading] = useState(true);
   const [fontSize, setFontSize] = useState([16]);
   const [autoDownload, setAutoDownload] = useState(true);
   const [readReceipts, setReadReceipts] = useState(true);
@@ -44,6 +49,88 @@ export const ChatSettingsSheet = ({ isOpen, onClose, defaultTab = 'appearance' }
   const [selectedWallpaper, setSelectedWallpaper] = useState('default');
   const [bubbleStyle, setBubbleStyle] = useState('rounded');
   const [mediaQuality, setMediaQuality] = useState('high');
+
+  // Load preferences from database
+  useEffect(() => {
+    if (user && isOpen) {
+      loadPreferences();
+    }
+  }, [user, isOpen]);
+
+  const loadPreferences = async () => {
+    if (!user) return;
+    
+    setLoading(true);
+    try {
+      const { data, error } = await supabase
+        .from('chat_preferences')
+        .select('*')
+        .eq('user_id', user.id)
+        .single();
+
+      if (error && error.code !== 'PGRST116') {
+        console.error('Error loading preferences:', error);
+        return;
+      }
+
+      if (data) {
+        setSelectedTheme(data.chat_theme);
+        setSelectedWallpaper(data.wallpaper);
+        setBubbleStyle(data.bubble_style);
+        setFontSize([data.font_size]);
+        setSounds(data.sounds_enabled);
+        setAutoDownload(data.auto_download);
+        setMediaQuality(data.media_quality);
+        setChatLock(data.chat_lock);
+        setReadReceipts(data.read_receipts);
+      }
+    } catch (error) {
+      console.error('Unexpected error loading preferences:', error);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const savePreferences = async () => {
+    if (!user) return;
+
+    try {
+      const { error } = await supabase
+        .from('chat_preferences')
+        .upsert({
+          user_id: user.id,
+          chat_theme: selectedTheme,
+          wallpaper: selectedWallpaper,
+          bubble_style: bubbleStyle,
+          font_size: fontSize[0],
+          sounds_enabled: sounds,
+          auto_download: autoDownload,
+          media_quality: mediaQuality,
+          chat_lock: chatLock,
+          read_receipts: readReceipts,
+        }, {
+          onConflict: 'user_id'
+        });
+
+      if (error) throw error;
+      
+      toast.success('Settings saved successfully');
+    } catch (error) {
+      console.error('Error saving preferences:', error);
+      toast.error('Failed to save settings');
+    }
+  };
+
+  // Auto-save when settings change
+  useEffect(() => {
+    if (!loading && user) {
+      const timeoutId = setTimeout(() => {
+        savePreferences();
+      }, 500); // Debounce saves
+
+      return () => clearTimeout(timeoutId);
+    }
+  }, [selectedTheme, selectedWallpaper, bubbleStyle, fontSize, sounds, autoDownload, mediaQuality, chatLock, readReceipts, loading]);
 
   const themes = [
     { id: 'teal', name: 'Teal Wave', color: 'bg-[hsl(174,72%,42%)]' },
@@ -356,15 +443,30 @@ export const ChatSettingsSheet = ({ isOpen, onClose, defaultTab = 'appearance' }
                     <h3 className="text-lg font-semibold text-destructive">Clear Chat Data</h3>
                   </div>
                   <div className="space-y-3">
-                    <Button variant="outline" className="w-full justify-start text-destructive hover:text-destructive hover:bg-destructive/10">
+                   <Button 
+                      variant="outline" 
+                      className="w-full justify-start text-destructive hover:text-destructive hover:bg-destructive/10"
+                      onClick={() => {
+                        sessionStorage.clear();
+                        toast.success('Cache cleared successfully');
+                      }}
+                    >
                       <Trash2 className="mr-2 h-4 w-4" />
                       Clear Cache
                     </Button>
-                    <Button variant="outline" className="w-full justify-start text-destructive hover:text-destructive hover:bg-destructive/10">
+                    <Button 
+                      variant="outline" 
+                      className="w-full justify-start text-destructive hover:text-destructive hover:bg-destructive/10"
+                      onClick={() => toast.info('Media deletion feature coming soon')}
+                    >
                       <Trash2 className="mr-2 h-4 w-4" />
                       Delete Downloaded Media
                     </Button>
-                    <Button variant="destructive" className="w-full justify-start">
+                    <Button 
+                      variant="destructive" 
+                      className="w-full justify-start"
+                      onClick={() => toast.error('This action requires confirmation')}
+                    >
                       <Trash2 className="mr-2 h-4 w-4" />
                       Delete All Messages
                     </Button>
