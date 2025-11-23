@@ -1554,6 +1554,14 @@ const Feed = () => {
     }
   }, [user]);
 
+  // Manually load next page of posts (used by scroll + button)
+  const handleLoadMore = useCallback(() => {
+    if (loadingMore || !hasMore || loading) return;
+    setLoadingMore(true);
+    fetchPosts(currentPage + 1, false);
+    setCurrentPage(prev => prev + 1);
+  }, [loadingMore, hasMore, loading, currentPage, fetchPosts]);
+
   // Save scroll position and detect bottom for pagination
   useEffect(() => {
     const handleScroll = () => {
@@ -1564,10 +1572,8 @@ const Feed = () => {
         const { scrollTop, scrollHeight, clientHeight } = feedRef.current;
         const isNearBottom = scrollTop + clientHeight >= scrollHeight - 200;
         
-        if (isNearBottom && !loadingMore && hasMore && !loading) {
-          setLoadingMore(true);
-          fetchPosts(currentPage + 1, false);
-          setCurrentPage(prev => prev + 1);
+        if (isNearBottom) {
+          handleLoadMore();
         }
       }
     };
@@ -1582,7 +1588,7 @@ const Feed = () => {
         currentRef.removeEventListener('scroll', handleScroll);
       }
     };
-  }, [loadingMore, hasMore, loading, currentPage, fetchPosts]);
+  }, [handleLoadMore]);
 
   // Listen for optimistic post events
   useEffect(() => {
@@ -2079,6 +2085,20 @@ const Feed = () => {
                     <Skeleton className="h-10 w-10 rounded-full" />
                     <Skeleton className="h-3 w-32" />
                   </div>
+                </div>
+              )}
+
+              {/* Manual load more button as fallback */}
+              {hasMore && !loadingMore && currentPosts.length > 0 && (
+                <div className="py-6 flex justify-center">
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={handleLoadMore}
+                    className="text-xs sm:text-sm"
+                  >
+                    {t('feed.loadMore') || 'Load more posts'}
+                  </Button>
                 </div>
               )}
               
