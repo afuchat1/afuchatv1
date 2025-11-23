@@ -131,17 +131,17 @@ export const MessageBubble = ({
       {/* --- Reply Preview --- */}
       {repliedMessage && (
         <div className={`flex items-start gap-2 px-3 py-2 mb-1 border-l-2 ${
-          isOwn ? 'border-white/40 bg-white/10' : 'border-primary bg-muted/50'
+          isOwn ? 'border-primary-foreground/40 bg-primary-foreground/10' : 'border-primary bg-muted/50'
         }`}>
           <Reply className="h-3 w-3 mt-0.5 flex-shrink-0 opacity-60" />
           <div className="flex flex-col min-w-0 flex-1">
             <span className={`text-xs font-medium truncate ${
-              isOwn ? 'text-white' : 'text-primary'
+              isOwn ? 'text-primary-foreground' : 'text-primary'
             }`}>
               {repliedMessage.profiles?.display_name || 'User'}
             </span>
             <span className={`text-xs truncate ${
-              isOwn ? 'text-white/80' : 'text-muted-foreground'
+              isOwn ? 'text-primary-foreground/80' : 'text-muted-foreground'
             }`}>
               {repliedMessage.audio_url ? '🎤 Voice message' : repliedMessage.encrypted_content}
             </span>
@@ -177,7 +177,7 @@ export const MessageBubble = ({
             variant="ghost"
             size="icon"
             className={`h-9 w-9 rounded-full flex-shrink-0 ${
-              isOwn ? 'hover:bg-white/20' : 'hover:bg-primary/10'
+              isOwn ? 'hover:bg-primary-foreground/20' : 'hover:bg-primary/10'
             }`}
             onClick={onToggleAudio}
           >
@@ -264,7 +264,7 @@ export const MessageBubble = ({
     if (!isOwn) return null;
     
     if (allRead) {
-      return <CheckCheck className="h-3.5 w-3.5 text-blue-500" />;
+      return <CheckCheck className="h-3.5 w-3.5 text-accent" />;
     } else if (anyDelivered) {
       return <CheckCheck className="h-3.5 w-3.5 opacity-60" />;
     }
@@ -323,7 +323,7 @@ export const MessageBubble = ({
             <div
               className={`relative shadow-sm ${
                 isOwn
-                  ? 'bg-[hsl(218,65%,60%)] text-white'
+                  ? 'bg-primary text-primary-foreground'
                   : 'bg-card text-foreground'
               } ${
                 isGrouped
