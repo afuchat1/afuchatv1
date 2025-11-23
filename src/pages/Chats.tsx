@@ -65,8 +65,8 @@ const Chats = () => {
   const [showFab, setShowFab] = useState(true);
   const scrollRef = useRef<HTMLDivElement>(null);
   const lastScrollY = useRef(0);
-  const [shouldCollapseStories, setShouldCollapseStories] = useState(true); // Start collapsed by default
-  const [hasReachedBottom, setHasReachedBottom] = useState(false);
+  const [shouldCollapseStories, setShouldCollapseStories] = useState(true); // Start collapsed
+  const touchStartY = useRef(0);
 
   useEffect(() => {
     if (!user) return;
@@ -220,51 +220,63 @@ const Chats = () => {
       
       const scrollElement = scrollRef.current;
       const currentScrollY = scrollElement.scrollTop;
-      const scrollHeight = scrollElement.scrollHeight;
-      const clientHeight = scrollElement.clientHeight;
-      const scrollingUp = currentScrollY < lastScrollY.current;
+      const scrollingDown = currentScrollY > lastScrollY.current;
       
-      // Check if near bottom (within 100px)
-      const isNearBottom = scrollHeight - (currentScrollY + clientHeight) < 100;
-      
-      if (isNearBottom) {
-        setHasReachedBottom(true);
-      }
-      
-      // Expand stories only when scrolling up AND has reached bottom
-      if (scrollingUp && hasReachedBottom && shouldCollapseStories && currentScrollY < 50) {
+      // Expand stories when at the top (scrollTop <= 5) and trying to scroll up
+      if (currentScrollY <= 5 && !scrollingDown && shouldCollapseStories) {
         setShouldCollapseStories(false);
-        setHasReachedBottom(false); // Reset so it doesn't keep expanding
       }
       
-      // Collapse when scrolling down
-      if (!scrollingUp && currentScrollY > 50 && !shouldCollapseStories) {
+      // Collapse when scrolling down past threshold
+      if (scrollingDown && currentScrollY > 30 && !shouldCollapseStories) {
         setShouldCollapseStories(true);
       }
       
-      // FAB visibility based on scroll position
+      // FAB visibility
       if (currentScrollY < 10) {
         setShowFab(true);
-      } else if (!scrollingUp && currentScrollY > 50) {
+      } else if (scrollingDown && currentScrollY > 50) {
         setShowFab(false);
-      } else if (scrollingUp) {
+      } else if (!scrollingDown) {
         setShowFab(true);
       }
       
       lastScrollY.current = currentScrollY;
     };
 
+    const handleTouchStart = (e: TouchEvent) => {
+      touchStartY.current = e.touches[0].clientY;
+    };
+
+    const handleTouchMove = (e: TouchEvent) => {
+      if (!scrollRef.current) return;
+      
+      const scrollElement = scrollRef.current;
+      const currentScrollY = scrollElement.scrollTop;
+      const touchY = e.touches[0].clientY;
+      const touchDelta = touchY - touchStartY.current;
+      
+      // Expand when at top and pulling down (touch moving down = positive delta)
+      if (currentScrollY === 0 && touchDelta > 10 && shouldCollapseStories) {
+        setShouldCollapseStories(false);
+      }
+    };
+
     const scrollElement = scrollRef.current;
     if (scrollElement) {
       scrollElement.addEventListener('scroll', handleScroll, { passive: true });
+      scrollElement.addEventListener('touchstart', handleTouchStart, { passive: true });
+      scrollElement.addEventListener('touchmove', handleTouchMove, { passive: true });
     }
     
     return () => {
       if (scrollElement) {
         scrollElement.removeEventListener('scroll', handleScroll);
+        scrollElement.removeEventListener('touchstart', handleTouchStart);
+        scrollElement.removeEventListener('touchmove', handleTouchMove);
       }
     };
-  }, [shouldCollapseStories, hasReachedBottom]);
+  }, [shouldCollapseStories]);
 
   if (loading) {
     return (
