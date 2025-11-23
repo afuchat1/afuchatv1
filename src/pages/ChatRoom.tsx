@@ -237,6 +237,13 @@ const ChatRoom = () => {
                 
                 // Mark as delivered and read if we're the recipient
                 if (user && payload.new.sender_id !== user.id) {
+                  // Update the messages table read_at
+                  await supabase
+                    .from('messages')
+                    .update({ read_at: new Date().toISOString() })
+                    .eq('id', payload.new.id);
+                  
+                  // Also update message_status
                   await supabase
                     .from('message_status')
                     .upsert({
@@ -460,6 +467,14 @@ const ChatRoom = () => {
   const markMessagesAsRead = async (messageIds: string[]) => {
     if (!user) return;
 
+    // Update the messages table read_at field
+    await supabase
+      .from('messages')
+      .update({ read_at: new Date().toISOString() })
+      .in('id', messageIds)
+      .is('read_at', null);
+
+    // Also update message_status for detailed tracking
     for (const messageId of messageIds) {
       await supabase
         .from('message_status')
