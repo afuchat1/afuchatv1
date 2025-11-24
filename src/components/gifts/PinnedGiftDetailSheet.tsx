@@ -225,13 +225,25 @@ export const PinnedGiftDetailSheet = ({ giftId, open, onOpenChange }: PinnedGift
               </div>
             )}
 
-            {/* Close Button */}
-            <Button 
-              onClick={() => onOpenChange(false)} 
-              className="w-full h-14 text-lg rounded-2xl bg-primary hover:bg-primary/90"
-            >
-              Close
-            </Button>
+            {/* Action Buttons */}
+            <div className="grid grid-cols-2 gap-3">
+              <Button 
+                onClick={() => onOpenChange(false)} 
+                variant="outline"
+                className="h-14 text-lg rounded-2xl"
+              >
+                Close
+              </Button>
+              <Button 
+                onClick={() => {
+                  onOpenChange(false);
+                  window.location.href = `/gifts/${giftId}`;
+                }}
+                className="h-14 text-lg rounded-2xl bg-primary hover:bg-primary/90"
+              >
+                Learn More
+              </Button>
+            </div>
           </div>
         ) : null}
       </SheetContent>
