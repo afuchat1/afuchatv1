@@ -434,7 +434,11 @@ export default function Shop() {
                 )}
 
                 {!user && (
-                  <Button variant="outline" className="w-full h-10 font-semibold text-sm" disabled>
+                  <Button
+                    onClick={() => navigate('/auth/signin')}
+                    variant="outline"
+                    className="w-full h-10 font-semibold text-sm"
+                  >
                     Sign in to purchase
                   </Button>
                 )}
