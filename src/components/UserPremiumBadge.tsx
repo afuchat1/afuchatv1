@@ -8,7 +8,7 @@ interface UserPremiumBadgeProps {
 }
 
 export const UserPremiumBadge = ({ userId, size = 'md', className = '' }: UserPremiumBadgeProps) => {
-  const { isPremium, loading } = usePremiumStatus();
+  const { isPremium, loading } = usePremiumStatus(userId);
 
   if (loading || !isPremium) {
     return null;
