@@ -150,7 +150,7 @@ export const PinnedGiftDetailSheet = ({ giftId, open, onOpenChange }: PinnedGift
 
             {/* Gift Name */}
             <div className="text-center space-y-2">
-              <h2 className="text-3xl font-bold">{gift.name}</h2>
+              <h2 className="text-3xl font-bold truncate">{gift.name}</h2>
               <p className="text-muted-foreground">Collectible #{gift.id.slice(0, 8)}</p>
             </div>
 

@@ -158,11 +158,11 @@ export const GiftMarketplaceCard = ({ listing, onPurchaseComplete }: GiftMarketp
               <div className="absolute inset-0 bg-gradient-to-br from-primary/20 to-accent/20 rounded-full blur-xl" />
               <div className="relative text-6xl p-4 bg-gradient-to-br from-muted/50 to-muted/30 rounded-full">
                 {listing.gift.emoji}
-              </div>
             </div>
-            <h3 className="text-xl font-bold">{listing.gift.name}</h3>
-            <Badge className={getRarityColor(listing.gift.rarity)}>
-              {listing.gift.rarity}
+          </div>
+          <h3 className="text-xl font-bold truncate">{listing.gift.name}</h3>
+          <Badge className={getRarityColor(listing.gift.rarity)}>
+            {listing.gift.rarity}
             </Badge>
             {listing.gift.description && (
               <p className="text-sm text-muted-foreground line-clamp-2">

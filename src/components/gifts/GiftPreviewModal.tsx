@@ -96,9 +96,9 @@ export const GiftPreviewModal = ({ gift, open, onOpenChange, onSendGift }: GiftP
             <SheetHeader>
               <div className="flex items-start justify-between gap-4">
                 <div className="space-y-2 flex-1">
-                  <SheetTitle className="text-2xl font-bold flex items-center gap-2">
-                    {gift.name}
-                    <Badge className={`${getRarityColor(gift.rarity)} text-xs`}>
+                  <SheetTitle className="text-2xl font-bold flex items-center gap-2 truncate">
+                    <span className="truncate">{gift.name}</span>
+                    <Badge className={`${getRarityColor(gift.rarity)} text-xs flex-shrink-0`}>
                       {gift.rarity}
                     </Badge>
                   </SheetTitle>

@@ -189,7 +189,7 @@ export const GiftDetailSheet = ({ giftId, open, onOpenChange, recipientId, recip
                     size="lg"
                   />
                   <div>
-                    <h2 className="text-xl font-bold">{gift.name}</h2>
+                    <h2 className="text-xl font-bold truncate">{gift.name}</h2>
                     <Badge className={getRarityColor(gift.rarity)}>{gift.rarity}</Badge>
                   </div>
                 </div>

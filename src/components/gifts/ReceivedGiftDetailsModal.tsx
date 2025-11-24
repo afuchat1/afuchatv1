@@ -71,7 +71,7 @@ export const ReceivedGiftDetailsModal = ({
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="max-w-md max-h-[85vh] overflow-y-auto p-0 rounded-t-3xl">
         <DialogHeader className="p-6 pb-4 border-b border-border/40">
-          <DialogTitle className="text-center text-xl font-bold">{extractText(gift.gift.name)}</DialogTitle>
+          <DialogTitle className="text-center text-xl font-bold truncate">{extractText(gift.gift.name)}</DialogTitle>
         </DialogHeader>
 
         <div className="px-6 py-4 space-y-4">

@@ -303,7 +303,7 @@ export default function Shop() {
                       </Badge>
                     </div>
                   </div>
-                  <h3 className="text-base font-bold tracking-tight">
+                  <h3 className="text-base font-bold tracking-tight truncate">
                     {selectedListing.gift.name}
                   </h3>
                   {selectedListing.gift.description && (

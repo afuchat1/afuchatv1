@@ -209,7 +209,7 @@ export const GiftStatisticsSheet = ({ giftId, open, onOpenChange }: GiftStatisti
                 </div>
               </div>
               <div className="text-center space-y-2">
-                <h2 className="text-3xl font-bold">{gift.name}</h2>
+                <h2 className="text-3xl font-bold truncate">{gift.name}</h2>
                 <div className="flex items-center justify-center gap-2">
                   <span className="font-semibold capitalize">{gift.rarity}</span>
                   <Badge variant="secondary" className={getRarityColor(gift.rarity)}>
