@@ -1,4 +1,5 @@
 import React from 'react';
+import { usePremiumStatus } from '@/hooks/usePremiumStatus';
 
 interface VerifiedBadgeProps {
   isVerified?: boolean;
@@ -7,6 +8,7 @@ interface VerifiedBadgeProps {
   affiliateBusinessLogo?: string | null;
   affiliateBusinessName?: string | null;
   size?: 'sm' | 'md' | 'lg';
+  userId?: string;
 }
 
 export function VerifiedBadge({
@@ -15,8 +17,10 @@ export function VerifiedBadge({
   isAffiliate,
   affiliateBusinessLogo,
   affiliateBusinessName,
-  size = 'md'
+  size = 'md',
+  userId
 }: VerifiedBadgeProps) {
+  const { isPremium } = usePremiumStatus();
   const sizeClasses = {
     sm: 'w-4 h-4',
     md: 'w-5 h-5',
@@ -65,7 +69,8 @@ export function VerifiedBadge({
     );
   }
 
-  if (isVerified) {
+  // Show verified badge only if user has active premium subscription
+  if (isVerified && isPremium) {
     return (
       <svg
         viewBox="0 0 22 22"

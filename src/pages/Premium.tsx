@@ -192,17 +192,23 @@ export default function Premium() {
 
         {/* Current Subscription Status */}
         {currentSubscription && (
-          <Card className="p-6 mb-8 border-primary">
+          <Card className="p-6 mb-8 border-primary bg-gradient-to-br from-primary/5 to-transparent">
             <div className="flex items-start justify-between">
               <div className="flex items-center gap-3">
                 <div className="p-3 bg-primary/20 rounded-full">
                   <Crown className="h-6 w-6 text-primary" />
                 </div>
                 <div>
-                  <Badge className="mb-2">Active Premium</Badge>
-                  <p className="text-sm text-muted-foreground flex items-center gap-2">
+                  <div className="flex items-center gap-2 mb-2">
+                    <Badge className="bg-primary">Active Premium</Badge>
+                    <Badge variant="outline" className="text-xs">Verified</Badge>
+                  </div>
+                  <p className="text-sm text-muted-foreground flex items-center gap-2 mb-1">
                     <Calendar className="h-4 w-4" />
-                    Expires on {formatDate(currentSubscription.expires_at)}
+                    Subscription ends: <span className="font-semibold text-foreground">{formatDate(currentSubscription.expires_at)}</span>
+                  </p>
+                  <p className="text-xs text-muted-foreground">
+                    Your verified badge and premium features will expire on this date
                   </p>
                 </div>
               </div>

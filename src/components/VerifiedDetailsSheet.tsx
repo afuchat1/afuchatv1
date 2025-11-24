@@ -60,7 +60,7 @@ export function VerifiedDetailsSheet({
                   {isOrgVerified ? (
                     <>This account is verified because it's an official organization on AfuChat.</>
                   ) : (
-                    <>This account is verified because it's a notable account on AfuChat.</>
+                    <>This account is verified through premium subscription on AfuChat.</>
                   )}
                 </p>
               </div>
@@ -104,19 +104,19 @@ export function VerifiedDetailsSheet({
                 <div className="space-y-3 text-sm text-muted-foreground">
                   <div className="flex gap-3">
                     <CheckCircle2 className="w-5 h-5 flex-shrink-0 text-primary mt-0.5" />
-                    <p>Be an active and notable member of the AfuChat community</p>
+                    <p>Subscribe to premium to get instant verification</p>
                   </div>
                   <div className="flex gap-3">
                     <CheckCircle2 className="w-5 h-5 flex-shrink-0 text-primary mt-0.5" />
-                    <p>Have a complete profile with authentic information</p>
+                    <p>Access exclusive features like Gift Marketplace and AI Chat</p>
                   </div>
                   <div className="flex gap-3">
                     <CheckCircle2 className="w-5 h-5 flex-shrink-0 text-primary mt-0.5" />
-                    <p>Businesses and influencers with established presence can apply</p>
+                    <p>Send Red Envelopes and create Stories & Moments</p>
                   </div>
                   <div className="flex gap-3">
                     <CheckCircle2 className="w-5 h-5 flex-shrink-0 text-primary mt-0.5" />
-                    <p>Provide supporting documents (business registration, social media links, etc.)</p>
+                    <p>Show your premium status with a crown badge on your profile</p>
                   </div>
                 </div>
 
@@ -125,11 +125,11 @@ export function VerifiedDetailsSheet({
                   className="w-full mt-4 h-12 font-semibold rounded-xl"
                   size="lg"
                 >
-                  Apply for Verification
+                  Get Premium & Verified
                 </Button>
 
                 <p className="text-xs text-center text-muted-foreground">
-                  Applications are reviewed by our team. Processing may take 3-5 business days.
+                  Subscribe to premium to get instant verification and access exclusive features
                 </p>
               </div>
             )}
