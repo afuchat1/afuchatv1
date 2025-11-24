@@ -96,7 +96,7 @@ export const PinnedGiftsDisplay = ({ userId, className = '' }: PinnedGiftsDispla
                 giftName={pinnedGift.gift.name}
                 emoji={pinnedGift.gift.emoji}
                 rarity={pinnedGift.gift.rarity}
-                size="sm"
+                size="xs"
                 className="pointer-events-none"
               />
             </motion.div>

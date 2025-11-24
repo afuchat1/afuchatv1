@@ -7,7 +7,7 @@ interface GiftImageProps {
   giftName: string;
   emoji: string;
   rarity: string;
-  size?: 'sm' | 'md' | 'lg' | 'xl';
+  size?: 'xs' | 'sm' | 'md' | 'lg' | 'xl';
   className?: string;
 }
 
@@ -22,6 +22,7 @@ export const GiftImage = ({
   const { imageUrl, isLoading, error } = useGiftImage(giftId, giftName, emoji, rarity);
 
   const sizeClasses = {
+    xs: 'w-8 h-8',
     sm: 'w-12 h-12',
     md: 'w-20 h-20',
     lg: 'w-32 h-32',
