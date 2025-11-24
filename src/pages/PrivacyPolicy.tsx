@@ -52,23 +52,53 @@ const PrivacyPolicy = () => {
           <section className="mb-8">
             <h2 className="text-2xl font-semibold mb-4">{t('privacy.infoCollected.title')}</h2>
             <h3 className="text-xl font-semibold mb-3 mt-6">{t('privacy.infoCollected.direct')}</h3>
+            <p className="text-foreground/90 leading-relaxed mb-4">
+              {t('privacy.infoCollected.directDesc')}
+            </p>
             <h3 className="text-xl font-semibold mb-3 mt-6">{t('privacy.infoCollected.automatic')}</h3>
+            <p className="text-foreground/90 leading-relaxed mb-4">
+              {t('privacy.infoCollected.automaticDesc')}
+            </p>
             <h3 className="text-xl font-semibold mb-3 mt-6">{t('privacy.infoCollected.thirdParty')}</h3>
+            <p className="text-foreground/90 leading-relaxed mb-4">
+              {t('privacy.infoCollected.thirdPartyDesc')}
+            </p>
           </section>
 
           <section className="mb-8">
             <h2 className="text-2xl font-semibold mb-4">{t('privacy.usage.title')}</h2>
             <h3 className="text-xl font-semibold mb-3 mt-6">{t('privacy.usage.provision')}</h3>
+            <p className="text-foreground/90 leading-relaxed mb-4">
+              {t('privacy.usage.provisionDesc')}
+            </p>
             <h3 className="text-xl font-semibold mb-3 mt-6">{t('privacy.usage.improvement')}</h3>
+            <p className="text-foreground/90 leading-relaxed mb-4">
+              {t('privacy.usage.improvementDesc')}
+            </p>
             <h3 className="text-xl font-semibold mb-3 mt-6">{t('privacy.usage.safety')}</h3>
+            <p className="text-foreground/90 leading-relaxed mb-4">
+              {t('privacy.usage.safetyDesc')}
+            </p>
             <h3 className="text-xl font-semibold mb-3 mt-6">{t('privacy.usage.communications')}</h3>
+            <p className="text-foreground/90 leading-relaxed mb-4">
+              {t('privacy.usage.communicationsDesc')}
+            </p>
             <h3 className="text-xl font-semibold mb-3 mt-6">{t('privacy.usage.legal')}</h3>
+            <p className="text-foreground/90 leading-relaxed mb-4">
+              {t('privacy.usage.legalDesc')}
+            </p>
           </section>
 
           <section className="mb-8">
             <h2 className="text-2xl font-semibold mb-4">{t('privacy.ai.title')}</h2>
             <h3 className="text-xl font-semibold mb-3 mt-6">{t('privacy.ai.features')}</h3>
+            <p className="text-foreground/90 leading-relaxed mb-4">
+              {t('privacy.ai.featuresDesc')}
+            </p>
             <h3 className="text-xl font-semibold mb-3 mt-6">{t('privacy.ai.processing')}</h3>
+            <p className="text-foreground/90 leading-relaxed mb-4">
+              {t('privacy.ai.processingDesc')}
+            </p>
           </section>
 
           <section className="mb-8">
@@ -76,20 +106,47 @@ const PrivacyPolicy = () => {
             <p className="text-foreground/90 leading-relaxed mb-4">
               <strong>{t('privacy.sharing.noSell')}</strong>
             </p>
+            <p className="text-foreground/90 leading-relaxed mb-4">
+              {t('privacy.sharing.shareDesc')}
+            </p>
           </section>
 
           <section className="mb-8">
             <h2 className="text-2xl font-semibold mb-4">{t('privacy.security.title')}</h2>
+            <p className="text-foreground/90 leading-relaxed mb-4">
+              {t('privacy.security.securityIntro')}
+            </p>
             <h3 className="text-xl font-semibold mb-3 mt-6">{t('privacy.security.technical')}</h3>
+            <p className="text-foreground/90 leading-relaxed mb-4">
+              {t('privacy.security.technicalDesc')}
+            </p>
             <h3 className="text-xl font-semibold mb-3 mt-6">{t('privacy.security.organizational')}</h3>
+            <p className="text-foreground/90 leading-relaxed mb-4">
+              {t('privacy.security.organizationalDesc')}
+            </p>
           </section>
 
           <section className="mb-8">
             <h2 className="text-2xl font-semibold mb-4">{t('privacy.rights.title')}</h2>
+            <p className="text-foreground/90 leading-relaxed mb-4">
+              {t('privacy.rights.rightsIntro')}
+            </p>
             <h3 className="text-xl font-semibold mb-3 mt-6">{t('privacy.rights.access')}</h3>
+            <p className="text-foreground/90 leading-relaxed mb-4">
+              {t('privacy.rights.accessDesc')}
+            </p>
             <h3 className="text-xl font-semibold mb-3 mt-6">{t('privacy.rights.correction')}</h3>
+            <p className="text-foreground/90 leading-relaxed mb-4">
+              {t('privacy.rights.correctionDesc')}
+            </p>
             <h3 className="text-xl font-semibold mb-3 mt-6">{t('privacy.rights.deletion')}</h3>
+            <p className="text-foreground/90 leading-relaxed mb-4">
+              {t('privacy.rights.deletionDesc')}
+            </p>
             <h3 className="text-xl font-semibold mb-3 mt-6">{t('privacy.rights.control')}</h3>
+            <p className="text-foreground/90 leading-relaxed mb-4">
+              {t('privacy.rights.controlDesc')}
+            </p>
           </section>
 
           <section className="mb-8">

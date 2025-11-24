@@ -51,12 +51,18 @@ const TermsOfUse = () => {
             <p className="text-foreground/90 leading-relaxed mb-4">
               {t('terms.service.intro')}
             </p>
+            <p className="text-foreground/90 leading-relaxed mb-4">
+              {t('terms.service.serviceDesc')}
+            </p>
           </section>
 
           <section className="mb-8">
             <h2 className="text-2xl font-semibold mb-4">{t('terms.accounts.title')}</h2>
             <p className="text-foreground/90 leading-relaxed mb-4">
               {t('terms.accounts.requirements')}
+            </p>
+            <p className="text-foreground/90 leading-relaxed mb-4">
+              {t('terms.accounts.accountDesc')}
             </p>
           </section>
 
@@ -65,7 +71,13 @@ const TermsOfUse = () => {
             <p className="text-foreground/90 leading-relaxed mb-4">
               {t('terms.content.ownership')}
             </p>
+            <p className="text-foreground/90 leading-relaxed mb-4">
+              {t('terms.content.license')}
+            </p>
             <h3 className="text-xl font-semibold mb-3 mt-6">{t('terms.content.prohibited')}</h3>
+            <p className="text-foreground/90 leading-relaxed mb-4">
+              {t('terms.content.prohibitedDesc')}
+            </p>
           </section>
 
           <section className="mb-8">
@@ -73,12 +85,18 @@ const TermsOfUse = () => {
             <p className="text-foreground/90 leading-relaxed mb-4">
               {t('terms.aiContent.disclaimer')}
             </p>
+            <p className="text-foreground/90 leading-relaxed mb-4">
+              {t('terms.aiContent.aiDesc')}
+            </p>
           </section>
 
           <section className="mb-8">
             <h2 className="text-2xl font-semibold mb-4">{t('terms.virtualCurrency.title')}</h2>
             <p className="text-foreground/90 leading-relaxed mb-4">
               {t('terms.virtualCurrency.noRealValue')}
+            </p>
+            <p className="text-foreground/90 leading-relaxed mb-4">
+              {t('terms.virtualCurrency.currencyDesc')}
             </p>
           </section>
 
@@ -94,12 +112,18 @@ const TermsOfUse = () => {
             <p className="text-foreground/90 leading-relaxed mb-4">
               {t('terms.moderation.rights')}
             </p>
+            <p className="text-foreground/90 leading-relaxed mb-4">
+              {t('terms.moderation.moderationDesc')}
+            </p>
           </section>
 
           <section className="mb-8">
             <h2 className="text-2xl font-semibold mb-4">{t('terms.termination.title')}</h2>
             <p className="text-foreground/90 leading-relaxed mb-4">
               {t('terms.termination.rights')}
+            </p>
+            <p className="text-foreground/90 leading-relaxed mb-4">
+              {t('terms.termination.terminationDesc')}
             </p>
           </section>
 
@@ -108,12 +132,18 @@ const TermsOfUse = () => {
             <p className="text-foreground/90 leading-relaxed mb-4">
               {t('terms.disclaimer.asIs')}
             </p>
+            <p className="text-foreground/90 leading-relaxed mb-4">
+              {t('terms.disclaimer.disclaimerDesc')}
+            </p>
           </section>
 
           <section className="mb-8">
             <h2 className="text-2xl font-semibold mb-4">{t('terms.liability.title')}</h2>
             <p className="text-foreground/90 leading-relaxed mb-4">
               {t('terms.liability.limited')}
+            </p>
+            <p className="text-foreground/90 leading-relaxed mb-4">
+              {t('terms.liability.liabilityDesc')}
             </p>
           </section>
 
