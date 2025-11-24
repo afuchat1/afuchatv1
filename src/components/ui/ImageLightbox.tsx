@@ -7,7 +7,7 @@ import { toast } from 'sonner';
 interface ImageLightboxProps {
   images: Array<{ url: string; alt?: string }>;
   initialIndex: number;
-  onClose: () => void;
+  onClose: (e?: React.MouseEvent) => void;
 }
 
 export const ImageLightbox = ({ images, initialIndex, onClose }: ImageLightboxProps) => {
@@ -30,12 +30,16 @@ export const ImageLightbox = ({ images, initialIndex, onClose }: ImageLightboxPr
     return () => window.removeEventListener('keydown', handleKeyDown);
   }, [currentIndex]);
 
-  const goToPrevious = () => {
+  const goToPrevious = (e?: React.MouseEvent) => {
+    e?.stopPropagation();
+    e?.preventDefault();
     setCurrentIndex((prev) => (prev === 0 ? images.length - 1 : prev - 1));
     resetTransform();
   };
 
-  const goToNext = () => {
+  const goToNext = (e?: React.MouseEvent) => {
+    e?.stopPropagation();
+    e?.preventDefault();
     setCurrentIndex((prev) => (prev === images.length - 1 ? 0 : prev + 1));
     resetTransform();
   };
@@ -105,7 +109,9 @@ export const ImageLightbox = ({ images, initialIndex, onClose }: ImageLightboxPr
     }
   };
 
-  const handleShare = async () => {
+  const handleShare = async (e: React.MouseEvent) => {
+    e.stopPropagation();
+    e.preventDefault();
     const currentImage = images[currentIndex];
     if (navigator.share) {
       try {
@@ -122,7 +128,9 @@ export const ImageLightbox = ({ images, initialIndex, onClose }: ImageLightboxPr
     }
   };
 
-  const handleDownload = async () => {
+  const handleDownload = async (e: React.MouseEvent) => {
+    e.stopPropagation();
+    e.preventDefault();
     try {
       const currentImage = images[currentIndex];
       const response = await fetch(currentImage.url);
@@ -141,8 +149,26 @@ export const ImageLightbox = ({ images, initialIndex, onClose }: ImageLightboxPr
     }
   };
 
+  const handleClose = (e: React.MouseEvent) => {
+    e.stopPropagation();
+    e.preventDefault();
+    onClose(e);
+  };
+
+  const handleBackgroundClick = (e: React.MouseEvent) => {
+    // Only close if clicking the background, not the image
+    if (e.target === e.currentTarget) {
+      e.stopPropagation();
+      e.preventDefault();
+      onClose(e);
+    }
+  };
+
   return (
-    <div className="fixed inset-0 z-50 bg-black/95 flex items-center justify-center">
+    <div 
+      className="fixed inset-0 z-50 bg-black/95 flex items-center justify-center"
+      onClick={handleBackgroundClick}
+    >
       <div className="absolute top-4 right-4 flex gap-2 z-10">
         <Button variant="ghost" size="icon" onClick={handleDownload} className="bg-background/10 hover:bg-background/20 text-white">
           <Download className="h-5 w-5" />
@@ -150,7 +176,7 @@ export const ImageLightbox = ({ images, initialIndex, onClose }: ImageLightboxPr
         <Button variant="ghost" size="icon" onClick={handleShare} className="bg-background/10 hover:bg-background/20 text-white">
           <Share2 className="h-5 w-5" />
         </Button>
-        <Button variant="ghost" size="icon" onClick={onClose} className="bg-background/10 hover:bg-background/20 text-white">
+        <Button variant="ghost" size="icon" onClick={handleClose} className="bg-background/10 hover:bg-background/20 text-white">
           <X className="h-5 w-5" />
         </Button>
       </div>
@@ -203,7 +229,12 @@ export const ImageLightbox = ({ images, initialIndex, onClose }: ImageLightboxPr
             {images.map((_, index) => (
               <button
                 key={index}
-                onClick={() => { setCurrentIndex(index); resetTransform(); }}
+                onClick={(e) => { 
+                  e.stopPropagation(); 
+                  e.preventDefault(); 
+                  setCurrentIndex(index); 
+                  resetTransform(); 
+                }}
                 className={cn(
                   'h-2 rounded-full transition-all',
                   index === currentIndex ? 'bg-white w-8' : 'bg-white/40 w-2'

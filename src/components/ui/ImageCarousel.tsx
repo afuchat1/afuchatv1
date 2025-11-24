@@ -130,7 +130,11 @@ export const ImageCarousel = ({ images, className }: ImageCarouselProps) => {
         <ImageLightbox
           images={imageObjects}
           initialIndex={lightboxIndex}
-          onClose={() => setLightboxOpen(false)}
+          onClose={(e) => {
+            e?.stopPropagation();
+            e?.preventDefault();
+            setLightboxOpen(false);
+          }}
         />
       )}
     </>
