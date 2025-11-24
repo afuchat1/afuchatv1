@@ -67,38 +67,34 @@ const SheetContent = React.forwardRef<React.ElementRef<typeof SheetPrimitive.Con
       }
     };
 
+    const content = isBottom ? (
+      <motion.div
+        drag="y"
+        dragConstraints={{ top: 0, bottom: 0 }}
+        dragElastic={{ top: 0, bottom: 0.2 }}
+        onDragStart={() => setIsDragging(true)}
+        onDragEnd={handleDragEnd}
+        className="w-full"
+      >
+        {/* Drag handle indicator */}
+        <div className="flex justify-center pt-2 pb-4">
+          <div className="w-12 h-1.5 rounded-full bg-muted-foreground/20" />
+        </div>
+        {children}
+      </motion.div>
+    ) : (
+      children
+    );
+
     return (
       <SheetPortal>
         <SheetOverlay />
-        <SheetPrimitive.Content ref={ref} className={cn(sheetVariants({ side }), className)} {...props} asChild={isBottom}>
-          {isBottom ? (
-            <motion.div
-              drag="y"
-              dragConstraints={{ top: 0, bottom: 0 }}
-              dragElastic={{ top: 0, bottom: 0.2 }}
-              onDragStart={() => setIsDragging(true)}
-              onDragEnd={handleDragEnd}
-              className="relative"
-            >
-              {/* Drag handle indicator */}
-              <div className="flex justify-center pt-2 pb-4">
-                <div className="w-12 h-1.5 rounded-full bg-muted-foreground/20" />
-              </div>
-              {children}
-              <SheetPrimitive.Close className="absolute right-4 top-4 rounded-sm opacity-70 ring-offset-background transition-opacity data-[state=open]:bg-secondary hover:opacity-100 focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 disabled:pointer-events-none">
-                <X className="h-4 w-4" />
-                <span className="sr-only">Close</span>
-              </SheetPrimitive.Close>
-            </motion.div>
-          ) : (
-            <>
-              {children}
-              <SheetPrimitive.Close className="absolute right-4 top-4 rounded-sm opacity-70 ring-offset-background transition-opacity data-[state=open]:bg-secondary hover:opacity-100 focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 disabled:pointer-events-none">
-                <X className="h-4 w-4" />
-                <span className="sr-only">Close</span>
-              </SheetPrimitive.Close>
-            </>
-          )}
+        <SheetPrimitive.Content ref={ref} className={cn(sheetVariants({ side }), className)} {...props}>
+          {content}
+          <SheetPrimitive.Close className="absolute right-4 top-4 rounded-sm opacity-70 ring-offset-background transition-opacity data-[state=open]:bg-secondary hover:opacity-100 focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 disabled:pointer-events-none">
+            <X className="h-4 w-4" />
+            <span className="sr-only">Close</span>
+          </SheetPrimitive.Close>
         </SheetPrimitive.Content>
       </SheetPortal>
     );
