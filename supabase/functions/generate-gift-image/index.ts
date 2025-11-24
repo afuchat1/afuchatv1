@@ -17,9 +17,9 @@ serve(async (req) => {
       throw new Error('Gift name and emoji are required');
     }
 
-    const OPENAI_API_KEY = Deno.env.get('OPENAI_API_KEY');
-    if (!OPENAI_API_KEY) {
-      throw new Error('OPENAI_API_KEY is not configured');
+    const RUNWARE_API_KEY = Deno.env.get('RUNWARE_API_KEY');
+    if (!RUNWARE_API_KEY) {
+      throw new Error('RUNWARE_API_KEY is not configured');
     }
 
     // Create a detailed prompt based on rarity with better visual descriptions
@@ -48,33 +48,42 @@ Requirements:
 
 Make this look like an expensive digital gift that someone would be excited to receive!`;
 
-    console.log('Generating image with OpenAI:', prompt);
+    console.log('Generating image with Runware:', prompt);
 
-    const response = await fetch("https://api.openai.com/v1/images/generations", {
+    const response = await fetch("https://api.runware.ai/v1", {
       method: "POST",
       headers: {
-        "Authorization": `Bearer ${OPENAI_API_KEY}`,
         "Content-Type": "application/json",
       },
-      body: JSON.stringify({
-        model: "gpt-image-1",
-        prompt: prompt,
-        n: 1,
-        size: "1024x1024",
-        quality: "high",
-        background: "transparent",
-        output_format: "png"
-      })
+      body: JSON.stringify([
+        {
+          taskType: "authentication",
+          apiKey: RUNWARE_API_KEY
+        },
+        {
+          taskType: "imageInference",
+          taskUUID: crypto.randomUUID(),
+          positivePrompt: prompt,
+          width: 512,
+          height: 512,
+          model: "runware:100@1",
+          numberResults: 1,
+          outputFormat: "PNG",
+          CFGScale: 1,
+          scheduler: "FlowMatchEulerDiscreteScheduler",
+          steps: 4
+        }
+      ])
     });
 
     if (!response.ok) {
       const errorText = await response.text();
-      console.error('OpenAI API error:', response.status, errorText);
-      throw new Error(`OpenAI API error: ${response.status}`);
+      console.error('Runware API error:', response.status, errorText);
+      throw new Error(`Runware API error: ${response.status}`);
     }
 
     const data = await response.json();
-    const imageUrl = data.data?.[0]?.b64_json ? `data:image/png;base64,${data.data[0].b64_json}` : null;
+    const imageUrl = data.data?.find((item: any) => item.taskType === 'imageInference')?.imageURL;
 
     if (!imageUrl) {
       throw new Error('No image data in response');
