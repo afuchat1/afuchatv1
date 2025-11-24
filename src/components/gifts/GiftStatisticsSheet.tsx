@@ -11,6 +11,7 @@ import { Skeleton } from '@/components/ui/skeleton';
 import { Separator } from '@/components/ui/separator';
 import { motion } from 'framer-motion';
 import { TrendingUp, Users, Sparkles, Calendar } from 'lucide-react';
+import { GiftImage } from './GiftImage';
 
 interface GiftStats {
   current_price: number;
@@ -204,8 +205,14 @@ export const GiftStatisticsSheet = ({ giftId, open, onOpenChange }: GiftStatisti
             >
               <div className="relative">
                 <div className="absolute inset-0 bg-gradient-to-br from-primary/30 to-accent/30 rounded-full blur-2xl animate-pulse" />
-                <div className="relative text-8xl p-8 bg-gradient-to-br from-muted/50 to-muted/30 rounded-full border-4 border-primary/20 shadow-2xl">
-                  {gift.emoji}
+                <div className="relative p-8">
+                  <GiftImage
+                    giftId={gift.id}
+                    giftName={gift.name}
+                    emoji={gift.emoji}
+                    rarity={gift.rarity}
+                    size="xl"
+                  />
                 </div>
               </div>
               <div className="text-center space-y-2">
