@@ -130,10 +130,21 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     });
 
     return () => subscription.unsubscribe();
-  }, []);
+  }, [checkSubscription]);
+
+  // Check subscription periodically
+  React.useEffect(() => {
+    if (!user) return;
+    
+    const interval = setInterval(() => {
+      checkSubscription();
+    }, 60000); // Check every minute
+
+    return () => clearInterval(interval);
+  }, [user, checkSubscription]);
 
   return (
-    <AuthContext.Provider value={{ user, session, loading }}>
+    <AuthContext.Provider value={{ user, session, loading, isPremium, isVIP, subscriptionEnd, checkSubscription }}>
       {children}
     </AuthContext.Provider>
   );
