@@ -1,8 +1,8 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useRef } from 'react';
 import { useParams, useNavigate, Link } from 'react-router-dom';
 import { supabase } from '@/integrations/supabase/client';
 import { CustomLoader } from '@/components/ui/CustomLoader';
-import { ArrowLeft, User as UserIcon } from 'lucide-react';
+import { ArrowLeft, User as UserIcon, Eye } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
 import { useTranslation } from 'react-i18next';
@@ -93,6 +93,7 @@ interface Post {
   }>;
   likes_count: number;
   replies_count: number;
+  view_count: number;
   
   author: {
     id: string; 
@@ -118,6 +119,42 @@ const PostDetail = () => {
   const [replyText, setReplyText] = useState('');
   const [replyingTo, setReplyingTo] = useState<{ replyId: string; authorHandle: string } | null>(null);
   const [submittingReply, setSubmittingReply] = useState(false);
+  const postRef = useRef<HTMLDivElement>(null);
+  const [hasTrackedView, setHasTrackedView] = useState(false);
+
+  // Track post view when it becomes visible
+  useEffect(() => {
+    if (!user || !postRef.current || hasTrackedView || !postId) return;
+
+    const observer = new IntersectionObserver(
+      async ([entry]) => {
+        if (entry.isIntersecting && !hasTrackedView) {
+          setHasTrackedView(true);
+          
+          // Track the view in the database
+          try {
+            await supabase
+              .from('post_views')
+              .insert({
+                post_id: postId,
+                viewer_id: user.id,
+              });
+            
+            // Update local view count
+            setPost(prev => prev ? { ...prev, view_count: prev.view_count + 1 } : null);
+          } catch (error) {
+            // Silently fail if view already exists
+            console.debug('View already tracked or error:', error);
+          }
+        }
+      },
+      { threshold: 0.5 }
+    );
+
+    observer.observe(postRef.current);
+
+    return () => observer.disconnect();
+  }, [user, postId, hasTrackedView]);
 
   useEffect(() => {
     if (!postId) return;
@@ -128,7 +165,7 @@ const PostDetail = () => {
       const postPromise = supabase
         .from('posts')
         .select(`
-          id, content, created_at, image_url,
+          id, content, created_at, image_url, view_count,
           profiles!inner (id, display_name, handle, is_verified, is_organization_verified),
           post_images(image_url, display_order, alt_text),
           post_link_previews(url, title, description, image_url, site_name)
@@ -171,6 +208,7 @@ const PostDetail = () => {
         post_link_previews: postData.post_link_previews || [],
         likes_count: likesCount,
         replies_count: repliesCount,
+        view_count: postData.view_count || 0,
         author: {
           id: postData.profiles.id,
           display_name: postData.profiles.display_name,
@@ -430,7 +468,7 @@ const PostDetail = () => {
   }
 
   return (
-    <div className="min-h-screen bg-background border-x border-border max-w-2xl mx-auto flex flex-col">
+    <div ref={postRef} className="min-h-screen bg-background border-x border-border max-w-2xl mx-auto flex flex-col">
       <div className="flex-1">
         
         {/* --- MAIN POST CONTENT --- */}
@@ -512,7 +550,10 @@ const PostDetail = () => {
                 <span className="text-sm font-semibold">
                   {post.replies_count} <span className="text-muted-foreground font-normal">Replies</span>
                 </span>
-                <span className="text-sm font-semibold text-muted-foreground">0 Shares</span> 
+                <span className="text-sm font-semibold flex items-center gap-1">
+                  <Eye className="h-3.5 w-3.5 text-muted-foreground" />
+                  {post.view_count} <span className="text-muted-foreground font-normal">Views</span>
+                </span>
             </div>
         </div>
 

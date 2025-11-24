@@ -1280,6 +1280,42 @@ export type Database = {
           },
         ]
       }
+      post_views: {
+        Row: {
+          id: string
+          post_id: string
+          viewed_at: string
+          viewer_id: string
+        }
+        Insert: {
+          id?: string
+          post_id: string
+          viewed_at?: string
+          viewer_id: string
+        }
+        Update: {
+          id?: string
+          post_id?: string
+          viewed_at?: string
+          viewer_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "post_views_post_id_fkey"
+            columns: ["post_id"]
+            isOneToOne: false
+            referencedRelation: "posts"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "post_views_viewer_id_fkey"
+            columns: ["viewer_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       posts: {
         Row: {
           author_id: string | null
@@ -1289,6 +1325,7 @@ export type Database = {
           image_url: string | null
           language_code: string | null
           updated_at: string | null
+          view_count: number
         }
         Insert: {
           author_id?: string | null
@@ -1298,6 +1335,7 @@ export type Database = {
           image_url?: string | null
           language_code?: string | null
           updated_at?: string | null
+          view_count?: number
         }
         Update: {
           author_id?: string | null
@@ -1307,6 +1345,7 @@ export type Database = {
           image_url?: string | null
           language_code?: string | null
           updated_at?: string | null
+          view_count?: number
         }
         Relationships: [
           {
