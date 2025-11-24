@@ -408,19 +408,7 @@ export const SendGiftDialog = ({ receiverId, receiverName, trigger }: SendGiftDi
                     </div>
                   </div>
                   
-                  {/* Preview Button - Fixed positioning for mobile */}
-                  <Button
-                    variant="ghost"
-                    size="sm"
-                    className="absolute top-0 left-0 h-5 w-5 p-0 rounded-full bg-background/90 backdrop-blur-sm hover:bg-background shadow-md border border-border/50 z-10 opacity-80 hover:opacity-100 transition-opacity"
-                    onClick={(e) => {
-                      e.preventDefault();
-                      e.stopPropagation();
-                      handlePreviewGift(gift, e);
-                    }}
-                  >
-                    <span className="text-[10px]">👁️</span>
-                  </Button>
+                  {/* Preview button removed on mobile to avoid covering gifts */}
                 </div>
 
                 {/* Send Button - Simple and Clean */}
