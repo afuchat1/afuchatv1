@@ -69,9 +69,9 @@ export const PinnedGiftsDisplay = ({ userId, className = '' }: PinnedGiftsDispla
             transition={{ delay: index * 0.1, type: 'spring', stiffness: 200, damping: 15 }}
           >
             <div className="relative group">
-              <div className="absolute inset-0 bg-gradient-to-br from-primary/30 to-accent/30 rounded-full blur-md opacity-70 group-hover:opacity-100 transition-opacity animate-pulse" />
-              <div className="relative bg-background/90 backdrop-blur-sm rounded-full p-1 border-2 border-primary/20 shadow-lg">
-                <SimpleGiftIcon emoji={pinnedGift.gift.emoji} size={28} />
+              <div className="absolute inset-0 bg-gradient-to-br from-primary/20 to-accent/20 rounded-full blur-sm opacity-60 group-hover:opacity-90 transition-opacity" />
+              <div className="relative bg-background/80 backdrop-blur-sm rounded-full p-0.5 border border-primary/10 shadow-sm">
+                <SimpleGiftIcon emoji={pinnedGift.gift.emoji} size={18} />
               </div>
             </div>
           </motion.div>
