@@ -361,8 +361,11 @@ export const SendGiftDialog = ({ receiverId, receiverName, trigger }: SendGiftDi
               >
                 {/* Gift Item - No Background */}
                 <div
-                  onClick={() => !loading && handleGiftTap(gift)}
-                  className={`cursor-pointer transition-all duration-300 hover:scale-110 group relative ${
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    if (!loading) handleGiftTap(gift);
+                  }}
+                  className={`cursor-pointer transition-all duration-300 hover:scale-110 group relative touch-manipulation ${
                     isSelected ? 'scale-125' : ''
                   }`}
                 >
@@ -405,14 +408,18 @@ export const SendGiftDialog = ({ receiverId, receiverName, trigger }: SendGiftDi
                     </div>
                   </div>
                   
-                  {/* Preview Button */}
+                  {/* Preview Button - Fixed positioning for mobile */}
                   <Button
                     variant="ghost"
                     size="sm"
-                    className="absolute -top-2 -left-2 h-6 w-6 p-0 rounded-full bg-background/90 backdrop-blur-sm hover:bg-background shadow-lg border border-border/50 z-20"
-                    onClick={(e) => handlePreviewGift(gift, e)}
+                    className="absolute top-0 left-0 h-5 w-5 p-0 rounded-full bg-background/90 backdrop-blur-sm hover:bg-background shadow-md border border-border/50 z-10 opacity-80 hover:opacity-100 transition-opacity"
+                    onClick={(e) => {
+                      e.preventDefault();
+                      e.stopPropagation();
+                      handlePreviewGift(gift, e);
+                    }}
                   >
-                    <span className="text-xs">👁️</span>
+                    <span className="text-[10px]">👁️</span>
                   </Button>
                 </div>
 
