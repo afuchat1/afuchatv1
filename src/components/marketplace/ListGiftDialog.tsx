@@ -89,7 +89,9 @@ export const ListGiftDialog = ({ open, onOpenChange }: ListGiftDialogProps) => {
         .not('gift_id', 'is', null);
 
       const listedGiftIds = new Set(existingListings?.map(l => l.gift_id) || []);
-      const availableGifts = (data || []).filter(g => !listedGiftIds.has(g.gift.id));
+      const availableGifts = (data || [])
+        .filter(g => g.gift !== null)
+        .filter(g => !listedGiftIds.has(g.gift.id));
 
       setReceivedGifts(availableGifts as any);
     } catch (error) {
