@@ -9,11 +9,46 @@ interface NexaProgressBarProps {
 }
 
 const GRADE_THRESHOLDS = [
-  { grade: 'Newcomer' as Grade, min: 0, max: 500, color: 'bg-gray-500' },
-  { grade: 'Active Chatter' as Grade, min: 500, max: 2000, color: 'bg-blue-500' },
-  { grade: 'Community Builder' as Grade, min: 2000, max: 5000, color: 'bg-purple-500' },
-  { grade: 'Elite Creator' as Grade, min: 5000, max: 15000, color: 'bg-yellow-500' },
-  { grade: 'Legend' as Grade, min: 15000, max: Infinity, color: 'bg-red-500' },
+  { 
+    grade: 'Newcomer' as Grade, 
+    min: 0, 
+    max: 500, 
+    gradient: 'from-gray-400 via-gray-500 to-gray-600',
+    glow: 'shadow-gray-500/20',
+    shimmerSpeed: 2
+  },
+  { 
+    grade: 'Active Chatter' as Grade, 
+    min: 500, 
+    max: 2000, 
+    gradient: 'from-blue-400 via-blue-500 to-blue-600',
+    glow: 'shadow-blue-500/30',
+    shimmerSpeed: 1.8
+  },
+  { 
+    grade: 'Community Builder' as Grade, 
+    min: 2000, 
+    max: 5000, 
+    gradient: 'from-purple-400 via-purple-500 to-purple-600',
+    glow: 'shadow-purple-500/40',
+    shimmerSpeed: 1.5
+  },
+  { 
+    grade: 'Elite Creator' as Grade, 
+    min: 5000, 
+    max: 15000, 
+    gradient: 'from-yellow-400 via-yellow-500 to-amber-500',
+    glow: 'shadow-yellow-500/50',
+    shimmerSpeed: 1.2
+  },
+  { 
+    grade: 'Legend' as Grade, 
+    min: 15000, 
+    max: Infinity, 
+    gradient: 'from-red-500 via-orange-500 to-pink-500',
+    glow: 'shadow-red-500/60',
+    shimmerSpeed: 1
+  },
 ];
 
 const TOTAL_MAX_FOR_DISPLAY = 15000; // Max value for visual representation
@@ -38,6 +73,9 @@ export const NexaProgressBar = ({ currentNexa, currentGrade, showDetails = true 
     position: (threshold.min / TOTAL_MAX_FOR_DISPLAY) * 100,
     grade: threshold.grade,
   }));
+
+  // Get current grade config for styling
+  const gradeConfig = currentThreshold || GRADE_THRESHOLDS[0];
 
   return (
     <div className="w-full space-y-2">
@@ -67,19 +105,37 @@ export const NexaProgressBar = ({ currentNexa, currentGrade, showDetails = true 
           </div>
         ))}
         
-        {/* Progress fill with gradient */}
+        {/* Progress fill with grade-specific gradient and glow */}
         <motion.div
-          className="absolute inset-y-0 left-0 rounded-full overflow-hidden"
+          className={`absolute inset-y-0 left-0 rounded-full overflow-hidden ${gradeConfig.glow}`}
           initial={{ width: 0 }}
           animate={{ width: `${progress}%` }}
           transition={{ duration: 0.8, ease: 'easeOut' }}
         >
-          <div className="h-full w-full bg-gradient-to-r from-primary via-primary to-primary/90">
+          <div className={`h-full w-full bg-gradient-to-r ${gradeConfig.gradient} relative`}>
+            {/* Shimmer effect with grade-specific speed */}
             <motion.div
-              className="absolute inset-0 bg-gradient-to-r from-transparent via-white/30 to-transparent"
+              className="absolute inset-0 bg-gradient-to-r from-transparent via-white/40 to-transparent"
               animate={{ x: ['-100%', '200%'] }}
-              transition={{ duration: 1.5, repeat: Infinity, ease: 'linear' }}
+              transition={{ 
+                duration: gradeConfig.shimmerSpeed, 
+                repeat: Infinity, 
+                ease: 'linear' 
+              }}
             />
+            
+            {/* Pulse effect for higher grades */}
+            {(currentGrade === 'Elite Creator' || currentGrade === 'Legend') && (
+              <motion.div
+                className="absolute inset-0 bg-white/10"
+                animate={{ opacity: [0.2, 0.4, 0.2] }}
+                transition={{ 
+                  duration: 2, 
+                  repeat: Infinity, 
+                  ease: 'easeInOut' 
+                }}
+              />
+            )}
           </div>
         </motion.div>
       </div>
