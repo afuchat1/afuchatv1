@@ -6,12 +6,13 @@ import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import {
-  TrendingUp, Search, Users, Hash, Sparkles, UserPlus,
+  TrendingUp, Search, Users, Hash, Sparkles, UserPlus, UserCheck,
   Settings, MessageSquare, Bell, User
 } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/contexts/AuthContext';
 import { useSettings } from '@/contexts/SettingsContext';
+import { useToast } from '@/hooks/use-toast';
 import Feed from './Feed';
 import { StoryAvatar } from '@/components/moments/StoryAvatar';
 
@@ -33,13 +34,17 @@ const DesktopFeed = () => {
   const navigate = useNavigate();
   const { user } = useAuth();
   const { openSettings } = useSettings();
+  const { toast } = useToast();
   const [trending, setTrending] = useState<TrendingTopic[]>([]);
   const [suggested, setSuggested] = useState<SuggestedUser[]>([]);
   const [searchQuery, setSearchQuery] = useState('');
+  const [followingIds, setFollowingIds] = useState<Set<string>>(new Set());
+  const [processingFollow, setProcessingFollow] = useState<Set<string>>(new Set());
 
   useEffect(() => {
     fetchTrendingTopics();
     fetchSuggestedUsers();
+    fetchFollowingStatus();
 
     // Subscribe to profile updates for suggested users
     const profilesChannel = supabase
@@ -105,6 +110,93 @@ const DesktopFeed = () => {
       if (data) setSuggested(data);
     } catch (error) {
       console.error('Error fetching suggested users:', error);
+    }
+  };
+
+  const fetchFollowingStatus = async () => {
+    if (!user) return;
+
+    try {
+      const { data, error } = await supabase
+        .from('follows')
+        .select('following_id')
+        .eq('follower_id', user.id);
+
+      if (error) throw error;
+      if (data) {
+        setFollowingIds(new Set(data.map(f => f.following_id)));
+      }
+    } catch (error) {
+      console.error('Error fetching following status:', error);
+    }
+  };
+
+  const handleFollow = async (userId: string) => {
+    if (!user) {
+      toast({
+        title: "Authentication required",
+        description: "Please sign in to follow users",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    setProcessingFollow(prev => new Set(prev).add(userId));
+
+    try {
+      const isFollowing = followingIds.has(userId);
+
+      if (isFollowing) {
+        // Unfollow
+        const { error } = await supabase
+          .from('follows')
+          .delete()
+          .eq('follower_id', user.id)
+          .eq('following_id', userId);
+
+        if (error) throw error;
+
+        setFollowingIds(prev => {
+          const next = new Set(prev);
+          next.delete(userId);
+          return next;
+        });
+
+        toast({
+          title: "Unfollowed",
+          description: "You are no longer following this user",
+        });
+      } else {
+        // Follow
+        const { error } = await supabase
+          .from('follows')
+          .insert({
+            follower_id: user.id,
+            following_id: userId
+          });
+
+        if (error) throw error;
+
+        setFollowingIds(prev => new Set(prev).add(userId));
+
+        toast({
+          title: "Following",
+          description: "You are now following this user",
+        });
+      }
+    } catch (error) {
+      console.error('Error following/unfollowing:', error);
+      toast({
+        title: "Error",
+        description: "Failed to update follow status",
+        variant: "destructive",
+      });
+    } finally {
+      setProcessingFollow(prev => {
+        const next = new Set(prev);
+        next.delete(userId);
+        return next;
+      });
     }
   };
 
@@ -297,9 +389,23 @@ const DesktopFeed = () => {
                       @{suggestedUser.handle}
                     </p>
                   </div>
-                  <Button size="sm" variant="outline">
-                    <UserPlus className="h-3 w-3 mr-1" />
-                    Follow
+                  <Button 
+                    size="sm" 
+                    variant={followingIds.has(suggestedUser.id) ? "secondary" : "outline"}
+                    onClick={() => handleFollow(suggestedUser.id)}
+                    disabled={processingFollow.has(suggestedUser.id)}
+                  >
+                    {followingIds.has(suggestedUser.id) ? (
+                      <>
+                        <UserCheck className="h-3 w-3 mr-1" />
+                        Following
+                      </>
+                    ) : (
+                      <>
+                        <UserPlus className="h-3 w-3 mr-1" />
+                        Follow
+                      </>
+                    )}
                   </Button>
                 </div>
               ))}
