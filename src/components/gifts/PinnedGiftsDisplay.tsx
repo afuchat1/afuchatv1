@@ -49,12 +49,12 @@ export const PinnedGiftsDisplay = ({ userId, className = '' }: PinnedGiftsDispla
   if (pinnedGifts.length === 0) return null;
 
   const positions = [
-    { top: '-5%', left: '50%', transform: 'translate(-50%, 0%)' },
-    { top: '25%', right: '-5%', transform: 'translate(0%, -50%)' },
-    { bottom: '25%', right: '-5%', transform: 'translate(0%, 50%)' },
-    { bottom: '-5%', left: '50%', transform: 'translate(-50%, 0%)' },
-    { bottom: '25%', left: '-5%', transform: 'translate(0%, 50%)' },
-    { top: '25%', left: '-5%', transform: 'translate(0%, -50%)' },
+    { top: '-8%', left: '50%', transform: 'translate(-50%, -50%)' },
+    { top: '15%', right: '-8%', transform: 'translate(50%, -50%)' },
+    { bottom: '15%', right: '-8%', transform: 'translate(50%, 50%)' },
+    { bottom: '-8%', left: '50%', transform: 'translate(-50%, 50%)' },
+    { bottom: '15%', left: '-8%', transform: 'translate(-50%, 50%)' },
+    { top: '15%', left: '-8%', transform: 'translate(-50%, -50%)' },
   ];
 
   return (
@@ -65,7 +65,7 @@ export const PinnedGiftsDisplay = ({ userId, className = '' }: PinnedGiftsDispla
           return (
             <motion.div
               key={pinnedGift.id}
-              className="absolute pointer-events-auto z-10 cursor-pointer"
+              className="absolute pointer-events-auto z-0 cursor-pointer"
               style={position}
               initial={{ scale: 0, opacity: 0, rotate: -180 }}
               animate={{ 
