@@ -50,7 +50,6 @@ const TermsOfUse = lazy(() => import("./pages/TermsOfUse"));
 const PrivacyPolicy = lazy(() => import("./pages/PrivacyPolicy"));
 const TrendingHashtags = lazy(() => import("./pages/TrendingHashtags"));
 const AdminAffiliateRequests = lazy(() => import("./pages/AdminAffiliateRequests"));
-const AdminVerificationRequests = lazy(() => import("./pages/AdminVerificationRequests"));
 const AffiliateRequest = lazy(() => import("./pages/AffiliateRequest"));
 const AffiliateDashboard = lazy(() => import("./pages/AffiliateDashboard"));
 const BusinessDashboard = lazy(() => import("./pages/BusinessDashboard"));
@@ -59,7 +58,6 @@ const MiniPrograms = lazy(() => import("./pages/MiniPrograms"));
 const Transfer = lazy(() => import("./pages/Transfer"));
 const RedEnvelope = lazy(() => import("./pages/RedEnvelope"));
 const DeveloperSDK = lazy(() => import("./pages/DeveloperSDK"));
-const VerificationRequest = lazy(() => import("./pages/VerificationRequest"));
 const Followers = lazy(() => import("./pages/Followers"));
 const Following = lazy(() => import("./pages/Following"));
 const SuggestedUsers = lazy(() => import("./pages/SuggestedUsers"));
@@ -151,7 +149,6 @@ const AppRoutes = () => {
       <Route path="/suggested-users" element={<SuggestedUsers />} />
       <Route path="/trending" element={<Layout><TrendingHashtags /></Layout>} />
       <Route path="/admin/affiliate-requests" element={<Layout><AdminAffiliateRequests /></Layout>} />
-      <Route path="/admin/verification-requests" element={<Layout><AdminVerificationRequests /></Layout>} />
       <Route path="/affiliate-request" element={<Layout><AffiliateRequest /></Layout>} />
       <Route path="/affiliate-dashboard" element={<Layout><AffiliateDashboard /></Layout>} />
       <Route path="/business/dashboard" element={<Layout><BusinessDashboard /></Layout>} />
@@ -160,7 +157,6 @@ const AppRoutes = () => {
       <Route path="/transfer" element={<Layout><Transfer /></Layout>} />
       <Route path="/red-envelope" element={<Layout><RedEnvelope /></Layout>} />
       <Route path="/developer-sdk" element={<Layout><DeveloperSDK /></Layout>} />
-      <Route path="/verification-request" element={<Layout><VerificationRequest /></Layout>} />
       <Route path="/games" element={<Layout><Games /></Layout>} />
       <Route path="/game" element={<Layout><SimpleGame /></Layout>} />
       <Route path="/memory-game" element={<Layout><MemoryGame /></Layout>} />

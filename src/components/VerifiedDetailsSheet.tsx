@@ -30,7 +30,7 @@ export function VerifiedDetailsSheet({
 
   const handleGetVerified = () => {
     onOpenChange(false);
-    navigate('/verification-request');
+    navigate('/premium');
   };
 
   return (
