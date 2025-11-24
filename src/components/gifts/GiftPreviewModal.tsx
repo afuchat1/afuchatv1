@@ -2,7 +2,7 @@ import { useState } from 'react';
 import { Sheet, SheetContent, SheetHeader, SheetTitle } from '@/components/ui/sheet';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
-import { X, Sparkles, TrendingUp } from 'lucide-react';
+import { Sparkles, TrendingUp, Gift as GiftIcon } from 'lucide-react';
 import { GiftImage } from './GiftImage';
 
 interface Gift {
@@ -52,18 +52,8 @@ export const GiftPreviewModal = ({ gift, open, onOpenChange, onSendGift }: GiftP
 
   return (
     <Sheet open={open} onOpenChange={onOpenChange}>
-      <SheetContent side="bottom" className="max-h-[90vh] overflow-y-auto p-0" onOpenChange={onOpenChange}>
-        <div className="relative bg-gradient-to-br from-background via-background to-primary/5">
-          {/* Close button */}
-          <Button
-            variant="ghost"
-            size="icon"
-            className="absolute top-4 right-4 z-10 rounded-full bg-background/80 backdrop-blur hover:bg-background"
-            onClick={() => onOpenChange(false)}
-          >
-            <X className="h-4 w-4" />
-          </Button>
-
+      <SheetContent side="bottom" className="max-h-[90vh] overflow-y-auto p-0 bg-gradient-to-b from-background via-background to-primary/10" onOpenChange={onOpenChange}>
+        <div className="relative">
           {/* 3D Preview Section */}
           <div className="relative h-96 flex items-center justify-center p-8 perspective-1000">
             <div
@@ -102,7 +92,7 @@ export const GiftPreviewModal = ({ gift, open, onOpenChange, onSendGift }: GiftP
           </div>
 
           {/* Details Section */}
-          <div className="p-6 space-y-4 border-t border-border bg-background/50 backdrop-blur">
+          <div className="p-6 space-y-6 border-t border-border/50 bg-gradient-to-b from-background/95 to-background/80 backdrop-blur-xl">
             <SheetHeader>
               <div className="flex items-start justify-between gap-4">
                 <div className="space-y-2 flex-1">
@@ -121,15 +111,15 @@ export const GiftPreviewModal = ({ gift, open, onOpenChange, onSendGift }: GiftP
 
             {/* Stats */}
             <div className="grid grid-cols-2 gap-4">
-              <div className="p-4 rounded-lg bg-primary/5 border border-primary/10">
-                <div className="text-xs text-muted-foreground mb-1">Price</div>
+              <div className="p-5 rounded-2xl bg-gradient-to-br from-primary/10 to-primary/5 border border-primary/20 shadow-lg hover:shadow-xl transition-shadow">
+                <div className="text-xs font-medium text-muted-foreground mb-2">Price</div>
                 <div className="flex items-baseline gap-2">
-                  <span className="text-2xl font-bold text-primary">
+                  <span className="text-3xl font-extrabold bg-gradient-to-r from-primary to-accent bg-clip-text text-transparent">
                     {(gift.current_price || gift.base_xp_cost).toLocaleString()}
                   </span>
-                  <span className="text-xs text-muted-foreground">Nexa</span>
+                  <span className="text-sm font-medium text-muted-foreground">Nexa</span>
                   {gift.price_multiplier && gift.price_multiplier !== 1 && (
-                    <Badge variant="secondary" className="ml-auto">
+                    <Badge variant="secondary" className="ml-auto bg-green-500/10 text-green-600 border-green-500/20">
                       <TrendingUp className="h-3 w-3 mr-1" />
                       {((gift.price_multiplier - 1) * 100).toFixed(0)}%
                     </Badge>
@@ -138,11 +128,11 @@ export const GiftPreviewModal = ({ gift, open, onOpenChange, onSendGift }: GiftP
               </div>
 
               {gift.total_sent !== undefined && (
-                <div className="p-4 rounded-lg bg-primary/5 border border-primary/10">
-                  <div className="text-xs text-muted-foreground mb-1">Total Sent</div>
+                <div className="p-5 rounded-2xl bg-gradient-to-br from-accent/10 to-accent/5 border border-accent/20 shadow-lg hover:shadow-xl transition-shadow">
+                  <div className="text-xs font-medium text-muted-foreground mb-2">Total Sent</div>
                   <div className="flex items-center gap-2">
-                    <Sparkles className="h-4 w-4 text-primary" />
-                    <span className="text-2xl font-bold">
+                    <Sparkles className="h-5 w-5 text-accent" />
+                    <span className="text-3xl font-extrabold text-foreground">
                       {gift.total_sent.toLocaleString()}
                     </span>
                   </div>
@@ -166,9 +156,10 @@ export const GiftPreviewModal = ({ gift, open, onOpenChange, onSendGift }: GiftP
             {onSendGift && (
               <Button
                 onClick={onSendGift}
-                className="w-full h-12 text-base font-semibold"
+                className="w-full h-14 text-lg font-bold shadow-2xl hover:shadow-3xl hover:scale-105 transition-all duration-300 bg-gradient-to-r from-primary via-accent to-primary"
                 size="lg"
               >
+                <GiftIcon className="h-5 w-5 mr-2" />
                 Send This Gift
               </Button>
             )}

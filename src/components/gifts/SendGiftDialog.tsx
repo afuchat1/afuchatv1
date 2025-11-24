@@ -318,54 +318,65 @@ export const SendGiftDialog = ({ receiverId, receiverName, trigger }: SendGiftDi
       <Sheet open={open} onOpenChange={setOpen}>
         <SheetTrigger asChild>
           {trigger || (
-            <Button variant="outline" size="sm" className="gap-2">
+            <Button variant="outline" size="sm" className="gap-2 hover:scale-105 transition-transform">
               <Gift className="h-4 w-4" />
               {t('gifts.sendGift')}
             </Button>
           )}
         </SheetTrigger>
-      <SheetContent side="bottom" className="max-h-[90vh] overflow-y-auto p-4" onOpenChange={setOpen}>
-        <SheetHeader className="pb-3">
-          <div className="flex items-center gap-3">
-            <Avatar className="h-12 w-12 ring-2 ring-primary/20">
+      <SheetContent side="bottom" className="max-h-[90vh] overflow-y-auto p-6 bg-gradient-to-b from-background via-background to-primary/5" onOpenChange={setOpen}>
+        <SheetHeader className="pb-4 space-y-4">
+          <div className="flex items-center gap-4 p-4 rounded-2xl bg-gradient-to-r from-primary/10 via-accent/10 to-primary/10 border border-primary/20 shadow-lg">
+            <Avatar className="h-14 w-14 ring-2 ring-primary/30 shadow-lg">
               <AvatarImage src={`https://api.dicebear.com/7.x/avataaars/svg?seed=${receiverId}`} />
-              <AvatarFallback>{receiverName[0]?.toUpperCase()}</AvatarFallback>
+              <AvatarFallback className="bg-gradient-to-br from-primary to-accent text-primary-foreground">{receiverName[0]?.toUpperCase()}</AvatarFallback>
             </Avatar>
-            <div>
-              <SheetTitle className="text-lg">{t('gifts.sendGiftTo', { name: receiverName })}</SheetTitle>
-              <SheetDescription className="text-xs">
-                {t('gifts.yourNexa', { nexa: userXP })}
+            <div className="flex-1">
+              <SheetTitle className="text-xl font-bold bg-gradient-to-r from-foreground to-foreground/70 bg-clip-text">{t('gifts.sendGiftTo', { name: receiverName })}</SheetTitle>
+              <SheetDescription className="text-sm font-medium flex items-center gap-1.5 mt-1">
+                <Sparkles className="h-3.5 w-3.5 text-primary" />
+                {t('gifts.yourNexa', { nexa: userXP.toLocaleString() })}
               </SheetDescription>
             </div>
           </div>
         </SheetHeader>
 
         {selectedGift && (
-          <div className="mb-4 text-center bg-gradient-to-br from-primary/10 via-accent/10 to-primary/10 rounded-xl p-4 border border-primary/20">
-            <div className="space-y-2">
-              <div className="text-lg font-bold text-foreground">
-                {selectedGift.count}x {selectedGift.emoji} 
-                {selectedGift.count > 1 && <span className="text-primary ml-1">COMBO!</span>}
+          <div className="mb-6 text-center bg-gradient-to-br from-primary/15 via-accent/15 to-primary/15 rounded-2xl p-6 border border-primary/30 shadow-xl relative overflow-hidden">
+            <div className="absolute inset-0 bg-gradient-to-r from-primary/5 via-transparent to-accent/5 animate-pulse" />
+            <div className="relative space-y-3">
+              <div className="text-2xl font-bold text-foreground flex items-center justify-center gap-2">
+                <span className="text-3xl">{selectedGift.emoji}</span>
+                <span>×{selectedGift.count}</span>
+                {selectedGift.count > 1 && (
+                  <span className="text-primary animate-pulse ml-2 px-3 py-1 rounded-full bg-primary/20 text-sm font-extrabold">
+                    COMBO!
+                  </span>
+                )}
               </div>
               {discount > 0 && (
-                <div className="text-sm text-primary font-semibold">
-                  {t('gifts.comboDiscount', { percent: (discount * 100).toFixed(0) })} 
+                <div className="text-base text-primary font-bold flex items-center justify-center gap-1 animate-bounce">
+                  <TrendingUp className="h-4 w-4" />
+                  {t('gifts.comboDiscount', { percent: (discount * 100).toFixed(0) })}
                 </div>
               )}
-              <div className="text-base font-bold text-foreground">{totalCost} Nexa</div>
+              <div className="text-2xl font-extrabold bg-gradient-to-r from-primary via-accent to-primary bg-clip-text text-transparent">
+                {totalCost.toLocaleString()} Nexa
+              </div>
               <Button 
                 onClick={handleSendGift} 
                 disabled={loading}
-                className="mt-2 w-full bg-gradient-to-r from-primary to-accent hover:from-primary/90 hover:to-accent/90 shadow-lg"
+                className="mt-4 w-full h-12 text-base font-bold bg-gradient-to-r from-primary via-accent to-primary hover:shadow-2xl hover:scale-105 transition-all duration-300 shadow-lg"
+                size="lg"
               >
                 {loading ? (
                   <>
-                    <Sparkles className="h-4 w-4 mr-2" />
+                    <Sparkles className="h-5 w-5 mr-2 animate-spin" />
                     {t('gifts.sending')}
                   </>
                 ) : (
                   <>
-                    <Gift className="h-4 w-4 mr-2" />
+                    <Gift className="h-5 w-5 mr-2" />
                     {t('gifts.send')}
                   </>
                 )}
@@ -374,11 +385,11 @@ export const SendGiftDialog = ({ receiverId, receiverName, trigger }: SendGiftDi
           </div>
         )}
 
-        <div className="text-xs text-center text-muted-foreground mb-4 bg-muted/30 rounded-lg p-2">
-          {t('gifts.tapToCombo')}
+        <div className="text-sm text-center text-muted-foreground mb-6 bg-gradient-to-r from-muted/40 via-muted/60 to-muted/40 rounded-xl p-3 border border-border/50">
+          <span className="font-medium">💡 {t('gifts.tapToCombo')}</span>
         </div>
 
-        <div className="grid grid-cols-4 sm:grid-cols-5 md:grid-cols-6 lg:grid-cols-7 gap-2">
+        <div className="grid grid-cols-4 sm:grid-cols-5 md:grid-cols-6 lg:grid-cols-7 gap-3">
           {gifts.map((gift) => {
             const currentPrice = calculatePrice(gift.id, gift.base_xp_cost);
             const isSelected = selectedGift?.id === gift.id;
@@ -393,14 +404,14 @@ export const SendGiftDialog = ({ receiverId, receiverName, trigger }: SendGiftDi
               >
                 <div
                   onClick={() => !loading && handleGiftTap(gift)}
-                  className={`cursor-pointer transition-all duration-300 hover:scale-105 hover:-translate-y-1 group relative p-1.5 sm:p-2 rounded-lg ${
+                  className={`cursor-pointer transition-all duration-300 hover:scale-110 hover:-translate-y-2 hover:shadow-2xl group relative p-2 sm:p-3 rounded-xl ${
                     isSelected
-                      ? 'ring-2 ring-primary shadow-lg bg-primary/10 scale-105'
-                      : 'hover:shadow-md hover:ring-1 hover:ring-primary/30 bg-card'
+                      ? 'ring-2 ring-primary shadow-2xl bg-gradient-to-br from-primary/20 via-accent/20 to-primary/20 scale-105 border border-primary/30'
+                      : 'hover:shadow-xl hover:ring-2 hover:ring-primary/40 bg-card/80 backdrop-blur border border-border/50 hover:border-primary/30'
                   }`}
                 >
                   {isSelected && selectedGift && (
-                    <div className="absolute -top-1 -right-1 z-10 bg-primary text-primary-foreground rounded-full h-4 w-4 flex items-center justify-center font-bold text-[10px] shadow-lg animate-[scale-in_0.2s_ease-out]">
+                    <div className="absolute -top-2 -right-2 z-10 bg-gradient-to-br from-primary to-accent text-primary-foreground rounded-full h-6 w-6 flex items-center justify-center font-bold text-xs shadow-2xl animate-[scale-in_0.2s_ease-out] ring-2 ring-background">
                       {selectedGift.count}
                     </div>
                   )}

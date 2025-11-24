@@ -306,7 +306,7 @@ const NewPostModal: React.FC<NewPostModalProps> = ({ isOpen, onClose }) => {
             <Sheet open={isOpen} onOpenChange={handleClose}>
                 <SheetContent 
                     side="bottom" 
-                    className="max-w-2xl mx-auto p-0 gap-0 border-border/50 overflow-y-auto sheet-mobile-keyboard"
+                    className="max-w-2xl mx-auto p-0 gap-0 overflow-y-auto sheet-mobile-keyboard bg-gradient-to-b from-background via-background to-primary/5"
                     onOpenChange={handleClose}
                     style={{
                         position: 'fixed',
@@ -319,17 +319,17 @@ const NewPostModal: React.FC<NewPostModalProps> = ({ isOpen, onClose }) => {
                     }}
                 >
                     {/* Header */}
-                    <div className="flex items-center justify-end px-4 py-3 border-b border-border/50 sticky top-0 bg-background z-10">
+                    <div className="flex items-center justify-end px-6 py-4 border-b border-border/50 sticky top-0 bg-background/95 backdrop-blur-xl z-10 shadow-sm">
                         <Button
                             onClick={handlePost}
                             disabled={isPosting || (!newPost.trim() && selectedImages.length === 0)}
-                            className="rounded-full px-6 font-semibold"
-                            size="sm"
+                            className="rounded-full px-8 font-bold shadow-lg hover:shadow-xl hover:scale-105 transition-all duration-200 bg-gradient-to-r from-primary to-accent"
+                            size="lg"
                         >
                             {isPosting ? (
                                 <>
-                                    <Sparkles className="mr-2 h-4 w-4" />
-                                    Posting
+                                    <Sparkles className="mr-2 h-5 w-5 animate-spin" />
+                                    Posting...
                                 </>
                             ) : (
                                 'Post'
