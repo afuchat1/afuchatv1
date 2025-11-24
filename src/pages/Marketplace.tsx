@@ -146,6 +146,7 @@ export default function Marketplace() {
         <ListGiftDialog 
           open={listDialogOpen}
           onOpenChange={setListDialogOpen}
+          onListingCreated={fetchMarketplaceListings}
         />
       </div>
     </>
