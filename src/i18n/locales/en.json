@@ -290,7 +290,24 @@
     "group": "Group",
     "noChatsFound": "No chats found",
     "tryDifferentSearch": "Try a different search term",
-    "startNewChat": "Start New Chat"
+    "startNewChat": "Start New Chat",
+    "appearance": "Appearance",
+    "customization": "Customization",
+    "privacy": "Privacy",
+    "storage": "Storage",
+    "chatSettings": "Chat Settings",
+    "theme": "Theme",
+    "wallpaper": "Wallpaper",
+    "bubbleStyle": "Bubble Style",
+    "fontSize": "Font Size",
+    "sounds": "Sounds",
+    "autoDownload": "Auto Download",
+    "mediaQuality": "Media Quality",
+    "chatLock": "Chat Lock",
+    "readReceipts": "Read Receipts",
+    "save": "Save",
+    "saved": "Settings saved",
+    "error": "Error saving settings"
   },
   "chatRoom": {
     "sendMessage": "Send message",
@@ -405,7 +422,16 @@
     "receivedOn": "Received on {{date}}",
     "comboSent": "Combo sent! Saved {{saved}} Nexa with discount!",
     "comboGift": "Combo Gift",
-    "sendCombo": "Send Combo"
+    "sendCombo": "Send Combo",
+    "cancel": "Cancel",
+    "message": "Message",
+    "selectGift": "Select a gift",
+    "preview": "Preview",
+    "currentPrice": "Current Price",
+    "popularity": "Popularity",
+    "discount": "Discount",
+    "totalCost": "Total Cost",
+    "combo": "Combo"
   },
   "tips": {
     "sendTip": "Send Tip",
