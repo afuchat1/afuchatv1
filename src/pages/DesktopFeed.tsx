@@ -6,7 +6,7 @@ import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import {
-  TrendingUp, Search, MessageSquare, Bell, User, Settings
+  TrendingUp, Search, MessageSquare, Bell, User, Settings, Home
 } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/contexts/AuthContext';
@@ -14,6 +14,7 @@ import { useSettings } from '@/contexts/SettingsContext';
 import { useToast } from '@/hooks/use-toast';
 import Feed from './Feed';
 import { StoryAvatar } from '@/components/moments/StoryAvatar';
+import { AccountModeSwitcher } from '@/components/AccountModeSwitcher';
 
 interface TrendingTopic {
   topic: string;
@@ -234,75 +235,67 @@ const DesktopFeed = () => {
     <div className="min-h-screen bg-background">
       <div className="max-w-[1400px] mx-auto flex">
         {/* Left Sidebar - Navigation */}
-        <aside className="hidden lg:flex w-[260px] flex-col gap-1 px-2 py-2 border-r border-border sticky top-0 h-screen">
-          <div className="mb-2 px-3 py-2">
-            <h2 className="text-xl font-bold">AfuChat</h2>
+        <aside className="hidden lg:flex w-[260px] flex-col gap-3 px-4 py-4 border-r border-border sticky top-0 h-screen">
+          {/* Account Mode Switcher */}
+          <div className="px-1">
+            <AccountModeSwitcher />
           </div>
 
-          <nav className="space-y-1">
+          <nav className="space-y-2 flex-1">
             <Button
               variant="ghost"
-              className="w-full justify-start text-base h-auto py-2.5 px-3 rounded-full hover:bg-muted/70"
-              onClick={() => navigate('/chats')}
+              className="w-full justify-start text-lg h-auto py-3 px-4 rounded-xl hover:bg-muted/70"
+              onClick={() => navigate('/home')}
             >
-              <MessageSquare className="h-5 w-5 mr-3" />
-              <span className="font-medium">Messages</span>
+              <Home className="h-6 w-6 mr-4" />
+              <span className="font-semibold">Home</span>
             </Button>
 
             <Button
               variant="ghost"
-              className="w-full justify-start text-base h-auto py-2.5 px-3 rounded-full hover:bg-muted/70"
+              className="w-full justify-start text-lg h-auto py-3 px-4 rounded-xl hover:bg-muted/70"
+              onClick={() => navigate('/search')}
+            >
+              <Search className="h-6 w-6 mr-4" />
+              <span className="font-semibold">Search</span>
+            </Button>
+
+            <Button
+              variant="ghost"
+              className="w-full justify-start text-lg h-auto py-3 px-4 rounded-xl hover:bg-muted/70 relative"
               onClick={() => navigate('/notifications')}
             >
-              <Bell className="h-5 w-5 mr-3" />
-              <span className="font-medium">Notifications</span>
+              <Bell className="h-6 w-6 mr-4" />
+              <span className="font-semibold">Notifications</span>
             </Button>
 
             <Button
               variant="ghost"
-              className="w-full justify-start text-base h-auto py-2.5 px-3 rounded-full hover:bg-muted/70"
+              className="w-full justify-start text-lg h-auto py-3 px-4 rounded-xl hover:bg-muted/70"
+              onClick={() => navigate('/chats')}
+            >
+              <MessageSquare className="h-6 w-6 mr-4" />
+              <span className="font-semibold">Messages</span>
+            </Button>
+
+            <Button
+              variant="default"
+              className="w-full justify-start text-lg h-auto py-3 px-4 rounded-xl bg-primary/20 hover:bg-primary/30 text-primary"
               onClick={() => user && navigate(`/${user.id}`)}
             >
-              <User className="h-5 w-5 mr-3" />
-              <span className="font-medium">Profile</span>
+              <User className="h-6 w-6 mr-4" />
+              <span className="font-semibold">Profile</span>
             </Button>
 
             <Button
               variant="ghost"
-              className="w-full justify-start text-base h-auto py-2.5 px-3 rounded-full hover:bg-muted/70"
+              className="w-full justify-start text-lg h-auto py-3 px-4 rounded-xl hover:bg-muted/70"
               onClick={() => openSettings()}
             >
-              <Settings className="h-5 w-5 mr-3" />
-              <span className="font-medium">Settings</span>
+              <Settings className="h-6 w-6 mr-4" />
+              <span className="font-semibold">Settings</span>
             </Button>
           </nav>
-
-          <div className="mt-auto p-2">
-            {user && (
-              <Button
-                variant="ghost"
-                className="w-full justify-start rounded-full hover:bg-muted/70 h-auto py-2"
-                onClick={() => navigate(`/${user.id}`)}
-              >
-							<StoryAvatar 
-								userId={user.id}
-								avatarUrl={user.user_metadata?.avatar_url}
-								name={user.user_metadata?.display_name || 'User'}
-								size="sm"
-								className="mr-2"
-								showStoryRing={true}
-							/>
-                <div className="text-left flex-1 min-w-0">
-                  <p className="font-semibold text-sm line-clamp-1">
-                    {user.user_metadata?.display_name || 'User'}
-                  </p>
-                  <p className="text-xs text-muted-foreground line-clamp-1">
-                    @{user.user_metadata?.handle || 'user'}
-                  </p>
-                </div>
-              </Button>
-            )}
-          </div>
         </aside>
 
         {/* Center - Feed */}
