@@ -195,7 +195,7 @@ export default function Shop() {
         description="Browse and purchase rare, epic, and legendary gifts"
       />
 
-      <div className="min-h-screen pb-20 lg:pb-4">
+      <div className="min-h-screen pb-24 lg:pb-4">
         {/* Header */}
         <div className="sticky top-0 z-10 bg-background/95 backdrop-blur border-b border-border">
           <div className="max-w-7xl mx-auto px-4 py-4">
@@ -215,7 +215,7 @@ export default function Shop() {
         </div>
 
         {/* Content */}
-        <div className="max-w-7xl mx-auto px-4 py-6">
+        <div className="max-w-7xl mx-auto px-4 py-6 pb-24 lg:pb-6">
           {listings.length === 0 ? (
             <div className="flex flex-col items-center justify-center py-20 text-center">
               <Store className="h-16 w-16 text-muted-foreground/50 mb-4" />
