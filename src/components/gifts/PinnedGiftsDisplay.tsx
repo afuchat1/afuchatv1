@@ -49,12 +49,12 @@ export const PinnedGiftsDisplay = ({ userId, className = '' }: PinnedGiftsDispla
   if (pinnedGifts.length === 0) return null;
 
   const positions = [
-    { top: '0%', left: '50%', transform: 'translate(-50%, -50%)' },
-    { top: '25%', right: '0%', transform: 'translate(50%, -50%)' },
-    { bottom: '25%', right: '0%', transform: 'translate(50%, 50%)' },
-    { bottom: '0%', left: '50%', transform: 'translate(-50%, 50%)' },
-    { bottom: '25%', left: '0%', transform: 'translate(-50%, 50%)' },
-    { top: '25%', left: '0%', transform: 'translate(-50%, -50%)' },
+    { top: '0%', left: '50%', transform: 'translate(-50%, 0%)' },
+    { top: '25%', right: '0%', transform: 'translate(0%, -50%)' },
+    { bottom: '25%', right: '0%', transform: 'translate(0%, 50%)' },
+    { bottom: '0%', left: '50%', transform: 'translate(-50%, 0%)' },
+    { bottom: '25%', left: '0%', transform: 'translate(0%, 50%)' },
+    { top: '25%', left: '0%', transform: 'translate(0%, -50%)' },
   ];
 
   return (
