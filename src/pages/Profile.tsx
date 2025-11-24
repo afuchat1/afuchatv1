@@ -55,6 +55,7 @@ interface Profile {
 	affiliation_date?: string;
 	last_seen?: string | null;
 	show_online_status?: boolean;
+	show_balance?: boolean;
 }
 
 interface Post {
@@ -431,7 +432,7 @@ const Profile = ({ mustExist = false }: ProfileProps) => {
 
 		let query = supabase
 			.from('profiles')
-			.select('*, created_at, last_seen, show_online_status, banner_url')
+			.select('*, created_at, last_seen, show_online_status, banner_url, show_balance')
 			.limit(1);
 
 		if (isParamUUID) {
@@ -1007,14 +1008,16 @@ const Profile = ({ mustExist = false }: ProfileProps) => {
 						</a>
 					)}
 
-				{/* Nexa Progress Bar */}
-				<div className="mt-4">
-					<NexaProgressBar 
-						currentNexa={profile.xp} 
-						currentGrade={profile.current_grade as Grade}
-						showDetails={true}
-					/>
-				</div>
+				{/* Nexa Progress Bar - only show if user has show_balance enabled or it's their own profile */}
+				{(profile.show_balance || user?.id === profileId) && (
+					<div className="mt-4">
+						<NexaProgressBar 
+							currentNexa={profile.xp} 
+							currentGrade={profile.current_grade as Grade}
+							showDetails={true}
+						/>
+					</div>
+				)}
 
 					<div className="flex items-center space-x-4 mt-3 text-muted-foreground text-sm">
 						<div className="flex items-center gap-1">

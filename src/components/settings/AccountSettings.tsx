@@ -2,10 +2,11 @@ import { useNavigate } from 'react-router-dom';
 import { useAuth } from '@/contexts/AuthContext';
 import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { User, Globe, Mail } from 'lucide-react';
+import { User, Globe, Mail, Eye, EyeOff } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 import { toast } from 'sonner';
 import { supabase } from '@/integrations/supabase/client';
+import { Switch } from '@/components/ui/switch';
 import {
   Select,
   SelectContent,
@@ -14,11 +15,13 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { PhoneNumberInput } from './PhoneNumberInput';
+import { useState, useEffect } from 'react';
 
 export const AccountSettings = () => {
   const navigate = useNavigate();
   const { user } = useAuth();
   const { t, i18n } = useTranslation();
+  const [showBalance, setShowBalance] = useState(true);
 
   const languages = [
     { code: 'en', name: t('languages.en'), flag: '🇬🇧' },
@@ -27,6 +30,24 @@ export const AccountSettings = () => {
     { code: 'ar', name: t('languages.ar'), flag: '🇸🇦' },
     { code: 'sw', name: t('languages.sw'), flag: '🇹🇿' },
   ];
+
+  useEffect(() => {
+    const fetchBalanceVisibility = async () => {
+      if (!user) return;
+      
+      const { data, error } = await supabase
+        .from('profiles')
+        .select('show_balance')
+        .eq('id', user.id)
+        .single();
+      
+      if (!error && data) {
+        setShowBalance(data.show_balance ?? true);
+      }
+    };
+    
+    fetchBalanceVisibility();
+  }, [user]);
 
   const handleLanguageChange = async (languageCode: string) => {
     i18n.changeLanguage(languageCode);
@@ -48,6 +69,24 @@ export const AccountSettings = () => {
         console.error('Error saving language preference:', error);
         toast.error(t('common.error'));
       }
+    }
+  };
+
+  const handleBalanceVisibilityToggle = async (checked: boolean) => {
+    if (!user) return;
+    
+    setShowBalance(checked);
+    
+    try {
+      await supabase
+        .from('profiles')
+        .update({ show_balance: checked })
+        .eq('id', user.id);
+      toast.success(checked ? 'Balance is now visible' : 'Balance is now hidden');
+    } catch (error) {
+      console.error('Error updating balance visibility:', error);
+      toast.error('Failed to update balance visibility');
+      setShowBalance(!checked);
     }
   };
 
@@ -106,6 +145,30 @@ export const AccountSettings = () => {
                 ))}
               </SelectContent>
             </Select>
+          </div>
+        </div>
+      </Card>
+
+      <Card className="p-6">
+        <div className="flex items-center gap-3 mb-6">
+          <div className="p-2 bg-primary/10 rounded-lg">
+            <Eye className="h-5 w-5 text-primary" />
+          </div>
+          <h3 className="text-xl font-semibold">Display Preferences</h3>
+        </div>
+        <div className="space-y-4">
+          <div className="flex items-center justify-between p-4 rounded-lg bg-muted/30">
+            <div className="flex items-center gap-3">
+              {showBalance ? <Eye className="h-5 w-5 text-muted-foreground" /> : <EyeOff className="h-5 w-5 text-muted-foreground" />}
+              <div>
+                <p className="font-medium">Show Balance on Profile</p>
+                <p className="text-sm text-muted-foreground">Display your Nexa balance and progress bar to visitors</p>
+              </div>
+            </div>
+            <Switch
+              checked={showBalance}
+              onCheckedChange={handleBalanceVisibilityToggle}
+            />
           </div>
         </div>
       </Card>

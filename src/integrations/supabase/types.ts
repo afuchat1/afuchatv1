@@ -1390,6 +1390,7 @@ export type Database = {
           login_streak: number | null
           phone_number: string | null
           profile_completion_rewarded: boolean | null
+          show_balance: boolean | null
           show_online_status: boolean | null
           show_read_receipts: boolean | null
           updated_at: string | null
@@ -1421,6 +1422,7 @@ export type Database = {
           login_streak?: number | null
           phone_number?: string | null
           profile_completion_rewarded?: boolean | null
+          show_balance?: boolean | null
           show_online_status?: boolean | null
           show_read_receipts?: boolean | null
           updated_at?: string | null
@@ -1452,6 +1454,7 @@ export type Database = {
           login_streak?: number | null
           phone_number?: string | null
           profile_completion_rewarded?: boolean | null
+          show_balance?: boolean | null
           show_online_status?: boolean | null
           show_read_receipts?: boolean | null
           updated_at?: string | null
