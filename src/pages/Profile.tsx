@@ -522,7 +522,7 @@ const Profile = ({ mustExist = false }: ProfileProps) => {
 			.eq('follower_id', user.id)
 			.eq('following_id', id)
 			.limit(1)
-			.single();
+			.maybeSingle();
 
 		setIsFollowing(!!data);
 	}, [user]);
