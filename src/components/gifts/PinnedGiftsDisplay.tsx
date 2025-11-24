@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { motion } from 'framer-motion';
 import { PinnedGiftDetailSheet } from './PinnedGiftDetailSheet';
+import { GiftImage } from './GiftImage';
 
 interface PinnedGift {
   id: string;
@@ -71,21 +72,13 @@ export const PinnedGiftsDisplay = ({ userId, className = '' }: PinnedGiftsDispla
               animate={{ 
                 scale: 1, 
                 opacity: 1, 
-                rotate: 0,
-                y: [0, -5, 0]
+                rotate: 0
               }}
               transition={{ 
                 delay: index * 0.1, 
                 type: 'spring', 
                 stiffness: 300, 
-                damping: 20,
-                y: {
-                  duration: 2,
-                  repeat: Infinity,
-                  repeatType: 'reverse',
-                  ease: 'easeInOut',
-                  delay: index * 0.2
-                }
+                damping: 20
               }}
               whileHover={{ 
                 scale: 1.3, 
@@ -98,9 +91,14 @@ export const PinnedGiftsDisplay = ({ userId, className = '' }: PinnedGiftsDispla
                 setDetailsOpen(true);
               }}
             >
-              <div className="relative text-xl drop-shadow-lg" style={{ filter: 'drop-shadow(0 2px 4px rgba(0,0,0,0.3))' }}>
-                {pinnedGift.gift.emoji}
-              </div>
+              <GiftImage
+                giftId={pinnedGift.gift.id}
+                giftName={pinnedGift.gift.name}
+                emoji={pinnedGift.gift.emoji}
+                rarity={pinnedGift.gift.rarity}
+                size="sm"
+                className="pointer-events-none"
+              />
             </motion.div>
           );
         })}
