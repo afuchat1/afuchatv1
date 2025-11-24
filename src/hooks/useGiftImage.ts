@@ -14,11 +14,28 @@ export const useGiftImage = (
   useEffect(() => {
     let mounted = true;
 
-    const generateImage = async () => {
+    const loadOrGenerateImage = async () => {
       try {
         setIsLoading(true);
         setError(false);
 
+        // First, check if the gift already has a stored image URL
+        const { data: gift } = await supabase
+          .from('gifts')
+          .select('image_url')
+          .eq('id', giftId)
+          .single();
+
+        if (!mounted) return;
+
+        // If image exists in database, use it
+        if (gift?.image_url) {
+          setImageUrl(gift.image_url);
+          setIsLoading(false);
+          return;
+        }
+
+        // Otherwise, generate a new image
         const { data, error: functionError } = await supabase.functions.invoke(
           'generate-gift-image',
           {
@@ -53,7 +70,7 @@ export const useGiftImage = (
       }
     };
 
-    generateImage();
+    loadOrGenerateImage();
 
     return () => {
       mounted = false;

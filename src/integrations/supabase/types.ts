@@ -619,6 +619,7 @@ export type Database = {
           description: string | null
           emoji: string
           id: string
+          image_url: string | null
           name: string
           rarity: string
           season: string | null
@@ -631,6 +632,7 @@ export type Database = {
           description?: string | null
           emoji: string
           id?: string
+          image_url?: string | null
           name: string
           rarity?: string
           season?: string | null
@@ -643,6 +645,7 @@ export type Database = {
           description?: string | null
           emoji?: string
           id?: string
+          image_url?: string | null
           name?: string
           rarity?: string
           season?: string | null

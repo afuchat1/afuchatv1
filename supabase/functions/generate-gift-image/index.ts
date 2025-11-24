@@ -1,4 +1,5 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
+import { createClient } from 'https://esm.sh/@supabase/supabase-js@2.7.1';
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
@@ -11,10 +12,33 @@ serve(async (req) => {
   }
 
   try {
-    const { giftName, emoji, rarity } = await req.json();
+    const { giftId, giftName, emoji, rarity } = await req.json();
     
-    if (!giftName || !emoji) {
-      throw new Error('Gift name and emoji are required');
+    if (!giftId || !giftName || !emoji) {
+      throw new Error('Gift ID, name and emoji are required');
+    }
+
+    // Initialize Supabase client
+    const supabaseUrl = Deno.env.get('SUPABASE_URL')!;
+    const supabaseKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!;
+    const supabase = createClient(supabaseUrl, supabaseKey);
+
+    // Check if gift already has a generated image
+    const { data: existingGift } = await supabase
+      .from('gifts')
+      .select('image_url')
+      .eq('id', giftId)
+      .single();
+
+    if (existingGift?.image_url) {
+      console.log('Using cached image for gift:', giftId);
+      return new Response(
+        JSON.stringify({ imageUrl: existingGift.image_url }),
+        { 
+          status: 200,
+          headers: { ...corsHeaders, 'Content-Type': 'application/json' }
+        }
+      );
     }
 
     const RUNWARE_API_KEY = Deno.env.get('RUNWARE_API_KEY');
@@ -22,31 +46,34 @@ serve(async (req) => {
       throw new Error('RUNWARE_API_KEY is not configured');
     }
 
-    // Create a detailed prompt based on rarity with better visual descriptions
+    // Create a detailed prompt based on rarity with animated effects
     const rarityStyles = {
-      common: 'clean and simple design, soft pastel colors, gentle glow, minimalist aesthetic',
-      uncommon: 'polished 3D render, vibrant colors, subtle particle effects, refined details',
-      rare: 'stunning 3D artwork, rich colors with metallic accents, dynamic lighting, floating sparkles and light rays',
-      epic: 'epic cinematic quality, dramatic lighting, glowing magical auras, swirling energy particles, holographic effects',
-      legendary: 'legendary masterpiece, radiant golden light beams, intense magical energy, ethereal glow, divine sparkles, premium luxury feel'
+      common: 'clean design, soft colors, gentle ambient glow, subtle floating particles',
+      uncommon: 'polished 3D render, vibrant colors, animated particle effects, refined shimmering details',
+      rare: 'stunning 3D artwork, rich metallic colors, dynamic animated lighting, floating sparkles and animated light rays, glowing edges',
+      epic: 'epic cinematic quality, dramatic pulsing lights, glowing animated magical auras, swirling energy particles, holographic animated effects',
+      legendary: 'legendary masterpiece, radiant animated golden light beams, intense pulsing magical energy, ethereal animated glow, divine animated sparkles, premium luxury animated effects'
     };
 
     const style = rarityStyles[rarity as keyof typeof rarityStyles] || rarityStyles.common;
     
-    const prompt = `Create an ultra-realistic, beautiful 3D digital gift of ${giftName}. Style: ${style}. 
+    const prompt = `Create an ultra-realistic, beautiful 3D animated digital gift of ${giftName}. Style: ${style}. 
 
-Requirements:
+CRITICAL Requirements:
+- COMPLETELY TRANSPARENT BACKGROUND (no background at all, pure transparency)
+- PNG format with alpha channel transparency
 - High-quality product photography style with professional studio lighting
-- Completely transparent background (PNG format)
 - Centered composition with the gift floating gracefully
-- Soft shadows beneath the item for depth
+- Animated glowing effects, particles, and light rays around the gift
+- Soft animated shadows beneath the item for depth
 - Premium, gift-worthy appearance with attention to detail
 - Size: 512x512px
-- Make it look like a real, tangible luxury gift item
-- Add appropriate visual effects based on rarity (sparkles, glow, particles)
+- Make it look like a real, tangible luxury gift item with animated effects
+- Add animated visual effects based on rarity (sparkles, glow, particles, light beams)
 - The ${emoji} should inspire the design but make it realistic and beautiful
+- Ensure complete transparency - no white or colored background
 
-Make this look like an expensive digital gift that someone would be excited to receive!`;
+Make this look like an expensive animated digital gift with transparent background that someone would be excited to receive!`;
 
     console.log('Generating image with Runware:', prompt);
 
@@ -90,6 +117,14 @@ Make this look like an expensive digital gift that someone would be excited to r
     }
 
     console.log('Image generated successfully');
+
+    // Save the image URL to the database
+    await supabase
+      .from('gifts')
+      .update({ image_url: imageUrl })
+      .eq('id', giftId);
+
+    console.log('Image URL saved to database');
 
     return new Response(
       JSON.stringify({ imageUrl }),
