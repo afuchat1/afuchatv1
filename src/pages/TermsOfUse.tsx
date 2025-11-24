@@ -7,7 +7,7 @@ const TermsOfUse = () => {
   const navigate = useNavigate();
 
   return (
-    <div className="min-h-screen bg-background">
+    <div className="min-h-screen bg-background select-none">
       {/* Header */}
       <header className="sticky top-0 z-50 w-full border-b border-border bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
         <div className="container max-w-4xl mx-auto px-4 sm:px-6">
@@ -222,13 +222,28 @@ const TermsOfUse = () => {
           <section className="mb-8">
             <h2 className="text-2xl font-semibold mb-4">Contact Us</h2>
             <p className="text-foreground/90 leading-relaxed mb-4">
-              If you have any questions about these Terms of Use or need to report a violation, please contact us at:
+              If you have any questions about these Terms of Use or need to report a violation, please contact us through:
             </p>
-            <ul className="list-disc list-inside text-foreground/90 leading-relaxed mb-4 ml-4">
-              <li>Email: legal@afuchat.com</li>
-              <li>Through our in-app support system</li>
-              <li>Via our Support page at AfuChat</li>
-            </ul>
+            <div className="space-y-3 mb-4">
+              <a 
+                href="mailto:legal@afuchat.com" 
+                className="flex items-center gap-2 text-primary hover:underline w-fit"
+              >
+                <span>Email: legal@afuchat.com</span>
+              </a>
+              <button
+                onClick={() => navigate('/support')}
+                className="flex items-center gap-2 text-primary hover:underline w-fit cursor-pointer"
+              >
+                <span>In-app Support System</span>
+              </button>
+              <button
+                onClick={() => navigate('/support')}
+                className="flex items-center gap-2 text-primary hover:underline w-fit cursor-pointer"
+              >
+                <span>AfuChat Support Page</span>
+              </button>
+            </div>
             <p className="text-foreground/90 leading-relaxed">
               We will respond to your inquiries within a reasonable timeframe.
             </p>
