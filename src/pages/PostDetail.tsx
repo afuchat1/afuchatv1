@@ -488,18 +488,7 @@ const PostDetail = () => {
                     isOrgVerified={post.author.is_organization_verified} 
                   />
                 </div>
-                <p 
-                  className="text-sm text-muted-foreground truncate select-text cursor-pointer hover:text-primary transition-colors"
-                  onClick={(e) => {
-                    e.preventDefault();
-                    e.stopPropagation();
-                    navigator.clipboard.writeText(post.author.handle);
-                    toast.success('Username copied to clipboard!');
-                  }}
-                  title="Click to copy username"
-                >
-                  @{post.author.handle}
-                </p>
+                <p className="text-sm text-muted-foreground truncate">@{post.author.handle}</p>
               </Link>
             </div>
 

@@ -2,7 +2,6 @@ import { Link } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { useTranslation } from 'react-i18next';
 import { UserAvatar } from '@/components/avatar/UserAvatar';
-import { toast } from 'sonner';
 import React from 'react';
 
 interface Reply {
@@ -84,16 +83,7 @@ export const NestedReplyItem = ({
                   isVerified={reply.author.is_verified} 
                   isOrgVerified={reply.author.is_organization_verified} 
                 />
-                <span 
-                  className="text-sm text-muted-foreground ml-2 truncate select-text cursor-pointer hover:text-primary transition-colors"
-                  onClick={(e) => {
-                    e.preventDefault();
-                    e.stopPropagation();
-                    navigator.clipboard.writeText(reply.author.handle);
-                    toast.success('Username copied to clipboard!');
-                  }}
-                  title="Click to copy username"
-                >
+                <span className="text-sm text-muted-foreground ml-2 truncate">
                   @{reply.author.handle}
                 </span>
               </div>

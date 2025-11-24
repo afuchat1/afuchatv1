@@ -798,13 +798,8 @@ const PostCard = ({ post, addReply, user, navigate, onAcknowledge, onDeletePost,
             )}
 
             <span
-              className="text-muted-foreground text-[10px] sm:text-xs select-text cursor-pointer truncate flex-shrink min-w-0 hover:text-primary transition-colors"
-              onClick={(e) => {
-                e.stopPropagation();
-                navigator.clipboard.writeText(post.profiles.handle);
-                toast.success('Username copied to clipboard!');
-              }}
-              title="Click to copy username"
+              className="text-muted-foreground text-[10px] sm:text-xs hover:underline cursor-pointer truncate flex-shrink min-w-0"
+              onClick={() => handleViewProfile(post.author_id)}
             >
               @{post.profiles.handle}
             </span>

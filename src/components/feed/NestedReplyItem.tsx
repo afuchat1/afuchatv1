@@ -5,7 +5,6 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { useAITranslation } from '@/hooks/useAITranslation';
 import { MessageSquare } from 'lucide-react';
-import { toast } from 'sonner';
 
 interface Reply {
   id: string;
@@ -136,13 +135,8 @@ export const NestedReplyItem = ({
             <VerifiedBadge isVerified={reply.profiles.is_verified} isOrgVerified={reply.profiles.is_organization_verified} />
 
             <span
-              className="text-muted-foreground text-[10px] sm:text-xs select-text cursor-pointer truncate flex-shrink min-w-0 hover:text-primary transition-colors"
-              onClick={(e) => {
-                e.stopPropagation();
-                navigator.clipboard.writeText(reply.profiles.handle);
-                toast.success('Username copied to clipboard!');
-              }}
-              title="Click to copy username"
+              className="text-muted-foreground text-[10px] sm:text-xs hover:underline cursor-pointer truncate flex-shrink min-w-0"
+              onClick={() => handleViewProfile(reply.author_id)}
             >
               @{reply.profiles.handle}
             </span>
