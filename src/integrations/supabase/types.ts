@@ -541,6 +541,7 @@ export type Database = {
         Row: {
           gift_id: string
           id: string
+          last_sale_price: number | null
           last_updated: string | null
           price_multiplier: number
           total_sent: number
@@ -548,6 +549,7 @@ export type Database = {
         Insert: {
           gift_id: string
           id?: string
+          last_sale_price?: number | null
           last_updated?: string | null
           price_multiplier?: number
           total_sent?: number
@@ -555,6 +557,7 @@ export type Database = {
         Update: {
           gift_id?: string
           id?: string
+          last_sale_price?: number | null
           last_updated?: string | null
           price_multiplier?: number
           total_sent?: number

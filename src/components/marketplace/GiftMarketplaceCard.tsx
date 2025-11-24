@@ -121,6 +121,20 @@ export const GiftMarketplaceCard = ({ listing, onPurchaseComplete }: GiftMarketp
 
       if (listingError) throw listingError;
 
+      // Update last sale price for dynamic pricing (skyrocket effect)
+      const priceMultiplier = 1.5; // 50% increase after each sale
+      const newPrice = Math.floor(listing.asking_price * priceMultiplier);
+      
+      await supabase
+        .from('gift_statistics')
+        .upsert({
+          gift_id: listing.gift.id,
+          last_sale_price: newPrice,
+          last_updated: new Date().toISOString(),
+        }, {
+          onConflict: 'gift_id'
+        });
+
       toast.success(`You purchased ${listing.gift.name}!`);
       onPurchaseComplete();
     } catch (error) {

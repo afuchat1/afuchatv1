@@ -103,6 +103,28 @@ export const ListGiftDialog = ({ open, onOpenChange, onListingCreated }: ListGif
     }
   };
 
+  const getSuggestedPrice = async (giftId: string, basePrice: number) => {
+    // Check if there's a last sale price (dynamic pricing)
+    const { data: stats } = await supabase
+      .from('gift_statistics')
+      .select('last_sale_price')
+      .eq('gift_id', giftId)
+      .maybeSingle();
+
+    // If there's a last sale price, use it; otherwise use base price
+    return stats?.last_sale_price || basePrice;
+  };
+
+  const handleGiftSelection = async (receivedGift: ReceivedGift) => {
+    setSelectedGift(receivedGift);
+    // Auto-populate with suggested price based on last sale
+    const suggestedPrice = await getSuggestedPrice(
+      receivedGift.gift.id,
+      receivedGift.gift.base_xp_cost
+    );
+    setAskingPrice(suggestedPrice.toString());
+  };
+
   const handleListGift = async () => {
     if (!selectedGift || !askingPrice || !user) return;
 
@@ -166,7 +188,7 @@ export const ListGiftDialog = ({ open, onOpenChange, onListingCreated }: ListGif
                 {receivedGifts.map((receivedGift) => (
                   <button
                     key={receivedGift.id}
-                    onClick={() => setSelectedGift(receivedGift)}
+                    onClick={() => handleGiftSelection(receivedGift)}
                     className={`p-4 rounded-lg border-2 transition-all ${
                       selectedGift?.id === receivedGift.id
                         ? 'border-primary bg-primary/10'
@@ -196,7 +218,7 @@ export const ListGiftDialog = ({ open, onOpenChange, onListingCreated }: ListGif
                   min="1"
                 />
                 <p className="text-xs text-muted-foreground">
-                  Base value: {selectedGift.gift.base_xp_cost.toLocaleString()} Nexa
+                  Suggested price based on last sale: {askingPrice ? parseInt(askingPrice).toLocaleString() : selectedGift.gift.base_xp_cost.toLocaleString()} Nexa
                 </p>
               </div>
             )}

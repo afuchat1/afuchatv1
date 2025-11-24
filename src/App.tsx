@@ -73,7 +73,6 @@ const SecurityDashboard = lazy(() => import("./pages/SecurityDashboard"));
 const ChangePassword = lazy(() => import("./pages/ChangePassword"));
 const Gifts = lazy(() => import("./pages/Gifts"));
 const GiftDetail = lazy(() => import("./pages/GiftDetail"));
-const Marketplace = lazy(() => import("./pages/Marketplace"));
 const Premium = lazy(() => import("./pages/Premium"));
 
 const FoodDelivery = lazy(() => import("./pages/FoodDelivery"));
@@ -140,7 +139,6 @@ const AppRoutes = () => {
       <Route path="/social" element={<Layout><SocialHub /></Layout>} />
       <Route path="/gifts" element={<Layout><Gifts /></Layout>} />
       <Route path="/gifts/:id" element={<Layout><GiftDetail /></Layout>} />
-      <Route path="/marketplace" element={<Layout><Marketplace /></Layout>} />
       <Route path="/premium" element={<Layout><Premium /></Layout>} />
       <Route path="/qr-code" element={<Layout><QRCode /></Layout>} />
       <Route path="/settings" element={<Layout><Settings /></Layout>} />
