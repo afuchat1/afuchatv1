@@ -9,6 +9,7 @@ import { CustomLoader } from '@/components/ui/CustomLoader';
 import { ListGiftDialog } from '@/components/marketplace/ListGiftDialog';
 import { Badge } from '@/components/ui/badge';
 import { Card } from '@/components/ui/card';
+import { PremiumGate } from '@/components/PremiumGate';
 
 interface MyListing {
   id: string;
@@ -115,7 +116,7 @@ export default function Marketplace() {
   }
 
   return (
-    <>
+    <PremiumGate feature="Gift Marketplace" showUpgrade={true}>
       <SEO 
         title="My Marketplace Listings"
         description="Manage your gift marketplace listings"
@@ -203,6 +204,6 @@ export default function Marketplace() {
         onOpenChange={setListDialogOpen}
         onListingCreated={fetchMyListings}
       />
-    </>
+    </PremiumGate>
   );
 }

@@ -9,6 +9,7 @@ import { Bot, Send, ArrowLeft } from 'lucide-react';
 import { Skeleton } from '@/components/ui/skeleton';
 import { toast } from 'sonner';
 import { useNavigate, useLocation } from 'react-router-dom';
+import { PremiumGate } from '@/components/PremiumGate';
 
 interface Message {
   role: 'user' | 'assistant';
@@ -218,6 +219,7 @@ const AIChat: React.FC = () => {
 
   if (AI_COMING_SOON) {
     return (
+      <PremiumGate feature="AI Chat Assistant" showUpgrade={true}>
       <div className="flex flex-col h-screen bg-background">
         <div className="border-b border-border bg-card p-4 flex items-center gap-3">
           <Button variant="ghost" size="icon" onClick={() => navigate(-1)} className="rounded-full">
@@ -264,10 +266,12 @@ const AIChat: React.FC = () => {
           </Card>
         </div>
       </div>
+      </PremiumGate>
     );
   }
 
   return (
+    <PremiumGate feature="AI Chat Assistant" showUpgrade={true}>
     <div className="flex flex-col h-screen bg-background">
       <div className="border-b border-border bg-card p-4 flex items-center gap-3">
         <Button variant="ghost" size="icon" onClick={() => navigate(-1)} className="rounded-full hidden lg:inline-flex">
@@ -349,6 +353,7 @@ const AIChat: React.FC = () => {
         </div>
       </div>
     </div>
+    </PremiumGate>
   );
 };
 
