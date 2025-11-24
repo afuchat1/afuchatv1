@@ -20,7 +20,7 @@ export function VerifiedBadge({
   size = 'md',
   userId
 }: VerifiedBadgeProps) {
-  const { isPremium } = usePremiumStatus();
+  const { isPremium } = usePremiumStatus(userId);
   const sizeClasses = {
     sm: 'w-4 h-4',
     md: 'w-5 h-5',
