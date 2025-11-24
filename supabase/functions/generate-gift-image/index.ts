@@ -57,23 +57,26 @@ serve(async (req) => {
 
     const style = rarityStyles[rarity as keyof typeof rarityStyles] || rarityStyles.common;
     
-    const prompt = `Create an ultra-realistic, beautiful 3D animated digital gift of ${giftName}. Style: ${style}. 
+    const prompt = `Create a 3D rendered ${giftName} gift object ONLY. Style: ${style}. 
 
-CRITICAL Requirements:
-- COMPLETELY TRANSPARENT BACKGROUND (no background at all, pure transparency)
-- PNG format with alpha channel transparency
-- High-quality product photography style with professional studio lighting
-- Centered composition with the gift floating gracefully
-- Animated glowing effects, particles, and light rays around the gift
-- Soft animated shadows beneath the item for depth
-- Premium, gift-worthy appearance with attention to detail
+CRITICAL TRANSPARENCY REQUIREMENTS - READ CAREFULLY:
+- ABSOLUTE ZERO BACKGROUND - Pure 100% transparent PNG with full alpha channel
+- NO background elements whatsoever - no floors, no surfaces, no environments, no gradients
+- NO shadows on background - only object self-shadows
+- NO backdrop - the gift object must float in complete void/transparency
+- The ONLY thing visible should be the gift object itself
+- PNG with full alpha transparency - everything except the gift object must be completely transparent (alpha = 0)
+
+Object Requirements:
+- Single centered 3D gift object floating in transparent space
+- Professional product photography lighting on the object only
+- ${style} applied to the gift object itself
+- High detail and premium appearance
+- The ${emoji} should inspire the object design
 - Size: 512x512px
-- Make it look like a real, tangible luxury gift item with animated effects
-- Add animated visual effects based on rarity (sparkles, glow, particles, light beams)
-- The ${emoji} should inspire the design but make it realistic and beautiful
-- Ensure complete transparency - no white or colored background
+- The gift should be the ONLY visible element - everything else must be transparent
 
-Make this look like an expensive animated digital gift with transparent background that someone would be excited to receive!`;
+VERIFY: After generation, only the gift object should be visible. All surrounding pixels must be fully transparent (alpha channel = 0).`;
 
     console.log('Generating image with Runware:', prompt);
 
