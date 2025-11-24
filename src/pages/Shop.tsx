@@ -127,62 +127,22 @@ export default function Shop() {
 
     setPurchasing(true);
     try {
-      // Deduct Nexa from buyer
-      const { error: buyerError } = await supabase
-        .from('profiles')
-        .update({ xp: userXP - selectedListing.asking_price })
-        .eq('id', user.id);
+      // Use database function to handle purchase atomically
+      const { data, error } = await supabase.rpc('purchase_marketplace_gift', {
+        p_listing_id: selectedListing.id,
+        p_buyer_id: user.id,
+      });
 
-      if (buyerError) throw buyerError;
+      if (error) throw error;
 
-      // Add Nexa to seller
-      const { data: sellerData } = await supabase
-        .from('profiles')
-        .select('xp')
-        .eq('id', selectedListing.user_id)
-        .single();
+      const result = data as { success: boolean; error?: string; message?: string };
 
-      if (sellerData) {
-        const { error: sellerError } = await supabase
-          .from('profiles')
-          .update({ xp: sellerData.xp + selectedListing.asking_price })
-          .eq('id', selectedListing.user_id);
-
-        if (sellerError) throw sellerError;
+      if (!result.success) {
+        toast.error(result.error || 'Failed to purchase gift');
+        return;
       }
 
-      // Create gift transaction
-      const { error: txError } = await supabase
-        .from('gift_transactions')
-        .insert({
-          gift_id: selectedListing.gift.id,
-          sender_id: selectedListing.user_id,
-          receiver_id: user.id,
-          xp_cost: selectedListing.asking_price,
-        });
-
-      if (txError) throw txError;
-
-      // Mark listing as inactive
-      const { error: listingError } = await supabase
-        .from('marketplace_listings')
-        .update({ is_active: false })
-        .eq('id', selectedListing.id);
-
-      if (listingError) throw listingError;
-
-      // Update last sale price
-      await supabase
-        .from('gift_statistics')
-        .upsert({
-          gift_id: selectedListing.gift.id,
-          last_sale_price: selectedListing.asking_price,
-          last_updated: new Date().toISOString(),
-        }, {
-          onConflict: 'gift_id'
-        });
-
-      toast.success(`You purchased ${selectedListing.gift.name}!`);
+      toast.success(`You purchased ${selectedListing.gift.name}! Check your profile gifts.`);
       setSelectedListing(null);
       fetchMarketplaceListings();
       fetchUserXP();

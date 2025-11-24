@@ -2257,6 +2257,10 @@ export type Database = {
         Args: { p_amount: number; p_message?: string; p_receiver_id: string }
         Returns: Json
       }
+      purchase_marketplace_gift: {
+        Args: { p_buyer_id: string; p_listing_id: string }
+        Returns: Json
+      }
       purchase_subscription: { Args: { p_plan_id: string }; Returns: Json }
       record_login_attempt: {
         Args: {
