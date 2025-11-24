@@ -269,10 +269,10 @@ export default function Shop() {
 
       {/* Purchase Sheet */}
       <Sheet open={!!selectedListing} onOpenChange={() => setSelectedListing(null)}>
-        <SheetContent side="bottom" className="max-h-[70vh] overflow-y-auto rounded-t-3xl bg-background/95 backdrop-blur-xl border-t border-border/50">
+        <SheetContent side="bottom" className="max-h-[70vh] flex flex-col rounded-t-3xl bg-background/95 backdrop-blur-xl border-t border-border/50">
           {selectedListing && (
             <>
-              <SheetHeader className="space-y-1 pb-3 border-b border-border/40">
+              <SheetHeader className="space-y-1 pb-3 border-b border-border/40 flex-shrink-0">
                 <SheetTitle className="text-lg font-bold">
                   Gift Details
                 </SheetTitle>
@@ -281,7 +281,7 @@ export default function Shop() {
                 </SheetDescription>
               </SheetHeader>
 
-              <div className="space-y-3 mt-3 pb-6">
+              <div className="space-y-3 mt-3 pb-6 overflow-y-auto flex-1">
                 {/* Gift Display with Animation */}
                 <motion.div 
                   className="flex flex-col items-center text-center space-y-1"
