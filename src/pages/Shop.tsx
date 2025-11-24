@@ -18,6 +18,7 @@ import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { toast } from 'sonner';
 import { Loader2, ShoppingCart, User } from 'lucide-react';
 import { motion } from 'framer-motion';
+import { GiftImage } from '@/components/gifts/GiftImage';
 
 interface GiftMarketplaceListing {
   id: string;
@@ -247,9 +248,13 @@ export default function Shop() {
                           whileHover={{ scale: 1.1 }}
                           whileTap={{ scale: 0.9 }}
                         >
-                          <div className="w-20 h-20 rounded-full flex items-center justify-center text-5xl">
-                            {listing.gift.emoji}
-                          </div>
+                          <GiftImage
+                            giftId={listing.gift.id}
+                            giftName={listing.gift.name}
+                            emoji={listing.gift.emoji}
+                            rarity={listing.gift.rarity}
+                            size="md"
+                          />
                           <p className="text-xs font-medium text-center line-clamp-1 w-full">
                             {listing.gift.name}
                           </p>
@@ -290,13 +295,13 @@ export default function Shop() {
                   transition={{ duration: 0.3 }}
                 >
                   <div className="relative">
-                    <motion.div 
-                      className="text-[40px] p-2 bg-gradient-to-br from-primary/10 via-primary/5 to-transparent rounded-full shadow-lg"
-                      whileHover={{ scale: 1.05 }}
-                      transition={{ type: "spring", stiffness: 300 }}
-                    >
-                      {selectedListing.gift.emoji}
-                    </motion.div>
+                    <GiftImage
+                      giftId={selectedListing.gift.id}
+                      giftName={selectedListing.gift.name}
+                      emoji={selectedListing.gift.emoji}
+                      rarity={selectedListing.gift.rarity}
+                      size="xl"
+                    />
                     <div className="absolute -bottom-1 -right-1">
                       <Badge className={`${getRarityColor(selectedListing.gift.rarity)} px-2 py-0.5 text-[10px] font-semibold shadow-lg`}>
                         {selectedListing.gift.rarity}
