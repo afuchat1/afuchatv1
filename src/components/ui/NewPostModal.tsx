@@ -10,7 +10,7 @@ import { X, Sparkles, Image as ImageIcon, Globe } from 'lucide-react';
 import { ImageEditor } from '@/components/image-editor/ImageEditor';
 import { BatchImageEditor } from '@/components/image-editor/BatchImageEditor';
 import { postSchema } from '@/lib/validation';
-import { Dialog, DialogContent } from '@/components/ui/dialog';
+import { Sheet, SheetContent } from '@/components/ui/sheet';
 import { useImageDescription } from '@/hooks/useImageDescription';
 import { AltTextEditor } from '@/components/ui/AltTextEditor';
 import { compressImageFile } from '@/lib/imageCompression';
@@ -277,18 +277,10 @@ const NewPostModal: React.FC<NewPostModalProps> = ({ isOpen, onClose }) => {
 
     return (
         <>
-            <Dialog open={isOpen} onOpenChange={handleClose}>
-                <DialogContent className="max-w-2xl p-0 gap-0 border-border/50">
+            <Sheet open={isOpen} onOpenChange={handleClose}>
+                <SheetContent side="bottom" className="max-w-2xl mx-auto p-0 gap-0 border-border/50 max-h-[90vh] overflow-y-auto" onOpenChange={handleClose}>
                     {/* Header */}
-                    <div className="flex items-center justify-between px-4 py-3 border-b border-border/50">
-                        <Button
-                            variant="ghost"
-                            size="icon"
-                            onClick={handleClose}
-                            className="h-8 w-8 rounded-full"
-                        >
-                            <X className="h-5 w-5" />
-                        </Button>
+                    <div className="flex items-center justify-end px-4 py-3 border-b border-border/50">
                         <Button
                             onClick={handlePost}
                             disabled={isPosting || (!newPost.trim() && selectedImages.length === 0)}
@@ -463,12 +455,12 @@ const NewPostModal: React.FC<NewPostModalProps> = ({ isOpen, onClose }) => {
                         onChange={handleImageSelect}
                         className="hidden"
                     />
-                </DialogContent>
-            </Dialog>
+                </SheetContent>
+            </Sheet>
 
-            {/* AI Dialog */}
-            <Dialog open={showAIDialog} onOpenChange={setShowAIDialog}>
-                <DialogContent className="sm:max-w-md">
+            {/* AI Sheet */}
+            <Sheet open={showAIDialog} onOpenChange={setShowAIDialog}>
+                <SheetContent side="bottom" className="max-w-md mx-auto" onOpenChange={setShowAIDialog}>
                     <div className="space-y-4">
                         <div>
                             <h3 className="text-lg font-semibold mb-2">AI Post Generator</h3>
@@ -505,8 +497,8 @@ const NewPostModal: React.FC<NewPostModalProps> = ({ isOpen, onClose }) => {
                             </Button>
                         </div>
                     </div>
-                </DialogContent>
-            </Dialog>
+                </SheetContent>
+            </Sheet>
 
             {/* Image Editor */}
             {showImageEditor && editingImagePreview && (
