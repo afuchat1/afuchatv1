@@ -344,7 +344,7 @@ export const SendGiftDialog = ({ receiverId, receiverName, trigger }: SendGiftDi
         </SheetTrigger>
       <SheetContent 
         side="bottom" 
-        className="max-h-[85vh] flex flex-col rounded-t-3xl bg-background/95 backdrop-blur-xl border-t border-border/50 p-0" 
+        className="h-[85vh] flex flex-col rounded-t-3xl bg-background/95 backdrop-blur-xl border-t border-border/50 p-0" 
         onOpenChange={setOpen}
       >
         <SheetHeader className="p-6 pb-4 border-b border-border/40 flex-shrink-0">
@@ -363,7 +363,7 @@ export const SendGiftDialog = ({ receiverId, receiverName, trigger }: SendGiftDi
           </div>
         </SheetHeader>
 
-        <div className="flex-1 overflow-y-auto overflow-x-hidden px-6 -webkit-overflow-scrolling-touch">
+        <div className="flex-1 min-h-0 overflow-y-auto overflow-x-hidden px-6" style={{ WebkitOverflowScrolling: 'touch' }}>
           <div className="py-4 space-y-4">
             <div className="text-xs text-center text-muted-foreground bg-muted/30 rounded-xl p-3 border border-border/50">
               <span className="font-medium">💡 {t('gifts.tapToCombo')}</span>
