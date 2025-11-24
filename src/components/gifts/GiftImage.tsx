@@ -1,5 +1,6 @@
 import { useGiftImage } from '@/hooks/useGiftImage';
 import { Skeleton } from '@/components/ui/skeleton';
+import { motion } from 'framer-motion';
 
 interface GiftImageProps {
   giftId: string;
@@ -46,12 +47,34 @@ export const GiftImage = ({
   }
 
   return (
-    <div className={`${sizeClass} ${className} flex items-center justify-center`}>
-      <img 
+    <motion.div 
+      className={`${sizeClass} ${className} flex items-center justify-center`}
+      initial={{ scale: 0, opacity: 0 }}
+      animate={{ 
+        scale: 1, 
+        opacity: 1,
+        y: [0, -5, 0]
+      }}
+      transition={{ 
+        scale: { type: 'spring', stiffness: 300, damping: 20 },
+        opacity: { duration: 0.3 },
+        y: {
+          duration: 2,
+          repeat: Infinity,
+          repeatType: 'reverse',
+          ease: 'easeInOut'
+        }
+      }}
+    >
+      <motion.img 
         src={imageUrl} 
         alt={giftName}
         className={`${sizeClass} object-contain drop-shadow-lg`}
+        whileHover={{ 
+          scale: 1.1,
+          transition: { type: 'spring', stiffness: 400, damping: 10 }
+        }}
       />
-    </div>
+    </motion.div>
   );
 };
