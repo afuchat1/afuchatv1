@@ -32,6 +32,7 @@ import { VerifiedDetailsSheet } from '@/components/VerifiedDetailsSheet';
 import { OnlineStatus } from '@/components/OnlineStatus';
 import { StoryAvatar } from '@/components/moments/StoryAvatar';
 import { SEO } from '@/components/SEO';
+import { UserPremiumBadge } from '@/components/UserPremiumBadge';
 
 interface Profile {
 	id: string;
@@ -940,6 +941,8 @@ const Profile = ({ mustExist = false }: ProfileProps) => {
 								{profile.is_business_mode && (
 									<BusinessBadge />
 								)}
+								
+								<UserPremiumBadge userId={profileId} />
 							</div>
 					) : (profile.is_verified || profile.is_organization_verified || profile.is_business_mode) ? (
 						<div className="flex items-center gap-1">
@@ -976,6 +979,8 @@ const Profile = ({ mustExist = false }: ProfileProps) => {
 							{profile.is_business_mode && (
 								<BusinessBadge />
 							)}
+							
+							<UserPremiumBadge userId={profileId} />
 						</div>
 						) : (
 							<div className="flex items-center gap-1">
@@ -983,6 +988,7 @@ const Profile = ({ mustExist = false }: ProfileProps) => {
 								{profile.is_business_mode && (
 									<BusinessBadge />
 								)}
+								<UserPremiumBadge userId={profileId} />
 							</div>
 						)}
 

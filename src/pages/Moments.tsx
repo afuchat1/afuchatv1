@@ -10,6 +10,7 @@ import { Plus, ArrowLeft, Eye } from 'lucide-react';
 import { toast } from 'sonner';
 import { StoryViewer } from '@/components/moments/StoryViewer';
 import { CreateStoryDialog } from '@/components/moments/CreateStoryDialog';
+import { PremiumGate } from '@/components/PremiumGate';
 
 interface Story {
   id: string;
@@ -128,6 +129,7 @@ const Moments = () => {
   }, {} as Record<string, Story[]>);
 
   return (
+    <PremiumGate feature="Stories & Moments" showUpgrade={true}>
     <div className="min-h-screen bg-background pb-20 md:pb-0">
       <div className="max-w-4xl mx-auto">
         {/* Hero Header */}
@@ -273,6 +275,7 @@ const Moments = () => {
         onSuccess={fetchStories}
       />
     </div>
+    </PremiumGate>
   );
 };
 

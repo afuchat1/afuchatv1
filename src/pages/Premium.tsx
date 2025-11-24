@@ -5,7 +5,7 @@ import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { toast } from 'sonner';
-import { Crown, Check, Coins, Calendar, Sparkles, ArrowLeft } from 'lucide-react';
+import { Crown, Check, Coins, Calendar, Sparkles, ArrowLeft, Gift } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { Separator } from '@/components/ui/separator';
 
@@ -289,6 +289,78 @@ export default function Premium() {
 
         {/* Info Section */}
         <Card className="p-6 mt-8 bg-muted/30">
+          <h3 className="font-semibold mb-4 flex items-center gap-2">
+            <Sparkles className="h-5 w-5 text-primary" />
+            Premium Features
+          </h3>
+          <div className="grid md:grid-cols-2 gap-4">
+            <div className="space-y-3">
+              <div className="flex items-start gap-3">
+                <div className="p-2 bg-primary/10 rounded-lg">
+                  <Crown className="h-5 w-5 text-primary" />
+                </div>
+                <div>
+                  <p className="font-medium">Verified Badge</p>
+                  <p className="text-sm text-muted-foreground">Get the coveted verified checkmark</p>
+                </div>
+              </div>
+              
+              <div className="flex items-start gap-3">
+                <div className="p-2 bg-primary/10 rounded-lg">
+                  <Gift className="h-5 w-5 text-primary" />
+                </div>
+                <div>
+                  <p className="font-medium">Gift Marketplace</p>
+                  <p className="text-sm text-muted-foreground">Buy and sell rare gifts</p>
+                </div>
+              </div>
+              
+              <div className="flex items-start gap-3">
+                <div className="p-2 bg-primary/10 rounded-lg">
+                  <Sparkles className="h-5 w-5 text-primary" />
+                </div>
+                <div>
+                  <p className="font-medium">Stories & Moments</p>
+                  <p className="text-sm text-muted-foreground">Share 24-hour stories with followers</p>
+                </div>
+              </div>
+            </div>
+            
+            <div className="space-y-3">
+              <div className="flex items-start gap-3">
+                <div className="p-2 bg-primary/10 rounded-lg">
+                  <Calendar className="h-5 w-5 text-primary" />
+                </div>
+                <div>
+                  <p className="font-medium">Red Envelopes</p>
+                  <p className="text-sm text-muted-foreground">Send Nexa gifts to multiple friends</p>
+                </div>
+              </div>
+              
+              <div className="flex items-start gap-3">
+                <div className="p-2 bg-primary/10 rounded-lg">
+                  <Sparkles className="h-5 w-5 text-primary" />
+                </div>
+                <div>
+                  <p className="font-medium">AI Chat Assistant</p>
+                  <p className="text-sm text-muted-foreground">Chat with AfuAI for help and insights</p>
+                </div>
+              </div>
+              
+              <div className="flex items-start gap-3">
+                <div className="p-2 bg-primary/10 rounded-lg">
+                  <Crown className="h-5 w-5 text-primary" />
+                </div>
+                <div>
+                  <p className="font-medium">Premium Badge</p>
+                  <p className="text-sm text-muted-foreground">Show your premium status on your profile</p>
+                </div>
+              </div>
+            </div>
+          </div>
+        </Card>
+        
+        <Card className="p-6 mt-6 bg-muted/30">
           <h3 className="font-semibold mb-4 flex items-center gap-2">
             <Sparkles className="h-5 w-5 text-primary" />
             How It Works

@@ -13,6 +13,7 @@ import { ArrowLeft, Gift, Users, Sparkles, TrendingUp } from 'lucide-react';
 import { toast } from 'sonner';
 import { useQuery } from '@tanstack/react-query';
 import { RedEnvelopeCard } from '@/components/red-envelope/RedEnvelopeCard';
+import { PremiumGate } from '@/components/PremiumGate';
 
 const RedEnvelope = () => {
   const navigate = useNavigate();
@@ -139,6 +140,7 @@ const RedEnvelope = () => {
   };
 
   return (
+    <PremiumGate feature="Red Envelope" showUpgrade={true}>
     <div className="min-h-screen bg-background pb-20 md:pb-0">
       <div className="max-w-4xl mx-auto">
         {/* Balance Card */}
@@ -328,6 +330,7 @@ const RedEnvelope = () => {
         </Tabs>
       </div>
     </div>
+    </PremiumGate>
   );
 };
 
