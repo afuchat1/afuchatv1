@@ -6,7 +6,7 @@ import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import {
-  TrendingUp, Search, MessageSquare, Bell, User, Settings
+  TrendingUp, Search, MessageSquare, Bell, User, Settings, Home, Users
 } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/contexts/AuthContext';
@@ -39,6 +39,7 @@ const DesktopFeed = () => {
   const [searchQuery, setSearchQuery] = useState('');
   const [followingIds, setFollowingIds] = useState<Set<string>>(new Set());
   const [processingFollow, setProcessingFollow] = useState<Set<string>>(new Set());
+  const [activeTab, setActiveTab] = useState<'foryou' | 'following'>('foryou');
 
   useEffect(() => {
     fetchTrendingTopics();
@@ -241,6 +242,24 @@ const DesktopFeed = () => {
 
           <nav className="space-y-1">
             <Button
+              variant={activeTab === 'foryou' ? 'default' : 'ghost'}
+              className="w-full justify-start text-base h-auto py-2.5 px-3 rounded-full hover:bg-muted/70"
+              onClick={() => setActiveTab('foryou')}
+            >
+              <Home className="h-5 w-5 mr-3" />
+              <span className="font-medium">For you</span>
+            </Button>
+
+            <Button
+              variant={activeTab === 'following' ? 'default' : 'ghost'}
+              className="w-full justify-start text-base h-auto py-2.5 px-3 rounded-full hover:bg-muted/70"
+              onClick={() => setActiveTab('following')}
+            >
+              <Users className="h-5 w-5 mr-3" />
+              <span className="font-medium">Following</span>
+            </Button>
+
+            <Button
               variant="ghost"
               className="w-full justify-start text-base h-auto py-2.5 px-3 rounded-full hover:bg-muted/70"
               onClick={() => navigate('/chats')}
@@ -307,7 +326,7 @@ const DesktopFeed = () => {
 
         {/* Center - Feed */}
         <main className="flex-1 min-w-0 border-r border-border max-w-[680px]">
-          <Feed />
+          <Feed defaultTab={activeTab} />
         </main>
 
         {/* Right Sidebar - Trending & Suggestions */}

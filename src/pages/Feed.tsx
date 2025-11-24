@@ -1071,7 +1071,11 @@ const PostCard = ({ post, addReply, user, navigate, onAcknowledge, onDeletePost,
 
 // --- FEED COMPONENT (Updated with new handlers) ---
 
-const Feed = () => {
+interface FeedProps {
+  defaultTab?: 'foryou' | 'following';
+}
+
+const Feed = ({ defaultTab = 'foryou' }: FeedProps = {}) => {
   const { t } = useTranslation();
   const { awardNexa } = useNexa();
   const { user } = useAuth();
@@ -1081,7 +1085,7 @@ const Feed = () => {
   const [loadingMore, setLoadingMore] = useState(false);
   const [hasMore, setHasMore] = useState(true);
   const [currentPage, setCurrentPage] = useState(0);
-  const [activeTab, setActiveTab] = useState<'foryou' | 'following'>('foryou');
+  const [activeTab, setActiveTab] = useState<'foryou' | 'following'>(defaultTab);
   const [newPostsCount, setNewPostsCount] = useState(0);
   const [userProfile, setUserProfile] = useState<{ display_name: string; avatar_url: string | null } | null>(null);
   const [expandedPosts, setExpandedPosts] = useState<Set<string>>(new Set());
@@ -1102,6 +1106,11 @@ const Feed = () => {
     }
     return shuffled;
   };
+
+  // Sync activeTab when defaultTab changes
+  useEffect(() => {
+    setActiveTab(defaultTab);
+  }, [defaultTab]);
 
   // Load cached data immediately on mount
   useEffect(() => {
