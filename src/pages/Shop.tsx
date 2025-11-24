@@ -263,17 +263,19 @@ export default function Shop() {
                         {rarityListings.length} {rarityListings.length === 1 ? 'gift' : 'gifts'}
                       </span>
                     </div>
-                    <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 xl:grid-cols-8 gap-3">
+                    <div className="grid grid-cols-3 sm:grid-cols-4 md:grid-cols-5 lg:grid-cols-7 xl:grid-cols-9 gap-4">
                       {rarityListings.map((listing) => (
                         <motion.button
                           key={listing.id}
                           onClick={() => setSelectedListing(listing)}
-                          className="flex flex-col items-center gap-2 p-4 rounded-lg border border-border hover:border-primary/50 transition-all bg-card"
-                          whileHover={{ scale: 1.05 }}
-                          whileTap={{ scale: 0.95 }}
+                          className="flex flex-col items-center gap-2 transition-all"
+                          whileHover={{ scale: 1.1 }}
+                          whileTap={{ scale: 0.9 }}
                         >
-                          <div className="text-5xl">{listing.gift.emoji}</div>
-                          <p className="text-xs font-medium text-center line-clamp-1">
+                          <div className="w-20 h-20 rounded-full flex items-center justify-center text-5xl">
+                            {listing.gift.emoji}
+                          </div>
+                          <p className="text-xs font-medium text-center line-clamp-1 w-full">
                             {listing.gift.name}
                           </p>
                           <p className="text-sm font-bold text-primary">
