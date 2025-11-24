@@ -7,7 +7,7 @@ import { Card, CardHeader, CardTitle, CardDescription, CardFooter } from '@/comp
 import { Badge } from '@/components/ui/badge';
 import { Input } from '@/components/ui/input';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from '@/components/ui/dialog';
-import { Check, Sparkles, Zap, Clock, Hammer, TrendingUp, Users } from 'lucide-react';
+import { Check, Sparkles, Zap, Clock, Hammer, Users } from 'lucide-react';
 import { Skeleton } from '@/components/ui/skeleton';
 import { toast } from 'sonner';
 import { SEO } from '@/components/SEO';
@@ -44,25 +44,6 @@ interface UserPurchase {
   id?: string;
 }
 
-interface MarketplaceListing {
-  id: string;
-  user_id: string;
-  shop_item_id: string;
-  purchase_id: string;
-  asking_price: number;
-  created_at: string;
-  shop_items?: {
-    name: string;
-    description: string;
-    emoji: string;
-    item_type: string;
-    image_url?: string;
-  };
-  profiles?: {
-    display_name: string;
-    handle: string;
-  };
-}
 
 export default function Shop() {
   const navigate = useNavigate();
@@ -70,20 +51,15 @@ export default function Shop() {
   const [items, setItems] = useState<ShopItem[]>([]);
   const [auctionItems, setAuctionItems] = useState<ShopItem[]>([]);
   const [featuredItems, setFeaturedItems] = useState<ShopItem[]>([]);
-  const [marketplaceListings, setMarketplaceListings] = useState<MarketplaceListing[]>([]);
   const [purchases, setPurchases] = useState<UserPurchase[]>([]);
   const [bids, setBids] = useState<Record<string, Bid[]>>({});
   const [userXP, setUserXP] = useState(0);
   const [loading, setLoading] = useState(true);
   const [purchasing, setPurchasing] = useState<string | null>(null);
   const [bidDialogOpen, setBidDialogOpen] = useState(false);
-  const [listDialogOpen, setListDialogOpen] = useState(false);
   const [selectedItem, setSelectedItem] = useState<ShopItem | null>(null);
-  const [selectedPurchase, setSelectedPurchase] = useState<UserPurchase | null>(null);
   const [bidAmount, setBidAmount] = useState('');
-  const [listingPrice, setListingPrice] = useState('');
   const [placingBid, setPlacingBid] = useState(false);
-  const [activeTab, setActiveTab] = useState<'shop' | 'marketplace'>('shop');
 
   useEffect(() => {
     fetchShopData();
@@ -197,21 +173,6 @@ export default function Shop() {
 
       setItems((itemsData || []) as ShopItem[]);
 
-      // Fetch marketplace listings
-      const { data: marketplaceData, error: marketplaceError } = await supabase
-        .from('marketplace_listings')
-        .select(`
-          *,
-          shop_items (name, description, emoji, item_type, image_url),
-          profiles (display_name, handle)
-        `)
-        .eq('is_active', true)
-        .order('created_at', { ascending: false });
-
-      if (marketplaceError) throw marketplaceError;
-
-      setMarketplaceListings((marketplaceData || []) as MarketplaceListing[]);
-
       // Fetch user purchases
       const { data: purchasesData, error: purchasesError } = await supabase
         .from('user_shop_purchases')
@@ -322,88 +283,6 @@ export default function Shop() {
     setBidDialogOpen(true);
   };
 
-  const openListDialog = (purchase: UserPurchase, item: ShopItem) => {
-    setSelectedPurchase(purchase);
-    setSelectedItem(item);
-    setListingPrice('');
-    setListDialogOpen(true);
-  };
-
-  const handleCreateListing = async () => {
-    if (!selectedPurchase || !listingPrice) return;
-
-    setPlacingBid(true);
-    try {
-      const price = parseInt(listingPrice);
-      const { data, error } = await supabase.rpc('create_marketplace_listing', {
-        p_purchase_id: selectedPurchase.id,
-        p_asking_price: price,
-      });
-
-      if (error) throw error;
-
-      if (!data || data.length === 0) {
-        throw new Error('No response from server');
-      }
-
-      const result = data[0] as { success: boolean; message: string };
-
-      if (result.success) {
-        toast.success('Item listed on marketplace!');
-        setListDialogOpen(false);
-        setListingPrice('');
-        setSelectedPurchase(null);
-        setSelectedItem(null);
-        fetchShopData();
-      } else {
-        toast.error(result.message);
-      }
-    } catch (error) {
-      console.error('Listing error:', error);
-      toast.error('Failed to create listing');
-    } finally {
-      setPlacingBid(false);
-    }
-  };
-
-  const handlePurchaseMarketplaceItem = async (listingId: string, itemName: string) => {
-    if (!user) {
-      navigate('/auth');
-      return;
-    }
-
-    setPurchasing(listingId);
-    try {
-      const { data, error } = await supabase.rpc('purchase_marketplace_item', {
-        p_listing_id: listingId,
-      });
-
-      if (error) throw error;
-
-      if (!data || data.length === 0) {
-        throw new Error('No response from server');
-      }
-
-      const result = data[0] as { success: boolean; message: string; new_xp?: number };
-
-      if (result.success) {
-        toast.success(`Purchased ${itemName}!`);
-        setUserXP(result.new_xp || 0);
-        fetchShopData();
-        
-        window.dispatchEvent(new CustomEvent('nexa-updated', { 
-          detail: { nexa: result.new_xp } 
-        }));
-      } else {
-        toast.error(result.message);
-      }
-    } catch (error) {
-      console.error('Purchase error:', error);
-      toast.error('Failed to complete purchase');
-    } finally {
-      setPurchasing(null);
-    }
-  };
 
   const isOwned = (itemId: string) => {
     return purchases.some(p => p.shop_item_id === itemId);
@@ -612,24 +491,8 @@ export default function Shop() {
           </div>
         </div>
 
-        <div className="mb-6 flex gap-2">
-          <Button
-            variant={activeTab === 'shop' ? 'default' : 'outline'}
-            onClick={() => setActiveTab('shop')}
-          >
-            Shop
-          </Button>
-          <Button
-            variant={activeTab === 'marketplace' ? 'default' : 'outline'}
-            onClick={() => setActiveTab('marketplace')}
-          >
-            Marketplace
-          </Button>
-        </div>
-
-        {activeTab === 'shop' ? (
-          <div className="space-y-8">
-            {auctionItems.length > 0 && (
+        <div className="space-y-8">
+          {auctionItems.length > 0 && (
               <div>
                 <div className="flex items-center gap-2 mb-4">
                   <Hammer className="w-5 h-5 text-purple-500" />
@@ -680,17 +543,6 @@ export default function Shop() {
                           <CardTitle className="text-lg">{item.name}</CardTitle>
                           <CardDescription className="text-sm">{item.description}</CardDescription>
                         </CardHeader>
-                        <CardFooter>
-                          <Button
-                            onClick={() => openListDialog(purchase, item)}
-                            variant="outline"
-                            size="sm"
-                            className="w-full"
-                          >
-                            <TrendingUp className="w-4 h-4 mr-2" />
-                            List on Marketplace
-                          </Button>
-                        </CardFooter>
                       </Card>
                     );
                   })}
@@ -698,64 +550,7 @@ export default function Shop() {
               </div>
             )}
           </div>
-        ) : (
-          <div>
-            <h2 className="text-2xl font-bold mb-4">Marketplace</h2>
-            {marketplaceListings.length === 0 ? (
-              <div className="text-center py-12 text-muted-foreground">
-                No items listed on the marketplace yet
-              </div>
-            ) : (
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-                {marketplaceListings.map(listing => (
-                  <Card key={listing.id}>
-                    <CardHeader>
-                      <div className="flex items-center justify-between">
-                        <div className="text-4xl">{listing.shop_items?.emoji}</div>
-                        <Badge variant="outline">
-                          <Users className="w-3 h-3 mr-1" />
-                          Resale
-                        </Badge>
-                      </div>
-                      <CardTitle className="text-lg">{listing.shop_items?.name}</CardTitle>
-                      <CardDescription className="text-sm">
-                        {listing.shop_items?.description}
-                      </CardDescription>
-                      <div className="text-xs text-muted-foreground">
-                        Seller: @{listing.profiles?.handle}
-                      </div>
-                    </CardHeader>
-                    <CardFooter className="flex flex-col gap-2">
-                      <div className="flex items-center justify-between w-full">
-                        <span className="text-sm text-muted-foreground">Price:</span>
-                        <span className="text-lg font-bold">{listing.asking_price} Nexa</span>
-                      </div>
-                      <Button
-                        onClick={() => handlePurchaseMarketplaceItem(listing.id, listing.shop_items?.name || 'Item')}
-                        disabled={listing.user_id === user?.id || userXP < listing.asking_price || purchasing === listing.id}
-                        size="sm"
-                        className="w-full"
-                      >
-                        {purchasing === listing.id ? (
-                          <>
-                            Purchasing...
-                          </>
-                        ) : listing.user_id === user?.id ? (
-                          'Your Listing'
-                        ) : userXP < listing.asking_price ? (
-                          'Not Enough Nexa'
-                        ) : (
-                          'Purchase'
-                        )}
-                      </Button>
-                    </CardFooter>
-                  </Card>
-                ))}
-              </div>
-            )}
-          </div>
-        )}
-      </div>
+        </div>
 
       <Dialog open={bidDialogOpen} onOpenChange={setBidDialogOpen}>
         <DialogContent>
@@ -801,43 +596,6 @@ export default function Shop() {
                 </>
               ) : (
                 'Place Bid'
-              )}
-            </Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
-
-      <Dialog open={listDialogOpen} onOpenChange={setListDialogOpen}>
-        <DialogContent>
-          <DialogHeader>
-            <DialogTitle>List on Marketplace</DialogTitle>
-            <DialogDescription>
-              Set a price for {selectedItem?.name}
-            </DialogDescription>
-          </DialogHeader>
-          <div className="space-y-4">
-            <div>
-              <label className="text-sm font-medium">Asking Price (Nexa)</label>
-              <Input
-                type="number"
-                value={listingPrice}
-                onChange={(e) => setListingPrice(e.target.value)}
-                placeholder="Enter asking price"
-                min="1"
-              />
-            </div>
-          </div>
-          <DialogFooter>
-            <Button variant="outline" onClick={() => setListDialogOpen(false)}>
-              Cancel
-            </Button>
-            <Button onClick={handleCreateListing} disabled={placingBid || !listingPrice}>
-              {placingBid ? (
-                <>
-                  Listing...
-                </>
-              ) : (
-                'Create Listing'
               )}
             </Button>
           </DialogFooter>
