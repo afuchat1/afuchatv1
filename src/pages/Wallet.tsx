@@ -2,12 +2,13 @@ import { useNavigate } from 'react-router-dom';
 import { useQuery } from '@tanstack/react-query';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { ArrowLeft, Wallet as WalletIcon, TrendingUp, TrendingDown, Gift, Heart, ShoppingBag, Trophy, Mail, Send } from 'lucide-react';
+import { ArrowLeft, Wallet as WalletIcon, TrendingUp, TrendingDown, Gift, Heart, ShoppingBag, Trophy, Mail, Send, Crown, Sparkles } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/contexts/AuthContext';
 import Logo from '@/components/Logo';
 import { Badge } from '@/components/ui/badge';
 import { formatDistanceToNow } from 'date-fns';
+import { ACoinConverter } from '@/components/currency/ACoinConverter';
 
 const Wallet = () => {
   const navigate = useNavigate();
@@ -204,6 +205,44 @@ const Wallet = () => {
             </div>
           </CardContent>
         </Card>
+
+        {/* Premium CTA Card */}
+        <Card className="mb-8 bg-gradient-to-br from-yellow-500/10 via-orange-500/10 to-red-500/10 border-yellow-500/20">
+          <CardContent className="pt-6">
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-4">
+                <div className="p-3 bg-gradient-to-br from-yellow-500 to-orange-500 rounded-full">
+                  <Crown className="h-6 w-6 text-white" />
+                </div>
+                <div>
+                  <h3 className="text-lg font-bold flex items-center gap-2">
+                    Get Premium & Verified
+                    <Sparkles className="h-4 w-4 text-yellow-500" />
+                  </h3>
+                  <p className="text-sm text-muted-foreground">Subscribe with ACoin and get verified instantly</p>
+                </div>
+              </div>
+              <Button 
+                onClick={() => navigate('/premium')}
+                className="bg-gradient-to-r from-yellow-500 to-orange-500 hover:from-yellow-600 hover:to-orange-600 text-white"
+              >
+                View Plans
+              </Button>
+            </div>
+          </CardContent>
+        </Card>
+
+        {/* ACoin Converter */}
+        <div className="mb-8">
+          <ACoinConverter 
+            currentNexa={profile?.xp || 0}
+            currentACoin={profile?.acoin || 0}
+            onConversionSuccess={() => {
+              // Refetch profile to update balances
+              window.location.reload();
+            }}
+          />
+        </div>
 
         {/* Transaction History */}
         <div className="mb-6">

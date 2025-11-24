@@ -1810,6 +1810,42 @@ export type Database = {
           },
         ]
       }
+      subscription_plans: {
+        Row: {
+          acoin_price: number
+          created_at: string | null
+          description: string | null
+          duration_days: number
+          features: Json | null
+          grants_verification: boolean | null
+          id: string
+          is_active: boolean | null
+          name: string
+        }
+        Insert: {
+          acoin_price: number
+          created_at?: string | null
+          description?: string | null
+          duration_days?: number
+          features?: Json | null
+          grants_verification?: boolean | null
+          id?: string
+          is_active?: boolean | null
+          name: string
+        }
+        Update: {
+          acoin_price?: number
+          created_at?: string | null
+          description?: string | null
+          duration_days?: number
+          features?: Json | null
+          grants_verification?: boolean | null
+          id?: string
+          is_active?: boolean | null
+          name?: string
+        }
+        Relationships: []
+      }
       supported_languages: {
         Row: {
           code: string
@@ -2045,6 +2081,54 @@ export type Database = {
           },
         ]
       }
+      user_subscriptions: {
+        Row: {
+          acoin_paid: number
+          created_at: string | null
+          expires_at: string
+          id: string
+          is_active: boolean | null
+          plan_id: string
+          started_at: string | null
+          user_id: string
+        }
+        Insert: {
+          acoin_paid: number
+          created_at?: string | null
+          expires_at: string
+          id?: string
+          is_active?: boolean | null
+          plan_id: string
+          started_at?: string | null
+          user_id: string
+        }
+        Update: {
+          acoin_paid?: number
+          created_at?: string | null
+          expires_at?: string
+          id?: string
+          is_active?: boolean | null
+          plan_id?: string
+          started_at?: string | null
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "user_subscriptions_plan_id_fkey"
+            columns: ["plan_id"]
+            isOneToOne: false
+            referencedRelation: "subscription_plans"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "user_subscriptions_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       verification_requests: {
         Row: {
           account_type: string
@@ -2226,6 +2310,7 @@ export type Database = {
         }
         Returns: Json
       }
+      expire_subscriptions: { Args: never; Returns: number }
       finalize_auction: { Args: { p_shop_item_id: string }; Returns: Json }
       get_gift_price: { Args: { p_gift_id: string }; Returns: number }
       get_or_create_chat: { Args: { other_user_id: string }; Returns: string }
@@ -2315,6 +2400,7 @@ export type Database = {
           success: boolean
         }[]
       }
+      purchase_subscription: { Args: { p_plan_id: string }; Returns: Json }
       record_login_attempt: {
         Args: {
           p_ip_address?: string
