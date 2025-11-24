@@ -3,7 +3,7 @@ import { useNavigate, Link } from 'react-router-dom';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/contexts/AuthContext';
 import { toast } from 'sonner';
-import { MessageSquare, Heart, Share, Ellipsis, Sparkles, Gift } from 'lucide-react';
+import { MessageSquare, Heart, Share, Ellipsis, Sparkles, Gift, Eye } from 'lucide-react';
 import { CustomLoader, InlineLoader } from '@/components/ui/CustomLoader';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -76,6 +76,7 @@ interface Post {
   replies: Reply[];
   like_count: number;
   reply_count: number;
+  view_count: number;
   has_liked: boolean;
   affiliation_date?: string;
 }
@@ -408,6 +409,39 @@ const PostCard = ({ post, addReply, user, navigate, onAcknowledge, onDeletePost,
   const [translatedContent, setTranslatedContent] = useState<string | null>(null);
   const [isTranslating, setIsTranslating] = useState(false);
   const [visibleRepliesCount, setVisibleRepliesCount] = useState(5);
+  const postRef = useRef<HTMLDivElement>(null);
+  const [hasTrackedView, setHasTrackedView] = useState(false);
+
+  // Track post view when it becomes visible
+  useEffect(() => {
+    if (!user || !postRef.current || hasTrackedView) return;
+
+    const observer = new IntersectionObserver(
+      async ([entry]) => {
+        if (entry.isIntersecting && !hasTrackedView) {
+          setHasTrackedView(true);
+          
+          // Track the view in the database
+          try {
+            await supabase
+              .from('post_views')
+              .insert({
+                post_id: post.id,
+                viewer_id: user.id,
+              });
+          } catch (error) {
+            // Silently fail if view already exists (duplicate key constraint)
+            console.debug('View already tracked or error:', error);
+          }
+        }
+      },
+      { threshold: 0.5 } // Post must be 50% visible
+    );
+
+    observer.observe(postRef.current);
+
+    return () => observer.disconnect();
+  }, [user, post.id, hasTrackedView]);
   
   // Organize replies into a tree structure
   const organizeReplies = (replies: Reply[]): Reply[] => {
@@ -721,7 +755,7 @@ const PostCard = ({ post, addReply, user, navigate, onAcknowledge, onDeletePost,
   };
 
   return (
-    <div className="flex py-2 pl-0 pr-4 transition-colors hover:bg-muted/5">
+    <div ref={postRef} className="flex py-2 pl-0 pr-4 transition-colors hover:bg-muted/5">
       <div
         className="mr-2 sm:mr-3 flex-shrink-0 cursor-pointer ml-0.5 sm:ml-1"
         onClick={() => handleViewProfile(post.author_id)}
@@ -901,6 +935,10 @@ const PostCard = ({ post, addReply, user, navigate, onAcknowledge, onDeletePost,
           <Button variant="ghost" size="sm" className="flex items-center gap-0.5 sm:gap-1 group h-7 sm:h-8 px-2 sm:px-3" onClick={() => onAcknowledge(post.id, post.has_liked)}>
             <Heart className={`h-3.5 w-3.5 sm:h-4 sm:w-4 group-hover:text-red-500 transition-colors ${post.has_liked ? 'text-red-500 fill-red-500' : ''}`} />
             <span className={`group-hover:text-red-500 transition-colors text-[10px] sm:text-xs ${post.has_liked ? 'text-red-500' : ''}`}>{post.like_count > 0 ? post.like_count : ''}</span>
+          </Button>
+          <Button variant="ghost" size="sm" className="flex items-center gap-0.5 sm:gap-1 group h-7 sm:h-8 px-2 sm:px-3">
+            <Eye className="h-3.5 w-3.5 sm:h-4 sm:w-4" />
+            <span className="text-[10px] sm:text-xs">{post.view_count > 0 ? post.view_count : ''}</span>
           </Button>
           <Button variant="ghost" size="sm" className="flex items-center gap-0.5 sm:gap-1 group h-7 sm:h-8 px-2 sm:px-3" onClick={handleShare}>
             <Share className="h-3.5 w-3.5 sm:h-4 sm:w-4 group-hover:text-primary transition-colors" />
@@ -1527,6 +1565,7 @@ const Feed = () => {
           replies: replies,
           reply_count: replies.length,
           like_count: acks.length,
+          view_count: post.view_count || 0,
           has_liked: currentUserId ? acks.includes(currentUserId) : false,
           affiliation_date: post.profiles?.is_affiliate && post.author_id ? affiliationDates.get(post.author_id) : undefined,
         } as Post;
@@ -1548,6 +1587,7 @@ const Feed = () => {
           replies: replies,
           reply_count: replies.length,
           like_count: acks.length,
+          view_count: post.view_count || 0,
           has_liked: currentUserId ? acks.includes(currentUserId) : false,
         } as Post;
       });
