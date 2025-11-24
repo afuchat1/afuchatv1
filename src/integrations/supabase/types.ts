@@ -722,34 +722,44 @@ export type Database = {
         Row: {
           asking_price: number
           created_at: string | null
+          gift_id: string | null
           id: string
           is_active: boolean | null
-          purchase_id: string
-          shop_item_id: string
+          purchase_id: string | null
+          shop_item_id: string | null
           updated_at: string | null
           user_id: string
         }
         Insert: {
           asking_price: number
           created_at?: string | null
+          gift_id?: string | null
           id?: string
           is_active?: boolean | null
-          purchase_id: string
-          shop_item_id: string
+          purchase_id?: string | null
+          shop_item_id?: string | null
           updated_at?: string | null
           user_id: string
         }
         Update: {
           asking_price?: number
           created_at?: string | null
+          gift_id?: string | null
           id?: string
           is_active?: boolean | null
-          purchase_id?: string
-          shop_item_id?: string
+          purchase_id?: string | null
+          shop_item_id?: string | null
           updated_at?: string | null
           user_id?: string
         }
         Relationships: [
+          {
+            foreignKeyName: "marketplace_listings_gift_id_fkey"
+            columns: ["gift_id"]
+            isOneToOne: false
+            referencedRelation: "gifts"
+            referencedColumns: ["id"]
+          },
           {
             foreignKeyName: "marketplace_listings_purchase_id_fkey"
             columns: ["purchase_id"]
