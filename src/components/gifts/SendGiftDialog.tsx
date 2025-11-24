@@ -363,7 +363,7 @@ export const SendGiftDialog = ({ receiverId, receiverName, trigger }: SendGiftDi
                 <div
                   onClick={() => !loading && handleGiftTap(gift)}
                   className={`cursor-pointer transition-all duration-300 hover:scale-110 group relative ${
-                    isSelected ? 'scale-110' : ''
+                    isSelected ? 'scale-125' : ''
                   }`}
                 >
                   {/* Count Badge */}
@@ -382,7 +382,9 @@ export const SendGiftDialog = ({ receiverId, receiverName, trigger }: SendGiftDi
                         emoji={gift.emoji}
                         rarity={gift.rarity}
                         size="md"
-                        className="mx-auto drop-shadow-lg"
+                        className={`mx-auto drop-shadow-lg transition-all duration-300 ${
+                          isSelected ? 'scale-125' : ''
+                        }`}
                       />
                       <Badge className={`absolute -top-1 -right-1 ${getRarityColor(gift.rarity)} text-[8px] px-1 py-0 shadow-md`}>
                         {gift.rarity.slice(0, 1)}
@@ -414,42 +416,18 @@ export const SendGiftDialog = ({ receiverId, receiverName, trigger }: SendGiftDi
                   </Button>
                 </div>
 
-                {/* Send Action - Appears Below When Selected */}
+                {/* Send Button - Simple and Clean */}
                 {isSelected && selectedGift && (
-                  <div
+                  <Button
                     onClick={(e) => {
                       e.stopPropagation();
-                      if (!loading) handleSendGift();
+                      handleSendGift();
                     }}
-                    className="cursor-pointer flex flex-col items-center gap-1.5 animate-[fade-in_0.3s_ease-out] group"
+                    disabled={loading}
+                    className="w-full h-9 bg-primary hover:bg-primary/90 text-primary-foreground font-semibold text-sm rounded-lg shadow-md hover:shadow-lg transition-all duration-200 animate-[scale-in_0.3s_ease-out]"
                   >
-                    {loading ? (
-                      <>
-                        <Sparkles className="h-5 w-5 text-primary animate-spin" />
-                        <span className="text-xs font-semibold text-muted-foreground">{t('gifts.sending')}</span>
-                      </>
-                    ) : (
-                      <>
-                        <div className="relative flex items-center gap-1.5">
-                          <Gift className="h-5 w-5 text-primary group-hover:scale-110 transition-transform" />
-                          <span className="text-sm font-bold bg-gradient-to-r from-primary to-accent bg-clip-text text-transparent group-hover:from-accent group-hover:to-primary transition-all">
-                            {t('gifts.send')}
-                          </span>
-                        </div>
-                        <div className="flex items-center gap-1.5">
-                          <span className="text-xs font-bold text-foreground/70">
-                            {totalCost.toLocaleString()} Nexa
-                          </span>
-                          {discount > 0 && (
-                            <span className="text-[9px] font-bold text-green-600 dark:text-green-400">
-                              -{(discount * 100).toFixed(0)}%
-                            </span>
-                          )}
-                        </div>
-                        <div className="h-[2px] w-0 group-hover:w-full bg-gradient-to-r from-primary to-accent transition-all duration-300" />
-                      </>
-                    )}
-                  </div>
+                    {loading ? t('gifts.sending') : t('gifts.send')}
+                  </Button>
                 )}
               </div>
             );
