@@ -2,12 +2,15 @@ import { useEffect, useState } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { Card } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
-import { Gift, TrendingUp, Sparkles } from 'lucide-react';
+import { Button } from '@/components/ui/button';
+import { Gift, TrendingUp, Sparkles, Pin } from 'lucide-react';
 import { Skeleton } from '@/components/ui/skeleton';
 import { useTranslation } from 'react-i18next';
+import { useAuth } from '@/contexts/AuthContext';
 import { GiftImage } from './GiftImage';
 import { GiftDetailSheet } from './GiftDetailSheet';
 import { extractText } from '@/lib/textUtils';
+import { toast } from 'sonner';
 
 interface GiftTransaction {
   id: string;
@@ -50,6 +53,7 @@ const getRarityColor = (rarity: string) => {
 
 export const ReceivedGifts = ({ userId }: ReceivedGiftsProps) => {
   const { t } = useTranslation();
+  const { user } = useAuth();
   const [gifts, setGifts] = useState<GiftTransaction[]>([]);
   const [loading, setLoading] = useState(true);
   const [totalValue, setTotalValue] = useState(0);
@@ -57,34 +61,45 @@ export const ReceivedGifts = ({ userId }: ReceivedGiftsProps) => {
   const [detailsSheetOpen, setDetailsSheetOpen] = useState(false);
   const [giftStats, setGiftStats] = useState<Record<string, GiftStatistics>>({});
   const [profileName, setProfileName] = useState<string>('');
+  const [pinnedGiftIds, setPinnedGiftIds] = useState<Set<string>>(new Set());
+  
+  const isOwnProfile = user?.id === userId;
 
   useEffect(() => {
     fetchGifts();
     fetchProfileName();
+    if (isOwnProfile) {
+      fetchPinnedGifts();
+    }
 
-    // Set up real-time subscription for new gifts
-    const channel = supabase
-      .channel('gift-transactions-changes')
-      .on(
-        'postgres_changes',
-        {
-          event: 'INSERT',
-          schema: 'public',
-          table: 'gift_transactions',
-          filter: `receiver_id=eq.${userId}`,
-        },
-        (payload) => {
-          console.log('New gift received:', payload);
-          // Fetch updated gifts when a new one is received
-          fetchGifts();
-        }
-      )
+    // Real-time subscription for new gifts
+    const subscription = supabase
+      .channel('gift_transactions_changes')
+      .on('postgres_changes', {
+        event: 'INSERT',
+        schema: 'public',
+        table: 'gift_transactions',
+        filter: `receiver_id=eq.${userId}`
+      }, () => {
+        fetchGifts();
+      })
       .subscribe();
 
     return () => {
-      supabase.removeChannel(channel);
+      subscription.unsubscribe();
     };
-  }, [userId]);
+  }, [userId, isOwnProfile]);
+
+  const fetchPinnedGifts = async () => {
+    const { data } = await supabase
+      .from('pinned_gifts')
+      .select('gift_id')
+      .eq('user_id', userId);
+    
+    if (data) {
+      setPinnedGiftIds(new Set(data.map(p => p.gift_id)));
+    }
+  };
 
   const fetchProfileName = async () => {
     const { data } = await supabase
@@ -92,7 +107,7 @@ export const ReceivedGifts = ({ userId }: ReceivedGiftsProps) => {
       .select('display_name')
       .eq('id', userId)
       .single();
-    
+
     if (data) {
       setProfileName(data.display_name);
     }
@@ -179,6 +194,45 @@ export const ReceivedGifts = ({ userId }: ReceivedGiftsProps) => {
     }
   };
 
+  const handlePinToggle = async (e: React.MouseEvent, giftId: string) => {
+    e.stopPropagation();
+    
+    if (pinnedGiftIds.has(giftId)) {
+      const { error } = await supabase
+        .from('pinned_gifts')
+        .delete()
+        .eq('user_id', userId)
+        .eq('gift_id', giftId);
+      
+      if (!error) {
+        setPinnedGiftIds(prev => {
+          const newSet = new Set(prev);
+          newSet.delete(giftId);
+          return newSet;
+        });
+        toast.success('Gift unpinned');
+      }
+    } else {
+      if (pinnedGiftIds.size >= 6) {
+        toast.error('You can only pin up to 6 gifts');
+        return;
+      }
+      
+      const { error } = await supabase
+        .from('pinned_gifts')
+        .insert({ user_id: userId, gift_id: giftId });
+      
+      if (!error) {
+        setPinnedGiftIds(prev => new Set(prev).add(giftId));
+        toast.success('Gift pinned to profile');
+      }
+    }
+  };
+  
+  const isRareGift = (rarity: string) => {
+    return ['rare', 'epic', 'legendary'].includes(rarity.toLowerCase());
+  };
+
   const calculatePrice = (giftId: string, baseCost: number) => {
     const stats = giftStats[giftId];
     if (!stats) return baseCost;
@@ -250,6 +304,16 @@ export const ReceivedGifts = ({ userId }: ReceivedGiftsProps) => {
                 <Badge className={`absolute -top-2 -right-2 ${getRarityColor(gift.gift.rarity)} text-[10px] px-1.5 py-0.5`}>
                   {gift.gift.rarity}
                 </Badge>
+                {isOwnProfile && isRareGift(gift.gift.rarity) && (
+                  <Button
+                    size="sm"
+                    variant={pinnedGiftIds.has(gift.gift.id) ? 'default' : 'ghost'}
+                    className="absolute -top-2 -left-2 h-6 w-6 p-0 rounded-full opacity-0 group-hover:opacity-100 transition-opacity"
+                    onClick={(e) => handlePinToggle(e, gift.gift.id)}
+                  >
+                    <Pin className={`h-3 w-3 ${pinnedGiftIds.has(gift.gift.id) ? 'fill-current' : ''}`} />
+                  </Button>
+                )}
               </div>
 
               <div className="text-center">

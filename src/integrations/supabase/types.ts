@@ -1110,6 +1110,42 @@ export type Database = {
           },
         ]
       }
+      pinned_gifts: {
+        Row: {
+          gift_id: string
+          id: string
+          pinned_at: string
+          user_id: string
+        }
+        Insert: {
+          gift_id: string
+          id?: string
+          pinned_at?: string
+          user_id: string
+        }
+        Update: {
+          gift_id?: string
+          id?: string
+          pinned_at?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "pinned_gifts_gift_id_fkey"
+            columns: ["gift_id"]
+            isOneToOne: false
+            referencedRelation: "gifts"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "pinned_gifts_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       post_acknowledgments: {
         Row: {
           created_at: string | null

@@ -19,6 +19,7 @@ import { ReceivedGifts } from '@/components/gifts/ReceivedGifts';
 import { TipStats } from '@/components/tips/TipStats';
 import { TipButton } from '@/components/tips/TipButton';
 import ProfileActionsSheet from '@/components/ProfileActionsSheet';
+import { PinnedGiftsDisplay } from '@/components/gifts/PinnedGiftsDisplay';
 import { useAITranslation } from '@/hooks/useAITranslation';
 import { ImageCarousel } from '@/components/ui/ImageCarousel';
 import { LinkPreviewCard } from '@/components/ui/LinkPreviewCard';
@@ -847,6 +848,7 @@ const Profile = ({ mustExist = false }: ProfileProps) => {
 								showStoryRing={true}
 							/>
 						</div>
+						<PinnedGiftsDisplay userId={profileId} />
 						<OnlineStatus lastSeen={profile.last_seen} showOnlineStatus={profile.show_online_status} />
 					</div>
 
