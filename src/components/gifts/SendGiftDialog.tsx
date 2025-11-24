@@ -204,17 +204,27 @@ export const SendGiftDialog = ({ receiverId, receiverName, trigger }: SendGiftDi
   const handleSendGift = async () => {
     if (!selectedGift || !user) return;
 
+    console.log('=== SENDING GIFT ===');
+    console.log('Selected gift:', selectedGift);
+    console.log('User XP:', userXP);
+    console.log('Total cost:', totalCost);
+    console.log('Is combo?:', selectedGift.count > 1);
+
     setLoading(true);
     try {
       const giftIds = Array(selectedGift.count).fill(selectedGift.id);
+      console.log('Gift IDs array:', giftIds);
 
       // Use combo function if multiple, otherwise single gift
       if (selectedGift.count > 1) {
+        console.log('Calling send_gift_combo...');
         const { data, error } = await supabase.rpc('send_gift_combo', {
           p_gift_ids: giftIds,
           p_receiver_id: receiverId,
           p_message: null,
         });
+
+        console.log('send_gift_combo response:', { data, error });
 
         if (error) throw error;
 
@@ -287,6 +297,11 @@ export const SendGiftDialog = ({ receiverId, receiverName, trigger }: SendGiftDi
       }
     } catch (error) {
       console.error('Error sending gift:', error);
+      // Log detailed error information
+      if (error instanceof Error) {
+        console.error('Error message:', error.message);
+        console.error('Error details:', JSON.stringify(error, null, 2));
+      }
       toast.error(t('gifts.giftFailed'));
     } finally {
       setLoading(false);
