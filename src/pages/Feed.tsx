@@ -1962,14 +1962,16 @@ const Feed = () => {
         'postgres_changes',
         { event: 'INSERT', schema: 'public', table: 'post_acknowledgments' },
         (payload) => {
-          // Optimistically update like count and status
+          // Skip if this is current user's action (already updated optimistically)
+          if (payload.new.user_id === user?.id) return;
+          
+          // Update like count for other users' actions
           const updateLike = (currentPosts: Post[]) =>
             currentPosts.map((p) =>
               p.id === payload.new.post_id
                 ? {
                     ...p,
                     like_count: p.like_count + 1,
-                    has_liked: payload.new.user_id === user?.id ? true : p.has_liked,
                   }
                 : p
             );
@@ -1982,14 +1984,16 @@ const Feed = () => {
         'postgres_changes',
         { event: 'DELETE', schema: 'public', table: 'post_acknowledgments' },
         (payload) => {
-          // Optimistically update like count and status
+          // Skip if this is current user's action (already updated optimistically)
+          if (payload.old.user_id === user?.id) return;
+          
+          // Update like count for other users' actions
           const updateUnlike = (currentPosts: Post[]) =>
             currentPosts.map((p) =>
               p.id === payload.old.post_id
                 ? {
                     ...p,
                     like_count: Math.max(0, p.like_count - 1),
-                    has_liked: payload.old.user_id === user?.id ? false : p.has_liked,
                   }
                 : p
             );
