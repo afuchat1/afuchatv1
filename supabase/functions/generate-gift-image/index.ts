@@ -17,9 +17,9 @@ serve(async (req) => {
       throw new Error('Gift name and emoji are required');
     }
 
-    const LOVABLE_API_KEY = Deno.env.get('LOVABLE_API_KEY');
-    if (!LOVABLE_API_KEY) {
-      throw new Error('LOVABLE_API_KEY is not configured');
+    const FREEPIK_API_KEY = Deno.env.get('FREEPIK_API_KEY');
+    if (!FREEPIK_API_KEY) {
+      throw new Error('FREEPIK_API_KEY is not configured');
     }
 
     // Create a detailed prompt based on rarity with better visual descriptions
@@ -48,55 +48,82 @@ Requirements:
 
 Make this look like an expensive digital gift that someone would be excited to receive!`;
 
-    console.log('Generating image with prompt:', prompt);
+    console.log('Creating Freepik task with prompt:', prompt);
 
-    const response = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
+    // Create the image generation task
+    const createResponse = await fetch("https://api.freepik.com/v1/ai/text-to-image/hyperflux", {
       method: "POST",
       headers: {
-        Authorization: `Bearer ${LOVABLE_API_KEY}`,
+        "x-freepik-api-key": FREEPIK_API_KEY,
         "Content-Type": "application/json",
       },
       body: JSON.stringify({
-        model: "google/gemini-2.5-flash-image-preview",
-        messages: [
-          {
-            role: "user",
-            content: prompt
-          }
-        ],
-        modalities: ["image", "text"]
+        prompt: prompt,
+        aspect_ratio: "square_1_1"
       })
     });
 
-    if (!response.ok) {
-      const errorText = await response.text();
-      console.error('AI Gateway error:', response.status, errorText);
-      
-      if (response.status === 429) {
-        return new Response(
-          JSON.stringify({ error: 'Rate limit exceeded. Please try again later.' }),
-          { status: 429, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
-        );
-      }
-      
-      if (response.status === 402) {
-        return new Response(
-          JSON.stringify({ error: 'AI credits depleted. Please add credits to your workspace.' }),
-          { status: 402, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
-        );
-      }
-      
-      throw new Error(`AI Gateway error: ${response.status}`);
+    if (!createResponse.ok) {
+      const errorText = await createResponse.text();
+      console.error('Freepik API error:', createResponse.status, errorText);
+      throw new Error(`Freepik API error: ${createResponse.status}`);
     }
 
-    const data = await response.json();
-    const imageUrl = data.choices?.[0]?.message?.images?.[0]?.image_url?.url;
+    const createData = await createResponse.json();
+    const taskId = createData.data?.task_id;
+
+    if (!taskId) {
+      throw new Error('No task ID returned from Freepik API');
+    }
+
+    console.log('Task created:', taskId);
+
+    // Poll for task completion
+    let attempts = 0;
+    const maxAttempts = 30; // 30 seconds timeout
+    let imageUrl: string | null = null;
+
+    while (attempts < maxAttempts) {
+      await new Promise(resolve => setTimeout(resolve, 1000)); // Wait 1 second
+      
+      const statusResponse = await fetch(
+        `https://api.freepik.com/v1/ai/text-to-image/hyperflux/${taskId}`,
+        {
+          headers: {
+            "x-freepik-api-key": FREEPIK_API_KEY,
+          }
+        }
+      );
+
+      if (!statusResponse.ok) {
+        console.error('Status check error:', statusResponse.status);
+        attempts++;
+        continue;
+      }
+
+      const statusData = await statusResponse.json();
+      const status = statusData.data?.status;
+      
+      console.log(`Task status (attempt ${attempts + 1}):`, status);
+
+      if (status === 'SUCCESS') {
+        const generated = statusData.data?.generated;
+        if (generated && generated.length > 0) {
+          imageUrl = generated[0];
+          break;
+        }
+      } else if (status === 'FAILED') {
+        throw new Error('Image generation failed');
+      }
+
+      attempts++;
+    }
 
     if (!imageUrl) {
-      throw new Error('No image URL in response');
+      throw new Error('Image generation timeout');
     }
 
-    console.log('Image generated successfully');
+    console.log('Image generated successfully:', imageUrl);
 
     return new Response(
       JSON.stringify({ imageUrl }),
