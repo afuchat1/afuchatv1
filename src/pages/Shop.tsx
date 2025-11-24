@@ -279,7 +279,7 @@ export default function Shop() {
                             {listing.gift.name}
                           </p>
                           <p className="text-sm font-bold text-primary">
-                            {listing.asking_price.toLocaleString()}
+                            {listing.asking_price.toLocaleString()} Nexa
                           </p>
                         </motion.button>
                       ))}
