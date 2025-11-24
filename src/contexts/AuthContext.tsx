@@ -6,12 +6,20 @@ interface AuthContextType {
   user: User | null;
   session: Session | null;
   loading: boolean;
+  isPremium: boolean;
+  isVIP: boolean;
+  subscriptionEnd: string | null;
+  checkSubscription: () => Promise<void>;
 }
 
 const AuthContext = React.createContext<AuthContextType>({
   user: null,
   session: null,
   loading: true,
+  isPremium: false,
+  isVIP: false,
+  subscriptionEnd: null,
+  checkSubscription: async () => {},
 });
 
 export const useAuth = () => {
@@ -26,6 +34,27 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [user, setUser] = React.useState<User | null>(null);
   const [session, setSession] = React.useState<Session | null>(null);
   const [loading, setLoading] = React.useState(true);
+  const [isPremium, setIsPremium] = React.useState(false);
+  const [isVIP, setIsVIP] = React.useState(false);
+  const [subscriptionEnd, setSubscriptionEnd] = React.useState<string | null>(null);
+
+  const checkSubscription = React.useCallback(async () => {
+    if (!user) return;
+    
+    try {
+      const { data, error } = await supabase.functions.invoke('check-subscription');
+      if (error) throw error;
+      
+      const premiumProductId = "prod_TO5FgJrgCvSYuD";
+      const vipProductId = "prod_TO5Ff17rDukZRi";
+      
+      setIsPremium(data.subscribed && (data.product_id === premiumProductId || data.product_id === vipProductId));
+      setIsVIP(data.subscribed && data.product_id === vipProductId);
+      setSubscriptionEnd(data.subscription_end);
+    } catch (error) {
+      console.error('Error checking subscription:', error);
+    }
+  }, [user]);
 
   React.useEffect(() => {
     // Function to record session and login
@@ -74,6 +103,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
             recordUserSession(session).catch((error) => {
               console.error('Error recording session from auth state change:', error);
             });
+            checkSubscription();
           }, 0);
         }
       }
@@ -91,6 +121,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
           recordUserSession(session).catch((error) => {
             console.error('Error recording existing session:', error);
           });
+          checkSubscription();
         }, 0);
       }
     }).catch((error) => {
