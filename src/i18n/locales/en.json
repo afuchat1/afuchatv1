@@ -646,6 +646,14 @@
     "ar": "العربية",
     "sw": "Kiswahili"
   },
+  "privacy": {
+    "title": "Privacy Policy",
+    "lastUpdated": "Last Updated: January 2025"
+  },
+  "terms": {
+    "title": "Terms of Use",
+    "lastUpdated": "Last Updated: January 2025"
+  },
   "errors": {
     "generic": "Something went wrong",
     "network": "Network error",
