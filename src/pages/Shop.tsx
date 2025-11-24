@@ -2,12 +2,12 @@ import { useState, useEffect } from 'react';
 import { useAuth } from '@/contexts/AuthContext';
 import { supabase } from '@/integrations/supabase/client';
 import { Button } from '@/components/ui/button';
-import { Plus, Store } from 'lucide-react';
+import { Store, Package } from 'lucide-react';
 import { toast } from 'sonner';
 import { SEO } from '@/components/SEO';
 import { CustomLoader } from '@/components/ui/CustomLoader';
-import { ListGiftDialog } from '@/components/marketplace/ListGiftDialog';
 import { GiftMarketplaceCard } from '@/components/marketplace/GiftMarketplaceCard';
+import { useNavigate } from 'react-router-dom';
 
 interface GiftMarketplaceListing {
   id: string;
@@ -30,9 +30,9 @@ interface GiftMarketplaceListing {
 
 export default function Shop() {
   const { user } = useAuth();
+  const navigate = useNavigate();
   const [listings, setListings] = useState<GiftMarketplaceListing[]>([]);
   const [loading, setLoading] = useState(true);
-  const [listDialogOpen, setListDialogOpen] = useState(false);
 
   useEffect(() => {
     fetchMarketplaceListings();
@@ -106,9 +106,9 @@ export default function Shop() {
                 </div>
               </div>
               {user && (
-                <Button onClick={() => setListDialogOpen(true)}>
-                  <Plus className="h-4 w-4 mr-2" />
-                  List Gift
+                <Button onClick={() => navigate('/marketplace')}>
+                  <Package className="h-4 w-4 mr-2" />
+                  My Listings
                 </Button>
               )}
             </div>
@@ -123,9 +123,9 @@ export default function Shop() {
               <h2 className="text-2xl font-bold mb-2">No gifts available</h2>
               <p className="text-muted-foreground mb-6">Be the first to list a rare gift!</p>
               {user && (
-                <Button onClick={() => setListDialogOpen(true)}>
-                  <Plus className="h-4 w-4 mr-2" />
-                  List Your First Gift
+                <Button onClick={() => navigate('/marketplace')}>
+                  <Package className="h-4 w-4 mr-2" />
+                  Go to My Listings
                 </Button>
               )}
             </div>
@@ -141,13 +141,6 @@ export default function Shop() {
             </div>
           )}
         </div>
-
-        {/* List Gift Dialog */}
-        <ListGiftDialog 
-          open={listDialogOpen}
-          onOpenChange={setListDialogOpen}
-          onListingCreated={fetchMarketplaceListings}
-        />
       </div>
     </>
   );
