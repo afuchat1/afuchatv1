@@ -69,15 +69,15 @@ export const ReceivedGiftDetailsModal = ({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-md">
-        <DialogHeader>
-          <DialogTitle className="text-center">{extractText(gift.gift.name)}</DialogTitle>
+      <DialogContent className="max-w-md max-h-[85vh] overflow-y-auto p-0 rounded-t-3xl">
+        <DialogHeader className="p-6 pb-4 border-b border-border/40">
+          <DialogTitle className="text-center text-xl font-bold">{extractText(gift.gift.name)}</DialogTitle>
         </DialogHeader>
 
-        <div className="space-y-4">
+        <div className="px-6 py-4 space-y-4">
           {/* Gift Display */}
           <div className="flex flex-col items-center gap-3 p-4 bg-gradient-to-br from-primary/5 to-accent/5 rounded-lg">
-            <SimpleGiftIcon emoji={extractText(gift.gift.emoji)} size={80} />
+            <SimpleGiftIcon emoji={extractText(gift.gift.emoji)} size={64} />
             <Badge 
               className="text-xs font-semibold"
               style={{ backgroundColor: getRarityColor(gift.gift.rarity) }}
@@ -98,7 +98,7 @@ export const ReceivedGiftDetailsModal = ({
             <div className="flex items-center gap-3">
               <Avatar className="h-10 w-10 ring-2 ring-primary/20">
                 <AvatarImage src={`https://api.dicebear.com/7.x/avataaars/svg?seed=${gift.sender.handle}`} />
-                <AvatarFallback>{gift.sender.display_name[0]?.toUpperCase()}</AvatarFallback>
+                <AvatarFallback className="text-sm">{gift.sender.display_name[0]?.toUpperCase()}</AvatarFallback>
               </Avatar>
               <div>
                 <div className="text-sm font-semibold text-foreground">{gift.sender.display_name}</div>
@@ -131,7 +131,7 @@ export const ReceivedGiftDetailsModal = ({
                   {t('gifts.currentPrice')}
                 </span>
               </div>
-              <div className="text-lg font-bold text-primary">{currentPrice} Nexa</div>
+              <div className="text-base font-bold text-primary">{currentPrice} Nexa</div>
             </div>
 
             <div className="bg-muted/30 rounded-lg p-3 text-center">
@@ -141,29 +141,29 @@ export const ReceivedGiftDetailsModal = ({
                   {t('gifts.popularity')}
                 </span>
               </div>
-              <div className="text-lg font-bold text-foreground">{totalSent}</div>
+              <div className="text-base font-bold text-foreground">{totalSent}</div>
             </div>
           </div>
 
           {/* Value Badge */}
           <div className="bg-gradient-to-br from-primary/10 via-accent/10 to-primary/10 rounded-lg p-3 border border-primary/20 text-center">
             <div className="text-xs text-muted-foreground mb-1">Value Received</div>
-            <div className="text-xl font-bold text-foreground">{gift.xp_cost} Nexa</div>
+            <div className="text-lg font-bold text-foreground">{gift.xp_cost} Nexa</div>
           </div>
 
           {/* Price History Chart */}
           <div className="bg-muted/20 rounded-lg p-3">
             <h4 className="text-xs font-semibold mb-3 text-center">{t('gifts.priceHistory')}</h4>
-            <ResponsiveContainer width="100%" height={120}>
+            <ResponsiveContainer width="100%" height={100}>
               <LineChart data={priceHistory}>
                 <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" />
                 <XAxis 
                   dataKey="time" 
-                  tick={{ fontSize: 10, fill: 'hsl(var(--muted-foreground))' }}
+                  tick={{ fontSize: 9, fill: 'hsl(var(--muted-foreground))' }}
                   stroke="hsl(var(--border))"
                 />
                 <YAxis 
-                  tick={{ fontSize: 10, fill: 'hsl(var(--muted-foreground))' }}
+                  tick={{ fontSize: 9, fill: 'hsl(var(--muted-foreground))' }}
                   stroke="hsl(var(--border))"
                 />
                 <Tooltip 
@@ -171,7 +171,7 @@ export const ReceivedGiftDetailsModal = ({
                     backgroundColor: 'hsl(var(--background))',
                     border: '1px solid hsl(var(--border))',
                     borderRadius: '8px',
-                    fontSize: '12px'
+                    fontSize: '11px'
                   }}
                 />
                 <Line 

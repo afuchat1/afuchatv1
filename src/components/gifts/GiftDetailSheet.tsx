@@ -166,27 +166,30 @@ export const GiftDetailSheet = ({ giftId, open, onOpenChange, recipientId, recip
 
   return (
     <Sheet open={open} onOpenChange={onOpenChange}>
-      <SheetContent side="bottom" className="w-full max-h-[90vh] overflow-y-auto">
+      <SheetContent 
+        side="bottom" 
+        className="max-h-[85vh] flex flex-col rounded-t-3xl bg-background/95 backdrop-blur-xl border-t border-border/50 p-0"
+      >
         {loading || !gift || !stats ? (
-          <div className="space-y-6">
+          <div className="space-y-6 p-6">
             <Skeleton className="h-20 w-20 rounded-lg" />
             <Skeleton className="h-40 w-full" />
             <Skeleton className="h-64 w-full" />
           </div>
         ) : (
           <>
-            <SheetHeader>
-              <SheetTitle className="flex items-center justify-between">
-                <div className="flex items-center gap-4">
+            <SheetHeader className="p-6 pb-4 border-b border-border/40 flex-shrink-0">
+              <SheetTitle className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+                <div className="flex items-center gap-3">
                   <GiftImage
                     giftId={gift.id}
                     giftName={gift.name}
                     emoji={gift.emoji}
                     rarity={gift.rarity}
-                    size="xl"
+                    size="lg"
                   />
                   <div>
-                    <h2 className="text-2xl font-bold">{gift.name}</h2>
+                    <h2 className="text-xl font-bold">{gift.name}</h2>
                     <Badge className={getRarityColor(gift.rarity)}>{gift.rarity}</Badge>
                   </div>
                 </div>
@@ -195,7 +198,7 @@ export const GiftDetailSheet = ({ giftId, open, onOpenChange, recipientId, recip
                     receiverId={recipientId!}
                     receiverName={recipientName || 'User'}
                     trigger={
-                      <Button className="gap-2">
+                      <Button size="sm" className="gap-2 h-10 whitespace-nowrap">
                         <Gift className="h-4 w-4" />
                         Send Gift
                       </Button>
@@ -205,61 +208,61 @@ export const GiftDetailSheet = ({ giftId, open, onOpenChange, recipientId, recip
               </SheetTitle>
             </SheetHeader>
 
-            <div className="mt-6 space-y-6">
-              <Card className="p-4 space-y-4">
-                <p className="text-muted-foreground">{gift.description || 'A special gift to share with friends'}</p>
+            <div className="flex-1 overflow-y-auto px-6 py-4 space-y-4">
+              <Card className="p-4 space-y-3">
+                <p className="text-sm text-muted-foreground">{gift.description || 'A special gift to share with friends'}</p>
                 
-                <div className="flex items-center gap-4 text-sm">
-                  <div className="flex items-center gap-2">
-                    <Calendar className="h-4 w-4 text-muted-foreground" />
+                <div className="flex flex-wrap items-center gap-3 text-xs">
+                  <div className="flex items-center gap-1.5">
+                    <Calendar className="h-3.5 w-3.5 text-muted-foreground" />
                     <span className="text-muted-foreground">
                       Added {new Date(gift.created_at).toLocaleDateString()}
                     </span>
                   </div>
                   {gift.season && (
-                    <Badge variant="outline">{gift.season}</Badge>
+                    <Badge variant="outline" className="text-xs">{gift.season}</Badge>
                   )}
                 </div>
               </Card>
 
-              <div className="grid grid-cols-3 gap-3">
-                <Card className="p-4">
+              <div className="grid grid-cols-3 gap-2">
+                <Card className="p-3">
                   <div className="space-y-1">
-                    <p className="text-xs text-muted-foreground">Price</p>
-                    <p className="text-xl font-bold text-primary">
+                    <p className="text-[10px] text-muted-foreground">Price</p>
+                    <p className="text-lg font-bold text-primary">
                       {stats.current_price.toLocaleString()}
                     </p>
-                    <p className="text-[10px] text-muted-foreground">
+                    <p className="text-[9px] text-muted-foreground">
                       Base: {gift.base_xp_cost.toLocaleString()}
                     </p>
                   </div>
                 </Card>
 
-                <Card className="p-4">
+                <Card className="p-3">
                   <div className="space-y-1">
                     <div className="flex items-center gap-1">
                       <TrendingUp className="h-3 w-3 text-muted-foreground" />
-                      <p className="text-xs text-muted-foreground">Multi</p>
+                      <p className="text-[10px] text-muted-foreground">Multi</p>
                     </div>
-                    <p className="text-xl font-bold">
+                    <p className="text-lg font-bold">
                       {stats.price_multiplier.toFixed(2)}x
                     </p>
-                    <p className="text-[10px] text-muted-foreground">
+                    <p className="text-[9px] text-muted-foreground">
                       {stats.price_multiplier >= 1 ? '+' : ''}{((stats.price_multiplier - 1) * 100).toFixed(0)}%
                     </p>
                   </div>
                 </Card>
 
-                <Card className="p-4">
+                <Card className="p-3">
                   <div className="space-y-1">
                     <div className="flex items-center gap-1">
                       <Sparkles className="h-3 w-3 text-muted-foreground" />
-                      <p className="text-xs text-muted-foreground">Sent</p>
+                      <p className="text-[10px] text-muted-foreground">Sent</p>
                     </div>
-                    <p className="text-xl font-bold">
+                    <p className="text-lg font-bold">
                       {stats.total_sent.toLocaleString()}
                     </p>
-                    <p className="text-[10px] text-muted-foreground">
+                    <p className="text-[9px] text-muted-foreground">
                       All time
                     </p>
                   </div>
@@ -267,17 +270,17 @@ export const GiftDetailSheet = ({ giftId, open, onOpenChange, recipientId, recip
               </div>
 
               <Card className="p-4">
-                <h3 className="text-sm font-semibold mb-3 flex items-center gap-2">
-                  <TrendingUp className="h-4 w-4" />
+                <h3 className="text-xs font-semibold mb-3 flex items-center gap-2">
+                  <TrendingUp className="h-3.5 w-3.5" />
                   7-Day Price History
                 </h3>
                 <div className="space-y-2">
                   {stats.price_history.slice(-7).map((entry, index) => (
                     <div key={index} className="flex items-center justify-between text-xs">
-                      <span className="text-muted-foreground">{new Date(entry.date).toLocaleDateString()}</span>
+                      <span className="text-muted-foreground text-[10px]">{new Date(entry.date).toLocaleDateString()}</span>
                       <div className="flex items-center gap-2">
-                        <span className="font-medium">{entry.price.toLocaleString()} Nexa</span>
-                        <span className="text-[10px] text-muted-foreground">({entry.multiplier.toFixed(2)}x)</span>
+                        <span className="font-medium text-xs">{entry.price.toLocaleString()} Nexa</span>
+                        <span className="text-[9px] text-muted-foreground">({entry.multiplier.toFixed(2)}x)</span>
                       </div>
                     </div>
                   ))}
@@ -286,27 +289,27 @@ export const GiftDetailSheet = ({ giftId, open, onOpenChange, recipientId, recip
 
               {recentTransactions.length > 0 && (
                 <Card className="p-4">
-                  <h3 className="text-sm font-semibold mb-3 flex items-center gap-2">
-                    <Users className="h-4 w-4" />
+                  <h3 className="text-xs font-semibold mb-3 flex items-center gap-2">
+                    <Users className="h-3.5 w-3.5" />
                     Recent Transactions
                   </h3>
                   <div className="space-y-3">
                     {recentTransactions.slice(0, 5).map(tx => (
                       <div key={tx.id}>
                         <div className="flex items-center justify-between">
-                          <div className="flex items-center gap-2 text-xs">
+                          <div className="flex items-center gap-2 text-[10px]">
                             <span className="font-medium">@{tx.sender.handle}</span>
                             <span className="text-muted-foreground">→</span>
                             <span className="font-medium">@{tx.receiver.handle}</span>
                           </div>
                           <div className="text-right">
-                            <p className="text-xs font-medium">{tx.xp_cost.toLocaleString()} Nexa</p>
-                            <p className="text-[10px] text-muted-foreground">
+                            <p className="text-[10px] font-medium">{tx.xp_cost.toLocaleString()} Nexa</p>
+                            <p className="text-[9px] text-muted-foreground">
                               {new Date(tx.created_at).toLocaleDateString()}
                             </p>
                           </div>
                         </div>
-                        <Separator className="mt-3" />
+                        <Separator className="mt-2" />
                       </div>
                     ))}
                   </div>

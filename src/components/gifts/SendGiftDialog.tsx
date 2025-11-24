@@ -342,110 +342,112 @@ export const SendGiftDialog = ({ receiverId, receiverName, trigger }: SendGiftDi
             </Button>
           )}
         </SheetTrigger>
-      <SheetContent side="bottom" className="max-h-[85vh] overflow-y-auto rounded-t-3xl bg-background/95 backdrop-blur-xl border-t border-border/50 p-6" onOpenChange={setOpen}>
-        <SheetHeader className="pb-6 space-y-4">
-          <div className="flex items-center gap-4 p-4 rounded-xl bg-muted/30 border border-border/50">
-            <Avatar className="h-12 w-12 ring-2 ring-primary/20">
+      <SheetContent 
+        side="bottom" 
+        className="max-h-[85vh] flex flex-col rounded-t-3xl bg-background/95 backdrop-blur-xl border-t border-border/50 p-0" 
+        onOpenChange={setOpen}
+      >
+        <SheetHeader className="p-6 pb-4 border-b border-border/40 flex-shrink-0">
+          <div className="flex items-center gap-3 p-4 rounded-xl bg-muted/30 border border-border/50">
+            <Avatar className="h-10 w-10 ring-2 ring-primary/20">
               <AvatarImage src={`https://api.dicebear.com/7.x/avataaars/svg?seed=${receiverId}`} />
-              <AvatarFallback className="bg-primary text-primary-foreground">{receiverName[0]?.toUpperCase()}</AvatarFallback>
+              <AvatarFallback className="bg-primary text-primary-foreground text-sm">{receiverName[0]?.toUpperCase()}</AvatarFallback>
             </Avatar>
             <div className="flex-1">
-              <SheetTitle className="text-2xl font-bold">{t('gifts.sendGiftTo', { name: receiverName })}</SheetTitle>
-              <SheetDescription className="text-sm flex items-center gap-1.5 mt-1">
-                <Sparkles className="h-3.5 w-3.5 text-primary" />
+              <SheetTitle className="text-xl font-bold">{t('gifts.sendGiftTo', { name: receiverName })}</SheetTitle>
+              <SheetDescription className="text-xs flex items-center gap-1.5 mt-1">
+                <Sparkles className="h-3 w-3 text-primary" />
                 {t('gifts.yourNexa', { nexa: userXP.toLocaleString() })}
               </SheetDescription>
             </div>
           </div>
         </SheetHeader>
 
+        <div className="flex-1 overflow-y-auto px-6 py-4">
+          <div className="text-xs text-center text-muted-foreground mb-4 bg-muted/30 rounded-xl p-3 border border-border/50">
+            <span className="font-medium">💡 {t('gifts.tapToCombo')}</span>
+          </div>
 
-        <div className="text-sm text-center text-muted-foreground mb-6 bg-muted/30 rounded-xl p-3 border border-border/50">
-          <span className="font-medium">💡 {t('gifts.tapToCombo')}</span>
-        </div>
+          <div className="grid grid-cols-4 sm:grid-cols-5 md:grid-cols-6 lg:grid-cols-7 gap-4 pb-4">
+            {gifts.map((gift) => {
+              const currentPrice = calculatePrice(gift.id, gift.base_xp_cost);
+              const isSelected = selectedGift?.id === gift.id;
+              const stats = giftStats[gift.id];
+              const priceMultiplier = stats?.price_multiplier || 1;
 
-        <div className="grid grid-cols-4 sm:grid-cols-5 md:grid-cols-6 lg:grid-cols-7 gap-6">
-          {gifts.map((gift) => {
-            const currentPrice = calculatePrice(gift.id, gift.base_xp_cost);
-            const isSelected = selectedGift?.id === gift.id;
-            const stats = giftStats[gift.id];
-            const priceMultiplier = stats?.price_multiplier || 1;
-            const totalSent = stats?.total_sent || 0;
-
-            return (
-              <div
-                key={gift.id}
-                className="relative flex flex-col items-center gap-2"
-              >
-                {/* Gift Item - No Background */}
+              return (
                 <div
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    if (!loading) handleGiftTap(gift);
-                  }}
-                  className={`cursor-pointer transition-all duration-300 hover:scale-110 group relative touch-manipulation ${
-                    isSelected ? 'scale-125' : ''
-                  }`}
+                  key={gift.id}
+                  className="relative flex flex-col items-center gap-2"
                 >
-                  {/* Count Badge */}
-                  {isSelected && selectedGift && (
-                    <div className="absolute -top-2 -right-2 z-10 bg-gradient-to-br from-primary to-accent text-primary-foreground rounded-full h-6 w-6 flex items-center justify-center font-bold text-xs shadow-xl animate-[scale-in_0.2s_ease-out] ring-2 ring-background">
-                      {selectedGift.count}
-                    </div>
-                  )}
-                  
-                  <div className="relative space-y-1.5">
-                    {/* Gift Image */}
-                    <div className="relative">
-                      <GiftImage
-                        giftId={gift.id}
-                        giftName={gift.name}
-                        emoji={gift.emoji}
-                        rarity={gift.rarity}
-                        size="md"
-                        className={`mx-auto drop-shadow-lg transition-all duration-300 ${
-                          isSelected ? 'scale-125' : ''
-                        }`}
-                      />
-                      <Badge className={`absolute -top-1 -right-1 ${getRarityColor(gift.rarity)} text-[8px] px-1 py-0 shadow-md`}>
-                        {gift.rarity.slice(0, 1)}
-                      </Badge>
-                    </div>
+                  {/* Gift Item - No Background */}
+                  <div
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      if (!loading) handleGiftTap(gift);
+                    }}
+                    className={`cursor-pointer transition-all duration-300 hover:scale-110 group relative touch-manipulation ${
+                      isSelected ? 'scale-125' : ''
+                    }`}
+                  >
+                    {/* Count Badge */}
+                    {isSelected && selectedGift && (
+                      <div className="absolute -top-2 -right-2 z-10 bg-gradient-to-br from-primary to-accent text-primary-foreground rounded-full h-6 w-6 flex items-center justify-center font-bold text-xs shadow-xl animate-[scale-in_0.2s_ease-out] ring-2 ring-background">
+                        {selectedGift.count}
+                      </div>
+                    )}
+                    
+                    <div className="relative space-y-1">
+                      {/* Gift Image */}
+                      <div className="relative">
+                        <GiftImage
+                          giftId={gift.id}
+                          giftName={gift.name}
+                          emoji={gift.emoji}
+                          rarity={gift.rarity}
+                          size="md"
+                          className={`mx-auto drop-shadow-lg transition-all duration-300 ${
+                            isSelected ? 'scale-125' : ''
+                          }`}
+                        />
+                        <Badge className={`absolute -top-1 -right-1 ${getRarityColor(gift.rarity)} text-[8px] px-1 py-0 shadow-md`}>
+                          {gift.rarity.slice(0, 1)}
+                        </Badge>
+                      </div>
 
-                    {/* Gift Info */}
-                    <div className="text-center space-y-0.5">
-                      <h3 className="font-semibold text-[11px] truncate text-foreground">{gift.name}</h3>
-                      <div className="flex items-center justify-center gap-1">
-                        <span className="text-xs font-bold bg-gradient-to-r from-primary to-accent bg-clip-text text-transparent">
-                          {currentPrice.toLocaleString()} Nexa
-                        </span>
-                        {priceMultiplier !== 1 && (
-                          <TrendingUp className="h-3 w-3 text-green-500" />
-                        )}
+                      {/* Gift Info */}
+                      <div className="text-center space-y-0.5">
+                        <h3 className="font-semibold text-[10px] truncate text-foreground">{gift.name}</h3>
+                        <div className="flex items-center justify-center gap-1">
+                          <span className="text-[10px] font-bold bg-gradient-to-r from-primary to-accent bg-clip-text text-transparent">
+                            {currentPrice.toLocaleString()} Nexa
+                          </span>
+                          {priceMultiplier !== 1 && (
+                            <TrendingUp className="h-2.5 w-2.5 text-green-500" />
+                          )}
+                        </div>
                       </div>
                     </div>
                   </div>
-                  
-                  {/* Preview button removed on mobile to avoid covering gifts */}
-                </div>
 
-                {/* Send Button - Simple and Clean */}
-                {isSelected && selectedGift && (
-                  <Button
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      handleSendGift();
-                    }}
-                    disabled={loading}
-                    size="sm"
-                    className="h-9 px-6 bg-primary hover:bg-primary/90 text-primary-foreground font-semibold text-xs rounded-xl shadow-md hover:shadow-lg transition-all duration-200 animate-[scale-in_0.3s_ease-out]"
-                  >
-                    {loading ? t('gifts.sending') : t('gifts.send')}
-                  </Button>
-                )}
-              </div>
-            );
-          })}
+                  {/* Send Button - Simple and Clean */}
+                  {isSelected && selectedGift && (
+                    <Button
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        handleSendGift();
+                      }}
+                      disabled={loading}
+                      size="sm"
+                      className="h-8 px-4 bg-primary hover:bg-primary/90 text-primary-foreground font-semibold text-[10px] rounded-xl shadow-md hover:shadow-lg transition-all duration-200 animate-[scale-in_0.3s_ease-out]"
+                    >
+                      {loading ? t('gifts.sending') : t('gifts.send')}
+                    </Button>
+                  )}
+                </div>
+              );
+            })}
+          </div>
         </div>
       </SheetContent>
       </Sheet>
@@ -453,9 +455,13 @@ export const SendGiftDialog = ({ receiverId, receiverName, trigger }: SendGiftDi
       {/* Preview Sheet */}
       {previewGift && (
         <Sheet open={showPreview} onOpenChange={setShowPreview}>
-          <SheetContent side="bottom" className="max-h-[85vh] overflow-y-auto rounded-t-3xl bg-background/95 backdrop-blur-xl border-t border-border/50 p-6" onOpenChange={setShowPreview}>
-            <SheetHeader className="pb-6">
-              <SheetTitle className="text-2xl font-bold flex items-center gap-2">
+          <SheetContent 
+            side="bottom" 
+            className="max-h-[85vh] flex flex-col rounded-t-3xl bg-background/95 backdrop-blur-xl border-t border-border/50 p-0" 
+            onOpenChange={setShowPreview}
+          >
+            <SheetHeader className="p-6 pb-4 border-b border-border/40 flex-shrink-0">
+              <SheetTitle className="text-xl font-bold flex items-center gap-2">
                 <GiftImage
                   giftId={previewGift.id}
                   giftName={previewGift.name}
@@ -467,7 +473,7 @@ export const SendGiftDialog = ({ receiverId, receiverName, trigger }: SendGiftDi
               </SheetTitle>
             </SheetHeader>
             
-            <div className="space-y-4 mt-4">
+            <div className="flex-1 overflow-y-auto px-6 py-4 space-y-4">
               <div className="flex items-center justify-center">
                 <GiftImage
                   giftId={previewGift.id}
@@ -478,7 +484,7 @@ export const SendGiftDialog = ({ receiverId, receiverName, trigger }: SendGiftDi
                 />
               </div>
               
-              <div className="space-y-2">
+              <div className="space-y-3">
                 <Badge className={getRarityColor(previewGift.rarity)}>
                   {previewGift.rarity}
                 </Badge>
@@ -487,49 +493,25 @@ export const SendGiftDialog = ({ receiverId, receiverName, trigger }: SendGiftDi
                   <p className="text-sm text-muted-foreground">{previewGift.description}</p>
                 )}
                 
-                <div className="grid grid-cols-2 gap-2 text-sm">
-                  <div className="bg-muted/50 rounded-lg p-2">
-                    <div className="text-xs text-muted-foreground">Base Cost</div>
-                    <div className="font-bold">{previewGift.base_xp_cost} Nexa</div>
+                <div className="grid grid-cols-2 gap-3 text-sm">
+                  <div className="bg-muted/50 rounded-lg p-3">
+                    <div className="text-xs text-muted-foreground mb-1">Current Price</div>
+                    <div className="font-bold text-primary">{previewGift.current_price.toLocaleString()} Nexa</div>
                   </div>
-                  
-                  <div className="bg-muted/50 rounded-lg p-2">
-                    <div className="text-xs text-muted-foreground">Current Price</div>
-                    <div className="font-bold text-primary">{previewGift.current_price} Nexa</div>
+                  <div className="bg-muted/50 rounded-lg p-3">
+                    <div className="text-xs text-muted-foreground mb-1">Total Sent</div>
+                    <div className="font-bold">{previewGift.total_sent.toLocaleString()}</div>
                   </div>
-                  
-                  {previewGift.price_multiplier !== 1 && (
-                    <div className="bg-muted/50 rounded-lg p-2">
-                      <div className="text-xs text-muted-foreground">Multiplier</div>
-                      <div className="font-bold flex items-center gap-1">
-                        <TrendingUp className="h-3 w-3 text-green-500" />
-                        {(previewGift.price_multiplier * 100).toFixed(0)}%
-                      </div>
-                    </div>
-                  )}
-                  
-                  {previewGift.total_sent > 0 && (
-                    <div className="bg-muted/50 rounded-lg p-2">
-                      <div className="text-xs text-muted-foreground">Total Sent</div>
-                      <div className="font-bold flex items-center gap-1">
-                        <Sparkles className="h-3 w-3" />
-                        {previewGift.total_sent.toLocaleString()}
-                      </div>
-                    </div>
-                  )}
+                  <div className="bg-muted/50 rounded-lg p-3">
+                    <div className="text-xs text-muted-foreground mb-1">Base Cost</div>
+                    <div className="font-bold">{previewGift.base_xp_cost.toLocaleString()} Nexa</div>
+                  </div>
+                  <div className="bg-muted/50 rounded-lg p-3">
+                    <div className="text-xs text-muted-foreground mb-1">Multiplier</div>
+                    <div className="font-bold">{previewGift.price_multiplier.toFixed(2)}x</div>
+                  </div>
                 </div>
               </div>
-              
-              <Button 
-                className="w-full"
-                onClick={() => {
-                  setShowPreview(false);
-                  handleGiftTap(previewGift);
-                }}
-              >
-                <Gift className="h-4 w-4 mr-2" />
-                Select Gift
-              </Button>
             </div>
           </SheetContent>
         </Sheet>
