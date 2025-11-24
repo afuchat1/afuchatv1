@@ -13,7 +13,6 @@ import { AccountModeSwitcher } from '@/components/AccountModeSwitcher';
 import { MobileMenuSheet } from '@/components/MobileMenuSheet';
 import { supabase } from '@/integrations/supabase/client';
 import { cn } from '@/lib/utils';
-import { useTranslation } from 'react-i18next';
 import { motion } from 'framer-motion';
 
 interface LayoutProps {
@@ -26,7 +25,6 @@ const Layout = ({ children }: LayoutProps) => {
   const { openSettings } = useSettings();
   const location = useLocation();
   const navigate = useNavigate();
-  const { t } = useTranslation();
   const [isAdmin, setIsAdmin] = useState(false);
   const [isBusinessMode, setIsBusinessMode] = useState(false);
   const [isAffiliate, setIsAffiliate] = useState(false);
@@ -97,10 +95,10 @@ const Layout = ({ children }: LayoutProps) => {
   };
 
   const navItems = [
-    { path: '/', icon: Home, label: t('common.home') },
-    { path: '/search', icon: Search, label: t('search.title') },
-    { path: '/notifications', icon: Bell, label: t('common.notifications'), badge: true },
-    { path: '/chats', icon: MessageSquare, label: t('common.messages') },
+    { path: '/', icon: Home, label: 'Home' },
+    { path: '/search', icon: Search, label: 'Search' },
+    { path: '/notifications', icon: Bell, label: 'Notifications', badge: true },
+    { path: '/chats', icon: MessageSquare, label: 'Messages' },
   ];
 
   // Additional features section
@@ -116,7 +114,7 @@ const Layout = ({ children }: LayoutProps) => {
   ];
 
   if (user) {
-    navItems.push({ path: `/${user.id}`, icon: User, label: t('common.profile'), badge: false });
+    navItems.push({ path: `/${user.id}`, icon: User, label: 'Profile', badge: false });
   }
 
   if (isAffiliate) {
@@ -124,14 +122,14 @@ const Layout = ({ children }: LayoutProps) => {
   }
 
   if (isAdmin) {
-    navItems.push({ path: '/admin', icon: Shield, label: t('admin.title'), badge: false });
+    navItems.push({ path: '/admin', icon: Shield, label: 'Admin', badge: false });
   }
 
   if (isBusinessMode && mode === 'business') {
-    navItems.push({ path: '/business/dashboard', icon: BarChart3, label: t('business.title'), badge: false });
+    navItems.push({ path: '/business/dashboard', icon: BarChart3, label: 'Business', badge: false });
   }
 
-  navItems.push({ path: '/settings', icon: Settings, label: t('common.settings'), badge: false });
+  navItems.push({ path: '/settings', icon: Settings, label: 'Settings', badge: false });
 
   const isActive = (path: string) => {
     if (path === '/') {
@@ -258,7 +256,7 @@ const Layout = ({ children }: LayoutProps) => {
                 "h-6 w-6",
                 isActive('/') && "fill-current"
               )} />
-              <span className="text-[10px] font-medium">{t('common.home')}</span>
+              <span className="text-[10px] font-medium">Home</span>
             </Link>
             
             <Link
@@ -272,7 +270,7 @@ const Layout = ({ children }: LayoutProps) => {
                 "h-6 w-6",
                 isActive('/search') && "fill-current"
               )} />
-              <span className="text-[10px] font-medium">{t('search.title')}</span>
+              <span className="text-[10px] font-medium">Search</span>
             </Link>
             
             <MobileMenuSheet />
@@ -288,7 +286,7 @@ const Layout = ({ children }: LayoutProps) => {
                 "h-6 w-6",
                 isActive('/chats') && "fill-current"
               )} />
-              <span className="text-[10px] font-medium">{t('common.messages')}</span>
+              <span className="text-[10px] font-medium">Messages</span>
             </Link>
             
             <Link
@@ -302,7 +300,7 @@ const Layout = ({ children }: LayoutProps) => {
                 "h-6 w-6",
                 isActive(user ? `/${user.id}` : '/auth') && "fill-current"
               )} />
-              <span className="text-[10px] font-medium">{t('common.profile')}</span>
+              <span className="text-[10px] font-medium">Profile</span>
             </Link>
           </div>
         </nav>
