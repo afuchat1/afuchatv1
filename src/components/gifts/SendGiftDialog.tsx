@@ -414,35 +414,42 @@ export const SendGiftDialog = ({ receiverId, receiverName, trigger }: SendGiftDi
                   </Button>
                 </div>
 
-                {/* Send Button - Appears Below When Selected */}
+                {/* Send Action - Appears Below When Selected */}
                 {isSelected && selectedGift && (
-                  <Button
+                  <div
                     onClick={(e) => {
                       e.stopPropagation();
-                      handleSendGift();
+                      if (!loading) handleSendGift();
                     }}
-                    disabled={loading}
-                    size="sm"
-                    className="w-full h-auto py-2 px-3 bg-gradient-to-r from-primary via-accent to-primary text-primary-foreground hover:shadow-xl transition-all duration-300 rounded-xl flex flex-col items-center justify-center gap-1 animate-[scale-in_0.3s_ease-out] shadow-lg hover:scale-105"
+                    className="cursor-pointer flex flex-col items-center gap-1.5 animate-[fade-in_0.3s_ease-out] group"
                   >
                     {loading ? (
                       <>
-                        <Sparkles className="h-4 w-4 animate-spin" />
-                        <span className="text-[9px] font-bold">{t('gifts.sending')}</span>
+                        <Sparkles className="h-5 w-5 text-primary animate-spin" />
+                        <span className="text-xs font-semibold text-muted-foreground">{t('gifts.sending')}</span>
                       </>
                     ) : (
                       <>
-                        <Gift className="h-5 w-5" />
-                        <span className="text-[10px] font-extrabold">{t('gifts.send')}</span>
-                        <span className="text-[9px] font-bold opacity-90">{totalCost.toLocaleString()} N</span>
-                        {discount > 0 && (
-                          <span className="text-[8px] font-bold text-primary-foreground bg-primary-foreground/20 px-1.5 py-0.5 rounded-full mt-0.5">
-                            -{(discount * 100).toFixed(0)}% OFF
+                        <div className="relative flex items-center gap-1.5">
+                          <Gift className="h-5 w-5 text-primary group-hover:scale-110 transition-transform" />
+                          <span className="text-sm font-bold bg-gradient-to-r from-primary to-accent bg-clip-text text-transparent group-hover:from-accent group-hover:to-primary transition-all">
+                            {t('gifts.send')}
                           </span>
-                        )}
+                        </div>
+                        <div className="flex items-center gap-1.5">
+                          <span className="text-xs font-bold text-foreground/70">
+                            {totalCost.toLocaleString()} Nexa
+                          </span>
+                          {discount > 0 && (
+                            <span className="text-[9px] font-bold text-green-600 dark:text-green-400">
+                              -{(discount * 100).toFixed(0)}%
+                            </span>
+                          )}
+                        </div>
+                        <div className="h-[2px] w-0 group-hover:w-full bg-gradient-to-r from-primary to-accent transition-all duration-300" />
                       </>
                     )}
-                  </Button>
+                  </div>
                 )}
               </div>
             );
