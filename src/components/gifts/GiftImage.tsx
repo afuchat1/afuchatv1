@@ -73,16 +73,6 @@ export const GiftImage = ({
         alt={giftName}
         className={`${sizeClass} object-contain drop-shadow-lg`}
         style={{ transformStyle: 'preserve-3d' }}
-        animate={{
-          rotateY: [0, 360],
-        }}
-        transition={{
-          rotateY: {
-            duration: 8,
-            repeat: Infinity,
-            ease: 'linear'
-          }
-        }}
         whileHover={{ 
           scale: 1.2,
           rotateX: 15,
