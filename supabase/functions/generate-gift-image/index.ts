@@ -17,9 +17,9 @@ serve(async (req) => {
       throw new Error('Gift name and emoji are required');
     }
 
-    const GEMINI_API_KEY = Deno.env.get('GEMINI_API_KEY');
-    if (!GEMINI_API_KEY) {
-      throw new Error('GEMINI_API_KEY is not configured');
+    const OPENAI_API_KEY = Deno.env.get('OPENAI_API_KEY');
+    if (!OPENAI_API_KEY) {
+      throw new Error('OPENAI_API_KEY is not configured');
     }
 
     // Create a detailed prompt based on rarity with better visual descriptions
@@ -48,42 +48,37 @@ Requirements:
 
 Make this look like an expensive digital gift that someone would be excited to receive!`;
 
-    console.log('Generating image with Google Gemini:', prompt);
+    console.log('Generating image with OpenAI:', prompt);
 
-    const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash-exp:generateContent?key=${GEMINI_API_KEY}`, {
+    const response = await fetch("https://api.openai.com/v1/images/generations", {
       method: "POST",
       headers: {
+        "Authorization": `Bearer ${OPENAI_API_KEY}`,
         "Content-Type": "application/json",
       },
       body: JSON.stringify({
-        contents: [{
-          parts: [{
-            text: prompt
-          }]
-        }],
-        generationConfig: {
-          response_modalities: ["image"]
-        }
+        model: "gpt-image-1",
+        prompt: prompt,
+        n: 1,
+        size: "1024x1024",
+        quality: "high",
+        background: "transparent",
+        output_format: "png"
       })
     });
 
     if (!response.ok) {
       const errorText = await response.text();
-      console.error('Google Gemini API error:', response.status, errorText);
-      throw new Error(`Google Gemini API error: ${response.status}`);
+      console.error('OpenAI API error:', response.status, errorText);
+      throw new Error(`OpenAI API error: ${response.status}`);
     }
 
     const data = await response.json();
-    
-    // Extract image from Gemini response
-    const imagePart = data.candidates?.[0]?.content?.parts?.find((part: any) => part.inline_data);
-    if (!imagePart?.inline_data?.data) {
+    const imageUrl = data.data?.[0]?.b64_json ? `data:image/png;base64,${data.data[0].b64_json}` : null;
+
+    if (!imageUrl) {
       throw new Error('No image data in response');
     }
-
-    // Convert base64 to data URL
-    const mimeType = imagePart.inline_data.mime_type || 'image/png';
-    const imageUrl = `data:${mimeType};base64,${imagePart.inline_data.data}`;
 
     console.log('Image generated successfully');
 
