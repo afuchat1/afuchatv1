@@ -2,7 +2,7 @@ import { useNavigate } from 'react-router-dom';
 import { useQuery } from '@tanstack/react-query';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
-import { ArrowLeft, Wallet as WalletIcon, TrendingUp, Gift, Heart, ShoppingBag, Trophy, Mail, Send, Crown, Sparkles, ArrowUpRight, ArrowDownRight, Coins } from 'lucide-react';
+import { ArrowLeft, Wallet as WalletIcon, TrendingUp, Gift, Heart, ShoppingBag, Mail, Send, Sparkles, ArrowUpRight, ArrowDownRight, Coins } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/contexts/AuthContext';
 import Logo from '@/components/Logo';
@@ -297,88 +297,11 @@ const Wallet = () => {
           </Card>
         </motion.div>
 
-        {/* Quick Actions */}
-        <motion.div
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.3, delay: 0.3 }}
-        >
-          <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
-            <Button 
-              variant="outline" 
-              className="h-auto py-4 flex flex-col gap-2"
-              onClick={() => navigate('/transfer')}
-            >
-              <Send className="h-5 w-5" />
-              <span className="text-sm">Transfer</span>
-            </Button>
-            <Button 
-              variant="outline" 
-              className="h-auto py-4 flex flex-col gap-2"
-              onClick={() => navigate('/shop')}
-            >
-              <ShoppingBag className="h-5 w-5" />
-              <span className="text-sm">Shop</span>
-            </Button>
-            <Button 
-              variant="outline" 
-              className="h-auto py-4 flex flex-col gap-2"
-              onClick={() => navigate('/gifts')}
-            >
-              <Gift className="h-5 w-5" />
-              <span className="text-sm">Gifts</span>
-            </Button>
-            <Button 
-              variant="outline" 
-              className="h-auto py-4 flex flex-col gap-2"
-              onClick={() => navigate('/leaderboard')}
-            >
-              <Trophy className="h-5 w-5" />
-              <span className="text-sm">Leaderboard</span>
-            </Button>
-          </div>
-        </motion.div>
-
-        {/* Premium CTA */}
-        <motion.div
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.3, delay: 0.4 }}
-        >
-          <Card className="relative overflow-hidden border-yellow-500/20 bg-gradient-to-br from-yellow-500/10 via-orange-500/10 to-red-500/10">
-            <div className="absolute inset-0 bg-gradient-to-br from-yellow-500/5 to-transparent" />
-            <CardContent className="relative p-6">
-              <div className="flex items-center justify-between gap-4">
-                <div className="flex items-center gap-4">
-                  <div className="p-3 bg-gradient-to-br from-yellow-500 to-orange-500 rounded-full shrink-0">
-                    <Crown className="h-6 w-6 text-white" />
-                  </div>
-                  <div>
-                    <h3 className="text-lg font-bold flex items-center gap-2 mb-1">
-                      Get Premium & Verified
-                      <Sparkles className="h-4 w-4 text-yellow-500" />
-                    </h3>
-                    <p className="text-sm text-muted-foreground">
-                      Subscribe with ACoin and get verified instantly
-                    </p>
-                  </div>
-                </div>
-                <Button 
-                  onClick={() => navigate('/premium')}
-                  className="bg-gradient-to-r from-yellow-500 to-orange-500 hover:from-yellow-600 hover:to-orange-600 text-white shrink-0"
-                >
-                  View Plans
-                </Button>
-              </div>
-            </CardContent>
-          </Card>
-        </motion.div>
-
         {/* ACoin Converter */}
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.3, delay: 0.5 }}
+          transition={{ duration: 0.3, delay: 0.3 }}
         >
           <ACoinConverter 
             currentNexa={profile?.xp || 0}
@@ -388,6 +311,23 @@ const Wallet = () => {
             }}
           />
         </motion.div>
+
+        {/* Quick Actions */}
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.3, delay: 0.4 }}
+        >
+          <Button 
+            variant="outline" 
+            className="w-full h-auto py-4 flex items-center justify-center gap-2"
+            onClick={() => navigate('/transfer')}
+          >
+            <Send className="h-5 w-5" />
+            <span>Transfer Nexa</span>
+          </Button>
+        </motion.div>
+
 
         {/* Transaction History */}
         <motion.div
