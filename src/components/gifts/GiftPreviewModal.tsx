@@ -52,7 +52,7 @@ export const GiftPreviewModal = ({ gift, open, onOpenChange, onSendGift }: GiftP
 
   return (
     <Sheet open={open} onOpenChange={onOpenChange}>
-      <SheetContent side="bottom" className="max-h-[90vh] overflow-y-auto p-0">
+      <SheetContent side="bottom" className="max-h-[90vh] overflow-y-auto p-0" onOpenChange={onOpenChange}>
         <div className="relative bg-gradient-to-br from-background via-background to-primary/5">
           {/* Close button */}
           <Button

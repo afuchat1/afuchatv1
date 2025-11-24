@@ -324,7 +324,7 @@ export const SendGiftDialog = ({ receiverId, receiverName, trigger }: SendGiftDi
             </Button>
           )}
         </SheetTrigger>
-      <SheetContent side="bottom" className="max-h-[90vh] overflow-y-auto p-4">
+      <SheetContent side="bottom" className="max-h-[90vh] overflow-y-auto p-4" onOpenChange={setOpen}>
         <SheetHeader className="pb-3">
           <div className="flex items-center gap-3">
             <Avatar className="h-12 w-12 ring-2 ring-primary/20">
@@ -452,7 +452,7 @@ export const SendGiftDialog = ({ receiverId, receiverName, trigger }: SendGiftDi
       {/* Preview Sheet */}
       {previewGift && (
         <Sheet open={showPreview} onOpenChange={setShowPreview}>
-          <SheetContent side="bottom" className="max-h-[80vh] overflow-y-auto">
+          <SheetContent side="bottom" className="max-h-[80vh] overflow-y-auto" onOpenChange={setShowPreview}>
             <SheetHeader>
               <SheetTitle className="flex items-center gap-2">
                 <GiftImage
