@@ -198,26 +198,28 @@ const AppRoutes = () => {
 };
 
 const App = () => (
-  <QueryClientProvider client={queryClient}>
-    <ThemeProvider>
-      <AuthProvider>
-        <AccountModeProvider>
-          <SettingsProvider>
-            <TooltipProvider>
-              <Toaster />
-              <Sonner />
-              <BrowserRouter future={{ v7_startTransition: true }}>
-                <AnimatePresence mode="wait">
-                  <AppRoutes />
-                </AnimatePresence>
-                <SettingsSheet />
-              </BrowserRouter>
-            </TooltipProvider>
-          </SettingsProvider>
-        </AccountModeProvider>
-      </AuthProvider>
-    </ThemeProvider>
-  </QueryClientProvider>
+  <div className="select-none">
+    <QueryClientProvider client={queryClient}>
+      <ThemeProvider>
+        <AuthProvider>
+          <AccountModeProvider>
+            <SettingsProvider>
+              <TooltipProvider>
+                <Toaster />
+                <Sonner />
+                <BrowserRouter future={{ v7_startTransition: true }}>
+                  <AnimatePresence mode="wait">
+                    <AppRoutes />
+                  </AnimatePresence>
+                  <SettingsSheet />
+                </BrowserRouter>
+              </TooltipProvider>
+            </SettingsProvider>
+          </AccountModeProvider>
+        </AuthProvider>
+      </ThemeProvider>
+    </QueryClientProvider>
+  </div>
 );
 
 export default App;
