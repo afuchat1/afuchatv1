@@ -69,6 +69,32 @@ const NewPostModal: React.FC<NewPostModalProps> = ({ isOpen, onClose }) => {
         }
     }, [user]);
 
+    // Handle mobile keyboard visibility
+    React.useEffect(() => {
+        if (!isOpen) return;
+
+        const handleResize = () => {
+            // Adjust sheet position when keyboard appears on mobile
+            if (window.visualViewport) {
+                const viewportHeight = window.visualViewport.height;
+                document.documentElement.style.setProperty('--viewport-height', `${viewportHeight}px`);
+            }
+        };
+
+        if (window.visualViewport) {
+            window.visualViewport.addEventListener('resize', handleResize);
+            window.visualViewport.addEventListener('scroll', handleResize);
+            handleResize();
+        }
+
+        return () => {
+            if (window.visualViewport) {
+                window.visualViewport.removeEventListener('resize', handleResize);
+                window.visualViewport.removeEventListener('scroll', handleResize);
+            }
+        };
+    }, [isOpen]);
+
     const handleClose = () => {
         setNewPost('');
         setSelectedImages([]);
@@ -278,9 +304,22 @@ const NewPostModal: React.FC<NewPostModalProps> = ({ isOpen, onClose }) => {
     return (
         <>
             <Sheet open={isOpen} onOpenChange={handleClose}>
-                <SheetContent side="bottom" className="max-w-2xl mx-auto p-0 gap-0 border-border/50 max-h-[90vh] overflow-y-auto" onOpenChange={handleClose}>
+                <SheetContent 
+                    side="bottom" 
+                    className="max-w-2xl mx-auto p-0 gap-0 border-border/50 overflow-y-auto sheet-mobile-keyboard"
+                    onOpenChange={handleClose}
+                    style={{
+                        position: 'fixed',
+                        bottom: '0',
+                        left: '50%',
+                        transform: 'translateX(-50%)',
+                        width: '100%',
+                        maxWidth: '42rem',
+                        maxHeight: 'var(--viewport-height, 90vh)',
+                    }}
+                >
                     {/* Header */}
-                    <div className="flex items-center justify-end px-4 py-3 border-b border-border/50">
+                    <div className="flex items-center justify-end px-4 py-3 border-b border-border/50 sticky top-0 bg-background z-10">
                         <Button
                             onClick={handlePost}
                             disabled={isPosting || (!newPost.trim() && selectedImages.length === 0)}
@@ -299,7 +338,7 @@ const NewPostModal: React.FC<NewPostModalProps> = ({ isOpen, onClose }) => {
                     </div>
 
                     {/* Content */}
-                    <div className="p-4">
+                    <div className="p-4 pb-safe">
                         <div className="flex gap-3">
                             {/* Avatar */}
                             <Avatar className="h-10 w-10 flex-shrink-0">
@@ -315,6 +354,10 @@ const NewPostModal: React.FC<NewPostModalProps> = ({ isOpen, onClose }) => {
                                     onChange={handleTextChange}
                                     placeholder="What's happening?"
                                     className="min-h-[120px] text-lg border-0 shadow-none resize-none focus-visible:ring-0 p-0 placeholder:text-muted-foreground/50"
+                                    style={{
+                                        WebkitUserSelect: 'text',
+                                        userSelect: 'text'
+                                    }}
                                 />
 
                                 {/* Link Previews */}

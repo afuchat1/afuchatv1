@@ -19,6 +19,18 @@
     transform: translateZ(0);
     will-change: transform, opacity;
   }
+
+  /* Safe area padding for mobile keyboards */
+  .pb-safe {
+    padding-bottom: env(safe-area-inset-bottom);
+  }
+
+  /* Mobile keyboard handling for sheets */
+  @supports (height: 100dvh) {
+    .sheet-mobile-keyboard {
+      max-height: 100dvh;
+    }
+  }
 }
 
 /* AfuChat Design System - Optimized for low-bandwidth, high readability
