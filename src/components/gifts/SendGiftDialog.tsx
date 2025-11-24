@@ -341,49 +341,6 @@ export const SendGiftDialog = ({ receiverId, receiverName, trigger }: SendGiftDi
           </div>
         </SheetHeader>
 
-        {selectedGift && (
-          <div className="mb-6 text-center bg-gradient-to-br from-primary/15 via-accent/15 to-primary/15 rounded-2xl p-6 border border-primary/30 shadow-xl relative overflow-hidden">
-            <div className="absolute inset-0 bg-gradient-to-r from-primary/5 via-transparent to-accent/5 animate-pulse" />
-            <div className="relative space-y-3">
-              <div className="text-2xl font-bold text-foreground flex items-center justify-center gap-2">
-                <span className="text-3xl">{selectedGift.emoji}</span>
-                <span>×{selectedGift.count}</span>
-                {selectedGift.count > 1 && (
-                  <span className="text-primary animate-pulse ml-2 px-3 py-1 rounded-full bg-primary/20 text-sm font-extrabold">
-                    COMBO!
-                  </span>
-                )}
-              </div>
-              {discount > 0 && (
-                <div className="text-base text-primary font-bold flex items-center justify-center gap-1 animate-bounce">
-                  <TrendingUp className="h-4 w-4" />
-                  {t('gifts.comboDiscount', { percent: (discount * 100).toFixed(0) })}
-                </div>
-              )}
-              <div className="text-2xl font-extrabold bg-gradient-to-r from-primary via-accent to-primary bg-clip-text text-transparent">
-                {totalCost.toLocaleString()} Nexa
-              </div>
-              <Button 
-                onClick={handleSendGift} 
-                disabled={loading}
-                className="mt-4 w-full h-12 text-base font-bold bg-gradient-to-r from-primary via-accent to-primary hover:shadow-2xl hover:scale-105 transition-all duration-300 shadow-lg"
-                size="lg"
-              >
-                {loading ? (
-                  <>
-                    <Sparkles className="h-5 w-5 mr-2 animate-spin" />
-                    {t('gifts.sending')}
-                  </>
-                ) : (
-                  <>
-                    <Gift className="h-5 w-5 mr-2" />
-                    {t('gifts.send')}
-                  </>
-                )}
-              </Button>
-            </div>
-          </div>
-        )}
 
         <div className="text-sm text-center text-muted-foreground mb-6 bg-gradient-to-r from-muted/40 via-muted/60 to-muted/40 rounded-xl p-3 border border-border/50">
           <span className="font-medium">💡 {t('gifts.tapToCombo')}</span>
@@ -411,9 +368,39 @@ export const SendGiftDialog = ({ receiverId, receiverName, trigger }: SendGiftDi
                   }`}
                 >
                   {isSelected && selectedGift && (
-                    <div className="absolute -top-2 -right-2 z-10 bg-gradient-to-br from-primary to-accent text-primary-foreground rounded-full h-6 w-6 flex items-center justify-center font-bold text-xs shadow-2xl animate-[scale-in_0.2s_ease-out] ring-2 ring-background">
-                      {selectedGift.count}
-                    </div>
+                    <>
+                      <div className="absolute -top-2 -right-2 z-10 bg-gradient-to-br from-primary to-accent text-primary-foreground rounded-full h-6 w-6 flex items-center justify-center font-bold text-xs shadow-2xl animate-[scale-in_0.2s_ease-out] ring-2 ring-background">
+                        {selectedGift.count}
+                      </div>
+                      
+                      <Button
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          handleSendGift();
+                        }}
+                        disabled={loading}
+                        size="sm"
+                        className="absolute inset-0 z-20 bg-gradient-to-r from-primary via-accent to-primary text-primary-foreground hover:shadow-2xl transition-all duration-300 rounded-xl flex flex-col items-center justify-center gap-1 backdrop-blur-xl bg-opacity-95"
+                      >
+                        {loading ? (
+                          <>
+                            <Sparkles className="h-4 w-4 animate-spin" />
+                            <span className="text-[10px] font-bold">{t('gifts.sending')}</span>
+                          </>
+                        ) : (
+                          <>
+                            <Gift className="h-5 w-5" />
+                            <span className="text-[10px] font-bold">{t('gifts.send')}</span>
+                            <span className="text-[8px] font-bold opacity-90">{totalCost.toLocaleString()} Nexa</span>
+                            {discount > 0 && (
+                              <span className="text-[8px] font-bold text-primary-foreground/90 bg-primary-foreground/20 px-1 rounded">
+                                -{(discount * 100).toFixed(0)}%
+                              </span>
+                            )}
+                          </>
+                        )}
+                      </Button>
+                    </>
                   )}
                   
                   <div className="relative space-y-1">
