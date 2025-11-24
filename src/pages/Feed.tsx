@@ -28,6 +28,7 @@ import { BusinessBadge } from '@/components/BusinessBadge';
 import { AffiliatedBadge } from '@/components/AffiliatedBadge';
 import { OnlineStatus } from '@/components/OnlineStatus';
 import { StoryAvatar } from '@/components/moments/StoryAvatar';
+import { ViewsAnalyticsSheet } from '@/components/ViewsAnalyticsSheet';
 
 // --- INTERFACES ---
 
@@ -411,6 +412,7 @@ const PostCard = ({ post, addReply, user, navigate, onAcknowledge, onDeletePost,
   const [visibleRepliesCount, setVisibleRepliesCount] = useState(5);
   const postRef = useRef<HTMLDivElement>(null);
   const [hasTrackedView, setHasTrackedView] = useState(false);
+  const [showViewsSheet, setShowViewsSheet] = useState(false);
 
   // Track post view when it becomes visible
   useEffect(() => {
@@ -936,9 +938,17 @@ const PostCard = ({ post, addReply, user, navigate, onAcknowledge, onDeletePost,
             <Heart className={`h-3.5 w-3.5 sm:h-4 sm:w-4 group-hover:text-red-500 transition-colors ${post.has_liked ? 'text-red-500 fill-red-500' : ''}`} />
             <span className={`group-hover:text-red-500 transition-colors text-[10px] sm:text-xs ${post.has_liked ? 'text-red-500' : ''}`}>{post.like_count > 0 ? post.like_count : ''}</span>
           </Button>
-          <Button variant="ghost" size="sm" className="flex items-center gap-0.5 sm:gap-1 group h-7 sm:h-8 px-2 sm:px-3">
-            <TrendingUp className="h-3.5 w-3.5 sm:h-4 sm:w-4 text-muted-foreground" />
-            <span className="text-[10px] sm:text-xs">{post.view_count > 0 ? post.view_count : ''}</span>
+          <Button 
+            variant="ghost" 
+            size="sm" 
+            className="flex items-center gap-0.5 sm:gap-1 group h-7 sm:h-8 px-2 sm:px-3"
+            onClick={(e) => {
+              e.stopPropagation();
+              setShowViewsSheet(true);
+            }}
+          >
+            <TrendingUp className="h-3.5 w-3.5 sm:h-4 sm:w-4 text-muted-foreground group-hover:text-primary transition-colors" />
+            <span className="text-[10px] sm:text-xs group-hover:text-primary transition-colors">{post.view_count > 0 ? post.view_count : ''}</span>
           </Button>
           <Button variant="ghost" size="sm" className="flex items-center gap-0.5 sm:gap-1 group h-7 sm:h-8 px-2 sm:px-3" onClick={handleShare}>
             <Share className="h-3.5 w-3.5 sm:h-4 sm:w-4 group-hover:text-primary transition-colors" />
@@ -1043,6 +1053,14 @@ const PostCard = ({ post, addReply, user, navigate, onAcknowledge, onDeletePost,
           )}
         </div>
       </div>
+
+      <ViewsAnalyticsSheet
+        postId={post.id}
+        isOpen={showViewsSheet}
+        onClose={() => setShowViewsSheet(false)}
+        totalViews={post.view_count}
+        isPostOwner={user?.id === post.author_id}
+      />
     </div>
   );
 };

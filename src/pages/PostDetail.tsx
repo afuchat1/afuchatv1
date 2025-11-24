@@ -14,6 +14,7 @@ import { MentionInput } from '@/components/MentionInput';
 import { toast } from 'sonner';
 import { useAuth } from '@/contexts/AuthContext';
 import { NestedReplyItem } from '@/components/post-detail/NestedReplyItem';
+import { ViewsAnalyticsSheet } from '@/components/ViewsAnalyticsSheet';
 // Note: Verified Badge components must be imported or defined here
 
 // --- START: Verified Badge Components (Unchanged) ---
@@ -121,6 +122,7 @@ const PostDetail = () => {
   const [submittingReply, setSubmittingReply] = useState(false);
   const postRef = useRef<HTMLDivElement>(null);
   const [hasTrackedView, setHasTrackedView] = useState(false);
+  const [showViewsSheet, setShowViewsSheet] = useState(false);
 
   // Track post view when it becomes visible
   useEffect(() => {
@@ -550,10 +552,13 @@ const PostDetail = () => {
                 <span className="text-sm font-semibold">
                   {post.replies_count} <span className="text-muted-foreground font-normal">Replies</span>
                 </span>
-                <span className="text-sm font-semibold flex items-center gap-1">
+                <button 
+                  onClick={() => setShowViewsSheet(true)}
+                  className="text-sm font-semibold flex items-center gap-1 hover:text-primary transition-colors cursor-pointer"
+                >
                   <TrendingUp className="h-3.5 w-3.5 text-muted-foreground" />
                   {post.view_count} <span className="text-muted-foreground font-normal">Views</span>
-                </span>
+                </button>
             </div>
         </div>
 
@@ -628,6 +633,14 @@ const PostDetail = () => {
             )}
         </div>
       </div>
+
+      <ViewsAnalyticsSheet
+        postId={postId || ''}
+        isOpen={showViewsSheet}
+        onClose={() => setShowViewsSheet(false)}
+        totalViews={post?.view_count || 0}
+        isPostOwner={user?.id === post?.author.id}
+      />
     </div>
   );
 };
