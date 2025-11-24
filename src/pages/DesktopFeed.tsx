@@ -110,14 +110,20 @@ const DesktopFeed = () => {
 
       if (priorityError) throw priorityError;
 
-      // Fetch additional suggested users (excluding current user)
+      // Fetch additional suggested users (excluding current user and priority accounts)
       const priorityIds = priorityAccounts?.map(a => a.id) || [];
-      const { data: otherUsers, error } = await supabase
+      
+      let query = supabase
         .from('profiles')
         .select('id, display_name, handle, avatar_url, is_verified, is_business_mode')
-        .neq('id', user.id)
-        .not('id', 'in', `(${priorityIds.join(',')})`)
-        .limit(10);
+        .neq('id', user.id);
+      
+      // Only add the not filter if there are priority IDs
+      if (priorityIds.length > 0) {
+        query = query.not('id', 'in', `(${priorityIds.join(',')})`);
+      }
+      
+      const { data: otherUsers, error } = await query.limit(10);
 
       if (error) throw error;
 
