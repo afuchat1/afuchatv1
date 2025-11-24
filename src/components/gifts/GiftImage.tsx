@@ -50,6 +50,7 @@ export const GiftImage = ({
   return (
     <motion.div 
       className={`${sizeClass} ${className} flex items-center justify-center`}
+      style={{ perspective: '1000px' }}
       initial={{ scale: 0, opacity: 0 }}
       animate={{ 
         scale: 1, 
@@ -71,8 +72,21 @@ export const GiftImage = ({
         src={imageUrl} 
         alt={giftName}
         className={`${sizeClass} object-contain drop-shadow-lg`}
+        style={{ transformStyle: 'preserve-3d' }}
+        animate={{
+          rotateY: [0, 360],
+        }}
+        transition={{
+          rotateY: {
+            duration: 8,
+            repeat: Infinity,
+            ease: 'linear'
+          }
+        }}
         whileHover={{ 
-          scale: 1.1,
+          scale: 1.2,
+          rotateX: 15,
+          rotateZ: 5,
           transition: { type: 'spring', stiffness: 400, damping: 10 }
         }}
       />
