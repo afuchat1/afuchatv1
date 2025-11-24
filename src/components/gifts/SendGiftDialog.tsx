@@ -346,7 +346,7 @@ export const SendGiftDialog = ({ receiverId, receiverName, trigger }: SendGiftDi
           <span className="font-medium">💡 {t('gifts.tapToCombo')}</span>
         </div>
 
-        <div className="grid grid-cols-4 sm:grid-cols-5 md:grid-cols-6 lg:grid-cols-7 gap-3">
+        <div className="grid grid-cols-4 sm:grid-cols-5 md:grid-cols-6 lg:grid-cols-7 gap-6">
           {gifts.map((gift) => {
             const currentPrice = calculatePrice(gift.id, gift.base_xp_cost);
             const isSelected = selectedGift?.id === gift.id;
@@ -357,53 +357,24 @@ export const SendGiftDialog = ({ receiverId, receiverName, trigger }: SendGiftDi
             return (
               <div
                 key={gift.id}
-                className="relative"
+                className="relative flex flex-col items-center gap-2"
               >
+                {/* Gift Item - No Background */}
                 <div
                   onClick={() => !loading && handleGiftTap(gift)}
-                  className={`cursor-pointer transition-all duration-300 hover:scale-110 hover:-translate-y-2 hover:shadow-2xl group relative p-2 sm:p-3 rounded-xl ${
-                    isSelected
-                      ? 'ring-2 ring-primary shadow-2xl bg-gradient-to-br from-primary/20 via-accent/20 to-primary/20 scale-105 border border-primary/30'
-                      : 'hover:shadow-xl hover:ring-2 hover:ring-primary/40 bg-card/80 backdrop-blur border border-border/50 hover:border-primary/30'
+                  className={`cursor-pointer transition-all duration-300 hover:scale-110 group relative ${
+                    isSelected ? 'scale-110' : ''
                   }`}
                 >
+                  {/* Count Badge */}
                   {isSelected && selectedGift && (
-                    <>
-                      <div className="absolute -top-2 -right-2 z-10 bg-gradient-to-br from-primary to-accent text-primary-foreground rounded-full h-6 w-6 flex items-center justify-center font-bold text-xs shadow-2xl animate-[scale-in_0.2s_ease-out] ring-2 ring-background">
-                        {selectedGift.count}
-                      </div>
-                      
-                      <Button
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          handleSendGift();
-                        }}
-                        disabled={loading}
-                        size="sm"
-                        className="absolute inset-0 z-20 bg-gradient-to-r from-primary via-accent to-primary text-primary-foreground hover:shadow-2xl transition-all duration-300 rounded-xl flex flex-col items-center justify-center gap-1 backdrop-blur-xl bg-opacity-95"
-                      >
-                        {loading ? (
-                          <>
-                            <Sparkles className="h-4 w-4 animate-spin" />
-                            <span className="text-[10px] font-bold">{t('gifts.sending')}</span>
-                          </>
-                        ) : (
-                          <>
-                            <Gift className="h-5 w-5" />
-                            <span className="text-[10px] font-bold">{t('gifts.send')}</span>
-                            <span className="text-[8px] font-bold opacity-90">{totalCost.toLocaleString()} Nexa</span>
-                            {discount > 0 && (
-                              <span className="text-[8px] font-bold text-primary-foreground/90 bg-primary-foreground/20 px-1 rounded">
-                                -{(discount * 100).toFixed(0)}%
-                              </span>
-                            )}
-                          </>
-                        )}
-                      </Button>
-                    </>
+                    <div className="absolute -top-2 -right-2 z-10 bg-gradient-to-br from-primary to-accent text-primary-foreground rounded-full h-6 w-6 flex items-center justify-center font-bold text-xs shadow-xl animate-[scale-in_0.2s_ease-out] ring-2 ring-background">
+                      {selectedGift.count}
+                    </div>
                   )}
                   
-                  <div className="relative space-y-1">
+                  <div className="relative space-y-1.5">
+                    {/* Gift Image */}
                     <div className="relative">
                       <GiftImage
                         giftId={gift.id}
@@ -411,35 +382,68 @@ export const SendGiftDialog = ({ receiverId, receiverName, trigger }: SendGiftDi
                         emoji={gift.emoji}
                         rarity={gift.rarity}
                         size="md"
-                        className="mx-auto"
+                        className="mx-auto drop-shadow-lg"
                       />
-                      <Badge className={`absolute -top-1 -right-1 ${getRarityColor(gift.rarity)} text-[8px] px-1 py-0`}>
+                      <Badge className={`absolute -top-1 -right-1 ${getRarityColor(gift.rarity)} text-[8px] px-1 py-0 shadow-md`}>
                         {gift.rarity.slice(0, 1)}
                       </Badge>
                     </div>
 
-                    <div className="text-center">
-                      <h3 className="font-semibold text-[10px] truncate">{gift.name}</h3>
-                      <div className="flex items-center justify-center gap-0.5">
-                        <span className="text-[10px] font-bold text-primary">
+                    {/* Gift Info */}
+                    <div className="text-center space-y-0.5">
+                      <h3 className="font-semibold text-[11px] truncate text-foreground">{gift.name}</h3>
+                      <div className="flex items-center justify-center gap-1">
+                        <span className="text-xs font-bold bg-gradient-to-r from-primary to-accent bg-clip-text text-transparent">
                           {currentPrice.toLocaleString()}
                         </span>
                         {priceMultiplier !== 1 && (
-                          <TrendingUp className="h-2 w-2 text-green-500" />
+                          <TrendingUp className="h-3 w-3 text-green-500" />
                         )}
                       </div>
                     </div>
                   </div>
+                  
+                  {/* Preview Button */}
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    className="absolute -top-2 -left-2 h-6 w-6 p-0 rounded-full bg-background/90 backdrop-blur-sm hover:bg-background shadow-lg border border-border/50 z-20"
+                    onClick={(e) => handlePreviewGift(gift, e)}
+                  >
+                    <span className="text-xs">👁️</span>
+                  </Button>
                 </div>
-                
-                <Button
-                  variant="ghost"
-                  size="sm"
-                  className="absolute -top-1 -left-1 h-5 w-5 p-0 rounded-full bg-background/80 backdrop-blur-sm hover:bg-background z-20"
-                  onClick={(e) => handlePreviewGift(gift, e)}
-                >
-                  <span className="text-[10px]">👁️</span>
-                </Button>
+
+                {/* Send Button - Appears Below When Selected */}
+                {isSelected && selectedGift && (
+                  <Button
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      handleSendGift();
+                    }}
+                    disabled={loading}
+                    size="sm"
+                    className="w-full h-auto py-2 px-3 bg-gradient-to-r from-primary via-accent to-primary text-primary-foreground hover:shadow-xl transition-all duration-300 rounded-xl flex flex-col items-center justify-center gap-1 animate-[scale-in_0.3s_ease-out] shadow-lg hover:scale-105"
+                  >
+                    {loading ? (
+                      <>
+                        <Sparkles className="h-4 w-4 animate-spin" />
+                        <span className="text-[9px] font-bold">{t('gifts.sending')}</span>
+                      </>
+                    ) : (
+                      <>
+                        <Gift className="h-5 w-5" />
+                        <span className="text-[10px] font-extrabold">{t('gifts.send')}</span>
+                        <span className="text-[9px] font-bold opacity-90">{totalCost.toLocaleString()} N</span>
+                        {discount > 0 && (
+                          <span className="text-[8px] font-bold text-primary-foreground bg-primary-foreground/20 px-1.5 py-0.5 rounded-full mt-0.5">
+                            -{(discount * 100).toFixed(0)}% OFF
+                          </span>
+                        )}
+                      </>
+                    )}
+                  </Button>
+                )}
               </div>
             );
           })}
