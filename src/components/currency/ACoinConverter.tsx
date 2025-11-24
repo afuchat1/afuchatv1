@@ -19,7 +19,7 @@ export const ACoinConverter = ({ currentNexa, currentACoin, onConversionSuccess 
   const { convertNexaToACoin } = useNexa();
 
   const conversionRate = 100; // 100 Nexa = 1 ACoin
-  const feePercent = 3; // 3% fee
+  const feePercent = 5.99; // 5.99% fee
 
   const calculateACoin = (nexa: number) => {
     const afterFee = nexa * (1 - feePercent / 100);
