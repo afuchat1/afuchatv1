@@ -20,7 +20,7 @@ i18n
       sw: { translation: sw },
     },
     fallbackLng: 'en',
-    lng: 'en', // Set default to English
+    lng: 'en',
     interpolation: {
       escapeValue: false,
     },
@@ -29,11 +29,21 @@ i18n
       caches: ['localStorage'],
     },
     react: {
-      useSuspense: false, // Disable suspense to prevent loading flashes
+      useSuspense: false,
     },
     returnEmptyString: false,
     returnNull: false,
     returnObjects: false,
+    // Format missing keys to show readable text instead of "section.keyName"
+    parseMissingKeyHandler: (key: string) => {
+      const parts = key.split('.');
+      const lastPart = parts[parts.length - 1];
+      // Convert camelCase to Title Case
+      return lastPart
+        .replace(/([A-Z])/g, ' $1')
+        .replace(/^./, (str) => str.toUpperCase())
+        .trim();
+    },
   });
 
 export default i18n;

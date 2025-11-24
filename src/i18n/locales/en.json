@@ -377,6 +377,7 @@
   },
   "gifts": {
     "sendGift": "Send Gift",
+    "send": "Send",
     "sendGiftTo": "Send a Gift to {{name}}",
     "yourNexa": "Your Nexa: {{nexa}}",
     "chooseGift": "Choose a gift to send",
@@ -386,6 +387,7 @@
     "giftFailed": "Failed to send gift",
     "insufficientNexa": "Insufficient Nexa to send this gift",
     "notEnoughNexa": "Not enough Nexa for this gift",
+    "tapToCombo": "Tap same gift multiple times to build a combo!",
     "noGiftsReceived": "No gifts received yet",
     "giftsReceived": "{{count}} Gifts",
     "totalValue": "Total value: {{value}} Nexa",
