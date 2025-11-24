@@ -64,15 +64,34 @@ export const PinnedGiftsDisplay = ({ userId, className = '' }: PinnedGiftsDispla
             key={pinnedGift.id}
             className="absolute pointer-events-auto z-10"
             style={position}
-            initial={{ scale: 0, opacity: 0 }}
-            animate={{ scale: 1, opacity: 1 }}
-            transition={{ delay: index * 0.1, type: 'spring', stiffness: 200, damping: 15 }}
+            initial={{ scale: 0, opacity: 0, rotate: -180 }}
+            animate={{ 
+              scale: 1, 
+              opacity: 1, 
+              rotate: 0,
+              y: [0, -5, 0]
+            }}
+            transition={{ 
+              delay: index * 0.1, 
+              type: 'spring', 
+              stiffness: 300, 
+              damping: 20,
+              y: {
+                duration: 2,
+                repeat: Infinity,
+                repeatType: 'reverse',
+                ease: 'easeInOut',
+                delay: index * 0.2
+              }
+            }}
+            whileHover={{ 
+              scale: 1.3, 
+              rotate: 15,
+              transition: { type: 'spring', stiffness: 400, damping: 10 }
+            }}
           >
-            <div className="relative group">
-              <div className="absolute inset-0 bg-gradient-to-br from-primary/20 to-accent/20 rounded-full blur-sm opacity-60 group-hover:opacity-90 transition-opacity" />
-              <div className="relative bg-background/80 backdrop-blur-sm rounded-full p-0.5 border border-primary/10 shadow-sm">
-                <SimpleGiftIcon emoji={pinnedGift.gift.emoji} size={18} />
-              </div>
+            <div className="relative text-2xl drop-shadow-lg" style={{ filter: 'drop-shadow(0 2px 4px rgba(0,0,0,0.3))' }}>
+              {pinnedGift.gift.emoji}
             </div>
           </motion.div>
         );
