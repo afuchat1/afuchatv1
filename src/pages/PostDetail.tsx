@@ -2,7 +2,7 @@ import { useEffect, useState, useRef } from 'react';
 import { useParams, useNavigate, Link } from 'react-router-dom';
 import { supabase } from '@/integrations/supabase/client';
 import { CustomLoader } from '@/components/ui/CustomLoader';
-import { ArrowLeft, User as UserIcon, Eye } from 'lucide-react';
+import { ArrowLeft, User as UserIcon, TrendingUp } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
 import { useTranslation } from 'react-i18next';
@@ -551,7 +551,7 @@ const PostDetail = () => {
                   {post.replies_count} <span className="text-muted-foreground font-normal">Replies</span>
                 </span>
                 <span className="text-sm font-semibold flex items-center gap-1">
-                  <Eye className="h-3.5 w-3.5 text-muted-foreground" />
+                  <TrendingUp className="h-3.5 w-3.5 text-muted-foreground" />
                   {post.view_count} <span className="text-muted-foreground font-normal">Views</span>
                 </span>
             </div>
