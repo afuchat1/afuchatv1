@@ -29,6 +29,7 @@ interface ReceivedGift {
 interface ListGiftDialogProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
+  onListingCreated?: () => void;
 }
 
 const getRarityColor = (rarity: string) => {
@@ -41,7 +42,7 @@ const getRarityColor = (rarity: string) => {
   }
 };
 
-export const ListGiftDialog = ({ open, onOpenChange }: ListGiftDialogProps) => {
+export const ListGiftDialog = ({ open, onOpenChange, onListingCreated }: ListGiftDialogProps) => {
   const { user } = useAuth();
   const [receivedGifts, setReceivedGifts] = useState<ReceivedGift[]>([]);
   const [selectedGift, setSelectedGift] = useState<ReceivedGift | null>(null);
@@ -125,6 +126,7 @@ export const ListGiftDialog = ({ open, onOpenChange }: ListGiftDialogProps) => {
       if (error) throw error;
 
       toast.success('Gift listed successfully!');
+      onListingCreated?.();
       onOpenChange(false);
       setSelectedGift(null);
       setAskingPrice('');
