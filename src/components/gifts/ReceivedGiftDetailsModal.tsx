@@ -6,7 +6,7 @@ import {
 } from '@/components/ui/dialog';
 import { Award, TrendingUp, Users, User } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
-import { SimpleGiftIcon } from './SimpleGiftIcon';
+import { GiftImage } from './GiftImage';
 import { Badge } from '@/components/ui/badge';
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
@@ -77,7 +77,13 @@ export const ReceivedGiftDetailsModal = ({
         <div className="px-6 py-4 space-y-4">
           {/* Gift Display */}
           <div className="flex flex-col items-center gap-3 p-4 bg-gradient-to-br from-primary/5 to-accent/5 rounded-lg">
-            <SimpleGiftIcon emoji={extractText(gift.gift.emoji)} size={64} />
+            <GiftImage
+              giftId={gift.id}
+              giftName={extractText(gift.gift.name)}
+              emoji={extractText(gift.gift.emoji)}
+              rarity={gift.gift.rarity}
+              size="lg"
+            />
             <Badge 
               className="text-xs font-semibold"
               style={{ backgroundColor: getRarityColor(gift.gift.rarity) }}

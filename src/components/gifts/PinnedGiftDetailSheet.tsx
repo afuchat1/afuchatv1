@@ -12,6 +12,7 @@ import { Button } from '@/components/ui/button';
 import { Skeleton } from '@/components/ui/skeleton';
 import { motion } from 'framer-motion';
 import { GiftStatisticsSheet } from './GiftStatisticsSheet';
+import { GiftImage } from './GiftImage';
 
 interface GiftDetails {
   id: string;
@@ -133,7 +134,7 @@ export const PinnedGiftDetailSheet = ({ giftId, open, onOpenChange }: PinnedGift
           </div>
         ) : gift ? (
           <div className="space-y-6 pt-6 pb-8">
-            {/* Gift Emoji/Image */}
+            {/* Gift Image */}
             <motion.div 
               className="flex justify-center"
               initial={{ scale: 0, rotate: -180 }}
@@ -142,8 +143,14 @@ export const PinnedGiftDetailSheet = ({ giftId, open, onOpenChange }: PinnedGift
             >
               <div className="relative">
                 <div className="absolute inset-0 bg-gradient-to-br from-primary/30 to-accent/30 rounded-full blur-2xl animate-pulse" />
-                <div className="relative text-8xl p-8 bg-gradient-to-br from-muted/50 to-muted/30 rounded-full border-4 border-primary/20 shadow-2xl">
-                  {gift.emoji}
+                <div className="relative p-8">
+                  <GiftImage
+                    giftId={gift.id}
+                    giftName={gift.name}
+                    emoji={gift.emoji}
+                    rarity={gift.rarity}
+                    size="xl"
+                  />
                 </div>
               </div>
             </motion.div>
