@@ -19,6 +19,7 @@ import { GiftConfetti } from './GiftConfetti';
 import { ComboConfetti } from './ComboConfetti';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { useNavigate } from 'react-router-dom';
+import { ScrollArea } from '@/components/ui/scroll-area';
 
 interface GiftItem {
   id: string;
@@ -363,13 +364,14 @@ export const SendGiftDialog = ({ receiverId, receiverName, trigger }: SendGiftDi
           </div>
         </SheetHeader>
 
-        <div className="flex-1 overflow-y-auto px-6 py-4">
-          <div className="text-xs text-center text-muted-foreground mb-4 bg-muted/30 rounded-xl p-3 border border-border/50">
-            <span className="font-medium">💡 {t('gifts.tapToCombo')}</span>
-          </div>
+        <ScrollArea className="flex-1 px-6">
+          <div className="py-4 space-y-4">
+            <div className="text-xs text-center text-muted-foreground bg-muted/30 rounded-xl p-3 border border-border/50">
+              <span className="font-medium">💡 {t('gifts.tapToCombo')}</span>
+            </div>
 
-          <div className="grid grid-cols-4 sm:grid-cols-5 md:grid-cols-6 lg:grid-cols-7 gap-4 pb-4">
-            {gifts.map((gift) => {
+            <div className="grid grid-cols-4 sm:grid-cols-5 md:grid-cols-6 lg:grid-cols-7 gap-4 pb-24">
+              {gifts.map((gift) => {
               const currentPrice = calculatePrice(gift.id, gift.base_xp_cost);
               const isSelected = selectedGift?.id === gift.id;
               const stats = giftStats[gift.id];
@@ -447,8 +449,9 @@ export const SendGiftDialog = ({ receiverId, receiverName, trigger }: SendGiftDi
                 </div>
               );
             })}
+            </div>
           </div>
-        </div>
+        </ScrollArea>
       </SheetContent>
       </Sheet>
 
