@@ -116,9 +116,9 @@ export const ViewsAnalyticsSheet = ({
   if (!isPostOwner) {
     return (
       <Sheet open={isOpen} onOpenChange={onClose}>
-        <SheetContent side="bottom" className="h-[50vh] rounded-t-3xl">
-          <SheetHeader>
-            <SheetTitle className="flex items-center gap-2">
+        <SheetContent side="bottom" className="max-h-[50vh] rounded-t-3xl bg-background/95 backdrop-blur-xl border-t border-border/50 p-6">
+          <SheetHeader className="pb-6">
+            <SheetTitle className="text-2xl font-bold flex items-center gap-2">
               <TrendingUp className="h-5 w-5 text-primary" />
               Views
             </SheetTitle>
@@ -141,15 +141,15 @@ export const ViewsAnalyticsSheet = ({
 
   return (
     <Sheet open={isOpen} onOpenChange={onClose}>
-      <SheetContent side="bottom" className="h-[85vh] rounded-t-3xl">
-        <SheetHeader>
-          <SheetTitle className="flex items-center gap-2">
+      <SheetContent side="bottom" className="max-h-[85vh] rounded-t-3xl bg-background/95 backdrop-blur-xl border-t border-border/50 p-6 overflow-y-auto">
+        <SheetHeader className="pb-6">
+          <SheetTitle className="text-2xl font-bold flex items-center gap-2">
             <TrendingUp className="h-5 w-5 text-primary" />
             Post Analytics
           </SheetTitle>
         </SheetHeader>
 
-        <div className="mt-6 space-y-6 overflow-y-auto h-[calc(85vh-80px)] pb-6">
+        <div className="space-y-6">
           {/* Stats Overview */}
           <div className="grid grid-cols-3 gap-3">
             <div className="p-4 bg-muted rounded-lg text-center">

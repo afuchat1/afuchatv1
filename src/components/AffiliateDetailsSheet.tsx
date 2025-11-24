@@ -37,49 +37,12 @@ export function AffiliateDetailsSheet({
     <Sheet open={open} onOpenChange={onOpenChange}>
       <SheetContent 
         side="bottom" 
-        className="h-auto max-h-[90vh] rounded-t-3xl border-t touch-pan-y"
-        onPointerDown={(e) => {
-          const target = e.target as HTMLElement;
-          const startY = e.clientY;
-          const sheetContent = target.closest('[role="dialog"]') as HTMLElement;
-          
-          const handlePointerMove = (e: PointerEvent) => {
-            const currentY = e.clientY;
-            const diff = currentY - startY;
-            
-            if (diff > 0 && sheetContent) {
-              sheetContent.style.transform = `translateY(${diff}px)`;
-            }
-          };
-          
-          const handlePointerUp = (e: PointerEvent) => {
-            const currentY = e.clientY;
-            const diff = currentY - startY;
-            
-            if (diff > 100) {
-              onOpenChange(false);
-            }
-            
-            if (sheetContent) {
-              sheetContent.style.transform = '';
-            }
-            
-            document.removeEventListener('pointermove', handlePointerMove);
-            document.removeEventListener('pointerup', handlePointerUp);
-          };
-          
-          document.addEventListener('pointermove', handlePointerMove);
-          document.addEventListener('pointerup', handlePointerUp);
-        }}
+        className="max-h-[85vh] rounded-t-3xl bg-background/95 backdrop-blur-xl border-t border-border/50 p-6 overflow-y-auto"
       >
-        {/* Drag indicator */}
-        <div className="absolute top-3 left-1/2 -translate-x-1/2 w-12 h-1 bg-muted-foreground/30 rounded-full cursor-grab active:cursor-grabbing" />
-        
-        <div className="pt-8 pb-6 px-6 space-y-6">
-          {/* Header */}
-          <div>
-            <h2 className="text-2xl font-bold">Verified account</h2>
-          </div>
+        {/* Header */}
+        <div className="mb-6">
+          <h2 className="text-2xl font-bold">Verified account</h2>
+        </div>
           
           {/* Verification Info */}
           <div className="space-y-6">
@@ -159,7 +122,7 @@ export function AffiliateDetailsSheet({
 
                 <Button 
                   onClick={handleGetVerified}
-                  className="w-full mt-4"
+                  className="w-full mt-4 h-12 font-semibold rounded-xl"
                   size="lg"
                 >
                   Get Verified
@@ -171,7 +134,6 @@ export function AffiliateDetailsSheet({
               </div>
             )}
           </div>
-        </div>
       </SheetContent>
     </Sheet>
   );

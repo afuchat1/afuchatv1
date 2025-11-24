@@ -24,19 +24,11 @@ const DeletePostSheet = ({ isOpen, onClose, onConfirm, isDeleting = false }: Del
     <Sheet open={isOpen} onOpenChange={onClose}>
       <SheetContent 
         side="bottom" 
-        className="h-auto rounded-t-2xl p-0 border-t border-border"
+        className="max-h-[85vh] rounded-t-3xl bg-background/95 backdrop-blur-xl border-t border-border/50 p-6"
       >
-        <div className="px-6 py-5">
           <SheetHeader className="text-left space-y-3 mb-6">
-            <div className="flex items-center justify-between">
-              <SheetTitle className="text-xl font-bold">{t('feed.deletePost')}</SheetTitle>
-              <SheetClose asChild>
-                <Button variant="ghost" size="icon" className="h-8 w-8 rounded-full">
-                  <X className="h-4 w-4" />
-                </Button>
-              </SheetClose>
-            </div>
-            <SheetDescription className="text-muted-foreground text-sm">
+            <SheetTitle className="text-2xl font-bold">{t('feed.deletePost')}</SheetTitle>
+            <SheetDescription className="text-sm">
               {t('feed.deletePostConfirm')}
             </SheetDescription>
           </SheetHeader>
@@ -48,7 +40,7 @@ const DeletePostSheet = ({ isOpen, onClose, onConfirm, isDeleting = false }: Del
                 onClose();
               }}
               disabled={isDeleting}
-              className="w-full bg-destructive hover:bg-destructive/90 text-destructive-foreground font-bold h-12 rounded-full"
+              className="w-full bg-destructive hover:bg-destructive/90 text-destructive-foreground font-semibold h-12 rounded-xl"
             >
               {isDeleting ? (
                 <>
@@ -66,14 +58,13 @@ const DeletePostSheet = ({ isOpen, onClose, onConfirm, isDeleting = false }: Del
             <SheetClose asChild>
               <Button
                 variant="outline"
-                className="w-full h-12 rounded-full font-bold border-border"
+                className="w-full h-12 rounded-xl font-semibold"
                 disabled={isDeleting}
               >
                 {t('common.cancel')}
               </Button>
             </SheetClose>
           </div>
-        </div>
       </SheetContent>
     </Sheet>
   );

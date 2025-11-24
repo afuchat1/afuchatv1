@@ -23,18 +23,13 @@ const ProfileActionsSheet = ({ isOpen, onClose, onLogout, onEditProfile }: Profi
     <Sheet open={isOpen} onOpenChange={onClose}>
       <SheetContent 
         side="bottom" 
-        className="h-auto rounded-t-2xl p-0 border-t border-border"
+        className="max-h-[85vh] rounded-t-3xl bg-background/95 backdrop-blur-xl border-t border-border/50 p-6"
       >
-        {/* Drag Handle */}
-        <div className="flex justify-center py-3 border-b border-border">
-          <div className="w-10 h-1 bg-border rounded-full" />
-        </div>
-
-        <div className="px-4 py-2">
+        <div className="space-y-3">
           <SheetClose asChild>
             <Button
               variant="ghost"
-              className="w-full justify-start py-4 h-auto text-base hover:bg-muted/80 rounded-lg"
+              className="w-full justify-start h-12 text-base hover:bg-muted/80 rounded-xl font-medium"
               onClick={onEditProfile}
             >
               <User className="h-5 w-5 mr-3 text-muted-foreground" />
@@ -45,7 +40,7 @@ const ProfileActionsSheet = ({ isOpen, onClose, onLogout, onEditProfile }: Profi
           <SheetClose asChild>
             <Button
               variant="ghost"
-              className="w-full justify-start py-4 h-auto text-base hover:bg-muted/80 rounded-lg"
+              className="w-full justify-start h-12 text-base hover:bg-muted/80 rounded-xl font-medium"
               onClick={() => { onClose(); openSettings(); }}
             >
               <Settings className="h-5 w-5 mr-3 text-muted-foreground" />
@@ -56,7 +51,7 @@ const ProfileActionsSheet = ({ isOpen, onClose, onLogout, onEditProfile }: Profi
           <SheetClose asChild>
             <Button
               variant="ghost"
-              className="w-full justify-start py-4 h-auto text-base text-destructive hover:bg-destructive/10 rounded-lg"
+              className="w-full justify-start h-12 text-base text-destructive hover:bg-destructive/10 rounded-xl font-medium"
               onClick={onLogout}
             >
               <LogOut className="h-5 w-5 mr-3" />

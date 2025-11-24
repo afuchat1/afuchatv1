@@ -120,7 +120,7 @@ export const PinnedGiftDetailSheet = ({ giftId, open, onOpenChange }: PinnedGift
 
   return (
     <Sheet open={open} onOpenChange={onOpenChange}>
-      <SheetContent side="bottom" className="h-[90vh] sm:h-[85vh] rounded-t-3xl bg-background/95 backdrop-blur-xl border-t border-border/50">
+      <SheetContent side="bottom" className="max-h-[85vh] rounded-t-3xl bg-background/95 backdrop-blur-xl border-t border-border/50 p-6 overflow-y-auto">
         <SheetHeader className="sr-only">
           <SheetTitle>Gift Details</SheetTitle>
         </SheetHeader>
@@ -233,7 +233,7 @@ export const PinnedGiftDetailSheet = ({ giftId, open, onOpenChange }: PinnedGift
               <Button 
                 onClick={() => onOpenChange(false)} 
                 variant="outline"
-                className="h-14 text-lg rounded-2xl"
+                className="h-12 font-semibold rounded-xl"
               >
                 Close
               </Button>
@@ -241,7 +241,7 @@ export const PinnedGiftDetailSheet = ({ giftId, open, onOpenChange }: PinnedGift
                 onClick={() => {
                   setStatsSheetOpen(true);
                 }}
-                className="h-14 text-lg rounded-2xl bg-primary hover:bg-primary/90"
+                className="h-12 font-semibold rounded-xl bg-primary hover:bg-primary/90"
               >
                 Learn More
               </Button>

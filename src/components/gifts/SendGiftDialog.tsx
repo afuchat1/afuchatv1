@@ -342,16 +342,16 @@ export const SendGiftDialog = ({ receiverId, receiverName, trigger }: SendGiftDi
             </Button>
           )}
         </SheetTrigger>
-      <SheetContent side="bottom" className="max-h-[90vh] overflow-y-auto p-6 bg-gradient-to-b from-background via-background to-primary/5" onOpenChange={setOpen}>
-        <SheetHeader className="pb-4 space-y-4">
-          <div className="flex items-center gap-4 p-4 rounded-2xl bg-gradient-to-r from-primary/10 via-accent/10 to-primary/10 border border-primary/20 shadow-lg">
-            <Avatar className="h-14 w-14 ring-2 ring-primary/30 shadow-lg">
+      <SheetContent side="bottom" className="max-h-[85vh] overflow-y-auto rounded-t-3xl bg-background/95 backdrop-blur-xl border-t border-border/50 p-6" onOpenChange={setOpen}>
+        <SheetHeader className="pb-6 space-y-4">
+          <div className="flex items-center gap-4 p-4 rounded-xl bg-muted/30 border border-border/50">
+            <Avatar className="h-12 w-12 ring-2 ring-primary/20">
               <AvatarImage src={`https://api.dicebear.com/7.x/avataaars/svg?seed=${receiverId}`} />
-              <AvatarFallback className="bg-gradient-to-br from-primary to-accent text-primary-foreground">{receiverName[0]?.toUpperCase()}</AvatarFallback>
+              <AvatarFallback className="bg-primary text-primary-foreground">{receiverName[0]?.toUpperCase()}</AvatarFallback>
             </Avatar>
             <div className="flex-1">
-              <SheetTitle className="text-xl font-bold bg-gradient-to-r from-foreground to-foreground/70 bg-clip-text">{t('gifts.sendGiftTo', { name: receiverName })}</SheetTitle>
-              <SheetDescription className="text-sm font-medium flex items-center gap-1.5 mt-1">
+              <SheetTitle className="text-2xl font-bold">{t('gifts.sendGiftTo', { name: receiverName })}</SheetTitle>
+              <SheetDescription className="text-sm flex items-center gap-1.5 mt-1">
                 <Sparkles className="h-3.5 w-3.5 text-primary" />
                 {t('gifts.yourNexa', { nexa: userXP.toLocaleString() })}
               </SheetDescription>
@@ -360,7 +360,7 @@ export const SendGiftDialog = ({ receiverId, receiverName, trigger }: SendGiftDi
         </SheetHeader>
 
 
-        <div className="text-sm text-center text-muted-foreground mb-6 bg-gradient-to-r from-muted/40 via-muted/60 to-muted/40 rounded-xl p-3 border border-border/50">
+        <div className="text-sm text-center text-muted-foreground mb-6 bg-muted/30 rounded-xl p-3 border border-border/50">
           <span className="font-medium">💡 {t('gifts.tapToCombo')}</span>
         </div>
 
@@ -438,7 +438,7 @@ export const SendGiftDialog = ({ receiverId, receiverName, trigger }: SendGiftDi
                     }}
                     disabled={loading}
                     size="sm"
-                    className="h-8 px-6 bg-primary hover:bg-primary/90 text-primary-foreground font-semibold text-xs rounded-full shadow-md hover:shadow-lg transition-all duration-200 animate-[scale-in_0.3s_ease-out]"
+                    className="h-9 px-6 bg-primary hover:bg-primary/90 text-primary-foreground font-semibold text-xs rounded-xl shadow-md hover:shadow-lg transition-all duration-200 animate-[scale-in_0.3s_ease-out]"
                   >
                     {loading ? t('gifts.sending') : t('gifts.send')}
                   </Button>
@@ -453,9 +453,9 @@ export const SendGiftDialog = ({ receiverId, receiverName, trigger }: SendGiftDi
       {/* Preview Sheet */}
       {previewGift && (
         <Sheet open={showPreview} onOpenChange={setShowPreview}>
-          <SheetContent side="bottom" className="max-h-[80vh] overflow-y-auto" onOpenChange={setShowPreview}>
-            <SheetHeader>
-              <SheetTitle className="flex items-center gap-2">
+          <SheetContent side="bottom" className="max-h-[85vh] overflow-y-auto rounded-t-3xl bg-background/95 backdrop-blur-xl border-t border-border/50 p-6" onOpenChange={setShowPreview}>
+            <SheetHeader className="pb-6">
+              <SheetTitle className="text-2xl font-bold flex items-center gap-2">
                 <GiftImage
                   giftId={previewGift.id}
                   giftName={previewGift.name}
