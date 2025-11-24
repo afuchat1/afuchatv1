@@ -152,45 +152,6 @@ export type Database = {
           },
         ]
       }
-      bids: {
-        Row: {
-          bid_amount: number
-          created_at: string | null
-          id: string
-          shop_item_id: string
-          user_id: string
-        }
-        Insert: {
-          bid_amount: number
-          created_at?: string | null
-          id?: string
-          shop_item_id: string
-          user_id: string
-        }
-        Update: {
-          bid_amount?: number
-          created_at?: string | null
-          id?: string
-          shop_item_id?: string
-          user_id?: string
-        }
-        Relationships: [
-          {
-            foreignKeyName: "bids_shop_item_id_fkey"
-            columns: ["shop_item_id"]
-            isOneToOne: false
-            referencedRelation: "shop_items"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "bids_user_id_fkey"
-            columns: ["user_id"]
-            isOneToOne: false
-            referencedRelation: "profiles"
-            referencedColumns: ["id"]
-          },
-        ]
-      }
       blocked_users: {
         Row: {
           blocked_at: string | null
@@ -1690,75 +1651,6 @@ export type Database = {
         }
         Relationships: []
       }
-      shop_items: {
-        Row: {
-          auction_end_time: string | null
-          auction_start_time: string | null
-          config: Json
-          created_at: string | null
-          current_bid: number | null
-          description: string | null
-          discount_percentage: number | null
-          emoji: string | null
-          featured_end_date: string | null
-          featured_start_date: string | null
-          id: string
-          image_url: string | null
-          is_auction: boolean | null
-          is_available: boolean | null
-          is_featured: boolean | null
-          item_type: string
-          min_bid_increment: number | null
-          name: string
-          starting_bid: number | null
-          xp_cost: number
-        }
-        Insert: {
-          auction_end_time?: string | null
-          auction_start_time?: string | null
-          config?: Json
-          created_at?: string | null
-          current_bid?: number | null
-          description?: string | null
-          discount_percentage?: number | null
-          emoji?: string | null
-          featured_end_date?: string | null
-          featured_start_date?: string | null
-          id?: string
-          image_url?: string | null
-          is_auction?: boolean | null
-          is_available?: boolean | null
-          is_featured?: boolean | null
-          item_type: string
-          min_bid_increment?: number | null
-          name: string
-          starting_bid?: number | null
-          xp_cost: number
-        }
-        Update: {
-          auction_end_time?: string | null
-          auction_start_time?: string | null
-          config?: Json
-          created_at?: string | null
-          current_bid?: number | null
-          description?: string | null
-          discount_percentage?: number | null
-          emoji?: string | null
-          featured_end_date?: string | null
-          featured_start_date?: string | null
-          id?: string
-          image_url?: string | null
-          is_auction?: boolean | null
-          is_available?: boolean | null
-          is_featured?: boolean | null
-          item_type?: string
-          min_bid_increment?: number | null
-          name?: string
-          starting_bid?: number | null
-          xp_cost?: number
-        }
-        Relationships: []
-      }
       stories: {
         Row: {
           caption: string | null
@@ -2075,38 +1967,6 @@ export type Database = {
         }
         Relationships: []
       }
-      user_shop_purchases: {
-        Row: {
-          id: string
-          purchased_at: string | null
-          shop_item_id: string
-          user_id: string
-          xp_paid: number
-        }
-        Insert: {
-          id?: string
-          purchased_at?: string | null
-          shop_item_id: string
-          user_id: string
-          xp_paid: number
-        }
-        Update: {
-          id?: string
-          purchased_at?: string | null
-          shop_item_id?: string
-          user_id?: string
-          xp_paid?: number
-        }
-        Relationships: [
-          {
-            foreignKeyName: "user_shop_purchases_shop_item_id_fkey"
-            columns: ["shop_item_id"]
-            isOneToOne: false
-            referencedRelation: "shop_items"
-            referencedColumns: ["id"]
-          },
-        ]
-      }
       user_subscriptions: {
         Row: {
           acoin_paid: number
@@ -2306,25 +2166,17 @@ export type Database = {
       claim_red_envelope: { Args: { p_envelope_id: string }; Returns: Json }
       cleanup_expired_sessions: { Args: never; Returns: number }
       convert_nexa_to_acoin: { Args: { p_nexa_amount: number }; Returns: Json }
-      create_marketplace_listing:
-        | {
-            Args: { p_asking_price: number; p_purchase_id: string }
-            Returns: {
-              message: string
-              success: boolean
-            }[]
-          }
-        | {
-            Args: {
-              p_asking_price: number
-              p_purchase_id: string
-              p_user_id?: string
-            }
-            Returns: {
-              message: string
-              success: boolean
-            }[]
-          }
+      create_marketplace_listing: {
+        Args: {
+          p_asking_price: number
+          p_purchase_id: string
+          p_user_id?: string
+        }
+        Returns: {
+          message: string
+          success: boolean
+        }[]
+      }
       create_new_chat: { Args: { other_user_id: string }; Returns: string }
       create_red_envelope: {
         Args: {
@@ -2337,7 +2189,6 @@ export type Database = {
         Returns: Json
       }
       expire_subscriptions: { Args: never; Returns: number }
-      finalize_auction: { Args: { p_shop_item_id: string }; Returns: Json }
       get_gift_price: { Args: { p_gift_id: string }; Returns: number }
       get_or_create_chat: { Args: { other_user_id: string }; Returns: string }
       get_protected_profile_fields: {
@@ -2387,13 +2238,6 @@ export type Database = {
         Returns: boolean
       }
       mark_notifications_as_read: { Args: never; Returns: undefined }
-      place_bid: {
-        Args: { p_bid_amount: number; p_shop_item_id: string }
-        Returns: {
-          message: string
-          success: boolean
-        }[]
-      }
       process_referral_reward:
         | {
             Args: { p_referral_code: string; p_referred_id: string }
@@ -2409,22 +2253,6 @@ export type Database = {
       process_xp_transfer: {
         Args: { p_amount: number; p_message?: string; p_receiver_id: string }
         Returns: Json
-      }
-      purchase_marketplace_item: {
-        Args: { p_listing_id: string }
-        Returns: {
-          message: string
-          new_xp: number
-          success: boolean
-        }[]
-      }
-      purchase_shop_item: {
-        Args: { p_shop_item_id: string }
-        Returns: {
-          message: string
-          new_xp: number
-          success: boolean
-        }[]
       }
       purchase_subscription: { Args: { p_plan_id: string }; Returns: Json }
       record_login_attempt: {

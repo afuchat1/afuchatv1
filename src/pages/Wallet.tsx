@@ -2,7 +2,7 @@ import { useNavigate } from 'react-router-dom';
 import { useQuery } from '@tanstack/react-query';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
-import { ArrowLeft, Wallet as WalletIcon, TrendingUp, Gift, Heart, ShoppingBag, Mail, Send, Sparkles, ArrowUpRight, ArrowDownRight, Coins, Eye, EyeOff, RefreshCw, Download, Filter } from 'lucide-react';
+import { ArrowLeft, Wallet as WalletIcon, TrendingUp, Gift, Heart, Mail, Send, Sparkles, ArrowUpRight, ArrowDownRight, Coins, Eye, EyeOff, RefreshCw, Download, Filter } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/contexts/AuthContext';
 import Logo from '@/components/Logo';
@@ -39,7 +39,7 @@ const Wallet = () => {
   const { data: transactions, refetch: refetchTransactions } = useQuery({
     queryKey: ['transactions', user?.id],
     queryFn: async () => {
-      const [gifts, tips, purchases, transfers, redEnvSent, redEnvClaimed, conversions] = await Promise.all([
+      const [gifts, tips, transfers, redEnvSent, redEnvClaimed, conversions] = await Promise.all([
         supabase
           .from('gift_transactions')
           .select('*, sender:profiles!gift_transactions_sender_id_fkey(display_name, handle), receiver:profiles!gift_transactions_receiver_id_fkey(display_name, handle), gift:gifts(*)')
@@ -51,12 +51,6 @@ const Wallet = () => {
           .select('*, sender:profiles!tips_sender_id_fkey(display_name, handle), receiver:profiles!tips_receiver_id_fkey(display_name, handle)')
           .or(`sender_id.eq.${user?.id},receiver_id.eq.${user?.id}`)
           .order('created_at', { ascending: false })
-          .limit(20),
-        supabase
-          .from('user_shop_purchases')
-          .select('*, item:shop_items(*)')
-          .eq('user_id', user?.id)
-          .order('purchased_at', { ascending: false })
           .limit(20),
         supabase
           .from('xp_transfers')
@@ -87,7 +81,6 @@ const Wallet = () => {
       const all: any[] = [
         ...(gifts.data || []).map(t => ({ ...t, type: 'gift', timestamp: t.created_at })),
         ...(tips.data || []).map(t => ({ ...t, type: 'tip', timestamp: t.created_at })),
-        ...(purchases.data || []).map(t => ({ ...t, type: 'purchase', timestamp: t.purchased_at })),
         ...(transfers.data || []).map(t => ({ ...t, type: 'transfer', timestamp: t.created_at })),
         ...(redEnvSent.data || []).map(t => ({ ...t, type: 'red_envelope_sent', timestamp: t.created_at })),
         ...(redEnvClaimed.data || []).map(t => ({ ...t, type: 'red_envelope_claimed', timestamp: t.claimed_at })),
@@ -111,8 +104,6 @@ const Wallet = () => {
         return <div className={`${wrapperClasses} bg-pink-500/10`}><Gift className={`${iconClasses} text-pink-500`} /></div>;
       case 'tip': 
         return <div className={`${wrapperClasses} bg-red-500/10`}><Heart className={`${iconClasses} text-red-500`} /></div>;
-      case 'purchase': 
-        return <div className={`${wrapperClasses} bg-purple-500/10`}><ShoppingBag className={`${iconClasses} text-purple-500`} /></div>;
       case 'transfer': 
         return <div className={`${wrapperClasses} bg-indigo-500/10`}><Send className={`${iconClasses} text-indigo-500`} /></div>;
       case 'red_envelope_sent': 
@@ -156,7 +147,7 @@ const Wallet = () => {
         ? 'Converted Nexa to ACoin'
         : 'Currency Conversion';
     }
-    return `Purchased ${transaction.item?.name}`;
+    return 'Transaction';
   };
 
   const getTransactionAmount = (transaction: any) => {
@@ -177,7 +168,7 @@ const Wallet = () => {
     const amount = transaction.xp_cost || transaction.xp_amount || transaction.xp_paid;
     const isSender = transaction.sender_id === user?.id;
     
-    if (transaction.type === 'purchase' || (transaction.type !== 'purchase' && isSender)) {
+    if (isSender) {
       return -amount;
     }
     return amount;
