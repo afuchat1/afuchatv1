@@ -422,9 +422,15 @@ export default function Shop() {
                 )}
 
                 {isOwnListing && (
-                  <Badge variant="secondary" className="w-full justify-center py-2 text-xs font-semibold">
-                    This is your listing
-                  </Badge>
+                  <Button
+                    onClick={() => navigate('/marketplace')}
+                    variant="secondary"
+                    className="w-full h-10 text-sm font-semibold"
+                    size="sm"
+                  >
+                    <Package className="mr-2 h-4 w-4" />
+                    View Your Listings
+                  </Button>
                 )}
 
                 {!user && (
