@@ -49,12 +49,12 @@ export const PinnedGiftsDisplay = ({ userId, className = '' }: PinnedGiftsDispla
   if (pinnedGifts.length === 0) return null;
 
   const positions = [
-    { top: '-8%', left: '50%', transform: 'translate(-50%, -50%)' },
-    { top: '15%', right: '-8%', transform: 'translate(50%, -50%)' },
-    { bottom: '15%', right: '-8%', transform: 'translate(50%, 50%)' },
-    { bottom: '-8%', left: '50%', transform: 'translate(-50%, 50%)' },
-    { bottom: '15%', left: '-8%', transform: 'translate(-50%, 50%)' },
-    { top: '15%', left: '-8%', transform: 'translate(-50%, -50%)' },
+    { top: '-15%', left: '50%', transform: 'translate(-50%, -50%)' },
+    { top: '12%', right: '-15%', transform: 'translate(50%, -50%)' },
+    { bottom: '12%', right: '-15%', transform: 'translate(50%, 50%)' },
+    { bottom: '-15%', left: '50%', transform: 'translate(-50%, 50%)' },
+    { bottom: '12%', left: '-15%', transform: 'translate(-50%, 50%)' },
+    { top: '12%', left: '-15%', transform: 'translate(-50%, -50%)' },
   ];
 
   return (
@@ -98,7 +98,7 @@ export const PinnedGiftsDisplay = ({ userId, className = '' }: PinnedGiftsDispla
                 setDetailsOpen(true);
               }}
             >
-              <div className="relative text-2xl drop-shadow-lg" style={{ filter: 'drop-shadow(0 2px 4px rgba(0,0,0,0.3))' }}>
+              <div className="relative text-3xl drop-shadow-lg" style={{ filter: 'drop-shadow(0 2px 4px rgba(0,0,0,0.3))' }}>
                 {pinnedGift.gift.emoji}
               </div>
             </motion.div>
