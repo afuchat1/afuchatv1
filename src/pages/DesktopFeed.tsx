@@ -100,14 +100,48 @@ const DesktopFeed = () => {
     if (!user) return;
 
     try {
-      const { data, error } = await supabase
+      const priorityHandles = ['afuchat', 'amkaweesi', 'afuai'];
+      
+      // Fetch following status for priority accounts
+      const { data: followingData } = await supabase
+        .from('follows')
+        .select('following_id')
+        .eq('follower_id', user.id);
+      
+      const followingIdsSet = new Set(followingData?.map(f => f.following_id) || []);
+      
+      // Fetch priority accounts
+      const { data: priorityAccounts, error: priorityError } = await supabase
+        .from('profiles')
+        .select('id, display_name, handle, avatar_url, is_verified, is_business_mode')
+        .in('handle', priorityHandles);
+
+      if (priorityError) throw priorityError;
+
+      // Filter out already followed priority accounts
+      const unfollowedPriority = priorityAccounts?.filter(
+        account => !followingIdsSet.has(account.id)
+      ) || [];
+
+      // Fetch additional suggested users (excluding priority accounts and current user)
+      const priorityIds = priorityAccounts?.map(a => a.id) || [];
+      const { data: otherUsers, error } = await supabase
         .from('profiles')
         .select('id, display_name, handle, avatar_url, is_verified, is_business_mode')
         .neq('id', user.id)
+        .not('id', 'in', `(${priorityIds.join(',')})`)
         .limit(5);
 
       if (error) throw error;
-      if (data) setSuggested(data);
+
+      // Filter out already followed users from other suggestions
+      const unfollowedOthers = otherUsers?.filter(
+        u => !followingIdsSet.has(u.id)
+      ) || [];
+
+      // Combine: priority accounts first, then others
+      const combined = [...unfollowedPriority, ...unfollowedOthers];
+      setSuggested(combined);
     } catch (error) {
       console.error('Error fetching suggested users:', error);
     }
@@ -184,6 +218,9 @@ const DesktopFeed = () => {
           description: "You are now following this user",
         });
       }
+
+      // Refetch suggestions to update the list
+      fetchSuggestedUsers();
     } catch (error) {
       console.error('Error following/unfollowing:', error);
       toast({
