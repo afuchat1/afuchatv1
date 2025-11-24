@@ -417,7 +417,7 @@ export const SendGiftDialog = ({ receiverId, receiverName, trigger }: SendGiftDi
                       <h3 className="font-semibold text-[11px] truncate text-foreground">{gift.name}</h3>
                       <div className="flex items-center justify-center gap-1">
                         <span className="text-xs font-bold bg-gradient-to-r from-primary to-accent bg-clip-text text-transparent">
-                          {currentPrice.toLocaleString()}
+                          {currentPrice.toLocaleString()} Nexa
                         </span>
                         {priceMultiplier !== 1 && (
                           <TrendingUp className="h-3 w-3 text-green-500" />
