@@ -5,11 +5,12 @@ import { supabase } from '@/integrations/supabase/client';
 import { Button } from '@/components/ui/button';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Card, CardContent } from '@/components/ui/card';
-import { ArrowLeft, Wallet, Send, Mail, TrendingUp, TrendingDown, Gift, ArrowUpRight, ArrowDownRight, ShoppingBag, Trophy, Heart, Sparkles } from 'lucide-react';
+import { ArrowLeft, Wallet, Send, Mail, TrendingUp, TrendingDown, Gift, ArrowUpRight, ArrowDownRight, ShoppingBag, Trophy, Heart, Sparkles, Coins } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import Logo from '@/components/Logo';
 import { formatDistanceToNow } from 'date-fns';
 import { motion } from 'framer-motion';
+import { ACoinConverter } from '@/components/currency/ACoinConverter';
 
 interface Transaction {
   id: string;
@@ -30,6 +31,7 @@ const FinancialHub = () => {
   const { user } = useAuth();
   const { toast } = useToast();
   const [balance, setBalance] = useState(0);
+  const [acoinBalance, setAcoinBalance] = useState(0);
   const [transactions, setTransactions] = useState<Transaction[]>([]);
   const [loading, setLoading] = useState(true);
 
@@ -130,11 +132,14 @@ const FinancialHub = () => {
 
       const { data: profile } = await supabase
         .from('profiles')
-        .select('xp')
+        .select('xp, acoin')
         .eq('id', user.id)
         .single();
 
-      if (profile) setBalance(profile.xp);
+      if (profile) {
+        setBalance(profile.xp);
+        setAcoinBalance(profile.acoin || 0);
+      }
 
       const [transfers, tips, redEnvelopes, gifts] = await Promise.all([
         fetchTransfers(),
@@ -403,43 +408,91 @@ const FinancialHub = () => {
 
       {/* Main Content */}
       <main className="container max-w-4xl mx-auto px-4 sm:px-6 py-6 pb-24 space-y-6">
-        {/* Balance Card */}
+        {/* Balance Cards */}
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          {/* Nexa Balance */}
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.3 }}
+          >
+            <Card className="relative overflow-hidden border-primary/20 bg-gradient-to-br from-primary/10 via-primary/5 to-background">
+              <div className="absolute inset-0 bg-gradient-to-br from-primary/5 to-transparent" />
+              <CardContent className="relative p-6">
+                <div className="flex items-center justify-between mb-4">
+                  <div className="p-3 bg-primary/10 rounded-full">
+                    <Wallet className="h-6 w-6 text-primary" />
+                  </div>
+                </div>
+                <p className="text-sm text-muted-foreground mb-1">Nexa Balance</p>
+                <p className="text-3xl font-bold text-primary">
+                  {balance.toLocaleString()}
+                </p>
+              </CardContent>
+            </Card>
+          </motion.div>
+
+          {/* ACoin Balance */}
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.3, delay: 0.1 }}
+          >
+            <Card className="relative overflow-hidden border-yellow-500/20 bg-gradient-to-br from-yellow-500/10 via-orange-500/5 to-background">
+              <div className="absolute inset-0 bg-gradient-to-br from-yellow-500/5 to-transparent" />
+              <CardContent className="relative p-6">
+                <div className="flex items-center justify-between mb-4">
+                  <div className="p-3 bg-gradient-to-br from-yellow-500/20 to-orange-500/20 rounded-full">
+                    <Coins className="h-6 w-6 text-yellow-600" />
+                  </div>
+                </div>
+                <p className="text-sm text-muted-foreground mb-1">ACoin Balance</p>
+                <p className="text-3xl font-bold text-yellow-600">
+                  {acoinBalance.toLocaleString()}
+                </p>
+              </CardContent>
+            </Card>
+          </motion.div>
+        </div>
+
+        {/* Quick Actions - Transfer & Red Envelope */}
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.3 }}
+          transition={{ duration: 0.3, delay: 0.2 }}
         >
-          <Card className="relative overflow-hidden border-primary/20 bg-gradient-to-br from-primary/10 via-primary/5 to-background">
-            <div className="absolute inset-0 bg-gradient-to-br from-primary/5 to-transparent" />
-            <CardContent className="relative p-6">
-              <div className="flex items-center gap-3 mb-4">
-                <div className="p-3 bg-primary/10 rounded-full">
-                  <Wallet className="h-6 w-6 text-primary" />
-                </div>
-                <div>
-                  <p className="text-sm text-muted-foreground">Your Balance</p>
-                  <p className="text-3xl font-bold text-primary">{balance.toLocaleString()} Nexa</p>
-                </div>
-              </div>
-              <div className="grid grid-cols-2 gap-3">
-                <Button onClick={() => navigate('/transfer')} className="w-full">
-                  <Send className="h-4 w-4 mr-2" />
-                  Transfer
-                </Button>
-                <Button onClick={() => navigate('/red-envelope')} variant="outline" className="w-full">
-                  <Mail className="h-4 w-4 mr-2" />
-                  Red Envelope
-                </Button>
-              </div>
-            </CardContent>
-          </Card>
+          <div className="grid grid-cols-2 gap-3">
+            <Button onClick={() => navigate('/transfer')} className="w-full h-auto py-4 flex items-center justify-center gap-2">
+              <Send className="h-5 w-5" />
+              <span>Transfer</span>
+            </Button>
+            <Button onClick={() => navigate('/red-envelope')} variant="outline" className="w-full h-auto py-4 flex items-center justify-center gap-2">
+              <Mail className="h-5 w-5" />
+              <span>Red Envelope</span>
+            </Button>
+          </div>
+        </motion.div>
+
+        {/* ACoin Converter */}
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.3, delay: 0.3 }}
+        >
+          <ACoinConverter 
+            currentNexa={balance}
+            currentACoin={acoinBalance}
+            onConversionSuccess={() => {
+              fetchFinancialData();
+            }}
+          />
         </motion.div>
 
         {/* Stats Overview */}
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.3, delay: 0.1 }}
+          transition={{ duration: 0.3, delay: 0.4 }}
         >
           <Card>
             <CardContent className="p-6">
@@ -482,53 +535,12 @@ const FinancialHub = () => {
           </Card>
         </motion.div>
 
-        {/* Quick Actions */}
-        <motion.div
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.3, delay: 0.2 }}
-        >
-          <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
-            <Button 
-              variant="outline" 
-              className="h-auto py-4 flex flex-col gap-2"
-              onClick={() => navigate('/wallet')}
-            >
-              <Wallet className="h-5 w-5" />
-              <span className="text-sm">Wallet</span>
-            </Button>
-            <Button 
-              variant="outline" 
-              className="h-auto py-4 flex flex-col gap-2"
-              onClick={() => navigate('/shop')}
-            >
-              <ShoppingBag className="h-5 w-5" />
-              <span className="text-sm">Shop</span>
-            </Button>
-            <Button 
-              variant="outline" 
-              className="h-auto py-4 flex flex-col gap-2"
-              onClick={() => navigate('/gifts')}
-            >
-              <Gift className="h-5 w-5" />
-              <span className="text-sm">Gifts</span>
-            </Button>
-            <Button 
-              variant="outline" 
-              className="h-auto py-4 flex flex-col gap-2"
-              onClick={() => navigate('/leaderboard')}
-            >
-              <Trophy className="h-5 w-5" />
-              <span className="text-sm">Leaderboard</span>
-            </Button>
-          </div>
-        </motion.div>
 
         {/* Transaction History */}
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.3, delay: 0.3 }}
+          transition={{ duration: 0.3, delay: 0.5 }}
         >
           <Card>
             <CardContent className="p-6">
