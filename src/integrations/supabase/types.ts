@@ -2383,6 +2383,7 @@ export type Database = {
         | "new_like"
         | "new_reply"
         | "new_mention"
+        | "gift"
       user_role_enum: "user" | "admin"
     }
     CompositeTypes: {
@@ -2517,6 +2518,7 @@ export const Constants = {
         "new_like",
         "new_reply",
         "new_mention",
+        "gift",
       ],
       user_role_enum: ["user", "admin"],
     },
