@@ -37,15 +37,64 @@ const PrivacyPolicy = () => {
           <p className="text-muted-foreground mb-8">{t('privacy.lastUpdated')}</p>
 
           <section className="mb-8">
-            <h2 className="text-2xl font-semibold mb-4">1. Introduction</h2>
+            <h2 className="text-2xl font-semibold mb-4">{t('privacy.intro.title')}</h2>
             <p className="text-foreground/90 leading-relaxed mb-4">
-              Welcome to AfuChat. We ("AfuChat," "we," "our," or "us") are committed to protecting your privacy and ensuring transparency about how we handle your personal information. This Privacy Policy explains our practices regarding the collection, use, disclosure, and protection of your data when you use our social networking platform ("Service").
+              {t('privacy.intro.welcome')}
             </p>
             <p className="text-foreground/90 leading-relaxed mb-4">
-              By using AfuChat, you agree to the collection and use of information in accordance with this Privacy Policy. If you do not agree with our policies and practices, please do not use our Service.
+              {t('privacy.intro.agreement')}
             </p>
             <p className="text-foreground/90 leading-relaxed mb-4">
-              This policy applies to all users worldwide and complies with applicable data protection laws including GDPR, CCPA, and other regional privacy regulations.
+              {t('privacy.intro.compliance')}
+            </p>
+          </section>
+
+          <section className="mb-8">
+            <h2 className="text-2xl font-semibold mb-4">{t('privacy.infoCollected.title')}</h2>
+            <h3 className="text-xl font-semibold mb-3 mt-6">{t('privacy.infoCollected.direct')}</h3>
+            <h3 className="text-xl font-semibold mb-3 mt-6">{t('privacy.infoCollected.automatic')}</h3>
+            <h3 className="text-xl font-semibold mb-3 mt-6">{t('privacy.infoCollected.thirdParty')}</h3>
+          </section>
+
+          <section className="mb-8">
+            <h2 className="text-2xl font-semibold mb-4">{t('privacy.usage.title')}</h2>
+            <h3 className="text-xl font-semibold mb-3 mt-6">{t('privacy.usage.provision')}</h3>
+            <h3 className="text-xl font-semibold mb-3 mt-6">{t('privacy.usage.improvement')}</h3>
+            <h3 className="text-xl font-semibold mb-3 mt-6">{t('privacy.usage.safety')}</h3>
+            <h3 className="text-xl font-semibold mb-3 mt-6">{t('privacy.usage.communications')}</h3>
+            <h3 className="text-xl font-semibold mb-3 mt-6">{t('privacy.usage.legal')}</h3>
+          </section>
+
+          <section className="mb-8">
+            <h2 className="text-2xl font-semibold mb-4">{t('privacy.ai.title')}</h2>
+            <h3 className="text-xl font-semibold mb-3 mt-6">{t('privacy.ai.features')}</h3>
+            <h3 className="text-xl font-semibold mb-3 mt-6">{t('privacy.ai.processing')}</h3>
+          </section>
+
+          <section className="mb-8">
+            <h2 className="text-2xl font-semibold mb-4">{t('privacy.sharing.title')}</h2>
+            <p className="text-foreground/90 leading-relaxed mb-4">
+              <strong>{t('privacy.sharing.noSell')}</strong>
+            </p>
+          </section>
+
+          <section className="mb-8">
+            <h2 className="text-2xl font-semibold mb-4">{t('privacy.security.title')}</h2>
+            <h3 className="text-xl font-semibold mb-3 mt-6">{t('privacy.security.technical')}</h3>
+            <h3 className="text-xl font-semibold mb-3 mt-6">{t('privacy.security.organizational')}</h3>
+          </section>
+
+          <section className="mb-8">
+            <h2 className="text-2xl font-semibold mb-4">{t('privacy.rights.title')}</h2>
+            <h3 className="text-xl font-semibold mb-3 mt-6">{t('privacy.rights.access')}</h3>
+            <h3 className="text-xl font-semibold mb-3 mt-6">{t('privacy.rights.correction')}</h3>
+            <h3 className="text-xl font-semibold mb-3 mt-6">{t('privacy.rights.deletion')}</h3>
+            <h3 className="text-xl font-semibold mb-3 mt-6">{t('privacy.rights.control')}</h3>
+          </section>
+
+          <section className="mb-8">
+            <p className="text-foreground/90 leading-relaxed">
+              {t('privacy.contact')}
             </p>
           </section>
 

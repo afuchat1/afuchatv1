@@ -230,5 +230,102 @@
     "fr": "Français",
     "ar": "العربية",
     "sw": "Kiswahili"
+  },
+  "privacy": {
+    "title": "Politique de Confidentialité",
+    "lastUpdated": "Dernière mise à jour: Janvier 2025",
+    "intro": {
+      "title": "Introduction",
+      "welcome": "Bienvenue sur AfuChat. Nous nous engageons à protéger votre vie privée et à assurer la transparence sur la manière dont nous traitons vos informations personnelles.",
+      "agreement": "En utilisant AfuChat, vous acceptez la collecte et l'utilisation des informations conformément à cette Politique de Confidentialité.",
+      "compliance": "Cette politique s'applique à tous les utilisateurs dans le monde entier et est conforme aux lois applicables en matière de protection des données, notamment le RGPD, le CCPA et d'autres réglementations régionales sur la confidentialité."
+    },
+    "infoCollected": {
+      "title": "Informations que Nous Collectons",
+      "direct": "Informations que Vous Fournissez Directement",
+      "automatic": "Informations Collectées Automatiquement",
+      "thirdParty": "Informations de Tiers"
+    },
+    "usage": {
+      "title": "Comment Nous Utilisons Vos Informations",
+      "provision": "Fourniture du Service",
+      "improvement": "Amélioration du Service",
+      "safety": "Sécurité et Protection",
+      "communications": "Communications",
+      "legal": "Conformité Légale"
+    },
+    "ai": {
+      "title": "IA et Apprentissage Automatique",
+      "features": "Fonctionnalités IA",
+      "processing": "Traitement des Données IA"
+    },
+    "sharing": {
+      "title": "Partage et Divulgation d'Informations",
+      "noSell": "Nous ne vendons pas vos informations personnelles."
+    },
+    "security": {
+      "title": "Sécurité des Données",
+      "technical": "Sécurité Technique",
+      "organizational": "Sécurité Organisationnelle"
+    },
+    "rights": {
+      "title": "Vos Droits en Matière de Confidentialité",
+      "access": "Accès et Portabilité",
+      "correction": "Correction et Mise à Jour",
+      "deletion": "Suppression",
+      "control": "Contrôle et Restrictions"
+    },
+    "contact": "Pour les demandes relatives à la confidentialité, contactez: privacy@afuchat.com"
+  },
+  "terms": {
+    "title": "Conditions d'Utilisation",
+    "lastUpdated": "Dernière mise à jour: Janvier 2025",
+    "acceptance": {
+      "title": "Acceptation des Conditions",
+      "intro": "En accédant et en utilisant AfuChat, vous acceptez d'être lié par ces Conditions d'Utilisation.",
+      "ageRequirement": "En créant un compte, vous confirmez que vous avez au moins 13 ans."
+    },
+    "service": {
+      "title": "Description du Service",
+      "intro": "AfuChat est une plateforme complète de réseautage social et de communication."
+    },
+    "accounts": {
+      "title": "Comptes d'Utilisateur et Inscription",
+      "requirements": "Vous devez fournir des informations exactes et maintenir la sécurité de votre compte."
+    },
+    "content": {
+      "title": "Contenu Utilisateur et Propriété Intellectuelle",
+      "ownership": "Vous conservez la propriété de votre contenu.",
+      "prohibited": "Contenu Interdit"
+    },
+    "aiContent": {
+      "title": "Contenu Généré par IA",
+      "disclaimer": "Le contenu généré par IA est fourni 'tel quel' sans garanties."
+    },
+    "virtualCurrency": {
+      "title": "Monnaie Virtuelle et Transactions",
+      "noRealValue": "Les articles virtuels n'ont aucune valeur monétaire réelle."
+    },
+    "conduct": {
+      "title": "Conduite Interdite",
+      "intro": "Vous acceptez de ne violer aucune loi ni de faire un usage abusif du Service."
+    },
+    "moderation": {
+      "title": "Modération du Contenu",
+      "rights": "Nous nous réservons le droit de surveiller et de supprimer du contenu."
+    },
+    "termination": {
+      "title": "Résiliation et Suspension de Compte",
+      "rights": "Nous pouvons suspendre ou résilier des comptes en cas de violations."
+    },
+    "disclaimer": {
+      "title": "Avertissement de Garanties",
+      "asIs": "LE SERVICE EST FOURNI 'TEL QUEL' ET 'SELON DISPONIBILITÉ'."
+    },
+    "liability": {
+      "title": "Limitation de Responsabilité",
+      "limited": "Notre responsabilité est limitée comme décrit ici."
+    },
+    "contact": "Pour toute demande, contactez: support@afuchat.com"
   }
 }

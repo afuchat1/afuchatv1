@@ -648,11 +648,100 @@
   },
   "privacy": {
     "title": "Privacy Policy",
-    "lastUpdated": "Last Updated: January 2025"
+    "lastUpdated": "Last Updated: January 2025",
+    "intro": {
+      "title": "Introduction",
+      "welcome": "Welcome to AfuChat. We (\"AfuChat,\" \"we,\" \"our,\" or \"us\") are committed to protecting your privacy and ensuring transparency about how we handle your personal information.",
+      "agreement": "By using AfuChat, you agree to the collection and use of information in accordance with this Privacy Policy.",
+      "compliance": "This policy applies to all users worldwide and complies with applicable data protection laws including GDPR, CCPA, and other regional privacy regulations."
+    },
+    "infoCollected": {
+      "title": "Information We Collect",
+      "direct": "Information You Provide Directly",
+      "automatic": "Automatically Collected Information",
+      "thirdParty": "Information from Third Parties"
+    },
+    "usage": {
+      "title": "How We Use Your Information",
+      "provision": "Service Provision",
+      "improvement": "Service Improvement",
+      "safety": "Safety and Security",
+      "communications": "Communications",
+      "legal": "Legal Compliance"
+    },
+    "ai": {
+      "title": "AI and Machine Learning",
+      "features": "AI Features",
+      "processing": "AI Data Processing"
+    },
+    "sharing": {
+      "title": "Information Sharing and Disclosure",
+      "noSell": "We do not sell your personal information."
+    },
+    "security": {
+      "title": "Data Security",
+      "technical": "Technical Security",
+      "organizational": "Organizational Security"
+    },
+    "rights": {
+      "title": "Your Privacy Rights",
+      "access": "Access and Portability",
+      "correction": "Correction and Update",
+      "deletion": "Deletion",
+      "control": "Control and Restrictions"
+    },
+    "contact": "For privacy-related inquiries, contact: privacy@afuchat.com"
   },
   "terms": {
     "title": "Terms of Use",
-    "lastUpdated": "Last Updated: January 2025"
+    "lastUpdated": "Last Updated: January 2025",
+    "acceptance": {
+      "title": "Acceptance of Terms",
+      "intro": "By accessing and using AfuChat, you accept and agree to be bound by these Terms of Use.",
+      "ageRequirement": "By creating an account, you confirm that you are at least 13 years old."
+    },
+    "service": {
+      "title": "Description of Service",
+      "intro": "AfuChat is a comprehensive social networking and communication platform."
+    },
+    "accounts": {
+      "title": "User Accounts and Registration",
+      "requirements": "You must provide accurate information and maintain account security."
+    },
+    "content": {
+      "title": "User Content and Intellectual Property",
+      "ownership": "You retain ownership of your content.",
+      "prohibited": "Prohibited Content"
+    },
+    "aiContent": {
+      "title": "AI-Generated Content",
+      "disclaimer": "AI-generated content is provided 'as is' without warranties."
+    },
+    "virtualCurrency": {
+      "title": "Virtual Currency and Transactions",
+      "noRealValue": "Virtual items have no real-world monetary value."
+    },
+    "conduct": {
+      "title": "Prohibited Conduct",
+      "intro": "You agree not to violate any laws or misuse the Service."
+    },
+    "moderation": {
+      "title": "Content Moderation",
+      "rights": "We reserve the right to monitor and remove content."
+    },
+    "termination": {
+      "title": "Account Termination and Suspension",
+      "rights": "We may suspend or terminate accounts for violations."
+    },
+    "disclaimer": {
+      "title": "Disclaimer of Warranties",
+      "asIs": "THE SERVICE IS PROVIDED 'AS IS' AND 'AS AVAILABLE'."
+    },
+    "liability": {
+      "title": "Limitation of Liability",
+      "limited": "Our liability is limited as described herein."
+    },
+    "contact": "For inquiries, contact: support@afuchat.com"
   },
   "errors": {
     "generic": "Something went wrong",

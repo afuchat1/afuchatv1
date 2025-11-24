@@ -37,12 +37,89 @@ const TermsOfUse = () => {
           <p className="text-muted-foreground mb-8">{t('terms.lastUpdated')}</p>
 
           <section className="mb-8">
-            <h2 className="text-2xl font-semibold mb-4">1. Acceptance of Terms</h2>
+            <h2 className="text-2xl font-semibold mb-4">{t('terms.acceptance.title')}</h2>
             <p className="text-foreground/90 leading-relaxed mb-4">
-              By accessing and using AfuChat ("the Service," "Platform," "we," "our," or "us"), you accept and agree to be bound by these Terms of Use. If you do not agree to these terms, you must not access or use the Service. These terms constitute a legally binding agreement between you and AfuChat.
+              {t('terms.acceptance.intro')}
             </p>
             <p className="text-foreground/90 leading-relaxed mb-4">
-              By creating an account or using our Service, you confirm that you are at least 13 years old and have the legal capacity to enter into this agreement.
+              {t('terms.acceptance.ageRequirement')}
+            </p>
+          </section>
+
+          <section className="mb-8">
+            <h2 className="text-2xl font-semibold mb-4">{t('terms.service.title')}</h2>
+            <p className="text-foreground/90 leading-relaxed mb-4">
+              {t('terms.service.intro')}
+            </p>
+          </section>
+
+          <section className="mb-8">
+            <h2 className="text-2xl font-semibold mb-4">{t('terms.accounts.title')}</h2>
+            <p className="text-foreground/90 leading-relaxed mb-4">
+              {t('terms.accounts.requirements')}
+            </p>
+          </section>
+
+          <section className="mb-8">
+            <h2 className="text-2xl font-semibold mb-4">{t('terms.content.title')}</h2>
+            <p className="text-foreground/90 leading-relaxed mb-4">
+              {t('terms.content.ownership')}
+            </p>
+            <h3 className="text-xl font-semibold mb-3 mt-6">{t('terms.content.prohibited')}</h3>
+          </section>
+
+          <section className="mb-8">
+            <h2 className="text-2xl font-semibold mb-4">{t('terms.aiContent.title')}</h2>
+            <p className="text-foreground/90 leading-relaxed mb-4">
+              {t('terms.aiContent.disclaimer')}
+            </p>
+          </section>
+
+          <section className="mb-8">
+            <h2 className="text-2xl font-semibold mb-4">{t('terms.virtualCurrency.title')}</h2>
+            <p className="text-foreground/90 leading-relaxed mb-4">
+              {t('terms.virtualCurrency.noRealValue')}
+            </p>
+          </section>
+
+          <section className="mb-8">
+            <h2 className="text-2xl font-semibold mb-4">{t('terms.conduct.title')}</h2>
+            <p className="text-foreground/90 leading-relaxed mb-4">
+              {t('terms.conduct.intro')}
+            </p>
+          </section>
+
+          <section className="mb-8">
+            <h2 className="text-2xl font-semibold mb-4">{t('terms.moderation.title')}</h2>
+            <p className="text-foreground/90 leading-relaxed mb-4">
+              {t('terms.moderation.rights')}
+            </p>
+          </section>
+
+          <section className="mb-8">
+            <h2 className="text-2xl font-semibold mb-4">{t('terms.termination.title')}</h2>
+            <p className="text-foreground/90 leading-relaxed mb-4">
+              {t('terms.termination.rights')}
+            </p>
+          </section>
+
+          <section className="mb-8">
+            <h2 className="text-2xl font-semibold mb-4">{t('terms.disclaimer.title')}</h2>
+            <p className="text-foreground/90 leading-relaxed mb-4">
+              {t('terms.disclaimer.asIs')}
+            </p>
+          </section>
+
+          <section className="mb-8">
+            <h2 className="text-2xl font-semibold mb-4">{t('terms.liability.title')}</h2>
+            <p className="text-foreground/90 leading-relaxed mb-4">
+              {t('terms.liability.limited')}
+            </p>
+          </section>
+
+          <section className="mb-8">
+            <p className="text-foreground/90 leading-relaxed">
+              {t('terms.contact')}
             </p>
           </section>
 

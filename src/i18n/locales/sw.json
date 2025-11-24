@@ -239,5 +239,109 @@
     "dailyLogin": "Kuingia kwa Kila Siku",
     "streak": "Mfululizo",
     "referFriend": "Rejelea Rafiki"
+  },
+  "languages": {
+    "en": "English",
+    "es": "Español",
+    "fr": "Français",
+    "ar": "العربية",
+    "sw": "Kiswahili"
+  },
+  "privacy": {
+    "title": "Sera ya Faragha",
+    "lastUpdated": "Imesasishwa Mwisho: Januari 2025",
+    "intro": {
+      "title": "Utangulizi",
+      "welcome": "Karibu kwenye AfuChat. Tumejitolea kulinda faragha yako na kuhakikisha uwazi kuhusu jinsi tunavyoshughulikia maelezo yako ya kibinafsi.",
+      "agreement": "Kwa kutumia AfuChat, unakubali ukusanyaji na matumizi ya maelezo kulingana na Sera hii ya Faragha.",
+      "compliance": "Sera hii inatumika kwa watumiaji wote ulimwenguni kote na inazingatia sheria za ulinzi wa data zinazotumika ikiwa ni pamoja na GDPR, CCPA na kanuni nyingine za kikanda za faragha."
+    },
+    "infoCollected": {
+      "title": "Maelezo Tunayokusanya",
+      "direct": "Maelezo Unayotoa Moja kwa Moja",
+      "automatic": "Maelezo Yanayokusanywa Kiotomatiki",
+      "thirdParty": "Maelezo kutoka kwa Wahusika Wengine"
+    },
+    "usage": {
+      "title": "Jinsi Tunavyotumia Maelezo Yako",
+      "provision": "Utoaji wa Huduma",
+      "improvement": "Kuboresha Huduma",
+      "safety": "Usalama na Ulinzi",
+      "communications": "Mawasiliano",
+      "legal": "Kuzingatia Sheria"
+    },
+    "ai": {
+      "title": "AI na Kujifunza kwa Mashine",
+      "features": "Vipengele vya AI",
+      "processing": "Usindikaji wa Data wa AI"
+    },
+    "sharing": {
+      "title": "Kushiriki na Kufichua Maelezo",
+      "noSell": "Hatuuzi maelezo yako ya kibinafsi."
+    },
+    "security": {
+      "title": "Usalama wa Data",
+      "technical": "Usalama wa Kiufundi",
+      "organizational": "Usalama wa Kiashiria"
+    },
+    "rights": {
+      "title": "Haki Zako za Faragha",
+      "access": "Ufikiaji na Usafirishaji",
+      "correction": "Marekebisho na Usasishaji",
+      "deletion": "Kufuta",
+      "control": "Udhibiti na Vikwazo"
+    },
+    "contact": "Kwa maswali yanayohusu faragha, wasiliana na: privacy@afuchat.com"
+  },
+  "terms": {
+    "title": "Masharti ya Matumizi",
+    "lastUpdated": "Imesasishwa Mwisho: Januari 2025",
+    "acceptance": {
+      "title": "Kukubali Masharti",
+      "intro": "Kwa kufikia na kutumia AfuChat, unakubali na kukubaliana kufuata Masharti haya ya Matumizi.",
+      "ageRequirement": "Kwa kuunda akaunti, unathibitisha kuwa una angalau umri wa miaka 13."
+    },
+    "service": {
+      "title": "Maelezo ya Huduma",
+      "intro": "AfuChat ni jukwaa kamili la mitandao ya kijamii na mawasiliano."
+    },
+    "accounts": {
+      "title": "Akaunti za Watumiaji na Usajili",
+      "requirements": "Lazima utoe maelezo sahihi na udumishe usalama wa akaunti yako."
+    },
+    "content": {
+      "title": "Maudhui ya Mtumiaji na Mali ya Akili",
+      "ownership": "Unabaki na umiliki wa maudhui yako.",
+      "prohibited": "Maudhui Yaliyokatazwa"
+    },
+    "aiContent": {
+      "title": "Maudhui Yanayotengenezwa na AI",
+      "disclaimer": "Maudhui yanayotengenezwa na AI yanatolewa 'kama yalivyo' bila dhamana."
+    },
+    "virtualCurrency": {
+      "title": "Sarafu ya Mtandaoni na Miamala",
+      "noRealValue": "Vitu vya mtandaoni havina thamani ya fedha halisi."
+    },
+    "conduct": {
+      "title": "Tabia Iliyokatazwa",
+      "intro": "Unakubali kutokuvunja sheria yoyote au kutumia vibaya Huduma."
+    },
+    "moderation": {
+      "title": "Usimamizi wa Maudhui",
+      "rights": "Tunahifadhi haki ya kufuatilia na kuondoa maudhui."
+    },
+    "termination": {
+      "title": "Kumaliza na Kusimamisha Akaunti",
+      "rights": "Tunaweza kusimamisha au kumaliza akaunti kwa ukiukaji."
+    },
+    "disclaimer": {
+      "title": "Kanusho la Dhamana",
+      "asIs": "HUDUMA INATOLEWA 'KAMA ILIVYO' NA 'KAMA INAVYOPATIKANA'."
+    },
+    "liability": {
+      "title": "Kiwango cha Dhima",
+      "limited": "Dhima yetu imewekewa kikomo kama inavyoelezwa hapa."
+    },
+    "contact": "Kwa maswali, wasiliana na: support@afuchat.com"
   }
 }

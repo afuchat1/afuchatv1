@@ -230,5 +230,102 @@
     "fr": "Français",
     "ar": "العربية",
     "sw": "Kiswahili"
+  },
+  "privacy": {
+    "title": "Política de Privacidad",
+    "lastUpdated": "Última actualización: Enero 2025",
+    "intro": {
+      "title": "Introducción",
+      "welcome": "Bienvenido a AfuChat. Estamos comprometidos a proteger su privacidad y garantizar la transparencia sobre cómo manejamos su información personal.",
+      "agreement": "Al usar AfuChat, usted acepta la recopilación y el uso de información de acuerdo con esta Política de Privacidad.",
+      "compliance": "Esta política se aplica a todos los usuarios a nivel mundial y cumple con las leyes de protección de datos aplicables, incluidos GDPR, CCPA y otras regulaciones regionales de privacidad."
+    },
+    "infoCollected": {
+      "title": "Información que Recopilamos",
+      "direct": "Información que Proporciona Directamente",
+      "automatic": "Información Recopilada Automáticamente",
+      "thirdParty": "Información de Terceros"
+    },
+    "usage": {
+      "title": "Cómo Usamos Su Información",
+      "provision": "Provisión del Servicio",
+      "improvement": "Mejora del Servicio",
+      "safety": "Seguridad y Protección",
+      "communications": "Comunicaciones",
+      "legal": "Cumplimiento Legal"
+    },
+    "ai": {
+      "title": "IA y Aprendizaje Automático",
+      "features": "Funciones de IA",
+      "processing": "Procesamiento de Datos con IA"
+    },
+    "sharing": {
+      "title": "Intercambio y Divulgación de Información",
+      "noSell": "No vendemos su información personal."
+    },
+    "security": {
+      "title": "Seguridad de Datos",
+      "technical": "Seguridad Técnica",
+      "organizational": "Seguridad Organizacional"
+    },
+    "rights": {
+      "title": "Sus Derechos de Privacidad",
+      "access": "Acceso y Portabilidad",
+      "correction": "Corrección y Actualización",
+      "deletion": "Eliminación",
+      "control": "Control y Restricciones"
+    },
+    "contact": "Para consultas relacionadas con la privacidad, contacte: privacy@afuchat.com"
+  },
+  "terms": {
+    "title": "Términos de Uso",
+    "lastUpdated": "Última actualización: Enero 2025",
+    "acceptance": {
+      "title": "Aceptación de los Términos",
+      "intro": "Al acceder y usar AfuChat, usted acepta y acuerda estar sujeto a estos Términos de Uso.",
+      "ageRequirement": "Al crear una cuenta, confirma que tiene al menos 13 años de edad."
+    },
+    "service": {
+      "title": "Descripción del Servicio",
+      "intro": "AfuChat es una plataforma integral de redes sociales y comunicación."
+    },
+    "accounts": {
+      "title": "Cuentas de Usuario y Registro",
+      "requirements": "Debe proporcionar información precisa y mantener la seguridad de su cuenta."
+    },
+    "content": {
+      "title": "Contenido de Usuario y Propiedad Intelectual",
+      "ownership": "Usted conserva la propiedad de su contenido.",
+      "prohibited": "Contenido Prohibido"
+    },
+    "aiContent": {
+      "title": "Contenido Generado por IA",
+      "disclaimer": "El contenido generado por IA se proporciona 'tal cual' sin garantías."
+    },
+    "virtualCurrency": {
+      "title": "Moneda Virtual y Transacciones",
+      "noRealValue": "Los elementos virtuales no tienen valor monetario real."
+    },
+    "conduct": {
+      "title": "Conducta Prohibida",
+      "intro": "Usted acepta no violar ninguna ley ni hacer mal uso del Servicio."
+    },
+    "moderation": {
+      "title": "Moderación de Contenido",
+      "rights": "Nos reservamos el derecho de monitorear y eliminar contenido."
+    },
+    "termination": {
+      "title": "Terminación y Suspensión de Cuenta",
+      "rights": "Podemos suspender o terminar cuentas por violaciones."
+    },
+    "disclaimer": {
+      "title": "Descargo de Responsabilidad de Garantías",
+      "asIs": "EL SERVICIO SE PROPORCIONA 'TAL CUAL' Y 'SEGÚN DISPONIBILIDAD'."
+    },
+    "liability": {
+      "title": "Limitación de Responsabilidad",
+      "limited": "Nuestra responsabilidad está limitada según se describe aquí."
+    },
+    "contact": "Para consultas, contacte: support@afuchat.com"
   }
 }
