@@ -9,14 +9,14 @@ interface NexaProgressBarProps {
 }
 
 const GRADE_THRESHOLDS = [
-  { grade: 'Newcomer' as Grade, min: 0, max: 100, color: 'bg-gray-500' },
-  { grade: 'Active Chatter' as Grade, min: 100, max: 500, color: 'bg-blue-500' },
-  { grade: 'Community Builder' as Grade, min: 500, max: 1500, color: 'bg-purple-500' },
-  { grade: 'Elite Creator' as Grade, min: 1500, max: 5000, color: 'bg-yellow-500' },
-  { grade: 'Legend' as Grade, min: 5000, max: Infinity, color: 'bg-red-500' },
+  { grade: 'Newcomer' as Grade, min: 0, max: 500, color: 'bg-gray-500' },
+  { grade: 'Active Chatter' as Grade, min: 500, max: 2000, color: 'bg-blue-500' },
+  { grade: 'Community Builder' as Grade, min: 2000, max: 5000, color: 'bg-purple-500' },
+  { grade: 'Elite Creator' as Grade, min: 5000, max: 15000, color: 'bg-yellow-500' },
+  { grade: 'Legend' as Grade, min: 15000, max: Infinity, color: 'bg-red-500' },
 ];
 
-const TOTAL_MAX_FOR_DISPLAY = 5000; // Max value for visual representation
+const TOTAL_MAX_FOR_DISPLAY = 15000; // Max value for visual representation
 
 export const NexaProgressBar = ({ currentNexa, currentGrade, showDetails = true }: NexaProgressBarProps) => {
   const [progress, setProgress] = useState(0);

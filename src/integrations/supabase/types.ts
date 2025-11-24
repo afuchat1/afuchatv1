@@ -2183,7 +2183,7 @@ export type Database = {
         }
         Returns: undefined
       }
-      calculate_grade: { Args: { p_xp: number }; Returns: string }
+      calculate_grade: { Args: { xp_amount: number }; Returns: string }
       check_and_unlock_accessories: {
         Args: { p_user_id: string }
         Returns: Json
