@@ -35,6 +35,7 @@ interface GiftTransaction {
 interface GiftStatistics {
   price_multiplier: number;
   total_sent: number;
+  last_sale_price?: number | null;
 }
 
 interface ReceivedGiftsProps {
@@ -154,7 +155,7 @@ export const ReceivedGifts = ({ userId }: ReceivedGiftsProps) => {
       // Fetch gift statistics
       const { data: statsData } = await supabase
         .from('gift_statistics')
-        .select('gift_id, price_multiplier, total_sent')
+        .select('gift_id, price_multiplier, total_sent, last_sale_price')
         .in('gift_id', giftIds);
 
       if (statsData) {
@@ -163,6 +164,7 @@ export const ReceivedGifts = ({ userId }: ReceivedGiftsProps) => {
           statsMap[stat.gift_id] = {
             price_multiplier: parseFloat(stat.price_multiplier),
             total_sent: stat.total_sent,
+            last_sale_price: stat.last_sale_price,
           };
         });
         setGiftStats(statsMap);
@@ -235,8 +237,9 @@ export const ReceivedGifts = ({ userId }: ReceivedGiftsProps) => {
 
   const calculatePrice = (giftId: string, baseCost: number) => {
     const stats = giftStats[giftId];
-    if (!stats) return baseCost;
-    return Math.ceil(baseCost * stats.price_multiplier);
+    // Use last_sale_price if available, otherwise use base cost
+    if (stats?.last_sale_price) return stats.last_sale_price;
+    return baseCost;
   };
 
   const handleGiftClick = (gift: GiftTransaction) => {

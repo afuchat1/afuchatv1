@@ -35,6 +35,7 @@ interface GiftItem {
 interface GiftStatistics {
   price_multiplier: number;
   total_sent: number;
+  last_sale_price?: number | null;
 }
 
 interface SendGiftDialogProps {
@@ -103,7 +104,7 @@ export const SendGiftDialog = ({ receiverId, receiverName, trigger }: SendGiftDi
 
     const { data: statsData } = await supabase
       .from('gift_statistics')
-      .select('gift_id, price_multiplier, total_sent');
+      .select('gift_id, price_multiplier, total_sent, last_sale_price');
 
     if (giftsData) {
       setGifts(giftsData);
@@ -115,6 +116,7 @@ export const SendGiftDialog = ({ receiverId, receiverName, trigger }: SendGiftDi
         statsMap[stat.gift_id] = {
           price_multiplier: parseFloat(stat.price_multiplier),
           total_sent: stat.total_sent,
+          last_sale_price: stat.last_sale_price,
         };
       });
       setGiftStats(statsMap);
@@ -136,8 +138,9 @@ export const SendGiftDialog = ({ receiverId, receiverName, trigger }: SendGiftDi
 
   const calculatePrice = (giftId: string, baseCost: number) => {
     const stats = giftStats[giftId];
-    if (!stats) return baseCost;
-    return Math.ceil(baseCost * stats.price_multiplier);
+    // Use last_sale_price if available, otherwise use base cost
+    if (stats?.last_sale_price) return stats.last_sale_price;
+    return baseCost;
   };
 
   const handleGiftTap = (gift: GiftItem) => {

@@ -109,7 +109,8 @@ export const GiftStatisticsSheet = ({ giftId, open, onOpenChange }: GiftStatisti
         .eq('gift_id', giftId)
         .single();
 
-      const currentPrice = Math.round(giftData.base_xp_cost * (statsData?.price_multiplier || 1));
+      // Use last_sale_price if available, otherwise use base_xp_cost
+      const currentPrice = statsData?.last_sale_price || giftData.base_xp_cost;
 
       // Fetch transaction data for detailed stats
       const { data: allTransactions } = await supabase

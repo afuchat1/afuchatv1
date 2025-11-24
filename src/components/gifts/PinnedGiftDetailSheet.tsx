@@ -84,7 +84,7 @@ export const PinnedGiftDetailSheet = ({ giftId, open, onOpenChange }: PinnedGift
       // Fetch gift statistics
       const { data: statsData } = await supabase
         .from('gift_statistics')
-        .select('total_sent, price_multiplier')
+        .select('total_sent, price_multiplier, last_sale_price')
         .eq('gift_id', giftId)
         .single();
 
@@ -101,7 +101,8 @@ export const PinnedGiftDetailSheet = ({ giftId, open, onOpenChange }: PinnedGift
         .single();
 
       const multiplier = statsData?.price_multiplier || 1;
-      const currentPrice = Math.ceil(giftData.base_xp_cost * multiplier);
+      // Use last_sale_price if available, otherwise use base_xp_cost
+      const currentPrice = statsData?.last_sale_price || giftData.base_xp_cost;
 
       setGift({
         ...giftData,

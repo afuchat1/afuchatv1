@@ -72,7 +72,8 @@ const Gifts = () => {
 
       const giftsWithStats = gifts?.map(gift => {
         const stat = stats?.find(s => s.gift_id === gift.id);
-        const currentPrice = Math.round(gift.base_xp_cost * (stat?.price_multiplier || 1));
+        // Use last_sale_price if available, otherwise use base_xp_cost
+        const currentPrice = stat?.last_sale_price || gift.base_xp_cost;
         
         return {
           ...gift,
