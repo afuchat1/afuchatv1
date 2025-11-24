@@ -4,11 +4,12 @@ import { useAuth } from '@/contexts/AuthContext';
 import { supabase } from '@/integrations/supabase/client';
 import { Button } from '@/components/ui/button';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { ArrowLeft, Wallet, Send, Mail, TrendingUp, TrendingDown, Gift, ArrowUpRight, ArrowDownRight } from 'lucide-react';
+import { Card, CardContent } from '@/components/ui/card';
+import { ArrowLeft, Wallet, Send, Mail, TrendingUp, TrendingDown, Gift, ArrowUpRight, ArrowDownRight, ShoppingBag, Trophy, Heart, Sparkles } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import Logo from '@/components/Logo';
 import { formatDistanceToNow } from 'date-fns';
+import { motion } from 'framer-motion';
 
 interface Transaction {
   id: string;
@@ -39,7 +40,6 @@ const FinancialHub = () => {
     }
 
     return () => {
-      // Cleanup realtime subscriptions
       supabase.removeAllChannels();
     };
   }, [user]);
@@ -47,8 +47,7 @@ const FinancialHub = () => {
   const setupRealtimeSubscriptions = () => {
     if (!user) return;
 
-    // Subscribe to XP transfers
-    const transfersChannel = supabase
+    supabase
       .channel('xp-transfers-changes')
       .on(
         'postgres_changes',
@@ -58,14 +57,11 @@ const FinancialHub = () => {
           table: 'xp_transfers',
           filter: `sender_id=eq.${user.id},receiver_id=eq.${user.id}`
         },
-        () => {
-          fetchFinancialData();
-        }
+        () => fetchFinancialData()
       )
       .subscribe();
 
-    // Subscribe to tips
-    const tipsChannel = supabase
+    supabase
       .channel('tips-changes')
       .on(
         'postgres_changes',
@@ -75,14 +71,11 @@ const FinancialHub = () => {
           table: 'tips',
           filter: `sender_id=eq.${user.id},receiver_id=eq.${user.id}`
         },
-        () => {
-          fetchFinancialData();
-        }
+        () => fetchFinancialData()
       )
       .subscribe();
 
-    // Subscribe to red envelope claims
-    const redEnvelopeChannel = supabase
+    supabase
       .channel('red-envelope-changes')
       .on(
         'postgres_changes',
@@ -92,14 +85,11 @@ const FinancialHub = () => {
           table: 'red_envelope_claims',
           filter: `claimer_id=eq.${user.id}`
         },
-        () => {
-          fetchFinancialData();
-        }
+        () => fetchFinancialData()
       )
       .subscribe();
 
-    // Subscribe to gift transactions
-    const giftsChannel = supabase
+    supabase
       .channel('gifts-changes')
       .on(
         'postgres_changes',
@@ -109,14 +99,11 @@ const FinancialHub = () => {
           table: 'gift_transactions',
           filter: `receiver_id=eq.${user.id}`
         },
-        () => {
-          fetchFinancialData();
-        }
+        () => fetchFinancialData()
       )
       .subscribe();
 
-    // Subscribe to profile changes for balance updates
-    const profileChannel = supabase
+    supabase
       .channel('profile-changes')
       .on(
         'postgres_changes',
@@ -141,7 +128,6 @@ const FinancialHub = () => {
     try {
       setLoading(true);
 
-      // Fetch user balance
       const { data: profile } = await supabase
         .from('profiles')
         .select('xp')
@@ -150,7 +136,6 @@ const FinancialHub = () => {
 
       if (profile) setBalance(profile.xp);
 
-      // Fetch all transactions
       const [transfers, tips, redEnvelopes, gifts] = await Promise.all([
         fetchTransfers(),
         fetchTips(),
@@ -158,7 +143,6 @@ const FinancialHub = () => {
         fetchGifts()
       ]);
 
-      // Combine and sort all transactions
       const allTransactions = [
         ...transfers,
         ...tips,
@@ -252,7 +236,6 @@ const FinancialHub = () => {
       .order('created_at', { ascending: false })
       .limit(10);
 
-    // Fetch profiles for sent tips
     const sentWithProfiles = await Promise.all(
       (sent || []).map(async (t) => {
         const { data: profile } = await supabase
@@ -277,7 +260,6 @@ const FinancialHub = () => {
       })
     );
 
-    // Fetch profiles for received tips
     const receivedWithProfiles = await Promise.all(
       (received || []).map(async (t) => {
         const { data: profile } = await supabase
@@ -371,28 +353,26 @@ const FinancialHub = () => {
     return receivedWithProfiles;
   };
 
-  const getTransactionIcon = (type: string, direction: string) => {
-    if (direction === 'sent') {
-      return <ArrowUpRight className="h-4 w-4 text-red-500" />;
-    } else {
-      return <ArrowDownRight className="h-4 w-4 text-green-500" />;
+  const getTransactionTypeIcon = (type: string) => {
+    const iconClasses = "h-5 w-5";
+    const wrapperClasses = "p-2.5 rounded-full";
+    
+    switch (type) {
+      case 'transfer':
+        return <div className={`${wrapperClasses} bg-indigo-500/10`}><Send className={`${iconClasses} text-indigo-500`} /></div>;
+      case 'tip':
+        return <div className={`${wrapperClasses} bg-red-500/10`}><Heart className={`${iconClasses} text-red-500`} /></div>;
+      case 'red_envelope':
+        return <div className={`${wrapperClasses} bg-orange-500/10`}><Mail className={`${iconClasses} text-orange-500`} /></div>;
+      case 'gift':
+        return <div className={`${wrapperClasses} bg-pink-500/10`}><Gift className={`${iconClasses} text-pink-500`} /></div>;
+      default:
+        return <div className={`${wrapperClasses} bg-primary/10`}><Wallet className={`${iconClasses} text-primary`} /></div>;
     }
   };
 
-  const getTransactionTypeIcon = (type: string) => {
-    switch (type) {
-      case 'transfer':
-        return <Send className="h-5 w-5" />;
-      case 'tip':
-        return <TrendingUp className="h-5 w-5" />;
-      case 'red_envelope':
-        return <Mail className="h-5 w-5" />;
-      case 'gift':
-        return <Gift className="h-5 w-5" />;
-      default:
-        return <Wallet className="h-5 w-5" />;
-    }
-  };
+  const totalReceived = transactions.filter(t => t.direction === 'received').reduce((sum, t) => sum + t.amount, 0);
+  const totalSent = transactions.filter(t => t.direction === 'sent').reduce((sum, t) => sum + t.amount, 0);
 
   if (!user) {
     navigate('/auth');
@@ -400,161 +380,298 @@ const FinancialHub = () => {
   }
 
   return (
-    <div className="min-h-screen bg-background pb-20">
-      {/* Hero Header */}
-      <div className="bg-gradient-to-br from-blue-500/10 via-purple-500/5 to-background border-b">
-        <div className="container max-w-4xl mx-auto px-4 py-8">
-          <div className="flex items-center gap-3 mb-2">
-            <Wallet className="h-8 w-8 text-blue-600" />
-            <h1 className="text-3xl md:text-4xl font-bold">Financial Hub</h1>
-          </div>
-          <p className="text-muted-foreground text-lg">Manage your Nexa, transfers, and transactions</p>
-        </div>
-      </div>
-
-      <main className="container max-w-4xl mx-auto py-6 px-4">
-        {/* Balance Card */}
-        <Card className="mb-6 bg-gradient-to-br from-blue-500/10 via-purple-500/10 to-pink-500/10 border-2">
-          <CardHeader>
-            <CardTitle className="flex items-center gap-2">
-              <Wallet className="h-6 w-6" />
-              Your Balance
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="text-4xl font-bold mb-4">{balance.toLocaleString()} Nexa</div>
-            <div className="grid grid-cols-2 gap-3">
-              <Button onClick={() => navigate('/transfer')} className="w-full">
-                <Send className="h-4 w-4 mr-2" />
-                Transfer
-              </Button>
-              <Button onClick={() => navigate('/red-envelope')} variant="outline" className="w-full">
-                <Mail className="h-4 w-4 mr-2" />
-                Red Envelope
-              </Button>
+    <div className="min-h-screen bg-background">
+      {/* Header */}
+      <header className="sticky top-0 z-50 w-full border-b border-border bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
+        <div className="container max-w-4xl mx-auto px-4 sm:px-6">
+          <div className="flex h-14 sm:h-16 items-center justify-between">
+            <Button
+              variant="ghost"
+              size="icon"
+              onClick={() => navigate(-1)}
+              className="shrink-0"
+            >
+              <ArrowLeft className="h-5 w-5" />
+            </Button>
+            <div className="absolute left-1/2 -translate-x-1/2">
+              <Logo size="sm" />
             </div>
-          </CardContent>
-        </Card>
+            <div className="w-10" />
+          </div>
+        </div>
+      </header>
 
-        {/* Transactions */}
-        <Card>
-          <CardHeader>
-            <CardTitle>Recent Transactions</CardTitle>
-            <CardDescription>Your latest financial activity</CardDescription>
-          </CardHeader>
-          <CardContent>
-            <Tabs defaultValue="all">
-              <TabsList className="grid w-full grid-cols-3">
-                <TabsTrigger value="all">All</TabsTrigger>
-                <TabsTrigger value="sent">Sent</TabsTrigger>
-                <TabsTrigger value="received">Received</TabsTrigger>
-              </TabsList>
+      {/* Main Content */}
+      <main className="container max-w-4xl mx-auto px-4 sm:px-6 py-6 pb-24 space-y-6">
+        {/* Balance Card */}
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.3 }}
+        >
+          <Card className="relative overflow-hidden border-primary/20 bg-gradient-to-br from-primary/10 via-primary/5 to-background">
+            <div className="absolute inset-0 bg-gradient-to-br from-primary/5 to-transparent" />
+            <CardContent className="relative p-6">
+              <div className="flex items-center gap-3 mb-4">
+                <div className="p-3 bg-primary/10 rounded-full">
+                  <Wallet className="h-6 w-6 text-primary" />
+                </div>
+                <div>
+                  <p className="text-sm text-muted-foreground">Your Balance</p>
+                  <p className="text-3xl font-bold text-primary">{balance.toLocaleString()} Nexa</p>
+                </div>
+              </div>
+              <div className="grid grid-cols-2 gap-3">
+                <Button onClick={() => navigate('/transfer')} className="w-full">
+                  <Send className="h-4 w-4 mr-2" />
+                  Transfer
+                </Button>
+                <Button onClick={() => navigate('/red-envelope')} variant="outline" className="w-full">
+                  <Mail className="h-4 w-4 mr-2" />
+                  Red Envelope
+                </Button>
+              </div>
+            </CardContent>
+          </Card>
+        </motion.div>
 
-              <TabsContent value="all" className="space-y-3 mt-4">
-                {loading ? (
-                  <div className="text-center py-8 text-muted-foreground">Loading...</div>
-                ) : transactions.length === 0 ? (
-                  <div className="text-center py-8 text-muted-foreground">No transactions yet</div>
-                ) : (
-                  transactions.map(transaction => (
-                    <div
-                      key={transaction.id}
-                      className="flex items-center gap-3 p-3 rounded-lg border border-border hover:bg-muted/50 transition-colors"
-                    >
-                      <div className={`p-2 rounded-full ${transaction.direction === 'sent' ? 'bg-red-500/10' : 'bg-green-500/10'}`}>
-                        {getTransactionTypeIcon(transaction.type)}
-                      </div>
-                      <div className="flex-1 min-w-0">
-                        <div className="flex items-center gap-2">
-                          <span className="font-semibold truncate">{transaction.otherParty.name}</span>
-                          {getTransactionIcon(transaction.type, transaction.direction)}
-                        </div>
-                        <p className="text-sm text-muted-foreground capitalize">{transaction.type}</p>
-                        {transaction.message && (
-                          <p className="text-xs text-muted-foreground italic mt-1">{transaction.message}</p>
-                        )}
-                      </div>
-                      <div className="text-right">
-                        <div className={`font-bold ${transaction.direction === 'sent' ? 'text-red-500' : 'text-green-500'}`}>
-                          {transaction.direction === 'sent' ? '-' : '+'}{transaction.amount} Nexa
-                        </div>
-                        <div className="text-xs text-muted-foreground">
-                          {formatDistanceToNow(new Date(transaction.created_at), { addSuffix: true })}
-                        </div>
-                      </div>
+        {/* Stats Overview */}
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.3, delay: 0.1 }}
+        >
+          <Card>
+            <CardContent className="p-6">
+              <div className="grid grid-cols-3 gap-4">
+                <div className="text-center">
+                  <div className="flex items-center justify-center mb-2">
+                    <div className="p-2 bg-green-500/10 rounded-full">
+                      <ArrowDownRight className="h-4 w-4 text-green-500" />
                     </div>
-                  ))
-                )}
-              </TabsContent>
-
-              <TabsContent value="sent" className="space-y-3 mt-4">
-                {transactions.filter(t => t.direction === 'sent').length === 0 ? (
-                  <div className="text-center py-8 text-muted-foreground">No sent transactions</div>
-                ) : (
-                  transactions.filter(t => t.direction === 'sent').map(transaction => (
-                    <div
-                      key={transaction.id}
-                      className="flex items-center gap-3 p-3 rounded-lg border border-border hover:bg-muted/50 transition-colors"
-                    >
-                      <div className="p-2 rounded-full bg-red-500/10">
-                        {getTransactionTypeIcon(transaction.type)}
-                      </div>
-                      <div className="flex-1 min-w-0">
-                        <div className="flex items-center gap-2">
-                          <span className="font-semibold truncate">{transaction.otherParty.name}</span>
-                          {getTransactionIcon(transaction.type, transaction.direction)}
-                        </div>
-                        <p className="text-sm text-muted-foreground capitalize">{transaction.type}</p>
-                        {transaction.message && (
-                          <p className="text-xs text-muted-foreground italic mt-1">{transaction.message}</p>
-                        )}
-                      </div>
-                      <div className="text-right">
-                        <div className="font-bold text-red-500">-{transaction.amount} Nexa</div>
-                        <div className="text-xs text-muted-foreground">
-                          {formatDistanceToNow(new Date(transaction.created_at), { addSuffix: true })}
-                        </div>
-                      </div>
+                  </div>
+                  <p className="text-sm text-muted-foreground mb-1">Received</p>
+                  <p className="text-lg font-bold text-green-500">
+                    +{totalReceived.toLocaleString()}
+                  </p>
+                </div>
+                <div className="text-center">
+                  <div className="flex items-center justify-center mb-2">
+                    <div className="p-2 bg-red-500/10 rounded-full">
+                      <ArrowUpRight className="h-4 w-4 text-red-500" />
                     </div>
-                  ))
-                )}
-              </TabsContent>
-
-              <TabsContent value="received" className="space-y-3 mt-4">
-                {transactions.filter(t => t.direction === 'received').length === 0 ? (
-                  <div className="text-center py-8 text-muted-foreground">No received transactions</div>
-                ) : (
-                  transactions.filter(t => t.direction === 'received').map(transaction => (
-                    <div
-                      key={transaction.id}
-                      className="flex items-center gap-3 p-3 rounded-lg border border-border hover:bg-muted/50 transition-colors"
-                    >
-                      <div className="p-2 rounded-full bg-green-500/10">
-                        {getTransactionTypeIcon(transaction.type)}
-                      </div>
-                      <div className="flex-1 min-w-0">
-                        <div className="flex items-center gap-2">
-                          <span className="font-semibold truncate">{transaction.otherParty.name}</span>
-                          {getTransactionIcon(transaction.type, transaction.direction)}
-                        </div>
-                        <p className="text-sm text-muted-foreground capitalize">{transaction.type}</p>
-                        {transaction.message && (
-                          <p className="text-xs text-muted-foreground italic mt-1">{transaction.message}</p>
-                        )}
-                      </div>
-                      <div className="text-right">
-                        <div className="font-bold text-green-500">+{transaction.amount} Nexa</div>
-                        <div className="text-xs text-muted-foreground">
-                          {formatDistanceToNow(new Date(transaction.created_at), { addSuffix: true })}
-                        </div>
-                      </div>
+                  </div>
+                  <p className="text-sm text-muted-foreground mb-1">Sent</p>
+                  <p className="text-lg font-bold text-red-500">
+                    -{totalSent.toLocaleString()}
+                  </p>
+                </div>
+                <div className="text-center">
+                  <div className="flex items-center justify-center mb-2">
+                    <div className="p-2 bg-primary/10 rounded-full">
+                      <TrendingUp className="h-4 w-4 text-primary" />
                     </div>
-                  ))
-                )}
-              </TabsContent>
-            </Tabs>
-          </CardContent>
-        </Card>
+                  </div>
+                  <p className="text-sm text-muted-foreground mb-1">Transactions</p>
+                  <p className="text-lg font-bold text-primary">
+                    {transactions.length}
+                  </p>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+        </motion.div>
+
+        {/* Quick Actions */}
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.3, delay: 0.2 }}
+        >
+          <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+            <Button 
+              variant="outline" 
+              className="h-auto py-4 flex flex-col gap-2"
+              onClick={() => navigate('/wallet')}
+            >
+              <Wallet className="h-5 w-5" />
+              <span className="text-sm">Wallet</span>
+            </Button>
+            <Button 
+              variant="outline" 
+              className="h-auto py-4 flex flex-col gap-2"
+              onClick={() => navigate('/shop')}
+            >
+              <ShoppingBag className="h-5 w-5" />
+              <span className="text-sm">Shop</span>
+            </Button>
+            <Button 
+              variant="outline" 
+              className="h-auto py-4 flex flex-col gap-2"
+              onClick={() => navigate('/gifts')}
+            >
+              <Gift className="h-5 w-5" />
+              <span className="text-sm">Gifts</span>
+            </Button>
+            <Button 
+              variant="outline" 
+              className="h-auto py-4 flex flex-col gap-2"
+              onClick={() => navigate('/leaderboard')}
+            >
+              <Trophy className="h-5 w-5" />
+              <span className="text-sm">Leaderboard</span>
+            </Button>
+          </div>
+        </motion.div>
+
+        {/* Transaction History */}
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.3, delay: 0.3 }}
+        >
+          <Card>
+            <CardContent className="p-6">
+              <h2 className="text-xl font-semibold mb-4">Recent Activity</h2>
+              
+              <Tabs defaultValue="all" className="w-full">
+                <TabsList className="grid w-full grid-cols-3 mb-4">
+                  <TabsTrigger value="all">All</TabsTrigger>
+                  <TabsTrigger value="received">Received</TabsTrigger>
+                  <TabsTrigger value="sent">Sent</TabsTrigger>
+                </TabsList>
+                
+                <TabsContent value="all" className="space-y-3 mt-0">
+                  {loading ? (
+                    <div className="text-center py-12">
+                      <div className="inline-flex p-4 bg-muted rounded-full mb-4">
+                        <Sparkles className="h-8 w-8 text-muted-foreground animate-pulse" />
+                      </div>
+                      <p className="text-muted-foreground">Loading transactions...</p>
+                    </div>
+                  ) : transactions.length === 0 ? (
+                    <div className="text-center py-12">
+                      <div className="inline-flex p-4 bg-muted rounded-full mb-4">
+                        <Wallet className="h-8 w-8 text-muted-foreground" />
+                      </div>
+                      <p className="text-muted-foreground">No transactions yet</p>
+                      <p className="text-sm text-muted-foreground mt-1">
+                        Start by sending gifts or tips to friends
+                      </p>
+                    </div>
+                  ) : (
+                    transactions.map((transaction, index) => (
+                      <motion.div
+                        key={transaction.id}
+                        initial={{ opacity: 0, x: -20 }}
+                        animate={{ opacity: 1, x: 0 }}
+                        transition={{ duration: 0.2, delay: index * 0.05 }}
+                      >
+                        <div className="flex items-center gap-4 p-3 rounded-lg hover:bg-muted/50 transition-colors">
+                          {getTransactionTypeIcon(transaction.type)}
+                          <div className="flex-1 min-w-0">
+                            <p className="font-medium truncate text-sm">
+                              {transaction.direction === 'sent' ? 'To ' : 'From '}{transaction.otherParty.name}
+                            </p>
+                            <p className="text-xs text-muted-foreground capitalize">{transaction.type}</p>
+                            {transaction.message && (
+                              <p className="text-xs text-muted-foreground italic mt-1 truncate">
+                                "{transaction.message}"
+                              </p>
+                            )}
+                            <p className="text-xs text-muted-foreground mt-1">
+                              {formatDistanceToNow(new Date(transaction.created_at), { addSuffix: true })}
+                            </p>
+                          </div>
+                          <div className="text-right shrink-0">
+                            <p className={`font-bold text-sm ${transaction.direction === 'sent' ? 'text-red-500' : 'text-green-500'}`}>
+                              {transaction.direction === 'sent' ? '-' : '+'}{transaction.amount.toLocaleString()}
+                            </p>
+                            <p className="text-xs text-muted-foreground">Nexa</p>
+                          </div>
+                        </div>
+                      </motion.div>
+                    ))
+                  )}
+                </TabsContent>
+
+                <TabsContent value="received" className="space-y-3 mt-0">
+                  {transactions.filter(t => t.direction === 'received').length === 0 ? (
+                    <div className="text-center py-8 text-muted-foreground">No received transactions</div>
+                  ) : (
+                    transactions.filter(t => t.direction === 'received').map((transaction, index) => (
+                      <motion.div
+                        key={transaction.id}
+                        initial={{ opacity: 0, x: -20 }}
+                        animate={{ opacity: 1, x: 0 }}
+                        transition={{ duration: 0.2, delay: index * 0.05 }}
+                      >
+                        <div className="flex items-center gap-4 p-3 rounded-lg hover:bg-muted/50 transition-colors">
+                          {getTransactionTypeIcon(transaction.type)}
+                          <div className="flex-1 min-w-0">
+                            <p className="font-medium truncate text-sm">From {transaction.otherParty.name}</p>
+                            <p className="text-xs text-muted-foreground capitalize">{transaction.type}</p>
+                            {transaction.message && (
+                              <p className="text-xs text-muted-foreground italic mt-1 truncate">
+                                "{transaction.message}"
+                              </p>
+                            )}
+                            <p className="text-xs text-muted-foreground mt-1">
+                              {formatDistanceToNow(new Date(transaction.created_at), { addSuffix: true })}
+                            </p>
+                          </div>
+                          <div className="text-right shrink-0">
+                            <p className="font-bold text-sm text-green-500">
+                              +{transaction.amount.toLocaleString()}
+                            </p>
+                            <p className="text-xs text-muted-foreground">Nexa</p>
+                          </div>
+                        </div>
+                      </motion.div>
+                    ))
+                  )}
+                </TabsContent>
+
+                <TabsContent value="sent" className="space-y-3 mt-0">
+                  {transactions.filter(t => t.direction === 'sent').length === 0 ? (
+                    <div className="text-center py-8 text-muted-foreground">No sent transactions</div>
+                  ) : (
+                    transactions.filter(t => t.direction === 'sent').map((transaction, index) => (
+                      <motion.div
+                        key={transaction.id}
+                        initial={{ opacity: 0, x: -20 }}
+                        animate={{ opacity: 1, x: 0 }}
+                        transition={{ duration: 0.2, delay: index * 0.05 }}
+                      >
+                        <div className="flex items-center gap-4 p-3 rounded-lg hover:bg-muted/50 transition-colors">
+                          {getTransactionTypeIcon(transaction.type)}
+                          <div className="flex-1 min-w-0">
+                            <p className="font-medium truncate text-sm">To {transaction.otherParty.name}</p>
+                            <p className="text-xs text-muted-foreground capitalize">{transaction.type}</p>
+                            {transaction.message && (
+                              <p className="text-xs text-muted-foreground italic mt-1 truncate">
+                                "{transaction.message}"
+                              </p>
+                            )}
+                            <p className="text-xs text-muted-foreground mt-1">
+                              {formatDistanceToNow(new Date(transaction.created_at), { addSuffix: true })}
+                            </p>
+                          </div>
+                          <div className="text-right shrink-0">
+                            <p className="font-bold text-sm text-red-500">
+                              -{transaction.amount.toLocaleString()}
+                            </p>
+                            <p className="text-xs text-muted-foreground">Nexa</p>
+                          </div>
+                        </div>
+                      </motion.div>
+                    ))
+                  )}
+                </TabsContent>
+              </Tabs>
+            </CardContent>
+          </Card>
+        </motion.div>
       </main>
     </div>
   );
