@@ -160,6 +160,7 @@ const Search = () => {
   const [webResults, setWebResults] = useState<WebSearchResult[]>([]);
   const [loading, setLoading] = useState(false);
   const [webLoading, setWebLoading] = useState(false);
+  const [webErrorMessage, setWebErrorMessage] = useState<string | null>(null);
   const [debouncedQuery, setDebouncedQuery] = useState('');
   const navigate = useNavigate();
 
@@ -194,6 +195,7 @@ const Search = () => {
 
     setLoading(true);
     setWebLoading(true);
+    setWebErrorMessage(null);
 
     // Update URL
     navigate(`?q=${encodeURIComponent(trimmedQuery)}`, { replace: true });
@@ -241,9 +243,10 @@ const Search = () => {
         body: { query: trimmedQuery }
       });
 
-      if (webError) {
-        console.error('Web search error:', webError);
+      if (webError || webSearchData?.error) {
+        console.error('Web search error:', webError || webSearchData?.error);
         setWebResults([]);
+        setWebErrorMessage('Web search is temporarily unavailable. Local results are still shown.');
       } else {
         setWebResults(webSearchData?.results || []);
       }
@@ -456,7 +459,7 @@ const Search = () => {
                         {result.thumbnailUrl && (
                           <img 
                             src={result.thumbnailUrl} 
-                            alt="" 
+                            alt="Web result thumbnail" 
                             className="w-16 h-16 rounded object-cover flex-shrink-0"
                           />
                         )}
@@ -476,6 +479,14 @@ const Search = () => {
                   ))}
                 </div>
               </section>
+            )}
+
+            {webErrorMessage && (
+              <div className="flex items-center justify-center py-4">
+                <p className="text-xs text-destructive text-center max-w-xs">
+                  {webErrorMessage}
+                </p>
+              </div>
             )}
 
             {webLoading && (
