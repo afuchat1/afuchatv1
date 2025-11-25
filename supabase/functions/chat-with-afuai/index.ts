@@ -16,28 +16,30 @@ serve(async (req) => {
     const supabaseAnonKey = Deno.env.get('SUPABASE_ANON_KEY');
     const authHeader = req.headers.get('Authorization');
     
-    const supabaseClient = createClient(supabaseUrl!, supabaseAnonKey!, {
-      global: { headers: { Authorization: authHeader! } },
-      auth: { persistSession: false }
-    });
-    
-    const jwt = authHeader?.replace('Bearer ', '');
-    if (!jwt) {
+    if (!authHeader) {
       return new Response(
         JSON.stringify({ error: 'Authentication required' }),
         { status: 401, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
       );
     }
     
-    const payload = JSON.parse(atob(jwt.split('.')[1]));
-    const userId = payload.sub;
+    const supabaseClient = createClient(supabaseUrl!, supabaseAnonKey!, {
+      global: { headers: { Authorization: authHeader } },
+      auth: { persistSession: false }
+    });
     
-    if (!userId) {
+    // Use Supabase's built-in method to get user instead of manually parsing JWT
+    const { data: { user }, error: authError } = await supabaseClient.auth.getUser();
+    
+    if (authError || !user) {
+      console.error('Auth error:', authError);
       return new Response(
         JSON.stringify({ error: 'Invalid authentication' }),
         { status: 401, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
       );
     }
+    
+    const userId = user.id;
 
     const { message, history } = await req.json();
     
