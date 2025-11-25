@@ -75,7 +75,7 @@ const TrendingSection = ({ onTrendClick }: { onTrendClick: (topic: string) => vo
     const fetchTrends = async () => {
       setLoading(true);
       try {
-        const { data, error } = await supabase.rpc('get_trending_topics' as any, {
+        const { data, error } = await supabase.rpc('get_trending_topics', {
           hours_ago: 24,
           num_topics: 5,
         });
@@ -89,9 +89,12 @@ const TrendingSection = ({ onTrendClick }: { onTrendClick: (topic: string) => vo
             topic: d.topic.charAt(0).toUpperCase() + d.topic.slice(1),
           }));
           setTrends(formattedData);
+        } else {
+          setTrends([]);
         }
       } catch (error) {
         console.error('RPC call failed:', error);
+        setTrends([]);
       } finally {
         setLoading(false);
       }
@@ -218,29 +221,42 @@ const Search = () => {
       // Search for groups
       const { data: groupData } = await supabase
         .from('chats')
-        .select(`
-          id, name, description, avatar_url,
-          chat_members(count)
-        `)
+        .select('id, name, description, avatar_url')
         .eq('is_group', true)
         .or(`name.ilike.%${trimmedQuery}%,description.ilike.%${trimmedQuery}%`)
         .limit(8);
 
-      // Check membership for groups if user is logged in
+      // Get member counts and check membership for groups
       let groupsWithMembership = groupData || [];
-      if (user && groupData) {
+      if (groupData && groupData.length > 0) {
         const groupIds = groupData.map((g: any) => g.id);
-        const { data: membershipData } = await supabase
+        
+        // Get member counts for all groups
+        const { data: memberCounts } = await supabase
           .from('chat_members')
           .select('chat_id')
-          .eq('user_id', user.id)
           .in('chat_id', groupIds);
         
-        const memberGroupIds = new Set(membershipData?.map(m => m.chat_id) || []);
+        const countMap = new Map<string, number>();
+        memberCounts?.forEach(m => {
+          countMap.set(m.chat_id, (countMap.get(m.chat_id) || 0) + 1);
+        });
+
+        // Check if current user is a member
+        let memberGroupIds = new Set<string>();
+        if (user) {
+          const { data: userMemberships } = await supabase
+            .from('chat_members')
+            .select('chat_id')
+            .eq('user_id', user.id)
+            .in('chat_id', groupIds);
+          memberGroupIds = new Set(userMemberships?.map(m => m.chat_id) || []);
+        }
+
         groupsWithMembership = groupData.map((g: any) => ({
           ...g,
           is_member: memberGroupIds.has(g.id),
-          member_count: g.chat_members?.[0]?.count || 0,
+          member_count: countMap.get(g.id) || 0,
         }));
       }
 
@@ -312,12 +328,15 @@ const Search = () => {
 
     try {
       const { data: chatId, error } = await supabase
-        .rpc('get_or_create_chat' as any, {
+        .rpc('get_or_create_chat', {
           other_user_id: targetUserId
         })
         .single();
 
-      if (error) throw error;
+      if (error) {
+        console.error('Chat RPC error:', error);
+        throw error;
+      }
 
       if (chatId) {
         navigate(`/chat/${chatId}`);

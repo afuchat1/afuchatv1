@@ -545,14 +545,15 @@ const ChatRoom = () => {
     if (error) {
       console.error('Fetch messages error:', error);
       toast.error('Failed to load messages');
+      return;
     }
     if (data) {
-      setMessages(data as any);
+      setMessages(data);
       // Mark messages as delivered and read
       if (user) {
         const messageIds = data
-          .filter((msg: any) => msg.sender_id !== user.id)
-          .map((msg: any) => msg.id);
+          .filter((msg) => msg.sender_id !== user.id)
+          .map((msg) => msg.id);
         
         if (messageIds.length > 0) {
           await markMessagesAsRead(messageIds);
@@ -1140,9 +1141,9 @@ const ChatRoom = () => {
                   });
 
                 const itemsWithDividers = sortedItems.reduce((acc: any[], item, index) => {
-                  const currentDate = 'sent_at' in item ? new Date(item.sent_at) : new Date(item.created_at);
+                  const currentDate = 'sent_at' in item ? new Date(item.sent_at) : new Date((item as RedEnvelope).created_at);
                   const prevDate = index > 0 
-                    ? ('sent_at' in sortedItems[index - 1] ? new Date((sortedItems[index - 1] as any).sent_at) : new Date((sortedItems[index - 1] as any).created_at))
+                    ? ('sent_at' in sortedItems[index - 1] ? new Date((sortedItems[index - 1] as Message).sent_at) : new Date((sortedItems[index - 1] as RedEnvelope).created_at))
                     : null;
 
                   if (!prevDate || !isSameDay(currentDate, prevDate)) {

@@ -28,7 +28,7 @@ const VerifiedBadge = ({ isVerified, isOrgVerified }: { isVerified?: boolean; is
 export interface Notification {
   id: string;
   created_at: string;
-  type: 'new_follower' | 'new_like' | 'new_reply' | 'new_mention';
+  type: 'new_follower' | 'new_like' | 'new_reply' | 'new_mention' | 'gift';
   is_read: boolean;
   post_id: string;
   actor: {
@@ -122,7 +122,11 @@ const Notifications = () => {
   const markAsRead = async () => {
     if (!user) return;
     try {
-      await supabase.rpc('mark_notifications_as_read' as any);
+      const { error } = await supabase.rpc('mark_notifications_as_read');
+      if (error) {
+        console.error('Error marking notifications as read:', error);
+        return;
+      }
       setNotifications(prev => 
         prev.map(n => ({ ...n, is_read: true }))
       );
@@ -148,19 +152,19 @@ const Notifications = () => {
 
       try {
         const { data, error } = await supabase
-          .from('notifications' as any)
+          .from('notifications')
           .select(`
             id, created_at, type, is_read, post_id,
-            actor:actor_id ( display_name, handle, is_verified, is_organization_verified ),
-            post:post_id ( content )
+            actor:profiles!actor_id ( display_name, handle, is_verified, is_organization_verified ),
+            post:posts!post_id ( content )
           `)
           .eq('user_id', user.id)
           .order('created_at', { ascending: false });
 
         if (error) {
           console.error('Error fetching notifications:', error);
-        } else {
-          setNotifications((data as any) || []);
+        } else if (data) {
+          setNotifications(data);
           sessionStorage.setItem('cachedNotifications', JSON.stringify(data));
         }
       } catch (err) {
