@@ -48,8 +48,8 @@ export const useAITranslation = () => {
   const [loading, setLoading] = useState(false);
   const retryCount = useRef<Map<string, number>>(new Map());
 
-  // AI Features coming soon - disable translations
-  const AI_COMING_SOON = true;
+  // AI Features activated - enable translations
+  const AI_COMING_SOON = false;
 
   const translateText = useCallback(async (
     text: string,

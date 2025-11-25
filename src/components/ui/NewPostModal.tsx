@@ -29,8 +29,8 @@ const NewPostModal: React.FC<NewPostModalProps> = ({ isOpen, onClose }) => {
     const { user } = useAuth();
     const { awardNexa } = useNexa();
     
-    // AI Features coming soon
-    const AI_COMING_SOON = true;
+    // AI Features activated
+    const AI_COMING_SOON = false;
     
     const [newPost, setNewPost] = useState('');
     const [isPosting, setIsPosting] = useState(false);
