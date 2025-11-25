@@ -73,13 +73,13 @@ const AIChat: React.FC = () => {
           // Get error message from various possible sources
           const errorMsg = error.message || JSON.stringify(error);
           
-          // Check for payment required error (402)
-          if (errorMsg.includes('402') || errorMsg.includes('Payment required') || errorMsg.includes('credits')) {
-            toast.error('Out of AI credits! Go to Settings → Workspace → Usage to add credits.', {
-              duration: 6000,
-            });
-            return;
-          }
+        // Check for payment required error (402)
+        if (errorMsg.includes('402') || errorMsg.includes('Payment required') || errorMsg.includes('credits')) {
+          toast.error('DeepSeek API credits exhausted. Please add credits to your DeepSeek account at platform.deepseek.com', {
+            duration: 6000,
+          });
+          return;
+        }
           
           // Check for rate limit error (429)
           if (errorMsg.includes('429') || errorMsg.includes('Rate limit')) {
@@ -150,7 +150,7 @@ const AIChat: React.FC = () => {
         
         // Check for payment required error (402)
         if (errorMsg.includes('402') || errorMsg.includes('Payment required') || errorMsg.includes('credits')) {
-          toast.error('Out of AI credits! Go to Settings → Workspace → Usage to add credits.', {
+          toast.error('DeepSeek API credits exhausted. Please add credits to your DeepSeek account at platform.deepseek.com', {
             duration: 6000,
           });
           return;
