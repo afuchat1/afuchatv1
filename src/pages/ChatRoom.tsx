@@ -1182,7 +1182,7 @@ const ChatRoom = () => {
 
 
         {/* Reply Preview */}
-        {replyToMessage && !selectedFile && (
+        {isMember && replyToMessage && !selectedFile && (
           <div className="fixed bottom-[60px] left-0 right-0 z-20 bg-card border-t border-border px-4 py-2">
             <div className="flex items-center gap-3">
               <div className="w-1 h-10 bg-primary rounded-full" />
@@ -1207,7 +1207,7 @@ const ChatRoom = () => {
         )}
 
         {/* File Upload Preview */}
-        {selectedFile && (
+        {isMember && selectedFile && (
           <FileUploadPreview
             file={selectedFile}
             onRemove={() => setSelectedFile(null)}
