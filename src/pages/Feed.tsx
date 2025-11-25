@@ -1905,10 +1905,11 @@ const Feed = ({ defaultTab = 'foryou' }: FeedProps = {}) => {
                       'Content-Type': 'application/json',
                       'Authorization': `Bearer ${import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY}`,
                     },
-                    body: JSON.stringify({
+                     body: JSON.stringify({
                       postId: payload.new.post_id,
                       replyContent: payload.new.content,
                       originalPostContent: postData?.content || '',
+                      triggerReplyId: payload.new.id,
                     }),
                   }
                 );
