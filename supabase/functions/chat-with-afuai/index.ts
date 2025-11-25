@@ -23,13 +23,16 @@ serve(async (req) => {
       );
     }
     
+    // Extract JWT token from Authorization header
+    const jwt = authHeader.replace('Bearer ', '');
+    
     const supabaseClient = createClient(supabaseUrl!, supabaseAnonKey!, {
       global: { headers: { Authorization: authHeader } },
       auth: { persistSession: false }
     });
     
-    // Use Supabase's built-in method to get user instead of manually parsing JWT
-    const { data: { user }, error: authError } = await supabaseClient.auth.getUser();
+    // Verify JWT by passing it explicitly to getUser
+    const { data: { user }, error: authError } = await supabaseClient.auth.getUser(jwt);
     
     if (authError || !user) {
       console.error('Auth error:', authError);
