@@ -33,8 +33,8 @@ const AIChat: React.FC = () => {
   const navigate = useNavigate();
   const location = useLocation();
   
-  // AI Features coming soon
-  const AI_COMING_SOON = true;
+  // AI Features activated
+  const AI_COMING_SOON = false;
   
   useEffect(() => {
     if (!user) {
