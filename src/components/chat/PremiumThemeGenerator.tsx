@@ -23,8 +23,14 @@ export const PremiumThemeGenerator = ({ type, onGenerated }: PremiumThemeGenerat
   const [isOpen, setIsOpen] = useState(false);
   const [prompt, setPrompt] = useState('');
   const [generating, setGenerating] = useState(false);
+  const AI_FEATURES_COMING_SOON = true;
 
   const handleGenerate = async () => {
+    if (AI_FEATURES_COMING_SOON) {
+      toast.info('AI theme generation coming soon!');
+      return;
+    }
+    
     if (!prompt.trim()) {
       toast.error('Please enter a description');
       return;

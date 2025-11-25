@@ -400,7 +400,8 @@ const PostDetail = () => {
 
       // Check if AfuAI was mentioned and trigger AI reply
       const mentionsAfuAi = /@afuai/i.test(finalContent);
-      if (mentionsAfuAi && post && replyData) {
+      const AI_FEATURES_COMING_SOON = true; // Temporarily disabled
+      if (mentionsAfuAi && post && replyData && !AI_FEATURES_COMING_SOON) {
         try {
           await fetch(
             `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/afu-ai-reply`,

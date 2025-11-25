@@ -4,8 +4,14 @@ import { toast } from 'sonner';
 
 export const useImageDescription = () => {
   const [isGenerating, setIsGenerating] = useState(false);
+  const AI_FEATURES_COMING_SOON = true;
 
   const generateDescription = async (imageData: string): Promise<string | null> => {
+    if (AI_FEATURES_COMING_SOON) {
+      toast.info('AI image descriptions coming soon!');
+      return null;
+    }
+    
     setIsGenerating(true);
     try {
       const { data, error } = await supabase.functions.invoke('generate-image-description', {

@@ -10,6 +10,7 @@ export const useGiftImage = (
   const [imageUrl, setImageUrl] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState(false);
+  const AI_FEATURES_COMING_SOON = true;
 
   useEffect(() => {
     let mounted = true;
@@ -31,6 +32,13 @@ export const useGiftImage = (
         // If image exists in database, use it
         if (gift?.image_url) {
           setImageUrl(gift.image_url);
+          setIsLoading(false);
+          return;
+        }
+
+        // AI features temporarily disabled - skip generation
+        if (AI_FEATURES_COMING_SOON) {
+          setImageUrl(null);
           setIsLoading(false);
           return;
         }

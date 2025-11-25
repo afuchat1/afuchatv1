@@ -1843,7 +1843,8 @@ const Feed = ({ defaultTab = 'foryou' }: FeedProps = {}) => {
             addReply(payload.new.post_id, newReply);
 
             const mentionsAfuAi = /@afuai/i.test(payload.new.content);
-            if (mentionsAfuAi) {
+            const AI_FEATURES_COMING_SOON = true; // Temporarily disabled
+            if (mentionsAfuAi && !AI_FEATURES_COMING_SOON) {
               const { data: postData } = await supabase
                 .from('posts')
                 .select('content')
