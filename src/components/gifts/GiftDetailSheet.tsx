@@ -242,13 +242,16 @@ export const GiftDetailSheet = ({ giftId, open, onOpenChange, recipientId, recip
                   <div className="space-y-1">
                     <div className="flex items-center gap-1">
                       <TrendingUp className="h-3 w-3 text-muted-foreground" />
-                      <p className="text-[10px] text-muted-foreground">Multi</p>
+                      <p className="text-[10px] text-muted-foreground">Increase</p>
                     </div>
-                    <p className="text-lg font-bold">
-                      {stats.price_multiplier.toFixed(2)}x
+                    <p className="text-lg font-bold text-green-500">
+                      {(() => {
+                        const percentIncrease = ((stats.current_price - gift.base_xp_cost) / gift.base_xp_cost * 100).toFixed(1);
+                        return stats.current_price > gift.base_xp_cost ? `+${percentIncrease}%` : '0%';
+                      })()}
                     </p>
                     <p className="text-[9px] text-muted-foreground">
-                      {stats.price_multiplier >= 1 ? '+' : ''}{((stats.price_multiplier - 1) * 100).toFixed(0)}%
+                      from base
                     </p>
                   </div>
                 </Card>

@@ -242,10 +242,13 @@ export const GiftStatisticsSheet = ({ giftId, open, onOpenChange }: GiftStatisti
                 <div className="flex items-center justify-center gap-1 mb-2">
                   <TrendingUp className="h-4 w-4 text-muted-foreground" />
                 </div>
-                <p className="text-2xl font-bold">
-                  {stats.price_multiplier.toFixed(2)}x
+                <p className="text-2xl font-bold text-green-500">
+                  {(() => {
+                    const percentIncrease = ((stats.current_price - gift.base_xp_cost) / gift.base_xp_cost * 100).toFixed(1);
+                    return stats.current_price > gift.base_xp_cost ? `+${percentIncrease}%` : '0%';
+                  })()}
                 </p>
-                <p className="text-xs text-muted-foreground mt-1">Multiplier</p>
+                <p className="text-xs text-muted-foreground mt-1">Increase</p>
               </div>
 
               <div className="bg-muted/20 rounded-2xl border border-border/50 p-4 text-center">

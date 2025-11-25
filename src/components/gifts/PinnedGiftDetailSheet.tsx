@@ -205,11 +205,14 @@ export const PinnedGiftDetailSheet = ({ giftId, open, onOpenChange }: PinnedGift
                 <span className="text-muted-foreground font-medium">Current Value</span>
                 <div className="flex items-center gap-2">
                   <span className="font-semibold text-primary">{gift.current_price.toLocaleString()} Nexa</span>
-                  {gift.price_multiplier !== 1 && (
-                    <Badge variant="secondary" className="text-green-500">
-                      {((gift.price_multiplier - 1) * 100).toFixed(1)}%
-                    </Badge>
-                  )}
+                  {(() => {
+                    const percentIncrease = ((gift.current_price - gift.base_xp_cost) / gift.base_xp_cost * 100).toFixed(1);
+                    return gift.current_price > gift.base_xp_cost ? (
+                      <Badge variant="secondary" className="text-green-500 font-semibold">
+                        +{percentIncrease}%
+                      </Badge>
+                    ) : null;
+                  })()}
                 </div>
               </div>
 
