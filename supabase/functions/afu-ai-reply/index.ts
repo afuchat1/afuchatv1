@@ -57,11 +57,11 @@ serve(async (req) => {
       );
     }
     
-    const YOU_API_KEY = Deno.env.get('YOU_API_KEY');
+    const AIMLAPI_KEY = Deno.env.get('AIMLAPI_KEY');
     const SUPABASE_URL = Deno.env.get('SUPABASE_URL');
     const SUPABASE_SERVICE_ROLE_KEY = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY');
     
-    if (!YOU_API_KEY || !SUPABASE_URL || !SUPABASE_SERVICE_ROLE_KEY) {
+    if (!AIMLAPI_KEY || !SUPABASE_URL || !SUPABASE_SERVICE_ROLE_KEY) {
       throw new Error('Missing required environment variables');
     }
 
@@ -93,7 +93,7 @@ serve(async (req) => {
       }
     }
 
-    // Generate AI response using You.com AI
+    // Generate AI response using AIMLAPI
     const systemPrompt = `You are AfuAI, a helpful and friendly AI assistant for AfuChat social platform. 
 You provide concise, relevant responses to user mentions. Keep replies under 200 characters.
 Be encouraging, supportive, and helpful. Use emojis sparingly.`;
@@ -103,10 +103,10 @@ User's mention: "${replyContent}"
 
 Please provide a helpful response.`;
 
-    const response = await fetch('https://api.you.com/v1/chat/completions', {
+    const response = await fetch('https://api.aimlapi.com/chat/completions', {
       method: 'POST',
       headers: {
-        'Authorization': `Bearer ${YOU_API_KEY}`,
+        'Authorization': `Bearer ${AIMLAPI_KEY}`,
         'Content-Type': 'application/json',
       },
       body: JSON.stringify({
@@ -122,7 +122,7 @@ Please provide a helpful response.`;
 
     if (!response.ok) {
       const errorText = await response.text();
-      console.error('You.com AI error:', response.status, errorText);
+      console.error('AIMLAPI error:', response.status, errorText);
       
       if (response.status === 429) {
         return new Response(JSON.stringify({ error: 'Rate limit exceeded' }), {
@@ -142,7 +142,7 @@ Please provide a helpful response.`;
     const aiData = await response.json();
     
     if (!aiData.choices || !aiData.choices[0]?.message?.content) {
-      throw new Error('Invalid response from You.com AI');
+      throw new Error('Invalid response from AIMLAPI');
     }
     
     const aiReply = aiData.choices[0].message.content;

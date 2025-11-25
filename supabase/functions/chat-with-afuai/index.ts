@@ -100,13 +100,13 @@ serve(async (req) => {
       }
     }
     
-    const YOU_API_KEY = Deno.env.get('YOU_API_KEY');
+    const AIMLAPI_KEY = Deno.env.get('AIMLAPI_KEY');
     
-    if (!YOU_API_KEY) {
-      throw new Error('YOU_API_KEY not configured');
+    if (!AIMLAPI_KEY) {
+      throw new Error('AIMLAPI_KEY not configured');
     }
 
-    // Build messages for You.com AI
+    // Build messages for AIMLAPI
     const messages = [
       {
         role: 'system',
@@ -132,10 +132,10 @@ Keep responses under 300 characters when possible.`
       content: message
     });
 
-    const response = await fetch('https://api.you.com/v1/chat/completions', {
+    const response = await fetch('https://api.aimlapi.com/chat/completions', {
       method: 'POST',
       headers: {
-        'Authorization': `Bearer ${YOU_API_KEY}`,
+        'Authorization': `Bearer ${AIMLAPI_KEY}`,
         'Content-Type': 'application/json',
       },
       body: JSON.stringify({
@@ -148,7 +148,7 @@ Keep responses under 300 characters when possible.`
 
     if (!response.ok) {
       const errorText = await response.text();
-      console.error('You.com AI error:', {
+      console.error('AIMLAPI error:', {
         status: response.status,
         statusText: response.statusText,
         body: errorText
@@ -162,19 +162,19 @@ Keep responses under 300 characters when possible.`
       }
       if (response.status === 401) {
         return new Response(JSON.stringify({ 
-          error: 'Invalid You.com API key. Please check your API key configuration.' 
+          error: 'Invalid AIMLAPI key. Please check your API key configuration.' 
         }), {
           status: 402,
           headers: { ...corsHeaders, 'Content-Type': 'application/json' },
         });
       }
-      throw new Error(`You.com AI error: ${response.status} ${errorText}`);
+      throw new Error(`AIMLAPI error: ${response.status} ${errorText}`);
     }
 
     const data = await response.json();
     
     if (!data.choices || !data.choices[0]?.message?.content) {
-      throw new Error('Invalid response from You.com AI');
+      throw new Error('Invalid response from AIMLAPI');
     }
     
     const reply = data.choices[0].message.content;
