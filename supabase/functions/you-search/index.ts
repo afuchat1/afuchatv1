@@ -45,19 +45,21 @@ serve(async (req) => {
     if (!response.ok) {
       const errorText = await response.text();
       console.error('You.com search error:', response.status, errorText);
-      
-      if (response.status === 429) {
-        return new Response(
-          JSON.stringify({ error: 'Rate limit exceeded' }),
-          { status: 429, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
-        );
-      }
-      
+
+      // Return a successful response to the client with a clear error message
+      // so the UI can handle it gracefully instead of throwing a 500.
       return new Response(
-        JSON.stringify({ error: 'Search failed' }),
-        { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+        JSON.stringify({
+          results: [],
+          error: `You.com API error ${response.status}: ${errorText}`,
+        }),
+        {
+          status: 200,
+          headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+        }
       );
     }
+
 
     const data = await response.json();
     
