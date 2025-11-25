@@ -12,7 +12,7 @@ import { useTranslation } from 'react-i18next';
 import { searchSchema } from '@/lib/validation';
 
 interface SearchResult {
-  type: 'user' | 'post';
+  type: 'user' | 'post' | 'group';
   id: string;
   display_name?: string;
   handle?: string;
@@ -29,6 +29,12 @@ interface SearchResult {
     is_verified?: boolean;
     is_organization_verified?: boolean;
   };
+  // Group-specific fields
+  name?: string;
+  description?: string;
+  avatar_url?: string;
+  member_count?: number;
+  is_member?: boolean;
 }
 
 interface Trend {
@@ -192,13 +198,14 @@ const Search = () => {
     const searchTsQuery = trimmedQuery.replace(/ /g, ' | '); 
 
     try {
-      // Local search
+      // Local search for users
       const { data: userData } = await supabase
         .from('profiles')
         .select('id, display_name, handle, bio, is_verified, is_organization_verified, is_private')
         .or(`display_name.ilike.%${trimmedQuery}%,handle.ilike.%${trimmedQuery}%`)
         .limit(5);
 
+      // Local search for posts
       const { data: postData } = await supabase
         .from('posts')
         .select(`
@@ -208,10 +215,48 @@ const Search = () => {
         .textSearch('content', searchTsQuery, { type: 'plain', config: searchConfig })
         .limit(10);
 
+      // Search for groups
+      const { data: groupData } = await supabase
+        .from('chats')
+        .select(`
+          id, name, description, avatar_url,
+          chat_members(count)
+        `)
+        .eq('is_group', true)
+        .or(`name.ilike.%${trimmedQuery}%,description.ilike.%${trimmedQuery}%`)
+        .limit(8);
+
+      // Check membership for groups if user is logged in
+      let groupsWithMembership = groupData || [];
+      if (user && groupData) {
+        const groupIds = groupData.map((g: any) => g.id);
+        const { data: membershipData } = await supabase
+          .from('chat_members')
+          .select('chat_id')
+          .eq('user_id', user.id)
+          .in('chat_id', groupIds);
+        
+        const memberGroupIds = new Set(membershipData?.map(m => m.chat_id) || []);
+        groupsWithMembership = groupData.map((g: any) => ({
+          ...g,
+          is_member: memberGroupIds.has(g.id),
+          member_count: g.chat_members?.[0]?.count || 0,
+        }));
+      }
+
       const combinedResults: SearchResult[] = [
         ...(userData || []).map((u: any) => ({
           type: 'user' as const,
           ...u,
+        })),
+        ...(groupsWithMembership || []).map((g: any) => ({
+          type: 'group' as const,
+          id: g.id,
+          name: g.name,
+          description: g.description,
+          avatar_url: g.avatar_url,
+          member_count: g.member_count,
+          is_member: g.is_member,
         })),
         ...(postData || []).map((p: any) => ({
           type: 'post' as const,
@@ -283,8 +328,34 @@ const Search = () => {
     }
   };
 
+  const handleJoinGroup = async (groupId: string) => {
+    if (!user) {
+      navigate('/auth');
+      return;
+    }
+
+    try {
+      const { error } = await supabase
+        .from('chat_members')
+        .insert({
+          chat_id: groupId,
+          user_id: user.id,
+          is_admin: false,
+        });
+
+      if (error) throw error;
+
+      toast.success(t('search.joinedGroup'));
+      navigate(`/chat/${groupId}`);
+    } catch (error) {
+      console.error('Error joining group:', error);
+      toast.error(t('search.joinGroupError'));
+    }
+  };
+
   const isSearchActive = !!query.trim();
   const userResults = results.filter(r => r.type === 'user');
+  const groupResults = results.filter(r => r.type === 'group');
   const postResults = results.filter(r => r.type === 'post');
   const hasAnyResults = results.length > 0;
 
@@ -363,6 +434,70 @@ const Search = () => {
                           <MessageSquare className="h-4 w-4 mr-1" />
                           {t('profile.message')}
                         </Button>
+                      </div>
+                    </Card>
+                  ))}
+                </div>
+              </section>
+            )}
+
+            {groupResults.length > 0 && (
+              <section>
+                <h2 className="text-sm font-bold text-foreground mb-3 border-b pb-1">{t('search.groups')} ({groupResults.length})</h2>
+                <div className="space-y-3">
+                  {groupResults.map((result) => (
+                    <Card 
+                        key={result.id} 
+                        className="p-4 hover:shadow-xl transition-shadow cursor-pointer"
+                        onClick={() => {
+                          if (result.is_member) {
+                            navigate(`/chat/${result.id}`);
+                          }
+                        }}
+                    >
+                      <div className="flex items-center justify-between">
+                        <div className="flex items-center space-x-3 flex-1">
+                          <div className="h-10 w-10 rounded-full bg-secondary flex items-center justify-center text-muted-foreground shadow-md flex-shrink-0">
+                            <MessageSquare className="h-5 w-5" />
+                          </div>
+                          <div className="flex-1 min-w-0">
+                            <h3 className="font-semibold text-foreground truncate text-sm">
+                              {result.name || 'Unnamed Group'}
+                            </h3>
+                            {result.description && (
+                              <p className="text-xs text-muted-foreground truncate mt-1">{result.description}</p>
+                            )}
+                            <p className="text-xs text-muted-foreground mt-1">
+                              {result.member_count} {result.member_count === 1 ? 'member' : 'members'}
+                            </p>
+                          </div>
+                        </div>
+                        {result.is_member ? (
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              navigate(`/chat/${result.id}`);
+                            }}
+                            className="ml-4 flex-shrink-0 text-xs"
+                          >
+                            <MessageSquare className="h-4 w-4 mr-1" />
+                            Open
+                          </Button>
+                        ) : (
+                          <Button
+                            variant="default"
+                            size="sm"
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              handleJoinGroup(result.id);
+                            }}
+                            className="ml-4 flex-shrink-0 text-xs"
+                          >
+                            Join
+                          </Button>
+                        )}
                       </div>
                     </Card>
                   ))}

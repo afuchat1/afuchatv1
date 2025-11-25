@@ -329,14 +329,22 @@
     "title": "Search",
     "placeholder": "Search users, posts, hashtags...",
     "users": "Users",
+    "people": "People",
     "posts": "Posts",
+    "groups": "Groups",
     "hashtags": "Hashtags",
     "noResults": "No results found",
     "tryDifferent": "Try a different search term",
     "recent": "Recent Searches",
     "trending": "Trending",
+    "trendingNow": "Trending Now",
+    "noTrends": "No trends available",
+    "postsCount": "{{count}} posts",
+    "tapTopic": "Tap a topic to search",
     "clearHistory": "Clear History",
-    "searching": "Searching..."
+    "searching": "Searching...",
+    "joinedGroup": "Successfully joined group!",
+    "joinGroupError": "Failed to join group"
   },
   "wallet": {
     "title": "Wallet",
