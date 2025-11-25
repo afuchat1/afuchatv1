@@ -528,8 +528,10 @@ export type Database = {
       chats: {
         Row: {
           archived_at: string | null
+          avatar_url: string | null
           created_at: string | null
           created_by: string | null
+          description: string | null
           id: string
           is_archived: boolean | null
           is_favorite: boolean | null
@@ -542,8 +544,10 @@ export type Database = {
         }
         Insert: {
           archived_at?: string | null
+          avatar_url?: string | null
           created_at?: string | null
           created_by?: string | null
+          description?: string | null
           id?: string
           is_archived?: boolean | null
           is_favorite?: boolean | null
@@ -556,8 +560,10 @@ export type Database = {
         }
         Update: {
           archived_at?: string | null
+          avatar_url?: string | null
           created_at?: string | null
           created_by?: string | null
+          description?: string | null
           id?: string
           is_archived?: boolean | null
           is_favorite?: boolean | null

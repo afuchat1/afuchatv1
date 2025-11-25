@@ -7,12 +7,13 @@ import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 import { CustomLoader } from '@/components/ui/CustomLoader';
-import { ArrowLeft, Send, User, Phone, Video, MoreVertical, Check, MessageSquare, HelpCircle, Info, Mic, MicOff, Play, Pause, Volume2, X, Smile, Paperclip } from 'lucide-react';
+import { ArrowLeft, Send, User, Phone, Video, MoreVertical, Check, MessageSquare, HelpCircle, Info, Mic, MicOff, Play, Pause, Volume2, X, Smile, Paperclip, Settings } from 'lucide-react';
 import { toast } from 'sonner';
 import { messageSchema } from '@/lib/validation';
 import { ChatRedEnvelope } from '@/components/chat/ChatRedEnvelope';
 import { SendRedEnvelopeDialog } from '@/components/chat/SendRedEnvelopeDialog';
 import { MessageBubble } from '@/components/chat/MessageBubble';
+import { GroupSettingsSheet } from '@/components/chat/GroupSettingsSheet';
 import { DateDivider } from '@/components/chat/DateDivider';
 import { TypingIndicator } from '@/components/chat/TypingIndicator';
 import { isSameDay, formatDistanceToNow } from 'date-fns';
@@ -97,6 +98,9 @@ interface RedEnvelope {
 interface ChatInfo {
   name: string | null;
   is_group: boolean;
+  description: string | null;
+  avatar_url: string | null;
+  created_by: string | null;
 }
 
 interface OtherUserProfile {
@@ -144,6 +148,8 @@ const ChatRoom = () => {
   const typingTimeoutRef = useRef<NodeJS.Timeout | null>(null);
   const [currentTheme, setCurrentTheme] = useState<ChatTheme | null>(null);
   const [currentWallpaper, setCurrentWallpaper] = useState<ChatWallpaper | null>(null);
+  const [isGroupSettingsOpen, setIsGroupSettingsOpen] = useState(false);
+  const [isGroupAdmin, setIsGroupAdmin] = useState(false);
 
   // Load theme and wallpaper data
   useEffect(() => {
@@ -458,12 +464,24 @@ const ChatRoom = () => {
   const fetchChatInfo = async () => {
     const { data } = await supabase
       .from('chats')
-      .select('name, is_group')
+      .select('name, is_group, description, avatar_url, created_by')
       .eq('id', chatId)
       .single();
     
     if (data) {
       setChatInfo(data);
+      
+      // Check if current user is admin for groups
+      if (data.is_group && user) {
+        const { data: memberData } = await supabase
+          .from('chat_members')
+          .select('is_admin')
+          .eq('chat_id', chatId)
+          .eq('user_id', user.id)
+          .single();
+        
+        setIsGroupAdmin(memberData?.is_admin || false);
+      }
       
       // For 1-on-1 chats, fetch the other user's profile
       if (!data.is_group && user) {
@@ -936,17 +954,17 @@ const ChatRoom = () => {
           
           <div className="flex items-center gap-3 flex-1 min-w-0">
             <UserAvatar 
-              userId={otherUser?.id || 'unknown'}
-              avatarUrl={otherUser?.avatar_url} 
-              name={otherUser?.display_name || chatInfo?.name || 'Chat'} 
+              userId={chatInfo?.is_group ? chatId! : (otherUser?.id || 'unknown')}
+              avatarUrl={chatInfo?.is_group ? chatInfo.avatar_url : otherUser?.avatar_url} 
+              name={chatInfo?.is_group ? (chatInfo.name || 'Group') : (otherUser?.display_name || 'Chat')} 
               size={40}
             />
             <div className="flex-1 min-w-0">
               <div className="flex items-center gap-1">
                 <h2 className="font-semibold text-base truncate">
-                  {otherUser?.display_name || chatInfo?.name || 'Chat'}
+                  {chatInfo?.is_group ? (chatInfo.name || 'Group') : (otherUser?.display_name || 'Chat')}
                 </h2>
-                {otherUser && (
+                {otherUser && !chatInfo?.is_group && (
                   <VerifiedBadge
                     isVerified={otherUser.is_verified || false}
                     isOrgVerified={otherUser.is_organization_verified || false}
@@ -955,22 +973,39 @@ const ChatRoom = () => {
                   />
                 )}
               </div>
-              {otherUser && (
+              {!chatInfo?.is_group && otherUser && (
                 <p className="text-xs text-muted-foreground">
                   {online ? 'online' : otherUser.last_seen ? `last seen at ${new Date(otherUser.last_seen).toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', hour12: false })}` : 'offline'}
+                </p>
+              )}
+              {chatInfo?.is_group && chatInfo.description && (
+                <p className="text-xs text-muted-foreground truncate">
+                  {chatInfo.description}
                 </p>
               )}
             </div>
           </div>
 
           <div className="flex items-center gap-1">
-            <Button
-              variant="ghost"
-              size="icon"
-              className="h-10 w-10 rounded-full"
-            >
-              <Phone className="h-5 w-5" />
-            </Button>
+            {!chatInfo?.is_group && (
+              <Button
+                variant="ghost"
+                size="icon"
+                className="h-10 w-10 rounded-full"
+              >
+                <Phone className="h-5 w-5" />
+              </Button>
+            )}
+            {chatInfo?.is_group && isGroupAdmin && (
+              <Button
+                variant="ghost"
+                size="icon"
+                className="h-10 w-10 rounded-full"
+                onClick={() => setIsGroupSettingsOpen(true)}
+              >
+                <Settings className="h-5 w-5" />
+              </Button>
+            )}
             <Button
               variant="ghost"
               size="icon"
@@ -1265,6 +1300,16 @@ const ChatRoom = () => {
           </form>
         </div>
       </div>
+
+      {/* Group Settings Sheet */}
+      {chatInfo?.is_group && (
+        <GroupSettingsSheet
+          isOpen={isGroupSettingsOpen}
+          onClose={() => setIsGroupSettingsOpen(false)}
+          chatId={chatId!}
+          isAdmin={isGroupAdmin}
+        />
+      )}
     </TooltipProvider>
   );
 };
