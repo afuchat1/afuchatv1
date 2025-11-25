@@ -31,14 +31,15 @@ serve(async (req) => {
 
     console.log('Searching You.com for:', query);
 
-    // Call You.com search API
-    const response = await fetch('https://api.ydc-index.io/search', {
+    // Call You.com search API with query parameter
+    const searchUrl = new URL('https://api.ydc-index.io/search');
+    searchUrl.searchParams.append('query', query);
+    
+    const response = await fetch(searchUrl.toString(), {
       method: 'GET',
       headers: {
         'X-API-Key': YOU_API_KEY,
-        'Content-Type': 'application/json',
       },
-      // Add query as URL parameter
     });
 
     if (!response.ok) {
