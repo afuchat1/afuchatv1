@@ -419,13 +419,19 @@ export const SendGiftDialog = ({ receiverId, receiverName, trigger }: SendGiftDi
                       {/* Gift Info */}
                       <div className="text-center space-y-0.5">
                         <h3 className="font-semibold text-[10px] truncate text-foreground">{gift.name}</h3>
-                        <div className="flex items-center justify-center gap-1">
+                        <div className="flex flex-col items-center gap-0.5">
                           <span className="text-[10px] font-bold bg-gradient-to-r from-primary to-accent bg-clip-text text-transparent">
                             {currentPrice.toLocaleString()} Nexa
                           </span>
-                          {priceMultiplier !== 1 && (
-                            <TrendingUp className="h-2.5 w-2.5 text-green-500" />
-                          )}
+                          {(() => {
+                            const percentIncrease = ((currentPrice - gift.base_xp_cost) / gift.base_xp_cost * 100).toFixed(1);
+                            return currentPrice > gift.base_xp_cost ? (
+                              <div className="flex items-center gap-0.5 text-[8px] text-green-500 font-semibold">
+                                <TrendingUp className="h-2 w-2" />
+                                <span>+{percentIncrease}%</span>
+                              </div>
+                            ) : null;
+                          })()}
                         </div>
                       </div>
                     </div>

@@ -215,7 +215,9 @@ const Gifts = () => {
 
                       <div className="text-center">
                         <h3 className="font-semibold text-xs truncate">{gift.name}</h3>
-                        <p className="text-xs text-muted-foreground font-medium">{gift.base_xp_cost} Nexa</p>
+                        <p className="text-xs text-muted-foreground font-medium">
+                          Base: {gift.base_xp_cost} Nexa
+                        </p>
                       </div>
 
                       <div className="text-center space-y-1">
@@ -223,18 +225,21 @@ const Gifts = () => {
                           <span className="text-xs font-bold text-primary">
                             {gift.current_price.toLocaleString()} Nexa
                           </span>
-                          {gift.price_multiplier !== 1 && (
-                            <div className="flex items-center gap-0.5 text-[10px] text-green-500">
-                              <TrendingUp className="h-2.5 w-2.5" />
-                              <span>{(gift.price_multiplier * 100 - 100).toFixed(0)}%</span>
-                            </div>
-                          )}
                         </div>
+                        {(() => {
+                          const percentIncrease = ((gift.current_price - gift.base_xp_cost) / gift.base_xp_cost * 100).toFixed(1);
+                          return gift.current_price > gift.base_xp_cost ? (
+                            <div className="flex items-center justify-center gap-0.5 text-[10px] text-green-500 font-semibold">
+                              <TrendingUp className="h-2.5 w-2.5" />
+                              <span>+{percentIncrease}%</span>
+                            </div>
+                          ) : null;
+                        })()}
 
                         {gift.total_sent > 0 && (
                           <div className="flex items-center justify-center gap-1 text-[10px] text-muted-foreground">
                             <Sparkles className="h-2.5 w-2.5" />
-                            <span>{gift.total_sent.toLocaleString()}</span>
+                            <span>{gift.total_sent.toLocaleString()} sent</span>
                           </div>
                         )}
                       </div>
@@ -294,7 +299,23 @@ const Gifts = () => {
 
                         <div className="text-center">
                           <h3 className="font-semibold text-xs truncate">{gift.name}</h3>
-                          <p className="text-xs text-muted-foreground font-medium">{gift.base_xp_cost} Nexa</p>
+                          <div className="space-y-0.5">
+                            <p className="text-xs text-muted-foreground font-medium">
+                              Base: {gift.base_xp_cost} Nexa
+                            </p>
+                            <p className="text-xs font-bold text-primary">
+                              {giftWithStats.current_price.toLocaleString()} Nexa
+                            </p>
+                            {(() => {
+                              const percentIncrease = ((giftWithStats.current_price - gift.base_xp_cost) / gift.base_xp_cost * 100).toFixed(1);
+                              return giftWithStats.current_price > gift.base_xp_cost ? (
+                                <div className="flex items-center justify-center gap-0.5 text-[10px] text-green-500 font-semibold">
+                                  <TrendingUp className="h-2.5 w-2.5" />
+                                  <span>+{percentIncrease}%</span>
+                                </div>
+                              ) : null;
+                            })()}
+                          </div>
                         </div>
                       </div>
                     </div>
