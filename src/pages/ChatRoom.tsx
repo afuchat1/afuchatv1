@@ -1063,17 +1063,17 @@ const ChatRoom = () => {
                 <Settings className="h-5 w-5" />
               </Button>
             )}
-            <DropdownMenu>
-              <DropdownMenuTrigger asChild>
-                <Button
-                  variant="ghost"
-                  size="icon"
-                  className="h-10 w-10 rounded-full"
-                >
-                  <MoreVertical className="h-5 w-5" />
-                </Button>
-              </DropdownMenuTrigger>
-              {chatInfo?.is_group && isMember && (
+            {chatInfo?.is_group && isMember ? (
+              <DropdownMenu>
+                <DropdownMenuTrigger asChild>
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    className="h-10 w-10 rounded-full"
+                  >
+                    <MoreVertical className="h-5 w-5" />
+                  </Button>
+                </DropdownMenuTrigger>
                 <DropdownMenuContent align="end">
                   <DropdownMenuItem 
                     onClick={handleLeaveGroup}
@@ -1083,8 +1083,16 @@ const ChatRoom = () => {
                     {t('chat.leaveGroup')}
                   </DropdownMenuItem>
                 </DropdownMenuContent>
-              )}
-            </DropdownMenu>
+              </DropdownMenu>
+            ) : (
+              <Button
+                variant="ghost"
+                size="icon"
+                className="h-10 w-10 rounded-full"
+              >
+                <MoreVertical className="h-5 w-5" />
+              </Button>
+            )}
           </div>
         </div>
 
