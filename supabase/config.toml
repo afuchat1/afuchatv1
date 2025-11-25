@@ -1,5 +1,8 @@
 project_id = "rhnsjqqtdzlkvqazfcbg"
 
+[functions.you-search]
+verify_jwt = false
+
 [functions.afu-ai-reply]
 verify_jwt = false
 
