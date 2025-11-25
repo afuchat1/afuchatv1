@@ -104,50 +104,76 @@ serve(async (req) => {
       }
     }
     
-    const DEEPSEEK_API_KEY = Deno.env.get('DEEPSEEK_API_KEY');
+    const GEMINI_API_KEY = Deno.env.get('GEMINI_API_KEY');
     
-    if (!DEEPSEEK_API_KEY) {
-      throw new Error('DEEPSEEK_API_KEY not configured');
+    if (!GEMINI_API_KEY) {
+      throw new Error('GEMINI_API_KEY not configured');
     }
 
-    // Build conversation history
-    const messages = [
-      {
-        role: 'system',
-        content: `You are AfuAI, a helpful AI assistant for AfuChat social platform.
+    // Build conversation for Gemini format
+    const contents = [];
+    
+    // Add system instruction as first exchange
+    contents.push({
+      role: 'user',
+      parts: [{ text: `You are AfuAI, a helpful AI assistant for AfuChat social platform.
         You help users:
         - Create engaging posts (suggest topics, write drafts, improve content)
         - Answer questions about AfuChat features
         - Provide general assistance and conversation
         
         Be friendly, concise, and helpful. Use emojis occasionally to be more engaging.
-        Keep responses under 300 characters when possible.`
-      },
-      ...(history || []).map((msg: any) => ({
-        role: msg.role,
-        content: msg.content
-      })),
-      {
-        role: 'user',
-        content: message
-      }
-    ];
-
-    const response = await fetch('https://api.deepseek.com/v1/chat/completions', {
-      method: 'POST',
-      headers: {
-        'Authorization': `Bearer ${DEEPSEEK_API_KEY}`,
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify({
-        model: 'deepseek-chat',
-        messages,
-      }),
+        Keep responses under 300 characters when possible.` }]
     });
+    
+    contents.push({
+      role: 'model',
+      parts: [{ text: "I understand. I'm AfuAI, ready to help users on AfuChat!" }]
+    });
+
+    // Add conversation history
+    if (history && Array.isArray(history)) {
+      for (const msg of history) {
+        if (msg.role === 'user') {
+          contents.push({
+            role: 'user',
+            parts: [{ text: msg.content }]
+          });
+        } else if (msg.role === 'assistant') {
+          contents.push({
+            role: 'model',
+            parts: [{ text: msg.content }]
+          });
+        }
+      }
+    }
+
+    // Add current message
+    contents.push({
+      role: 'user',
+      parts: [{ text: message }]
+    });
+
+    const response = await fetch(
+      `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash-exp:generateContent?key=${GEMINI_API_KEY}`,
+      {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          contents: contents,
+          generationConfig: {
+            temperature: 0.7,
+            maxOutputTokens: 1024,
+          }
+        }),
+      }
+    );
 
     if (!response.ok) {
       const errorText = await response.text();
-      console.error('AI Gateway error:', {
+      console.error('Gemini API error:', {
         status: response.status,
         statusText: response.statusText,
         body: errorText
@@ -159,19 +185,24 @@ serve(async (req) => {
           headers: { ...corsHeaders, 'Content-Type': 'application/json' },
         });
       }
-      if (response.status === 402) {
+      if (response.status === 400 && errorText.includes('API_KEY')) {
         return new Response(JSON.stringify({ 
-          error: 'Payment required. Your Lovable AI credits have been exhausted. Please add credits to your workspace.' 
+          error: 'Invalid Gemini API key. Please check your API key configuration.' 
         }), {
           status: 402,
           headers: { ...corsHeaders, 'Content-Type': 'application/json' },
         });
       }
-      throw new Error(`AI gateway error: ${response.status} ${errorText}`);
+      throw new Error(`Gemini API error: ${response.status} ${errorText}`);
     }
 
     const data = await response.json();
-    const reply = data.choices[0].message.content;
+    
+    if (!data.candidates || !data.candidates[0]?.content?.parts?.[0]?.text) {
+      throw new Error('Invalid response from Gemini API');
+    }
+    
+    const reply = data.candidates[0].content.parts[0].text;
 
     // Award XP for using AI
     await supabaseClient.rpc('award_xp', {

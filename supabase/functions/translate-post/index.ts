@@ -14,10 +14,10 @@ serve(async (req) => {
   try {
     const { text, targetLanguage } = await req.json();
     
-    const DEEPSEEK_API_KEY = Deno.env.get('DEEPSEEK_API_KEY');
+    const GEMINI_API_KEY = Deno.env.get('GEMINI_API_KEY');
     
-    if (!DEEPSEEK_API_KEY) {
-      throw new Error('DEEPSEEK_API_KEY not configured');
+    if (!GEMINI_API_KEY) {
+      throw new Error('GEMINI_API_KEY not configured');
     }
 
     const languageNames: Record<string, string> = {
@@ -30,29 +30,40 @@ serve(async (req) => {
 
     const targetLangName = languageNames[targetLanguage] || targetLanguage;
 
-    const response = await fetch('https://api.deepseek.com/v1/chat/completions', {
-      method: 'POST',
-      headers: {
-        'Authorization': `Bearer ${DEEPSEEK_API_KEY}`,
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify({
-        model: 'deepseek-chat',
-        messages: [
-          {
-            role: 'system',
-            content: `You are a professional translator. Translate the given text to ${targetLangName}. 
+    const systemPrompt = `You are a professional translator. Translate the given text to ${targetLangName}. 
             Only return the translated text, nothing else. 
             Preserve @mentions, hashtags, and emojis exactly as they appear.
-            If the text is already in ${targetLangName}, return it unchanged.`
-          },
-          {
-            role: 'user',
-            content: text
+            If the text is already in ${targetLangName}, return it unchanged.`;
+
+    const response = await fetch(
+      `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash-exp:generateContent?key=${GEMINI_API_KEY}`,
+      {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          contents: [
+            {
+              role: 'user',
+              parts: [{ text: systemPrompt }]
+            },
+            {
+              role: 'model',
+              parts: [{ text: "I understand. I'll translate accurately while preserving formatting." }]
+            },
+            {
+              role: 'user',
+              parts: [{ text: text }]
+            }
+          ],
+          generationConfig: {
+            temperature: 0.3,
+            maxOutputTokens: 1024,
           }
-        ],
-      }),
-    });
+        }),
+      }
+    );
 
     if (!response.ok) {
       const errorText = await response.text();
@@ -73,9 +84,9 @@ serve(async (req) => {
         });
       }
       
-      if (response.status === 402) {
+      if (response.status === 400 && errorText.includes('API_KEY')) {
         return new Response(JSON.stringify({ 
-          error: 'Translation credits exhausted. Please add credits to continue.' 
+          error: 'Invalid Gemini API key' 
         }), {
           status: 402,
           headers: { ...corsHeaders, 'Content-Type': 'application/json' },
@@ -95,7 +106,12 @@ serve(async (req) => {
     }
 
     const data = await response.json();
-    const translatedText = data.choices[0].message.content;
+    
+    if (!data.candidates || !data.candidates[0]?.content?.parts?.[0]?.text) {
+      throw new Error('Invalid response from Gemini API');
+    }
+    
+    const translatedText = data.candidates[0].content.parts[0].text;
 
     return new Response(JSON.stringify({ translatedText }), {
       headers: { ...corsHeaders, 'Content-Type': 'application/json' },

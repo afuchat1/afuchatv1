@@ -74,8 +74,8 @@ const AIChat: React.FC = () => {
           const errorMsg = error.message || JSON.stringify(error);
           
         // Check for payment required error (402)
-        if (errorMsg.includes('402') || errorMsg.includes('Payment required') || errorMsg.includes('credits')) {
-          toast.error('DeepSeek API credits exhausted. Please add credits to your DeepSeek account at platform.deepseek.com', {
+        if (errorMsg.includes('402') || errorMsg.includes('Payment required') || errorMsg.includes('API_KEY')) {
+          toast.error('Invalid or exhausted Gemini API key. Please check your API key configuration.', {
             duration: 6000,
           });
           return;
@@ -149,8 +149,8 @@ const AIChat: React.FC = () => {
         const errorMsg = error.message || JSON.stringify(error);
         
         // Check for payment required error (402)
-        if (errorMsg.includes('402') || errorMsg.includes('Payment required') || errorMsg.includes('credits')) {
-          toast.error('DeepSeek API credits exhausted. Please add credits to your DeepSeek account at platform.deepseek.com', {
+        if (errorMsg.includes('402') || errorMsg.includes('Payment required') || errorMsg.includes('API_KEY')) {
+          toast.error('Invalid or exhausted Gemini API key. Please check your API key configuration.', {
             duration: 6000,
           });
           return;

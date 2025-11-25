@@ -57,11 +57,11 @@ serve(async (req) => {
       );
     }
     
-    const DEEPSEEK_API_KEY = Deno.env.get('DEEPSEEK_API_KEY');
+    const GEMINI_API_KEY = Deno.env.get('GEMINI_API_KEY');
     const SUPABASE_URL = Deno.env.get('SUPABASE_URL');
     const SUPABASE_SERVICE_ROLE_KEY = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY');
     
-    if (!DEEPSEEK_API_KEY || !SUPABASE_URL || !SUPABASE_SERVICE_ROLE_KEY) {
+    if (!GEMINI_API_KEY || !SUPABASE_URL || !SUPABASE_SERVICE_ROLE_KEY) {
       throw new Error('Missing required environment variables');
     }
 
@@ -76,7 +76,6 @@ serve(async (req) => {
 
     if (profileError || !afuAiProfile) {
       console.error('AfuAI profile not found, creating one...');
-      // Create AfuAI profile if it doesn't exist
       const { data: newProfile, error: createError } = await supabase
         .from('profiles')
         .insert({
@@ -94,41 +93,55 @@ serve(async (req) => {
       }
     }
 
-    // Generate AI response
-    const response = await fetch('https://api.deepseek.com/v1/chat/completions', {
-      method: 'POST',
-      headers: {
-        'Authorization': `Bearer ${DEEPSEEK_API_KEY}`,
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify({
-        model: 'deepseek-chat',
-        messages: [
-          {
-            role: 'system',
-            content: `You are AfuAI, a helpful and friendly AI assistant for AfuChat social platform. 
-            You provide concise, relevant responses to user mentions. Keep replies under 200 characters.
-            Be encouraging, supportive, and helpful. Use emojis sparingly.
-            Original post: "${originalPostContent}"
-            User's mention: "${replyContent}"`
-          },
-          {
-            role: 'user',
-            content: replyContent
+    // Generate AI response using Gemini
+    const systemPrompt = `You are AfuAI, a helpful and friendly AI assistant for AfuChat social platform. 
+    You provide concise, relevant responses to user mentions. Keep replies under 200 characters.
+    Be encouraging, supportive, and helpful. Use emojis sparingly.
+    Original post: "${originalPostContent}"
+    User's mention: "${replyContent}"`;
+
+    const response = await fetch(
+      `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash-exp:generateContent?key=${GEMINI_API_KEY}`,
+      {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          contents: [
+            {
+              role: 'user',
+              parts: [{ text: systemPrompt }]
+            },
+            {
+              role: 'model',
+              parts: [{ text: "I understand. I'll provide a helpful, concise response." }]
+            },
+            {
+              role: 'user',
+              parts: [{ text: replyContent }]
+            }
+          ],
+          generationConfig: {
+            temperature: 0.7,
+            maxOutputTokens: 200,
           }
-        ],
-      }),
-    });
+        }),
+      }
+    );
 
     if (!response.ok) {
+      const errorText = await response.text();
+      console.error('Gemini API error:', response.status, errorText);
+      
       if (response.status === 429) {
         return new Response(JSON.stringify({ error: 'Rate limit exceeded' }), {
           status: 429,
           headers: { ...corsHeaders, 'Content-Type': 'application/json' },
         });
       }
-      if (response.status === 402) {
-        return new Response(JSON.stringify({ error: 'Payment required' }), {
+      if (response.status === 400 && errorText.includes('API_KEY')) {
+        return new Response(JSON.stringify({ error: 'Invalid API key' }), {
           status: 402,
           headers: { ...corsHeaders, 'Content-Type': 'application/json' },
         });
@@ -137,7 +150,12 @@ serve(async (req) => {
     }
 
     const aiData = await response.json();
-    const aiReply = aiData.choices[0].message.content;
+    
+    if (!aiData.candidates || !aiData.candidates[0]?.content?.parts?.[0]?.text) {
+      throw new Error('Invalid response from Gemini API');
+    }
+    
+    const aiReply = aiData.candidates[0].content.parts[0].text;
 
     // Get the user who mentioned AfuAI (from the trigger reply) to award XP
     let mentioningUserId = null;
