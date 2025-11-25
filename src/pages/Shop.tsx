@@ -36,6 +36,7 @@ interface GiftMarketplaceListing {
     emoji: string;
     rarity: string;
     description: string | null;
+    base_xp_cost: number;
   };
 }
 
@@ -250,6 +251,14 @@ export default function Shop() {
                             <p className="text-sm font-bold text-primary">
                               {listing.asking_price.toLocaleString()} Nexa
                             </p>
+                            {(() => {
+                              const percentIncrease = ((listing.asking_price - listing.gift.base_xp_cost) / listing.gift.base_xp_cost * 100).toFixed(1);
+                              return (
+                                <p className="text-[10px] font-semibold text-green-500">
+                                  +{percentIncrease}%
+                                </p>
+                              );
+                            })()}
                             <p className="text-[10px] text-muted-foreground">
                               by @{listing.seller.handle}
                             </p>
@@ -318,9 +327,9 @@ export default function Shop() {
                   animate={{ opacity: 1, y: 0 }}
                   transition={{ delay: 0.1 }}
                 >
-                  <div className="relative text-center py-2 px-2">
+                  <div className="relative text-center py-3 px-2">
                     <p className="text-[10px] font-medium text-muted-foreground mb-0.5 uppercase tracking-wider">
-                      Asking Price
+                      Current Market Price
                     </p>
                     <div className="flex items-baseline justify-center gap-1.5">
                       <p className="text-xl font-bold text-primary tracking-tight">
@@ -329,6 +338,21 @@ export default function Shop() {
                       <span className="text-xs font-semibold text-muted-foreground">
                         Nexa
                       </span>
+                    </div>
+                    {(() => {
+                      const percentIncrease = ((selectedListing.asking_price - selectedListing.gift.base_xp_cost) / selectedListing.gift.base_xp_cost * 100).toFixed(1);
+                      return (
+                        <div className="mt-1 flex items-center justify-center gap-2">
+                          <p className="text-xs font-semibold text-green-500">
+                            +{percentIncrease}% from base
+                          </p>
+                        </div>
+                      );
+                    })()}
+                    <div className="mt-1 pt-1 border-t border-border/30">
+                      <p className="text-[10px] text-muted-foreground">
+                        Original: {selectedListing.gift.base_xp_cost.toLocaleString()} Nexa
+                      </p>
                     </div>
                   </div>
                 </motion.div>

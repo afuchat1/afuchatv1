@@ -20,6 +20,7 @@ interface MyListing {
     name: string;
     emoji: string;
     rarity: string;
+    base_xp_cost: number;
   };
 }
 
@@ -61,7 +62,8 @@ export default function Marketplace() {
             id,
             name,
             emoji,
-            rarity
+            rarity,
+            base_xp_cost
           )
         `)
         .eq('user_id', user.id)
@@ -179,6 +181,19 @@ export default function Marketplace() {
                         {listing.asking_price.toLocaleString()}
                         <span className="text-lg text-muted-foreground ml-2">Nexa</span>
                       </p>
+                      {(() => {
+                        const percentIncrease = ((listing.asking_price - listing.gift.base_xp_cost) / listing.gift.base_xp_cost * 100).toFixed(1);
+                        return (
+                          <>
+                            <p className="text-sm font-semibold text-green-500 mt-1">
+                              +{percentIncrease}% market increase
+                            </p>
+                            <p className="text-xs text-muted-foreground mt-1">
+                              Base price: {listing.gift.base_xp_cost.toLocaleString()} Nexa
+                            </p>
+                          </>
+                        );
+                      })()}
                     </div>
 
                     {/* Actions */}
