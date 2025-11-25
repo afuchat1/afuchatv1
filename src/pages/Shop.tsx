@@ -106,22 +106,10 @@ export default function Shop() {
 
       if (error) throw error;
 
-      // Fetch gift statistics for last sale prices
-      const { data: statsData } = await supabase
-        .from('gift_statistics')
-        .select('gift_id, last_sale_price');
+      // Sort listings by asking price (cheapest first)
+      const sortedListings = (data || []).sort((a: any, b: any) => a.asking_price - b.asking_price);
 
-      // Update asking_price to use last_sale_price where applicable
-      const listingsWithUpdatedPrices = (data || []).map((listing: any) => {
-        const stats = statsData?.find((s: any) => s.gift_id === listing.gift.id);
-        return {
-          ...listing,
-          // Use last_sale_price if available, otherwise use asking_price
-          asking_price: stats?.last_sale_price || listing.gift.base_xp_cost || listing.asking_price
-        };
-      }).sort((a: any, b: any) => a.asking_price - b.asking_price);
-
-      setListings(listingsWithUpdatedPrices as any);
+      setListings(sortedListings as any);
     } catch (error) {
       console.error('Error fetching marketplace listings:', error);
       toast.error('Failed to load marketplace');
