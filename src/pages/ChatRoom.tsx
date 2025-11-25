@@ -150,6 +150,8 @@ const ChatRoom = () => {
   const [currentWallpaper, setCurrentWallpaper] = useState<ChatWallpaper | null>(null);
   const [isGroupSettingsOpen, setIsGroupSettingsOpen] = useState(false);
   const [isGroupAdmin, setIsGroupAdmin] = useState(false);
+  const [isMember, setIsMember] = useState(true);
+  const [isJoining, setIsJoining] = useState(false);
 
   // Load theme and wallpaper data
   useEffect(() => {
@@ -471,16 +473,22 @@ const ChatRoom = () => {
     if (data) {
       setChatInfo(data);
       
-      // Check if current user is admin for groups
+      // Check if current user is member and admin for groups
       if (data.is_group && user) {
         const { data: memberData } = await supabase
           .from('chat_members')
           .select('is_admin')
           .eq('chat_id', chatId)
           .eq('user_id', user.id)
-          .single();
+          .maybeSingle();
         
-        setIsGroupAdmin(memberData?.is_admin || false);
+        if (memberData) {
+          setIsMember(true);
+          setIsGroupAdmin(memberData.is_admin || false);
+        } else {
+          setIsMember(false);
+          setIsGroupAdmin(false);
+        }
       }
       
       // For 1-on-1 chats, fetch the other user's profile
@@ -929,6 +937,34 @@ const ChatRoom = () => {
     navigate(-1);
   };
 
+  const handleJoinGroup = async () => {
+    if (!user || !chatId) return;
+    
+    setIsJoining(true);
+    try {
+      const { error } = await supabase
+        .from('chat_members')
+        .insert({
+          chat_id: chatId,
+          user_id: user.id,
+          is_admin: false
+        });
+
+      if (error) throw error;
+
+      toast.success(t('chat.joinedGroup'));
+      setIsMember(true);
+      
+      // Refresh chat info
+      await fetchChatInfo();
+    } catch (error) {
+      console.error('Error joining group:', error);
+      toast.error(t('chat.joinGroupError'));
+    } finally {
+      setIsJoining(false);
+    }
+  };
+
 
   if (loading) {
     return (
@@ -1178,9 +1214,23 @@ const ChatRoom = () => {
           />
         )}
 
+        {/* Join Group Button for Non-Members */}
+        {chatInfo?.is_group && !isMember && (
+          <div className="fixed bottom-0 left-0 right-0 z-20 bg-card border-t border-border px-4 py-4">
+            <Button
+              onClick={handleJoinGroup}
+              disabled={isJoining}
+              className="w-full h-12 rounded-xl font-semibold"
+            >
+              {isJoining ? t('chat.joining') : t('chat.joinGroup')}
+            </Button>
+          </div>
+        )}
+
         {/* Input: WhatsApp style */}
-        <div className="fixed bottom-0 left-0 right-0 z-20 bg-card border-t border-border px-2 py-2 pb-[env(safe-area-inset-bottom)]">
-          <input
+        {isMember && (
+          <div className="fixed bottom-0 left-0 right-0 z-20 bg-card border-t border-border px-2 py-2 pb-[env(safe-area-inset-bottom)]">
+            <input
             ref={fileInputRef}
             type="file"
             className="hidden"
@@ -1299,6 +1349,11 @@ const ChatRoom = () => {
             )}
           </form>
         </div>
+        )}
+
+        {typingUsers.length > 0 && (
+          <TypingIndicator userName={typingUsers[0]} />
+        )}
       </div>
 
       {/* Group Settings Sheet */}

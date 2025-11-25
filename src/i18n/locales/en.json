@@ -240,6 +240,10 @@
     "error": "Failed to load notifications"
   },
   "chat": {
+    "joinGroup": "Join Group",
+    "joining": "Joining...",
+    "joinedGroup": "Successfully joined group",
+    "joinGroupError": "Failed to join group",
     "title": "Messages",
     "newChat": "New Chat",
     "searchUsers": "Search users...",
