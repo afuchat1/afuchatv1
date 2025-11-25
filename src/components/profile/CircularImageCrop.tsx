@@ -135,9 +135,33 @@ export const CircularImageCrop = ({ imageFile, open, onOpenChange, onSave }: Cir
 
   const handleSave = () => {
     const canvas = canvasRef.current;
-    if (!canvas) return;
+    if (!canvas || !image) return;
 
-    canvas.toBlob((blob) => {
+    // Create a new canvas for the final output without overlays
+    const outputCanvas = document.createElement('canvas');
+    const size = 1080;
+    outputCanvas.width = size;
+    outputCanvas.height = size;
+    
+    const ctx = outputCanvas.getContext('2d');
+    if (!ctx) return;
+
+    // Draw the image with transformations (no overlay)
+    const scaledWidth = image.width * scale;
+    const scaledHeight = image.height * scale;
+    const x = (size - scaledWidth) / 2 + position.x;
+    const y = (size - scaledHeight) / 2 + position.y;
+    
+    ctx.drawImage(image, x, y, scaledWidth, scaledHeight);
+
+    // Apply circular crop
+    ctx.globalCompositeOperation = 'destination-in';
+    ctx.beginPath();
+    ctx.arc(size / 2, size / 2, size / 2, 0, Math.PI * 2);
+    ctx.fill();
+
+    // Convert to blob and save
+    outputCanvas.toBlob((blob) => {
       if (blob) {
         onSave(blob);
         onOpenChange(false);
