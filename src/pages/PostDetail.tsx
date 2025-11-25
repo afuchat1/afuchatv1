@@ -385,16 +385,43 @@ const PostDetail = () => {
         : (post ? `@${post.author.handle}` : '');
       const finalContent = mention ? `${replyText.trim()} ${mention}` : replyText.trim();
 
-      const { error } = await supabase
+      const { data: replyData, error } = await supabase
         .from('post_replies')
         .insert({
           post_id: postId,
           author_id: user.id,
           content: finalContent,
           parent_reply_id: replyingTo?.replyId || null,
-        });
+        })
+        .select()
+        .single();
 
       if (error) throw error;
+
+      // Check if AfuAI was mentioned and trigger AI reply
+      const mentionsAfuAi = /@afuai/i.test(finalContent);
+      if (mentionsAfuAi && post && replyData) {
+        try {
+          await fetch(
+            `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/afu-ai-reply`,
+            {
+              method: 'POST',
+              headers: {
+                'Content-Type': 'application/json',
+                'Authorization': `Bearer ${import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY}`,
+              },
+              body: JSON.stringify({
+                postId: postId,
+                replyContent: finalContent,
+                originalPostContent: post.content || '',
+                triggerReplyId: replyData.id,
+              }),
+            }
+          );
+        } catch (error) {
+          console.error('Failed to trigger AfuAI:', error);
+        }
+      }
 
       toast.success('Reply posted!');
       setReplyText('');
