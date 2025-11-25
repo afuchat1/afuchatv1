@@ -1,13 +1,14 @@
 import { useEffect, useState, useRef } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/contexts/AuthContext';
-import { Menu, Search, Camera, CheckCheck, VolumeX, Pin } from 'lucide-react';
+import { Menu, Search, Camera, CheckCheck, VolumeX, Pin, Users } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { CustomLoader } from '@/components/ui/CustomLoader';
 import NewChatDialog from '@/components/ui/NewChatDialog';
 import { Button } from '@/components/ui/button';
 import { ChatStoriesHeader } from '@/components/chat/ChatStoriesHeader';
 import { StoryAvatar } from '@/components/moments/StoryAvatar';
+import { CreateGroupDialog } from '@/components/chat/CreateGroupDialog';
 import { toast } from 'sonner';
 
 interface Chat {
@@ -63,6 +64,7 @@ const Chats = () => {
   const [chats, setChats] = useState<Chat[]>([]);
   const [loading, setLoading] = useState(true);
   const [isNewChatDialogOpen, setIsNewChatDialogOpen] = useState(false);
+  const [isCreateGroupDialogOpen, setIsCreateGroupDialogOpen] = useState(false);
   const [showFab, setShowFab] = useState(true);
   const scrollRef = useRef<HTMLDivElement>(null);
   const lastScrollY = useRef(0);
@@ -592,20 +594,43 @@ const Chats = () => {
         )}
       </div>
 
-      {/* Floating Action Button */}
-      <Button
-        size="lg"
-        onClick={() => setIsNewChatDialogOpen(true)}
-        className={`fixed bottom-20 right-6 h-14 w-14 rounded-full shadow-lg bg-primary hover:bg-primary/90 active:scale-95 transition-all duration-300 z-50 ${
-          showFab ? 'translate-y-0 opacity-100 scale-100' : 'translate-y-20 opacity-0 scale-90 pointer-events-none'
-        }`}
-      >
-        <Camera className="h-6 w-6" />
-      </Button>
+      {/* Floating Action Buttons */}
+      <div className="fixed bottom-20 right-6 flex flex-col gap-3 z-50">
+        {/* Create Group Button */}
+        <Button
+          size="lg"
+          onClick={() => setIsCreateGroupDialogOpen(true)}
+          className={`h-14 w-14 rounded-full shadow-lg bg-secondary hover:bg-secondary/90 active:scale-95 transition-all duration-300 ${
+            showFab ? 'translate-y-0 opacity-100 scale-100' : 'translate-y-20 opacity-0 scale-90 pointer-events-none'
+          }`}
+        >
+          <Users className="h-6 w-6" />
+        </Button>
+        
+        {/* New Chat Button */}
+        <Button
+          size="lg"
+          onClick={() => setIsNewChatDialogOpen(true)}
+          className={`h-14 w-14 rounded-full shadow-lg bg-primary hover:bg-primary/90 active:scale-95 transition-all duration-300 ${
+            showFab ? 'translate-y-0 opacity-100 scale-100' : 'translate-y-20 opacity-0 scale-90 pointer-events-none'
+          }`}
+        >
+          <Camera className="h-6 w-6" />
+        </Button>
+      </div>
 
       <NewChatDialog
         isOpen={isNewChatDialogOpen}
         onClose={() => setIsNewChatDialogOpen(false)}
+      />
+
+      <CreateGroupDialog
+        isOpen={isCreateGroupDialogOpen}
+        onClose={() => setIsCreateGroupDialogOpen(false)}
+        onGroupCreated={(groupId) => {
+          navigate(`/chat/${groupId}`);
+          toast.success('Group created! Add members to get started.');
+        }}
       />
     </div>
   );
