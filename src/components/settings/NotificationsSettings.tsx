@@ -3,8 +3,7 @@ import { Card } from '@/components/ui/card';
 import { Switch } from '@/components/ui/switch';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Label } from '@/components/ui/label';
-import { Bell, MessageSquare, Heart, UserPlus, Gift, AtSign, Mail, Moon, Clock } from 'lucide-react';
-import EnableNotificationsButton from '@/components/EnableNotificationsButton';
+import { MessageSquare, Heart, UserPlus, Gift, AtSign, Mail, Moon, Clock } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/contexts/AuthContext';
 import { toast } from 'sonner';
@@ -22,15 +21,6 @@ export const NotificationsSettings = () => {
   const [emailMentions, setEmailMentions] = useState(true);
   const [emailReplies, setEmailReplies] = useState(true);
   const [emailDigestFrequency, setEmailDigestFrequency] = useState<string>('instant');
-  
-  // Push preferences
-  const [pushEnabled, setPushEnabled] = useState(true);
-  const [pushMessages, setPushMessages] = useState(true);
-  const [pushLikes, setPushLikes] = useState(true);
-  const [pushFollows, setPushFollows] = useState(true);
-  const [pushGifts, setPushGifts] = useState(true);
-  const [pushMentions, setPushMentions] = useState(true);
-  const [pushReplies, setPushReplies] = useState(true);
   
   // Quiet hours
   const [quietHoursEnabled, setQuietHoursEnabled] = useState(false);
@@ -63,15 +53,6 @@ export const NotificationsSettings = () => {
         setEmailMentions(data.email_mentions);
         setEmailReplies(data.email_replies);
         setEmailDigestFrequency(data.email_digest_frequency);
-        
-        // Push preferences
-        setPushEnabled(data.push_enabled);
-        setPushMessages(data.push_messages);
-        setPushLikes(data.push_likes);
-        setPushFollows(data.push_follows);
-        setPushGifts(data.push_gifts);
-        setPushMentions(data.push_mentions);
-        setPushReplies(data.push_replies);
         
         // Quiet hours
         setQuietHoursEnabled(data.quiet_hours_enabled);
@@ -116,20 +97,6 @@ export const NotificationsSettings = () => {
 
   return (
     <div className="space-y-6">
-      {/* Push Notifications Setup */}
-      <Card className="p-6">
-        <div className="flex items-center gap-3 mb-6">
-          <div className="p-2 bg-primary/10 rounded-lg">
-            <Bell className="h-5 w-5 text-primary" />
-          </div>
-          <h3 className="text-xl font-semibold">Push Notifications</h3>
-        </div>
-        <p className="text-sm text-muted-foreground mb-6">
-          Enable push notifications to receive alerts even when the app is closed
-        </p>
-        <EnableNotificationsButton />
-      </Card>
-
       {/* Email Notifications */}
       <Card className="p-6">
         <div className="flex items-center gap-3 mb-6">
@@ -280,134 +247,6 @@ export const NotificationsSettings = () => {
               </Select>
             </div>
           </>
-        )}
-      </Card>
-
-      {/* Push Notification Preferences */}
-      <Card className="p-6">
-        <div className="flex items-center gap-3 mb-6">
-          <div className="p-2 bg-primary/10 rounded-lg">
-            <Bell className="h-5 w-5 text-primary" />
-          </div>
-          <div className="flex-1">
-            <h3 className="text-xl font-semibold">Push Notification Preferences</h3>
-            <p className="text-sm text-muted-foreground mt-1">
-              Control what push notifications you receive
-            </p>
-          </div>
-          <Switch 
-            checked={pushEnabled} 
-            onCheckedChange={(checked) => {
-              setPushEnabled(checked);
-              updatePreferences({ push_enabled: checked });
-            }} 
-          />
-        </div>
-
-        {pushEnabled && (
-          <div className="space-y-4">
-            <div className="flex items-start justify-between gap-4 p-4 rounded-lg bg-muted/30 hover:bg-muted/50 transition-colors">
-              <div className="flex-1">
-                <div className="flex items-center gap-2 mb-1">
-                  <MessageSquare className="h-4 w-4 text-muted-foreground" />
-                  <p className="font-semibold">Messages</p>
-                </div>
-                <p className="text-sm text-muted-foreground">New direct messages</p>
-              </div>
-              <Switch 
-                checked={pushMessages} 
-                onCheckedChange={(checked) => {
-                  setPushMessages(checked);
-                  updatePreferences({ push_messages: checked });
-                }} 
-              />
-            </div>
-
-            <div className="flex items-start justify-between gap-4 p-4 rounded-lg bg-muted/30 hover:bg-muted/50 transition-colors">
-              <div className="flex-1">
-                <div className="flex items-center gap-2 mb-1">
-                  <Heart className="h-4 w-4 text-muted-foreground" />
-                  <p className="font-semibold">Likes & Reactions</p>
-                </div>
-                <p className="text-sm text-muted-foreground">When someone likes your post</p>
-              </div>
-              <Switch 
-                checked={pushLikes} 
-                onCheckedChange={(checked) => {
-                  setPushLikes(checked);
-                  updatePreferences({ push_likes: checked });
-                }} 
-              />
-            </div>
-
-            <div className="flex items-start justify-between gap-4 p-4 rounded-lg bg-muted/30 hover:bg-muted/50 transition-colors">
-              <div className="flex-1">
-                <div className="flex items-center gap-2 mb-1">
-                  <UserPlus className="h-4 w-4 text-muted-foreground" />
-                  <p className="font-semibold">New Followers</p>
-                </div>
-                <p className="text-sm text-muted-foreground">When someone follows you</p>
-              </div>
-              <Switch 
-                checked={pushFollows} 
-                onCheckedChange={(checked) => {
-                  setPushFollows(checked);
-                  updatePreferences({ push_follows: checked });
-                }} 
-              />
-            </div>
-
-            <div className="flex items-start justify-between gap-4 p-4 rounded-lg bg-muted/30 hover:bg-muted/50 transition-colors">
-              <div className="flex-1">
-                <div className="flex items-center gap-2 mb-1">
-                  <Gift className="h-4 w-4 text-muted-foreground" />
-                  <p className="font-semibold">Gifts & Tips</p>
-                </div>
-                <p className="text-sm text-muted-foreground">When you receive gifts or tips</p>
-              </div>
-              <Switch 
-                checked={pushGifts} 
-                onCheckedChange={(checked) => {
-                  setPushGifts(checked);
-                  updatePreferences({ push_gifts: checked });
-                }} 
-              />
-            </div>
-
-            <div className="flex items-start justify-between gap-4 p-4 rounded-lg bg-muted/30 hover:bg-muted/50 transition-colors">
-              <div className="flex-1">
-                <div className="flex items-center gap-2 mb-1">
-                  <AtSign className="h-4 w-4 text-muted-foreground" />
-                  <p className="font-semibold">Mentions</p>
-                </div>
-                <p className="text-sm text-muted-foreground">When someone mentions you</p>
-              </div>
-              <Switch 
-                checked={pushMentions} 
-                onCheckedChange={(checked) => {
-                  setPushMentions(checked);
-                  updatePreferences({ push_mentions: checked });
-                }} 
-              />
-            </div>
-
-            <div className="flex items-start justify-between gap-4 p-4 rounded-lg bg-muted/30 hover:bg-muted/50 transition-colors">
-              <div className="flex-1">
-                <div className="flex items-center gap-2 mb-1">
-                  <MessageSquare className="h-4 w-4 text-muted-foreground" />
-                  <p className="font-semibold">Replies</p>
-                </div>
-                <p className="text-sm text-muted-foreground">When someone replies to your post</p>
-              </div>
-              <Switch 
-                checked={pushReplies} 
-                onCheckedChange={(checked) => {
-                  setPushReplies(checked);
-                  updatePreferences({ push_replies: checked });
-                }} 
-              />
-            </div>
-          </div>
         )}
       </Card>
 

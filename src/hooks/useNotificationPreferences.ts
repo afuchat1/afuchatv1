@@ -13,13 +13,6 @@ export interface NotificationPreferences {
   email_mentions: boolean;
   email_replies: boolean;
   email_digest_frequency: 'instant' | 'daily' | 'weekly' | 'never';
-  push_enabled: boolean;
-  push_messages: boolean;
-  push_likes: boolean;
-  push_follows: boolean;
-  push_gifts: boolean;
-  push_mentions: boolean;
-  push_replies: boolean;
   quiet_hours_enabled: boolean;
   quiet_hours_start: string;
   quiet_hours_end: string;
@@ -34,13 +27,6 @@ const defaultPreferences: NotificationPreferences = {
   email_mentions: true,
   email_replies: true,
   email_digest_frequency: 'instant',
-  push_enabled: true,
-  push_messages: true,
-  push_likes: true,
-  push_follows: true,
-  push_gifts: true,
-  push_mentions: true,
-  push_replies: true,
   quiet_hours_enabled: false,
   quiet_hours_start: '22:00:00',
   quiet_hours_end: '08:00:00',
@@ -119,10 +105,9 @@ export const useNotificationPreferences = () => {
     }
   };
 
-  const shouldSendNotification = (type: string, channel: 'email' | 'push') => {
+  const shouldSendNotification = (type: string, channel: 'email') => {
     if (channel === 'email' && !preferences.email_enabled) return false;
-    if (channel === 'push' && !preferences.push_enabled) return false;
-    if (channel === 'push' && isInQuietHours()) return false;
+    if (isInQuietHours()) return false;
 
     const prefKey = `${channel}_${type}` as keyof NotificationPreferences;
     return preferences[prefKey] !== false;

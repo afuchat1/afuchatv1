@@ -32,39 +32,3 @@ registerRoute(
   })
 );
 
-// --- This is the new code for Push Notifications ---
-
-// 1. Listen for a push message from the server
-self.addEventListener('push', (event) => {
-  if (!event.data) {
-    console.error('Push event but no data');
-    return;
-  }
-  
-  const data = event.data.json();
-  const title = data.title || 'AfuChat';
-  const options = {
-    body: data.body,
-    icon: '/logo.jpg', // Using your logo from manifest
-    badge: '/logo.jpg', // Using your logo
-    vibrate: [200, 100, 200], // Vibration pattern: vibrate 200ms, pause 100ms, vibrate 200ms
-    data: {
-      url: data.url || '/', // We can send a URL to open on click
-    },
-  };
-
-  // Show the notification
-  event.waitUntil(
-    self.registration.showNotification(title, options)
-  );
-});
-
-// 2. Listen for a click on the notification
-self.addEventListener('notificationclick', (event: any) => {
-  event.notification.close(); // Close the notification
-
-  // Open the app or a specific URL
-  event.waitUntil(
-    self.clients.openWindow(event.notification.data.url || '/')
-  );
-});

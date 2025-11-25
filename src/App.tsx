@@ -12,7 +12,6 @@ import { SettingsSheet } from "./components/SettingsSheet";
 import { useDailyLogin } from "./hooks/useDailyLogin";
 import { useLanguageSync } from "./hooks/useLanguageSync";
 import { useScrollRestoration } from "./hooks/useScrollRestoration";
-import { usePushNotifications } from "./hooks/usePushNotifications";
 import { CustomLoader } from '@/components/ui/CustomLoader';
 import { LoadingBar } from '@/components/LoadingBar';
 import { motion, AnimatePresence } from 'framer-motion';
@@ -102,8 +101,6 @@ const AppRoutes = () => {
   useLanguageSync();
   // Restore scroll positions on navigation
   useScrollRestoration();
-  // Setup push notifications
-  usePushNotifications();
 
   return (
     <>
