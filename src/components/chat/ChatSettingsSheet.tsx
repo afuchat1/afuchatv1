@@ -2,6 +2,9 @@ import { useState, useEffect } from 'react';
 import { useAuth } from '@/contexts/AuthContext';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
+import { usePremiumStatus } from '@/hooks/usePremiumStatus';
+import { PremiumThemeGenerator } from './PremiumThemeGenerator';
+import { Crown } from 'lucide-react';
 import {
   Sheet,
   SheetContent,
@@ -39,6 +42,7 @@ interface ChatSettingsSheetProps {
 
 export const ChatSettingsSheet = ({ isOpen, onClose, defaultTab = 'appearance' }: ChatSettingsSheetProps) => {
   const { user } = useAuth();
+  const { isPremium } = usePremiumStatus();
   const [loading, setLoading] = useState(true);
   const [fontSize, setFontSize] = useState([16]);
   const [autoDownload, setAutoDownload] = useState(true);
@@ -49,13 +53,35 @@ export const ChatSettingsSheet = ({ isOpen, onClose, defaultTab = 'appearance' }
   const [selectedWallpaper, setSelectedWallpaper] = useState('default');
   const [bubbleStyle, setBubbleStyle] = useState('rounded');
   const [mediaQuality, setMediaQuality] = useState('high');
+  const [themes, setThemes] = useState<any[]>([]);
+  const [wallpapers, setWallpapers] = useState<any[]>([]);
 
-  // Load preferences from database
+  // Load themes and wallpapers from database
   useEffect(() => {
-    if (user && isOpen) {
-      loadPreferences();
+    if (isOpen) {
+      loadThemesAndWallpapers();
+      if (user) loadPreferences();
     }
   }, [user, isOpen]);
+
+  const loadThemesAndWallpapers = async () => {
+    try {
+      const { data: themesData } = await supabase
+        .from('chat_themes')
+        .select('*')
+        .order('created_at', { ascending: false });
+
+      const { data: wallpapersData } = await supabase
+        .from('chat_wallpapers')
+        .select('*')
+        .order('created_at', { ascending: false });
+
+      setThemes(themesData || []);
+      setWallpapers(wallpapersData || []);
+    } catch (error) {
+      console.error('Error loading themes/wallpapers:', error);
+    }
+  };
 
   const loadPreferences = async () => {
     if (!user) return;
@@ -132,23 +158,6 @@ export const ChatSettingsSheet = ({ isOpen, onClose, defaultTab = 'appearance' }
     }
   }, [selectedTheme, selectedWallpaper, bubbleStyle, fontSize, sounds, autoDownload, mediaQuality, chatLock, readReceipts, loading]);
 
-  const themes = [
-    { id: 'teal', name: 'Teal Wave', color: 'bg-[hsl(174,72%,42%)]' },
-    { id: 'purple', name: 'Purple Dream', color: 'bg-[hsl(271,76%,53%)]' },
-    { id: 'blue', name: 'Ocean Blue', color: 'bg-[hsl(217,91%,60%)]' },
-    { id: 'pink', name: 'Sunset Pink', color: 'bg-[hsl(340,82%,52%)]' },
-    { id: 'green', name: 'Forest Green', color: 'bg-[hsl(142,76%,36%)]' },
-    { id: 'orange', name: 'Warm Orange', color: 'bg-[hsl(24,95%,53%)]' },
-  ];
-
-  const wallpapers = [
-    { id: 'default', name: 'Default', gradient: 'bg-gradient-to-br from-background to-muted' },
-    { id: 'waves', name: 'Waves', gradient: 'bg-gradient-to-br from-primary/10 via-accent/10 to-background' },
-    { id: 'sunset', name: 'Sunset', gradient: 'bg-gradient-to-br from-orange-500/20 via-pink-500/20 to-purple-500/20' },
-    { id: 'forest', name: 'Forest', gradient: 'bg-gradient-to-br from-green-500/20 via-emerald-500/20 to-teal-500/20' },
-    { id: 'midnight', name: 'Midnight', gradient: 'bg-gradient-to-br from-blue-900/30 via-purple-900/30 to-pink-900/30' },
-  ];
-
   return (
     <Sheet open={isOpen} onOpenChange={onClose}>
       <SheetContent side="right" className="w-full sm:w-[540px] p-0">
@@ -178,25 +187,43 @@ export const ChatSettingsSheet = ({ isOpen, onClose, defaultTab = 'appearance' }
               <TabsContent value="appearance" className="space-y-6 mt-0">
                 {/* Themes */}
                 <div className="space-y-4">
-                  <div className="flex items-center gap-2">
-                    <Palette className="h-5 w-5 text-primary" />
-                    <h3 className="text-lg font-semibold">Chat Theme</h3>
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center gap-2">
+                      <Palette className="h-5 w-5 text-primary" />
+                      <h3 className="text-lg font-semibold">Chat Theme</h3>
+                    </div>
+                    {isPremium && <PremiumThemeGenerator type="theme" onGenerated={loadThemesAndWallpapers} />}
                   </div>
                   <div className="grid grid-cols-3 gap-3">
-                    {themes.map((theme) => (
-                      <button
-                        key={theme.id}
-                        onClick={() => setSelectedTheme(theme.id)}
-                        className={`relative p-4 rounded-xl border-2 transition-all hover:scale-105 ${
-                          selectedTheme === theme.id
-                            ? 'border-primary shadow-lg shadow-primary/20'
-                            : 'border-border hover:border-primary/50'
-                        }`}
-                      >
-                        <div className={`h-16 rounded-lg ${theme.color} mb-2`} />
-                        <p className="text-xs font-medium text-center">{theme.name}</p>
-                      </button>
-                    ))}
+                    {themes.map((theme) => {
+                      const colors = typeof theme.colors === 'string' ? JSON.parse(theme.colors) : theme.colors;
+                      const isLocked = theme.is_premium && !isPremium;
+                      return (
+                        <button
+                          key={theme.id}
+                          onClick={() => !isLocked && setSelectedTheme(theme.id)}
+                          disabled={isLocked}
+                          className={`relative p-4 rounded-xl border-2 transition-all ${
+                            !isLocked && 'hover:scale-105'
+                          } ${
+                            selectedTheme === theme.id
+                              ? 'border-primary shadow-lg shadow-primary/20'
+                              : 'border-border hover:border-primary/50'
+                          } ${isLocked && 'opacity-50 cursor-not-allowed'}`}
+                        >
+                          <div 
+                            className="h-16 rounded-lg mb-2" 
+                            style={{ background: `linear-gradient(135deg, ${colors.primary}, ${colors.secondary})` }}
+                          />
+                          <p className="text-xs font-medium text-center">{theme.name}</p>
+                          {isLocked && (
+                            <div className="absolute inset-0 flex items-center justify-center bg-background/80 rounded-xl">
+                              <Crown className="h-6 w-6 text-primary" />
+                            </div>
+                          )}
+                        </button>
+                      );
+                    })}
                   </div>
                 </div>
 
@@ -204,28 +231,47 @@ export const ChatSettingsSheet = ({ isOpen, onClose, defaultTab = 'appearance' }
 
                 {/* Wallpapers */}
                 <div className="space-y-4">
-                  <div className="flex items-center gap-2">
-                    <Wallpaper className="h-5 w-5 text-primary" />
-                    <h3 className="text-lg font-semibold">Chat Wallpaper</h3>
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center gap-2">
+                      <Wallpaper className="h-5 w-5 text-primary" />
+                      <h3 className="text-lg font-semibold">Chat Wallpaper</h3>
+                    </div>
+                    {isPremium && <PremiumThemeGenerator type="wallpaper" onGenerated={loadThemesAndWallpapers} />}
                   </div>
                   <div className="grid grid-cols-2 gap-3">
-                    {wallpapers.map((wallpaper) => (
-                      <button
-                        key={wallpaper.id}
-                        onClick={() => setSelectedWallpaper(wallpaper.id)}
-                        className={`relative h-24 rounded-xl border-2 transition-all hover:scale-105 ${wallpaper.gradient} ${
-                          selectedWallpaper === wallpaper.id
-                            ? 'border-primary shadow-lg shadow-primary/20'
-                            : 'border-border hover:border-primary/50'
-                        }`}
-                      >
-                        <div className="absolute inset-0 flex items-center justify-center">
-                          <p className="text-sm font-medium bg-background/80 px-3 py-1 rounded-full">
-                            {wallpaper.name}
-                          </p>
-                        </div>
-                      </button>
-                    ))}
+                    {wallpapers.map((wallpaper) => {
+                      const isLocked = wallpaper.is_premium && !isPremium;
+                      return (
+                        <button
+                          key={wallpaper.id}
+                          onClick={() => !isLocked && setSelectedWallpaper(wallpaper.id)}
+                          disabled={isLocked}
+                          className={`relative h-24 rounded-xl border-2 transition-all ${
+                            !isLocked && 'hover:scale-105'
+                          } ${
+                            selectedWallpaper === wallpaper.id
+                              ? 'border-primary shadow-lg shadow-primary/20'
+                              : 'border-border hover:border-primary/50'
+                          } ${isLocked && 'opacity-50 cursor-not-allowed'}`}
+                          style={
+                            wallpaper.image_url.startsWith('http') 
+                              ? { backgroundImage: `url(${wallpaper.image_url})`, backgroundSize: 'cover' }
+                              : undefined
+                          }
+                        >
+                          <div className="absolute inset-0 flex items-center justify-center">
+                            <p className="text-sm font-medium bg-background/80 px-3 py-1 rounded-full">
+                              {wallpaper.name}
+                            </p>
+                          </div>
+                          {isLocked && (
+                            <div className="absolute inset-0 flex items-center justify-center bg-background/80 rounded-xl">
+                              <Crown className="h-6 w-6 text-primary" />
+                            </div>
+                          )}
+                        </button>
+                      );
+                    })}
                   </div>
                 </div>
 

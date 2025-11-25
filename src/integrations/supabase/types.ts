@@ -242,9 +242,11 @@ export type Database = {
           media_quality: string | null
           read_receipts: boolean | null
           sounds_enabled: boolean | null
+          theme_id: string | null
           updated_at: string | null
           user_id: string
           wallpaper: string | null
+          wallpaper_id: string | null
         }
         Insert: {
           auto_download?: boolean | null
@@ -257,9 +259,11 @@ export type Database = {
           media_quality?: string | null
           read_receipts?: boolean | null
           sounds_enabled?: boolean | null
+          theme_id?: string | null
           updated_at?: string | null
           user_id: string
           wallpaper?: string | null
+          wallpaper_id?: string | null
         }
         Update: {
           auto_download?: boolean | null
@@ -272,11 +276,20 @@ export type Database = {
           media_quality?: string | null
           read_receipts?: boolean | null
           sounds_enabled?: boolean | null
+          theme_id?: string | null
           updated_at?: string | null
           user_id?: string
           wallpaper?: string | null
+          wallpaper_id?: string | null
         }
         Relationships: [
+          {
+            foreignKeyName: "chat_preferences_theme_id_fkey"
+            columns: ["theme_id"]
+            isOneToOne: false
+            referencedRelation: "chat_themes"
+            referencedColumns: ["id"]
+          },
           {
             foreignKeyName: "chat_preferences_user_id_fkey"
             columns: ["user_id"]
@@ -284,7 +297,71 @@ export type Database = {
             referencedRelation: "profiles"
             referencedColumns: ["id"]
           },
+          {
+            foreignKeyName: "chat_preferences_wallpaper_id_fkey"
+            columns: ["wallpaper_id"]
+            isOneToOne: false
+            referencedRelation: "chat_wallpapers"
+            referencedColumns: ["id"]
+          },
         ]
+      }
+      chat_themes: {
+        Row: {
+          colors: Json
+          created_at: string | null
+          generated_prompt: string
+          id: string
+          image_url: string | null
+          is_premium: boolean | null
+          name: string
+        }
+        Insert: {
+          colors: Json
+          created_at?: string | null
+          generated_prompt: string
+          id?: string
+          image_url?: string | null
+          is_premium?: boolean | null
+          name: string
+        }
+        Update: {
+          colors?: Json
+          created_at?: string | null
+          generated_prompt?: string
+          id?: string
+          image_url?: string | null
+          is_premium?: boolean | null
+          name?: string
+        }
+        Relationships: []
+      }
+      chat_wallpapers: {
+        Row: {
+          created_at: string | null
+          generated_prompt: string
+          id: string
+          image_url: string
+          is_premium: boolean | null
+          name: string
+        }
+        Insert: {
+          created_at?: string | null
+          generated_prompt: string
+          id?: string
+          image_url: string
+          is_premium?: boolean | null
+          name: string
+        }
+        Update: {
+          created_at?: string | null
+          generated_prompt?: string
+          id?: string
+          image_url?: string
+          is_premium?: boolean | null
+          name?: string
+        }
+        Relationships: []
       }
       chats: {
         Row: {
