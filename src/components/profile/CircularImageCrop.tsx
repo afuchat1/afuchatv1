@@ -25,8 +25,15 @@ export const CircularImageCrop = ({ imageFile, open, onOpenChange, onSave }: Cir
       const url = URL.createObjectURL(imageFile);
       img.onload = () => {
         setImage(img);
-        setScale(1);
-        setPosition({ x: 0, y: 0 });
+        // Start with image fitting in the canvas
+        const canvas = canvasRef.current;
+        if (canvas) {
+          const canvasSize = 400;
+          const imgAspect = img.width / img.height;
+          const initialScale = Math.min(canvasSize / img.width, canvasSize / img.height);
+          setScale(initialScale);
+          setPosition({ x: 0, y: 0 });
+        }
         URL.revokeObjectURL(url);
       };
       img.src = url;
@@ -50,26 +57,30 @@ export const CircularImageCrop = ({ imageFile, open, onOpenChange, onSave }: Cir
     canvas.width = size;
     canvas.height = size;
 
-    // Clear canvas
-    ctx.clearRect(0, 0, size, size);
+    // Fill with semi-transparent background
+    ctx.fillStyle = 'rgba(0, 0, 0, 0.5)';
+    ctx.fillRect(0, 0, size, size);
 
     // Draw image with transformations
     ctx.save();
-    ctx.translate(size / 2, size / 2);
     
     const scaledWidth = image.width * scale;
     const scaledHeight = image.height * scale;
     
+    // Center image and apply position offset
+    const x = (size - scaledWidth) / 2 + position.x;
+    const y = (size - scaledHeight) / 2 + position.y;
+    
     ctx.drawImage(
       image,
-      position.x - scaledWidth / 2,
-      position.y - scaledHeight / 2,
+      x,
+      y,
       scaledWidth,
       scaledHeight
     );
     ctx.restore();
 
-    // Draw circular mask overlay
+    // Create circular crop preview (show what will be kept)
     ctx.save();
     ctx.globalCompositeOperation = 'destination-in';
     ctx.beginPath();
@@ -80,9 +91,9 @@ export const CircularImageCrop = ({ imageFile, open, onOpenChange, onSave }: Cir
     // Draw circular border
     ctx.save();
     ctx.strokeStyle = 'hsl(var(--primary))';
-    ctx.lineWidth = 3;
+    ctx.lineWidth = 4;
     ctx.beginPath();
-    ctx.arc(size / 2, size / 2, size / 2 - 1.5, 0, Math.PI * 2);
+    ctx.arc(size / 2, size / 2, size / 2 - 2, 0, Math.PI * 2);
     ctx.stroke();
     ctx.restore();
   };
@@ -174,7 +185,7 @@ export const CircularImageCrop = ({ imageFile, open, onOpenChange, onSave }: Cir
               <Button
                 size="icon"
                 variant="outline"
-                onClick={() => setScale(Math.max(0.5, scale - 0.1))}
+                onClick={() => setScale(Math.max(0.1, scale - 0.1))}
                 className="h-10 w-10"
               >
                 <ZoomOut className="h-4 w-4" />
@@ -182,15 +193,15 @@ export const CircularImageCrop = ({ imageFile, open, onOpenChange, onSave }: Cir
               <Slider
                 value={[scale]}
                 onValueChange={(values) => setScale(values[0])}
-                min={0.5}
-                max={3}
-                step={0.1}
+                min={0.1}
+                max={5}
+                step={0.05}
                 className="flex-1"
               />
               <Button
                 size="icon"
                 variant="outline"
-                onClick={() => setScale(Math.min(3, scale + 0.1))}
+                onClick={() => setScale(Math.min(5, scale + 0.1))}
                 className="h-10 w-10"
               >
                 <ZoomIn className="h-4 w-4" />
