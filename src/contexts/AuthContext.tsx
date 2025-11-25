@@ -28,77 +28,80 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [loading, setLoading] = React.useState(true);
 
   React.useEffect(() => {
+    let isMounted = true;
+    
     // Function to record session and login
     const recordUserSession = async (session: Session) => {
-      if (!session?.user || !session?.access_token) return;
+      if (!session?.user || !session?.access_token || !isMounted) return;
       
-      // Fire and forget - don't block user experience on tracking failures
-      const userAgent = navigator.userAgent;
-      const browser = userAgent.includes('Chrome') ? 'Chrome' 
-        : userAgent.includes('Firefox') ? 'Firefox'
-        : userAgent.includes('Safari') ? 'Safari'
-        : 'Unknown';
-      
-      const deviceName = /Mobile|Android|iPhone|iPad/.test(userAgent) 
-        ? 'Mobile Device' 
-        : 'Desktop';
+      try {
+        const userAgent = navigator.userAgent;
+        const browser = userAgent.includes('Chrome') ? 'Chrome' 
+          : userAgent.includes('Firefox') ? 'Firefox'
+          : userAgent.includes('Safari') ? 'Safari'
+          : 'Unknown';
+        
+        const deviceName = /Mobile|Android|iPhone|iPad/.test(userAgent) 
+          ? 'Mobile Device' 
+          : 'Desktop';
 
-      // Record login history in background
-      Promise.resolve(supabase.rpc('record_login_attempt', {
-        p_user_id: session.user.id,
-        p_success: true,
-        p_user_agent: userAgent
-      })).catch(err => console.warn('Login tracking failed:', err));
-
-      // Create/update active session in background
-      Promise.resolve(supabase.rpc('upsert_active_session', {
-        p_user_id: session.user.id,
-        p_session_token: session.access_token,
-        p_device_name: deviceName,
-        p_browser: browser,
-        p_expires_at: session.expires_at ? new Date(session.expires_at * 1000).toISOString() : null
-      })).catch(err => console.warn('Session tracking failed:', err));
+        // Record login history and session - fire and forget
+        await Promise.all([
+          supabase.rpc('record_login_attempt', {
+            p_user_id: session.user.id,
+            p_success: true,
+            p_user_agent: userAgent
+          }).then(),
+          supabase.rpc('upsert_active_session', {
+            p_user_id: session.user.id,
+            p_session_token: session.access_token,
+            p_device_name: deviceName,
+            p_browser: browser,
+            p_expires_at: session.expires_at ? new Date(session.expires_at * 1000).toISOString() : null
+          }).then()
+        ]);
+      } catch {
+        // Silent fail - don't block user experience
+      }
     };
 
-    // Set up auth state listener FIRST to catch all events
+    // Set up auth state listener
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
       (event, session) => {
-        // Only synchronous state updates here to avoid deadlocks
+        if (!isMounted) return;
+        
         setSession(session);
         setUser(session?.user ?? null);
         setLoading(false);
         
-        // Defer any Supabase calls to avoid doing them inside the callback
         if ((event === 'SIGNED_IN' || event === 'TOKEN_REFRESHED') && session) {
-          setTimeout(() => {
-            recordUserSession(session).catch((error) => {
-              console.error('Error recording session from auth state change:', error);
-            });
-          }, 0);
+          setTimeout(() => recordUserSession(session), 100);
         }
       }
     );
 
-    // THEN check for existing session
-    supabase.auth.getSession().then(({ data: { session } }) => {
-      setSession(session);
-      setUser(session?.user ?? null);
-      setLoading(false);
-      
-      if (session) {
-        // Defer Supabase RPC calls to avoid doing them directly in the promise chain
-        setTimeout(() => {
-          recordUserSession(session).catch((error) => {
-            console.error('Error recording existing session:', error);
-          });
-        }, 0);
-      }
-    }).catch((error) => {
-      console.error('Error getting session:', error);
-      setLoading(false);
-    });
+    // Check for existing session
+    supabase.auth.getSession()
+      .then(({ data: { session } }) => {
+        if (!isMounted) return;
+        
+        setSession(session);
+        setUser(session?.user ?? null);
+        setLoading(false);
+        
+        if (session) {
+          setTimeout(() => recordUserSession(session), 100);
+        }
+      })
+      .catch((error) => {
+        console.error('Error getting session:', error);
+        if (isMounted) setLoading(false);
+      });
 
-    return () => subscription.unsubscribe();
+    return () => {
+      isMounted = false;
+      subscription.unsubscribe();
+    };
   }, []);
 
   return (

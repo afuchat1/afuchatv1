@@ -1430,52 +1430,39 @@ const Feed = ({ defaultTab = 'foryou' }: FeedProps = {}) => {
 
 
   const fetchPosts = useCallback(async (page: number = 0, isInitial: boolean = false) => {
-    console.log('[Feed] fetchPosts: Starting fetch...', { page, isInitial });
-    if (isInitial) {
-      setLoading(true);
-    } else {
-      setLoadingMore(true);
-    }
+    if (isInitial) setLoading(true);
+    else setLoadingMore(true);
     
-    // Set a timeout to prevent endless loading (30 seconds)
+    // Set a timeout to prevent endless loading
     const loadingTimeout = setTimeout(() => {
-      if (isInitial) {
-        setLoading(false);
-        toast.error('Loading is taking longer than expected. Please check your connection.');
-      } else {
-        setLoadingMore(false);
-      }
-    }, 30000); // 30 second timeout
+      if (isInitial) setLoading(false);
+      else setLoadingMore(false);
+      toast.error('Loading is taking longer than expected. Please check your connection.');
+    }, 30000);
     
     try {
       const POSTS_PER_PAGE = 50;
       const from = page * POSTS_PER_PAGE;
       const to = from + POSTS_PER_PAGE - 1;
 
-      // Fetch all posts for "For You" tab
-      let { data: postData, error: postsError } = await supabase
+      // Fetch posts with optimized query
+      const { data: postData, error: postsError } = await supabase
         .from('posts')
         .select(`
           *,
-          profiles(display_name, handle, is_verified, is_organization_verified, is_affiliate, is_business_mode, avatar_url, affiliated_business_id, last_seen, show_online_status),
+          profiles!inner(display_name, handle, is_verified, is_organization_verified, is_affiliate, is_business_mode, avatar_url, affiliated_business_id, last_seen, show_online_status),
           post_images(image_url, display_order, alt_text),
           post_link_previews(url, title, description, image_url, site_name)
         `)
         .order('created_at', { ascending: false })
         .range(from, to);
-
-      console.log('[Feed] fetchPosts: Posts query result:', { postData, postsError });
       
-      if (postsError) {
-        console.error('[Feed] fetchPosts: Error fetching posts:', postsError);
-        throw postsError;
-      }
-      if (!postData) postData = [];
+      if (postsError) throw postsError;
+      if (!postData) throw new Error('No posts data received');
 
-      // Check if we have more posts to load
       setHasMore(postData.length === POSTS_PER_PAGE);
 
-      // Fetch following posts if user is logged in
+      // Fetch following posts efficiently
       let followingPostData: any[] = [];
       if (user) {
         const { data: followingData } = await supabase
@@ -1483,180 +1470,147 @@ const Feed = ({ defaultTab = 'foryou' }: FeedProps = {}) => {
           .select('following_id')
           .eq('follower_id', user.id);
 
-        if (followingData && followingData.length > 0) {
+        if (followingData?.length > 0) {
           const followingIds = followingData.map((f) => f.following_id);
-          const { data: followingPostsData } = await supabase
+          const { data } = await supabase
             .from('posts')
             .select(`
               *,
-              profiles(display_name, handle, is_verified, is_organization_verified, is_affiliate, is_business_mode, avatar_url, affiliated_business_id),
+              profiles!inner(display_name, handle, is_verified, is_organization_verified, is_affiliate, is_business_mode, avatar_url, affiliated_business_id, last_seen, show_online_status),
               post_images(image_url, display_order, alt_text),
               post_link_previews(url, title, description, image_url, site_name)
             `)
             .in('author_id', followingIds)
-            .order('created_at', { ascending: false })
-            .range(from, to);
-
-          followingPostData = followingPostsData || [];
+            .order('created_at', { ascending: false });
+          followingPostData = data || [];
         }
       }
 
       const postIds = postData.map((p) => p.id);
 
-      // Fetch affiliated business profiles and affiliation dates
-      const allBusinessIds = Array.from(new Set([
-        ...postData.map(p => p.profiles?.affiliated_business_id).filter(Boolean),
-        ...followingPostData.map(p => p.profiles?.affiliated_business_id).filter(Boolean)
-      ])) as string[];
-
-      let businessProfiles: Map<string, { avatar_url: string | null; display_name: string }> = new Map();
-      if (allBusinessIds.length > 0) {
-        const { data: businessData } = await supabase
-          .from('profiles')
-          .select('id, avatar_url, display_name')
-          .in('id', allBusinessIds);
+      // Batch fetch all data in parallel
+      const [businessData, affiliationData, repliesData, ackData] = await Promise.all([
+        // Business profiles
+        (async () => {
+          const businessIds = Array.from(new Set([
+            ...postData.map(p => p.profiles?.affiliated_business_id),
+            ...followingPostData.map(p => p.profiles?.affiliated_business_id)
+          ].filter(Boolean))) as string[];
+          
+          if (businessIds.length === 0) return new Map();
+          
+          const { data } = await supabase
+            .from('profiles')
+            .select('id, avatar_url, display_name')
+            .in('id', businessIds);
+          
+          const map = new Map();
+          (data || []).forEach((b: any) => map.set(b.id, { avatar_url: b.avatar_url, display_name: b.display_name }));
+          return map;
+        })(),
         
-        (businessData || []).forEach((b: any) => {
-          businessProfiles.set(b.id, { avatar_url: b.avatar_url, display_name: b.display_name });
-        });
-      }
-
-      // Fetch affiliation dates from affiliate_requests
-      const allAuthorIds = Array.from(new Set([
-        ...postData.filter(p => p.profiles?.is_affiliate).map(p => p.author_id),
-        ...followingPostData.filter(p => p.profiles?.is_affiliate).map(p => p.author_id)
-      ])) as string[];
-
-      let affiliationDates: Map<string, string> = new Map();
-      if (allAuthorIds.length > 0) {
-        const { data: affiliationData } = await supabase
-          .from('affiliate_requests')
-          .select('user_id, reviewed_at')
-          .in('user_id', allAuthorIds)
-          .eq('status', 'approved');
+        // Affiliation dates
+        (async () => {
+          const authorIds = Array.from(new Set([
+            ...postData.filter(p => p.profiles?.is_affiliate).map(p => p.author_id),
+            ...followingPostData.filter(p => p.profiles?.is_affiliate).map(p => p.author_id)
+          ])) as string[];
+          
+          if (authorIds.length === 0) return new Map();
+          
+          const { data } = await supabase
+            .from('affiliate_requests')
+            .select('user_id, reviewed_at')
+            .in('user_id', authorIds)
+            .eq('status', 'approved');
+          
+          const map = new Map();
+          (data || []).forEach((a: any) => map.set(a.user_id, a.reviewed_at));
+          return map;
+        })(),
         
-        (affiliationData || []).forEach((a: any) => {
-          affiliationDates.set(a.user_id, a.reviewed_at);
-        });
-      }
+        // Replies
+        supabase
+          .from('post_replies')
+          .select('*, profiles(display_name, handle, is_verified, is_organization_verified, is_affiliate, is_business_mode, avatar_url, affiliated_business_id, last_seen, show_online_status)')
+          .in('post_id', postIds)
+          .order('created_at', { ascending: true }),
+        
+        // Acknowledgments
+        supabase
+          .from('post_acknowledgments')
+          .select('post_id, user_id')
+          .in('post_id', postIds)
+      ]);
 
-      const { data: repliesData, error: repliesError } = await supabase
-        .from('post_replies')
-        .select('*, profiles(display_name, handle, is_verified, is_organization_verified, is_affiliate, is_business_mode, avatar_url, affiliated_business_id, last_seen, show_online_status)')
-        .in('post_id', postIds)
-        .order('created_at', { ascending: true });
-
-      if (repliesError) throw repliesError;
-
-      const { data: ackData, error: ackError } = await supabase
-        .from('post_acknowledgments')
-        .select('post_id, user_id')
-        .in('post_id', postIds);
-
-      if (ackError) throw ackError;
-
+      // Process replies
       const repliesByPostId = new Map<string, Reply[]>();
-      (repliesData || []).forEach((r: any) => {
+      (repliesData.data || []).forEach((r: any) => {
         const reply = r as Reply;
-        // Add affiliated business data and affiliation date if available
         if (reply.profiles?.affiliated_business_id) {
-          reply.profiles.affiliated_business = businessProfiles.get(reply.profiles.affiliated_business_id) || null;
+          reply.profiles.affiliated_business = businessData.get(reply.profiles.affiliated_business_id) || null;
         }
         if (reply.profiles?.is_affiliate && reply.author_id) {
-          reply.affiliation_date = affiliationDates.get(reply.author_id);
+          reply.affiliation_date = affiliationData.get(reply.author_id);
         }
-        if (!repliesByPostId.has(r.post_id)) {
-          repliesByPostId.set(r.post_id, []);
-        }
+        if (!repliesByPostId.has(r.post_id)) repliesByPostId.set(r.post_id, []);
         repliesByPostId.get(r.post_id)!.push(reply);
       });
 
+      // Process acknowledgments
       const acksByPostId = new Map<string, string[]>();
-      (ackData || []).forEach((ack) => {
-        if (!acksByPostId.has(ack.post_id)) {
-          acksByPostId.set(ack.post_id, []);
-        }
+      (ackData.data || []).forEach((ack) => {
+        if (!acksByPostId.has(ack.post_id)) acksByPostId.set(ack.post_id, []);
         acksByPostId.get(ack.post_id)!.push(ack.user_id);
       });
 
       const currentUserId = user?.id || null;
-      const finalPosts: Post[] = postData.map((post: any) => {
+      
+      // Map posts
+      const mapPost = (post: any) => {
         const replies = repliesByPostId.get(post.id) || [];
         const acks = acksByPostId.get(post.id) || [];
 
-        // Add affiliated business data and affiliation date if available
         if (post.profiles?.affiliated_business_id) {
-          post.profiles.affiliated_business = businessProfiles.get(post.profiles.affiliated_business_id) || null;
+          post.profiles.affiliated_business = businessData.get(post.profiles.affiliated_business_id) || null;
         }
 
         return {
           ...post,
           profiles: post.profiles || { display_name: 'Unknown', handle: 'unknown', is_verified: false, is_organization_verified: false },
-          replies: replies,
+          replies,
           reply_count: replies.length,
           like_count: acks.length,
           view_count: post.view_count || 0,
           has_liked: currentUserId ? acks.includes(currentUserId) : false,
-          affiliation_date: post.profiles?.is_affiliate && post.author_id ? affiliationDates.get(post.author_id) : undefined,
+          affiliation_date: post.profiles?.is_affiliate && post.author_id ? affiliationData.get(post.author_id) : undefined,
         } as Post;
-      });
+      };
 
-      // Process following posts
-      const finalFollowingPosts: Post[] = followingPostData.map((post: any) => {
-        const replies = repliesByPostId.get(post.id) || [];
-        const acks = acksByPostId.get(post.id) || [];
-
-        // Add affiliated business data if available
-        if (post.profiles?.affiliated_business_id) {
-          post.profiles.affiliated_business = businessProfiles.get(post.profiles.affiliated_business_id) || null;
-        }
-
-        return {
-          ...post,
-          profiles: post.profiles || { display_name: 'Unknown', handle: 'unknown', is_verified: false, is_organization_verified: false },
-          replies: replies,
-          reply_count: replies.length,
-          like_count: acks.length,
-          view_count: post.view_count || 0,
-          has_liked: currentUserId ? acks.includes(currentUserId) : false,
-        } as Post;
-      });
-
-      // Randomize posts to ensure variety
-      const shuffledPosts = shuffleArray(finalPosts);
-      const shuffledFollowingPosts = shuffleArray(finalFollowingPosts);
-
-      console.log('[Feed] fetchPosts: Final posts count:', shuffledPosts.length);
-      console.log('[Feed] fetchPosts: Following posts count:', shuffledFollowingPosts.length);
+      const finalPosts = shuffleArray(postData.map(mapPost));
+      const finalFollowingPosts = shuffleArray(followingPostData.map(mapPost));
       
       if (isInitial) {
-        setPosts(shuffledPosts);
-        setFollowingPosts(shuffledFollowingPosts);
+        setPosts(finalPosts);
+        setFollowingPosts(finalFollowingPosts);
       } else {
-        setPosts(prev => [...prev, ...shuffledPosts]);
-        setFollowingPosts(prev => [...prev, ...shuffledFollowingPosts]);
+        setPosts(prev => [...prev, ...finalPosts]);
+        setFollowingPosts(prev => [...prev, ...finalFollowingPosts]);
       }
     } catch (err) {
-      console.error('[Feed] fetchPosts: Critical error:', err);
-      if (err instanceof Error) {
-        console.error('[Feed] fetchPosts: Error details:', err.message, err.stack);
-        toast.error(`Could not fetch feed: ${err.message}`);
-      } else {
-        toast.error('Could not fetch feed. Please try again.');
-      }
-      // Set empty arrays to show "no posts" message instead of infinite loading
+      console.error('[Feed] Error fetching posts:', err);
+      toast.error('Could not fetch feed. Please try again.');
       if (isInitial) {
         setPosts([]);
         setFollowingPosts([]);
       }
       setHasMore(false);
     } finally {
-      console.log('[Feed] fetchPosts: Setting loading to false');
-      clearTimeout(loadingTimeout); // Clear the timeout
+      clearTimeout(loadingTimeout);
       setLoading(false);
       setLoadingMore(false);
     }
-  }, [user]);
+  }, [user, shuffleArray]);
 
   // Manually load next page of posts (used by scroll + button)
   const handleLoadMore = useCallback(() => {
