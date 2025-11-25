@@ -81,11 +81,13 @@ const AIChat: React.FC = () => {
           return;
         }
           
-          // Check for rate limit error (429)
-          if (errorMsg.includes('429') || errorMsg.includes('Rate limit')) {
-            toast.error('Rate limit exceeded. Please try again in a moment.');
-            return;
-          }
+        // Check for rate limit error (429)
+        if (errorMsg.includes('429') || errorMsg.includes('Rate limit')) {
+          toast.error('Gemini API quota exhausted. The free tier limit has been reached. Please upgrade your Gemini API plan or wait for quota reset.', {
+            duration: 6000,
+          });
+          return;
+        }
           
           throw error;
         }
@@ -158,7 +160,9 @@ const AIChat: React.FC = () => {
         
         // Check for rate limit error (429)
         if (errorMsg.includes('429') || errorMsg.includes('Rate limit')) {
-          toast.error('Rate limit exceeded. Please try again in a moment.');
+          toast.error('Gemini API quota exhausted. The free tier limit has been reached. Please upgrade your Gemini API plan or wait for quota reset.', {
+            duration: 6000,
+          });
           return;
         }
         
