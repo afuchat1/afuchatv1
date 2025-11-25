@@ -212,13 +212,18 @@ export const ChatSettingsSheet = ({ isOpen, onClose, defaultTab = 'appearance' }
                           } ${isLocked && 'opacity-50 cursor-not-allowed'}`}
                         >
                           <div 
-                            className="h-16 rounded-lg mb-2" 
-                            style={{ background: `linear-gradient(135deg, ${colors.primary}, ${colors.secondary})` }}
+                            className="h-16 rounded-lg mb-2 shadow-md" 
+                            style={{ 
+                              background: `linear-gradient(135deg, ${colors.primary} 0%, ${colors.secondary} 50%, ${colors.accent} 100%)` 
+                            }}
                           />
-                          <p className="text-xs font-medium text-center">{theme.name}</p>
+                          <p className="text-xs font-semibold text-center">{theme.name}</p>
+                          {theme.is_premium && !isLocked && (
+                            <Crown className="absolute top-2 right-2 h-4 w-4 text-amber-500" />
+                          )}
                           {isLocked && (
-                            <div className="absolute inset-0 flex items-center justify-center bg-background/80 rounded-xl">
-                              <Crown className="h-6 w-6 text-primary" />
+                            <div className="absolute inset-0 flex items-center justify-center bg-background/90 backdrop-blur-sm rounded-xl">
+                              <Crown className="h-8 w-8 text-primary drop-shadow-lg" />
                             </div>
                           )}
                         </button>
@@ -246,27 +251,28 @@ export const ChatSettingsSheet = ({ isOpen, onClose, defaultTab = 'appearance' }
                           key={wallpaper.id}
                           onClick={() => !isLocked && setSelectedWallpaper(wallpaper.id)}
                           disabled={isLocked}
-                          className={`relative h-24 rounded-xl border-2 transition-all ${
+                          className={`relative h-24 rounded-xl border-2 transition-all overflow-hidden ${
                             !isLocked && 'hover:scale-105'
                           } ${
                             selectedWallpaper === wallpaper.id
                               ? 'border-primary shadow-lg shadow-primary/20'
                               : 'border-border hover:border-primary/50'
                           } ${isLocked && 'opacity-50 cursor-not-allowed'}`}
-                          style={
-                            wallpaper.image_url.startsWith('http') 
-                              ? { backgroundImage: `url(${wallpaper.image_url})`, backgroundSize: 'cover' }
-                              : undefined
-                          }
+                          style={{
+                            background: wallpaper.image_url.startsWith('http') 
+                              ? `url(${wallpaper.image_url})` 
+                              : wallpaper.image_url,
+                            backgroundSize: 'cover'
+                          }}
                         >
                           <div className="absolute inset-0 flex items-center justify-center">
-                            <p className="text-sm font-medium bg-background/80 px-3 py-1 rounded-full">
+                            <p className="text-sm font-semibold bg-background/90 backdrop-blur-sm px-3 py-1.5 rounded-full shadow-lg">
                               {wallpaper.name}
                             </p>
                           </div>
                           {isLocked && (
-                            <div className="absolute inset-0 flex items-center justify-center bg-background/80 rounded-xl">
-                              <Crown className="h-6 w-6 text-primary" />
+                            <div className="absolute inset-0 flex items-center justify-center bg-background/90 backdrop-blur-sm rounded-xl">
+                              <Crown className="h-8 w-8 text-primary drop-shadow-lg" />
                             </div>
                           )}
                         </button>
