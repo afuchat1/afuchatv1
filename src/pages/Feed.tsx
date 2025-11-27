@@ -30,6 +30,7 @@ import { OnlineStatus } from '@/components/OnlineStatus';
 import { StoryAvatar } from '@/components/moments/StoryAvatar';
 import { ViewsAnalyticsSheet } from '@/components/ViewsAnalyticsSheet';
 import { SEO } from '@/components/SEO';
+import { NativeAdCard } from '@/components/ads/NativeAdCard';
 
 // --- INTERFACES ---
 
@@ -2116,21 +2117,26 @@ const Feed = ({ defaultTab = 'foryou' }: FeedProps = {}) => {
             </div>
           ) : (
             <>
-              {currentPosts.map((post) => (
-                <PostCard
-                  key={post.id}
-                  post={post}
-                  addReply={addReply}
-                  user={user as AuthUser | null}
-                  navigate={navigate}
-                  onAcknowledge={handleAcknowledge}
-                  onDeletePost={handleDeletePost}
-                  onReportPost={handleReportPost}
-                  onEditPost={handleEditPost}
-                  userProfile={userProfile}
-                  expandedPosts={expandedPosts}
-                  setExpandedPosts={setExpandedPosts}
-                />
+              {currentPosts.map((post, index) => (
+                <div key={post.id}>
+                  <PostCard
+                    post={post}
+                    addReply={addReply}
+                    user={user as AuthUser | null}
+                    navigate={navigate}
+                    onAcknowledge={handleAcknowledge}
+                    onDeletePost={handleDeletePost}
+                    onReportPost={handleReportPost}
+                    onEditPost={handleEditPost}
+                    userProfile={userProfile}
+                    expandedPosts={expandedPosts}
+                    setExpandedPosts={setExpandedPosts}
+                  />
+                  {/* Show native ad after every 5th post */}
+                  {(index + 1) % 5 === 0 && (
+                    <NativeAdCard slot={`feed-${activeTab}-${Math.floor(index / 5)}`} />
+                  )}
+                </div>
               ))}
               
               {/* Loading more indicator */}
