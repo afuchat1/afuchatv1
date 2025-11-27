@@ -37,6 +37,37 @@ const Layout = ({ children }: LayoutProps) => {
   const [lastScrollY, setLastScrollY] = useState(0);
   const [chatScrollHide, setChatScrollHide] = useState(false);
 
+  // Define functions before useEffect hooks
+  const checkAdminStatus = async () => {
+    if (!user) return;
+    
+    const { data, error } = await supabase
+      .from('profiles')
+      .select('is_admin, is_business_mode, is_affiliate')
+      .eq('id', user.id)
+      .single();
+
+    if (!error && data) {
+      setIsAdmin(data.is_admin || false);
+      setIsBusinessMode(data.is_business_mode || false);
+      setIsAffiliate(data.is_affiliate || false);
+    }
+  };
+
+  const checkBusinessMode = async () => {
+    if (!user) return;
+    
+    const { data, error } = await supabase
+      .from('profiles')
+      .select('is_business_mode')
+      .eq('id', user.id)
+      .single();
+
+    if (!error && data) {
+      setIsBusinessMode(data.is_business_mode || false);
+    }
+  };
+
   // All hooks must be called before any conditional returns
   useEffect(() => {
     if (user) {
@@ -77,36 +108,6 @@ const Layout = ({ children }: LayoutProps) => {
   if (!isMobile) {
     return <DesktopHybridLayout>{children}</DesktopHybridLayout>;
   }
-
-  const checkAdminStatus = async () => {
-    if (!user) return;
-    
-    const { data, error } = await supabase
-      .from('profiles')
-      .select('is_admin, is_business_mode, is_affiliate')
-      .eq('id', user.id)
-      .single();
-
-    if (!error && data) {
-      setIsAdmin(data.is_admin || false);
-      setIsBusinessMode(data.is_business_mode || false);
-      setIsAffiliate(data.is_affiliate || false);
-    }
-  };
-
-  const checkBusinessMode = async () => {
-    if (!user) return;
-    
-    const { data, error } = await supabase
-      .from('profiles')
-      .select('is_business_mode')
-      .eq('id', user.id)
-      .single();
-
-    if (!error && data) {
-      setIsBusinessMode(data.is_business_mode || false);
-    }
-  };
 
   const navItems = [
     { path: '/', icon: Home, label: t('common.home') },
