@@ -10,6 +10,7 @@ import { ChatStoriesHeader } from '@/components/chat/ChatStoriesHeader';
 import { StoryAvatar } from '@/components/moments/StoryAvatar';
 import { CreateGroupDialog } from '@/components/chat/CreateGroupDialog';
 import { toast } from 'sonner';
+import { NativeAdCard } from '@/components/ads/NativeAdCard';
 
 interface Chat {
   id: string;
@@ -497,16 +498,16 @@ const Chats = () => {
           </div>
         ) : (
           <>
-          {filteredChats.map((chat) => {
+          {filteredChats.map((chat, index) => {
           const chatName = chat.is_group 
             ? (chat.name || 'Group Chat')
             : (chat.other_user?.display_name || 'User');
           
           return (
+            <div key={chat.id}>
             <div
-               key={chat.id}
                onClick={() => navigate(`/chat/${chat.id}`)}
-               className="flex items-center gap-3 px-4 py-3 hover:bg-muted/10 active:bg-muted/20 cursor-pointer transition-colors"
+               className="flex items-center gap-3 px-4 py-3 hover:bg-muted/10 active:bg-muted/20 cursor-pointer transition-colors border-b border-border"
              >
               {/* Avatar with Story Ring */}
               <div className="relative flex-shrink-0">
@@ -598,6 +599,11 @@ const Chats = () => {
                   </div>
                 )}
               </div>
+            </div>
+            {/* Show native ad after every 6th chat */}
+            {(index + 1) % 6 === 0 && (
+              <NativeAdCard slot={`chat-list-${Math.floor(index / 6)}`} />
+            )}
             </div>
           );
         })}

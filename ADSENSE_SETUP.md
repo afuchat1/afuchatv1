@@ -6,10 +6,13 @@ Your AfuChat platform now has compliant native ads that match your design while 
 
 ## How It Works
 
-- **Ad Placement**: Native ads appear every 5 posts in your feed
+- **Feed Placement**: Native ads appear every 5 posts in your feed
+- **Chat List Placement**: Native ads appear every 6 chats in the chat list
+- **Search Placement**: Contextual ads appear between search result sections (users, groups, posts) based on search query
 - **Labeling**: Each ad is clearly marked with a "Sponsored" badge
 - **Design**: Ads blend with your feed aesthetic while remaining distinguishable
 - **Compliance**: Fully compliant with Google AdSense policies and FTC guidelines
+- **Contextual Targeting**: Search ads are contextual to user interests based on their search queries
 
 ## Setup Steps
 
@@ -50,8 +53,10 @@ data-ad-client="ca-pub-XXXXXXXXXXXXXXXX"
 ✅ **Compliant with Google Policies**: Ads are clearly labeled and distinguishable
 ✅ **Professional Design**: Matches your feed aesthetic
 ✅ **Responsive**: Works on all device sizes
-✅ **Strategic Placement**: Every 5th post for optimal visibility
+✅ **Strategic Placement**: Feed (every 5 posts), Chat List (every 6 chats), Search (contextual between sections)
+✅ **Contextual Targeting**: Search ads relate to user search queries
 ✅ **Performance Optimized**: Lazy loading and efficient rendering
+✅ **Auto-Hide**: Ads automatically hide if no ad content is available
 
 ## Adding Ads to Other Pages
 

@@ -10,6 +10,7 @@ import { CustomLoader } from '@/components/ui/CustomLoader';
 import { toast } from 'sonner';
 import { useTranslation } from 'react-i18next';
 import { searchSchema } from '@/lib/validation';
+import { NativeAdCard } from '@/components/ads/NativeAdCard';
 
 interface SearchResult {
   type: 'user' | 'post' | 'group';
@@ -456,8 +457,13 @@ const Search = () => {
                       </div>
                     </Card>
                   ))}
-                </div>
+                 </div>
               </section>
+            )}
+
+            {/* Contextual ad related to user search */}
+            {userResults.length > 0 && (
+              <NativeAdCard slot={`search-users-${query.replace(/\s+/g, '-').toLowerCase()}`} />
             )}
 
             {groupResults.length > 0 && (
@@ -520,8 +526,13 @@ const Search = () => {
                       </div>
                     </Card>
                   ))}
-                </div>
+                 </div>
               </section>
+            )}
+
+            {/* Contextual ad related to group/post search */}
+            {(groupResults.length > 0 || postResults.length > 0) && (
+              <NativeAdCard slot={`search-content-${query.replace(/\s+/g, '-').toLowerCase()}`} />
             )}
 
             {postResults.length > 0 && (
