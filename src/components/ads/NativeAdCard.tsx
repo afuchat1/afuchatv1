@@ -1,6 +1,6 @@
 import { Badge } from '@/components/ui/badge';
 import { ExternalLink } from 'lucide-react';
-import { useEffect, useRef } from 'react';
+import { useEffect, useRef, useState } from 'react';
 
 interface NativeAdCardProps {
   slot: string;
@@ -8,15 +8,37 @@ interface NativeAdCardProps {
 
 export const NativeAdCard = ({ slot }: NativeAdCardProps) => {
   const adRef = useRef<HTMLDivElement>(null);
+  const [adLoaded, setAdLoaded] = useState(false);
 
   useEffect(() => {
     try {
       // @ts-ignore
       (window.adsbygoogle = window.adsbygoogle || []).push({});
+      
+      // Check if ad loaded after a short delay
+      const checkAdLoad = setTimeout(() => {
+        if (adRef.current) {
+          const ins = adRef.current.querySelector('ins');
+          // Check if AdSense populated the ad slot
+          if (ins && ins.getAttribute('data-ad-status') === 'filled') {
+            setAdLoaded(true);
+          } else if (ins && ins.clientHeight > 0) {
+            // Fallback: check if ad has height
+            setAdLoaded(true);
+          }
+        }
+      }, 1000);
+
+      return () => clearTimeout(checkAdLoad);
     } catch (err) {
       console.error('AdSense error:', err);
     }
   }, []);
+
+  // Don't render anything if ad didn't load
+  if (!adLoaded) {
+    return null;
+  }
 
   return (
     <div className="border-b border-border p-4">
