@@ -24,7 +24,11 @@ import {
   Bell,
   TrendingUp,
   Settings,
-  Bot
+  Bot,
+  FileText,
+  Lock,
+  HelpCircle,
+  Briefcase
 } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 import { supabase } from '@/integrations/supabase/client';
@@ -82,7 +86,11 @@ export function MobileMenuSheet() {
     { icon: Hash, label: 'Trending', path: '/trending' },
     { icon: Grid3x3, label: 'Mini Programs', path: '/mini-programs' },
     { icon: Bell, label: 'Notifications', path: '/notifications', requiresAuth: true },
+    { icon: Briefcase, label: 'Affiliate Request', path: '/affiliate-request', requiresAuth: true },
     { icon: Settings, label: 'Settings', path: '/settings', requiresAuth: true },
+    { icon: FileText, label: 'Terms v2.0.0', path: '/terms' },
+    { icon: Lock, label: 'Privacy v2.0.0', path: '/privacy' },
+    { icon: HelpCircle, label: 'Support', path: '/support' },
   ];
 
   // Add business mode item
@@ -132,13 +140,14 @@ export function MobileMenuSheet() {
       </SheetTrigger>
       <SheetContent 
         side="bottom" 
-        className="h-auto max-h-[60vh] rounded-t-3xl pb-8"
+        className="h-auto max-h-[85vh] rounded-t-3xl pb-8"
       >
         <SheetHeader className="pb-6">
           <SheetTitle className="text-xl font-bold">Quick Access</SheetTitle>
         </SheetHeader>
         
-        <div className="grid grid-cols-4 gap-4 px-2">
+        <div className="overflow-y-auto max-h-[calc(85vh-8rem)] px-2">
+          <div className="grid grid-cols-4 gap-4">
           {menuItems.map((item) => {
             // Check if item should be shown based on requirements
             if (item.requiresAuth && !user) return null;
@@ -161,6 +170,7 @@ export function MobileMenuSheet() {
               </button>
             );
           })}
+          </div>
         </div>
       </SheetContent>
     </Sheet>
