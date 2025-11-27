@@ -209,6 +209,14 @@ const Support = () => {
     {
       question: "How do I enable two-factor authentication (2FA)?",
       answer: "Two-factor authentication adds an extra layer of security to your account. Go to Settings > Security > Two-Factor Authentication and follow the setup instructions. You'll need an authenticator app (Google Authenticator, Authy, etc.) to scan the QR code."
+    },
+    {
+      question: "Why am I seeing ads on AfuChat? (Version 2.0.0)",
+      answer: "As of Version 2.0.0, AfuChat includes advertising services to help support our free platform and continue providing quality features. All ads are clearly labeled as 'Sponsored' and comply with advertising regulations. We use Google AdSense to display relevant ads throughout the platform. You can manage your ad preferences through Google Ad Settings."
+    },
+    {
+      question: "What's new in Version 2.0.0?",
+      answer: "Version 2.0.0 introduces native advertising integration with Google AdSense, displayed strategically throughout the feed, chat list, and search results. All ads are compliant with regulations and clearly labeled. We've also enhanced our professional landing page, improved platform metadata, and added comprehensive documentation. The advertising helps us keep AfuChat free for all users."
     }
   ];
 
@@ -239,8 +247,11 @@ const Support = () => {
         <div className="text-center mb-12">
           <HelpCircle className="h-16 w-16 mx-auto mb-4 text-primary" />
           <h1 className="text-3xl sm:text-4xl font-bold mb-2">Support Center</h1>
-          <p className="text-muted-foreground text-lg">
+          <p className="text-muted-foreground text-lg mb-2">
             We're here to help you get the most out of AfuChat
+          </p>
+          <p className="text-muted-foreground text-sm">
+            Platform Version 2.0.0 | Last Updated: November 27, 2025
           </p>
         </div>
 

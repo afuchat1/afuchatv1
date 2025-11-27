@@ -32,7 +32,7 @@ const PrivacyPolicy = () => {
       <main className="container max-w-4xl mx-auto px-4 sm:px-6 py-8 pb-24">
         <article className="prose prose-slate dark:prose-invert max-w-none">
           <h1 className="text-3xl sm:text-4xl font-bold mb-2">Privacy Policy</h1>
-          <p className="text-muted-foreground mb-8">Last Updated: January 2025</p>
+          <p className="text-muted-foreground mb-8">Version 2.0.0 | Last Updated: November 27, 2025</p>
 
           <section className="mb-8">
             <h2 className="text-2xl font-semibold mb-4">Introduction</h2>
@@ -106,6 +106,25 @@ const PrivacyPolicy = () => {
             <h3 className="text-xl font-semibold mb-3 mt-6">Data Processing for AI</h3>
             <p className="text-foreground/90 leading-relaxed mb-4">
               When you interact with AI features, we may process your content, messages, and usage patterns to train and improve our AI models. However, we implement strict privacy safeguards including data anonymization, secure processing environments, and user control over AI feature usage. You can opt out of certain AI features in your settings.
+            </p>
+          </section>
+
+          <section className="mb-8">
+            <h2 className="text-2xl font-semibold mb-4">Advertising and Third-Party Services</h2>
+            
+            <h3 className="text-xl font-semibold mb-3 mt-6">Google AdSense</h3>
+            <p className="text-foreground/90 leading-relaxed mb-4">
+              As of Version 2.0.0, AfuChat uses Google AdSense to display advertisements throughout our platform. Google AdSense may use cookies and similar technologies to serve ads based on your interests and browsing activity. All advertisements are clearly labeled as "Sponsored" to ensure transparency.
+            </p>
+            
+            <h3 className="text-xl font-semibold mb-3 mt-6">Advertising Data Collection</h3>
+            <p className="text-foreground/90 leading-relaxed mb-4">
+              Google and other third-party advertising partners may collect information about your device, browser, and interactions with ads to provide relevant advertising. This may include your IP address, device identifiers, ad interaction data, and browsing patterns. You can manage your ad preferences through Google Ad Settings or opt out of personalized advertising.
+            </p>
+            
+            <h3 className="text-xl font-semibold mb-3 mt-6">Ad Relevance</h3>
+            <p className="text-foreground/90 leading-relaxed mb-4">
+              We may use your search queries, interests, and activity on AfuChat to display contextually relevant advertisements. This helps us provide free services while showing you ads that may be of interest to you. We do not share your personal messages or private content with advertisers.
             </p>
           </section>
 
