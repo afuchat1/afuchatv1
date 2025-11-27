@@ -58,7 +58,6 @@ export const DesktopHybridLayout = ({ children }: DesktopHybridLayoutProps) => {
   const navItems = [
     { path: '/', icon: Home, label: t('common.home') },
     { path: '/chats', icon: MessageSquare, label: t('common.messages') },
-    { path: '/notifications', icon: Bell, label: t('common.notifications'), isNotification: true },
     { path: user ? `/${user.id}` : '/auth', icon: User, label: t('common.profile') },
   ];
 
@@ -168,27 +167,21 @@ export const DesktopHybridLayout = ({ children }: DesktopHybridLayoutProps) => {
               {/* Main Navigation */}
               <nav className="space-y-1">
                 <p className="px-3 text-xs font-semibold text-muted-foreground mb-2">NAVIGATION</p>
-                {navItems.map((item) => {
-                  if (item.isNotification) {
-                    return <NotificationIcon key={item.path} />;
-                  }
-                  
-                  return (
-                    <Link
-                      key={item.path}
-                      to={item.path}
-                      className={cn(
-                        "flex items-center gap-3 px-3 py-2.5 rounded-lg transition-all",
-                        isActive(item.path)
-                          ? "bg-sidebar-primary text-sidebar-primary-foreground"
-                          : "hover:bg-sidebar-accent/10 text-sidebar-foreground"
-                      )}
-                    >
-                      <item.icon className="h-5 w-5 flex-shrink-0" />
-                      <span className="font-medium">{item.label}</span>
-                    </Link>
-                  );
-                })}
+                {navItems.map((item) => (
+                  <Link
+                    key={item.path}
+                    to={item.path}
+                    className={cn(
+                      "flex items-center gap-3 px-3 py-2.5 rounded-lg transition-all",
+                      isActive(item.path)
+                        ? "bg-sidebar-primary text-sidebar-primary-foreground"
+                        : "hover:bg-sidebar-accent/10 text-sidebar-foreground"
+                    )}
+                  >
+                    <item.icon className="h-5 w-5 flex-shrink-0" />
+                    <span className="font-medium">{item.label}</span>
+                  </Link>
+                ))}
               </nav>
 
               {/* Discover Section */}
