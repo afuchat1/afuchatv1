@@ -3,11 +3,9 @@ import { useNavigate, useSearchParams } from 'react-router-dom';
 import { useAuth } from '@/contexts/AuthContext';
 import { supabase } from '@/integrations/supabase/client';
 import Feed from './Feed';
-import DesktopFeed from './DesktopFeed';
 import NewPostModal from '@/components/ui/NewPostModal';
 import FloatingActionButton from '@/components/ui/FloatingActionButton';
 import Layout from '@/components/Layout';
-import { useIsMobile } from '@/hooks/use-mobile';
 import { CustomLoader } from '@/components/ui/CustomLoader';
 
 const Home = () => {
@@ -16,8 +14,6 @@ const Home = () => {
   const [searchParams, setSearchParams] = useSearchParams();
   const [isPostModalOpen, setIsPostModalOpen] = useState(false);
   const [checkingFollows, setCheckingFollows] = useState(true);
-  const isMobile = useIsMobile();
-  const isDesktop = !isMobile;
 
   useEffect(() => {
     checkUserFollows();
@@ -77,23 +73,7 @@ const Home = () => {
     );
   }
 
-  // Desktop: X-style wide layout without Layout wrapper
-  if (isDesktop) {
-    return (
-      <>
-        <DesktopFeed />
-        <FloatingActionButton />
-        {user && (
-          <NewPostModal
-            isOpen={isPostModalOpen}
-            onClose={() => setIsPostModalOpen(false)}
-          />
-        )}
-      </>
-    );
-  }
-
-  // Mobile: Regular feed with Layout
+  // All devices: Use unified Layout (handles DesktopHybridLayout for non-mobile)
   return (
     <Layout>
       <div className="relative">
