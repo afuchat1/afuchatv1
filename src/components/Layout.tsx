@@ -15,6 +15,8 @@ import { supabase } from '@/integrations/supabase/client';
 import { cn } from '@/lib/utils';
 import { useTranslation } from 'react-i18next';
 import { motion } from 'framer-motion';
+import { DesktopHybridLayout } from '@/components/DesktopHybridLayout';
+import { useIsMobile } from '@/hooks/use-mobile';
 
 interface LayoutProps {
   children: ReactNode;
@@ -27,12 +29,18 @@ const Layout = ({ children }: LayoutProps) => {
   const location = useLocation();
   const navigate = useNavigate();
   const { t } = useTranslation();
+  const isMobile = useIsMobile();
   const [isAdmin, setIsAdmin] = useState(false);
   const [isBusinessMode, setIsBusinessMode] = useState(false);
   const [isAffiliate, setIsAffiliate] = useState(false);
   const [isScrollingDown, setIsScrollingDown] = useState(false);
   const [lastScrollY, setLastScrollY] = useState(0);
   const [chatScrollHide, setChatScrollHide] = useState(false);
+
+  // Use desktop hybrid layout for tablets and desktops
+  if (!isMobile) {
+    return <DesktopHybridLayout>{children}</DesktopHybridLayout>;
+  }
 
   useEffect(() => {
     if (user) {
@@ -147,90 +155,11 @@ const Layout = ({ children }: LayoutProps) => {
     <div className="min-h-screen bg-background select-none">
       <InstallPromptBanner />
       <OfflineIndicator />
-      
-      {/* Desktop Sidebar */}
-      <aside className="hidden lg:flex fixed left-0 top-0 bottom-0 w-64 xl:w-72 border-r border-border flex-col p-4">
-        <div className="mb-6">
-          <Logo />
-        </div>
-
-        <div className="mb-6">
-          <AccountModeSwitcher />
-        </div>
-
-        <nav className="flex-1 space-y-1 overflow-y-auto">
-          {/* Main Navigation */}
-          {navItems.map((item) => {
-            // Special handling for notifications - it's already a Link component
-            if (item.badge && item.path === '/notifications') {
-              return <NotificationIcon key={item.path} />;
-            }
-            
-            return (
-              <Link
-                key={item.path}
-                to={item.path}
-                className={cn(
-                  "flex items-center gap-4 px-4 py-3 rounded-full transition-colors text-xl font-semibold",
-                  isActive(item.path)
-                    ? "bg-primary/10 text-primary"
-                    : "hover:bg-muted text-foreground"
-                )}
-              >
-                <item.icon className="h-7 w-7" />
-                <span>{item.label}</span>
-              </Link>
-            );
-          })}
-
-          {/* Features Section */}
-          <div className="pt-4 mt-4 border-t border-border">
-            <p className="px-4 text-xs font-semibold text-muted-foreground mb-2">DISCOVER</p>
-            {featureItems.map((item) => {
-              // Check auth requirement
-              if (item.requiresAuth && !user) return null;
-              
-              return (
-                <Link
-                  key={item.path}
-                  to={item.path}
-                  className={cn(
-                    "flex items-center gap-4 px-4 py-2.5 rounded-full transition-colors text-base",
-                    isActive(item.path)
-                      ? "bg-primary/10 text-primary"
-                      : "hover:bg-muted text-foreground"
-                  )}
-                >
-                  <item.icon className="h-6 w-6" />
-                  <span>{item.label}</span>
-                </Link>
-              );
-            })}
-          </div>
-        </nav>
-
-        {user && (
-          <Button
-            onClick={() => openSettings()}
-            variant="ghost"
-            className="mt-4 w-full justify-start gap-4 px-4 py-6 rounded-full hover:bg-muted"
-          >
-            <div className="flex items-center gap-3 overflow-hidden">
-              <div className="h-10 w-10 rounded-full bg-primary/10 flex items-center justify-center flex-shrink-0">
-                <User className="h-5 w-5 text-primary" />
-              </div>
-              <div className="flex-1 text-left overflow-hidden">
-                <p className="font-semibold text-sm truncate">Account</p>
-              </div>
-            </div>
-          </Button>
-        )}
-      </aside>
 
       {/* Main Content */}
-      <main className="lg:ml-64 xl:ml-72 min-h-screen pb-20 lg:pb-0">
+      <main className="min-h-screen pb-20">
         <motion.div 
-          className="max-w-2xl mx-auto border-x border-border min-h-screen"
+          className="min-h-screen"
           initial={{ opacity: 0, y: 10 }}
           animate={{ opacity: 1, y: 0 }}
           exit={{ opacity: 0, y: -10 }}
