@@ -389,7 +389,7 @@ const ReplyItem = ({ reply, navigate, handleViewProfile }: {
 
 // --- POST CARD (Updated to accept and pass through new props) ---
 
-const PostCard = ({ post, addReply, user, navigate, onAcknowledge, onDeletePost, onReportPost, onEditPost, userProfile, expandedPosts, setExpandedPosts }:
+const PostCard = ({ post, addReply, user, navigate, onAcknowledge, onDeletePost, onReportPost, onEditPost, userProfile, expandedPosts, setExpandedPosts, guestMode = false }:
   { 
     post: Post;
     addReply: (postId: string, newReply: Reply) => void;
@@ -402,6 +402,7 @@ const PostCard = ({ post, addReply, user, navigate, onAcknowledge, onDeletePost,
     userProfile: { display_name: string; avatar_url: string | null } | null;
     expandedPosts: Set<string>;
     setExpandedPosts: React.Dispatch<React.SetStateAction<Set<string>>>;
+    guestMode?: boolean;
   }) => {
 
   const { t, i18n } = useTranslation();
@@ -547,8 +548,13 @@ const PostCard = ({ post, addReply, user, navigate, onAcknowledge, onDeletePost,
   };
 
   const handleReplySubmit = async () => {
-    if (!replyText.trim() || !user) {
-      navigate('/auth');
+    if (!replyText.trim() || !user || guestMode) {
+      toast.info('Please sign in to comment on posts', {
+        action: {
+          label: 'Sign In',
+          onClick: () => navigate('/auth/signin')
+        }
+      });
       return;
     }
 
@@ -1074,9 +1080,10 @@ const PostCard = ({ post, addReply, user, navigate, onAcknowledge, onDeletePost,
 
 interface FeedProps {
   defaultTab?: 'foryou' | 'following';
+  guestMode?: boolean;
 }
 
-const Feed = ({ defaultTab = 'foryou' }: FeedProps = {}) => {
+const Feed = ({ defaultTab = 'foryou', guestMode = false }: FeedProps = {}) => {
   const { t } = useTranslation();
   const { awardNexa } = useNexa();
   const { user } = useAuth();
@@ -1272,8 +1279,13 @@ const Feed = ({ defaultTab = 'foryou' }: FeedProps = {}) => {
   }, []);
 
   const handleAcknowledge = useCallback(async (postId: string, currentHasLiked: boolean) => {
-    if (!user) {
-      navigate('/auth');
+    if (!user || guestMode) {
+      toast.info('Please sign in to like posts', {
+        action: {
+          label: 'Sign In',
+          onClick: () => navigate('/auth/signin')
+        }
+      });
       return;
     }
     const currentUserId = user.id;
@@ -1346,7 +1358,7 @@ const Feed = ({ defaultTab = 'foryou' }: FeedProps = {}) => {
         }
       }
     }
-  }, [user, navigate, posts, followingPosts, awardNexa]);
+  }, [user, guestMode, navigate, posts, followingPosts, awardNexa]);
 
   // NEW: Delete Post Handler - Opens confirmation sheet
   const handleDeletePost = useCallback((postId: string) => {
@@ -2131,6 +2143,7 @@ const Feed = ({ defaultTab = 'foryou' }: FeedProps = {}) => {
                     userProfile={userProfile}
                     expandedPosts={expandedPosts}
                     setExpandedPosts={setExpandedPosts}
+                    guestMode={guestMode}
                   />
                   {/* Show native ad after every 5th post */}
                   {(index + 1) % 5 === 0 && (

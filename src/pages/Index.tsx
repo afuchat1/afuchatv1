@@ -1,23 +1,28 @@
-import { useEffect } from 'react';
+import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '@/contexts/AuthContext';
 import { Button } from '@/components/ui/button';
-import { MessageSquare, Radio, ShoppingBag, Sparkles, Shield, Zap, Users, Mail, Globe, ExternalLink } from 'lucide-react';
+import { MessageSquare, Radio, ShoppingBag, Sparkles, Shield, Zap, Users, Mail, Globe, ExternalLink, X } from 'lucide-react';
 import Logo from '@/components/Logo';
 import { SEO } from '@/components/SEO';
 import { Card, CardContent } from '@/components/ui/card';
-
+import Feed from './Feed';
+import DesktopFeed from './DesktopFeed';
+import { useIsMobile } from '@/hooks/use-mobile';
+import { motion, AnimatePresence } from 'framer-motion';
 
 const Index = () => {
   const { user } = useAuth();
   const navigate = useNavigate();
+  const isMobile = useIsMobile();
+  const [showLanding, setShowLanding] = useState(true);
 
   useEffect(() => {
-    // Redirect authenticated users to home feed
+    // If user is logged in, hide landing and show feed directly
     if (user) {
-      navigate('/home');
+      setShowLanding(false);
     }
-  }, [user, navigate]);
+  }, [user]);
 
   const features = [
     {
@@ -52,6 +57,41 @@ const Index = () => {
     }
   ];
 
+  // Show feed directly for authenticated users or when landing is dismissed
+  if (!showLanding || user) {
+    return (
+      <div className="min-h-screen bg-background">
+        <SEO 
+          title="AfuChat — All-in-One Social Platform | Connect, Chat, Shop & More"
+          description="AfuChat is a comprehensive social platform combining social networking, secure messaging, marketplace shopping, and AI assistance. Join our community to connect with friends, share moments, chat privately, discover unique gifts, and experience the future of social interaction."
+          keywords="social media, messaging app, chat platform, marketplace, AI assistant, social networking, secure messaging, online community, social commerce, group chat, private messaging, social platform"
+        />
+        {!user && (
+          <header className="sticky top-0 z-50 bg-background/95 backdrop-blur-xl border-b border-border/50">
+            <div className="container mx-auto px-4 sm:px-6 lg:px-8 max-w-7xl">
+              <div className="flex items-center justify-between h-16">
+                <div className="flex items-center gap-3">
+                  <Logo size="md" />
+                  <h1 className="text-xl font-bold text-foreground">AfuChat</h1>
+                </div>
+                <div className="flex items-center gap-3">
+                  <Button variant="ghost" onClick={() => navigate('/auth/signin')}>
+                    Sign In
+                  </Button>
+                  <Button onClick={() => navigate('/auth/signup')}>
+                    Get Started
+                  </Button>
+                </div>
+              </div>
+            </div>
+          </header>
+        )}
+        {isMobile ? <Feed guestMode={!user} /> : <DesktopFeed guestMode={!user} />}
+      </div>
+    );
+  }
+
+  // Landing page for first-time visitors
   return (
     <div className="min-h-screen bg-background">
       <SEO 
@@ -98,8 +138,8 @@ const Index = () => {
               <Button size="lg" className="text-base h-12 px-8" onClick={() => navigate('/auth/signup')}>
                 Create Free Account
               </Button>
-              <Button size="lg" variant="outline" className="text-base h-12 px-8" onClick={() => navigate('/privacy')}>
-                Learn More
+              <Button size="lg" variant="outline" className="text-base h-12 px-8" onClick={() => setShowLanding(false)}>
+                Browse Feed
               </Button>
             </div>
           </div>

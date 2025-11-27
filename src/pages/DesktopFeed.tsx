@@ -29,7 +29,11 @@ interface SuggestedUser {
   is_business_mode: boolean;
 }
 
-const DesktopFeed = () => {
+interface DesktopFeedProps {
+  guestMode?: boolean;
+}
+
+const DesktopFeed = ({ guestMode = false }: DesktopFeedProps = {}) => {
   const navigate = useNavigate();
   const { user } = useAuth();
   const { openSettings } = useSettings();
@@ -326,7 +330,7 @@ const DesktopFeed = () => {
 
         {/* Center - Feed */}
         <main className="flex-1 min-w-0 border-r border-border max-w-[680px]">
-          <Feed defaultTab={activeTab} />
+          <Feed defaultTab={activeTab} guestMode={guestMode} />
         </main>
 
         {/* Right Sidebar - Trending & Suggestions */}
