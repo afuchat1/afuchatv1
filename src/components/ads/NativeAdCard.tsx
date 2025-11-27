@@ -32,7 +32,7 @@ export const NativeAdCard = ({ slot }: NativeAdCardProps) => {
         <ins
           className="adsbygoogle"
           style={{ display: 'block' }}
-          data-ad-client="ca-pub-XXXXXXXXXXXXXXXX"
+          data-ad-client="ca-pub-6547165240467026"
           data-ad-slot={slot}
           data-ad-format="fluid"
           data-full-width-responsive="true"
