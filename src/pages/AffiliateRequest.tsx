@@ -42,6 +42,14 @@ const AffiliateRequest = () => {
     checkBusinessMode();
     fetchBusinessProfiles();
     checkExistingRequest();
+    
+    // Refresh status when component mounts
+    const handleFocus = () => {
+      checkExistingRequest();
+    };
+    
+    window.addEventListener('focus', handleFocus);
+    return () => window.removeEventListener('focus', handleFocus);
   }, [user]);
 
   const checkBusinessMode = async () => {
@@ -135,7 +143,14 @@ const AffiliateRequest = () => {
       if (error) throw error;
 
       toast.success('Affiliate request submitted successfully! The business owner will review your request.');
-      navigate('/settings');
+      
+      // Update the state to show pending status
+      setExistingRequest(true);
+      
+      // Navigate after a short delay to allow user to see the success message
+      setTimeout(() => {
+        navigate('/home');
+      }, 1500);
     } catch (error: any) {
       console.error('Error submitting affiliate request:', error);
       toast.error(error.message || 'Failed to submit request');
@@ -165,7 +180,7 @@ const AffiliateRequest = () => {
               >
                 Back to Settings
               </Button>
-              <Button onClick={() => navigate('/business-dashboard')}>
+              <Button onClick={() => navigate('/business/dashboard')}>
                 Go to Business Dashboard
               </Button>
             </div>
@@ -215,14 +230,22 @@ const AffiliateRequest = () => {
           </div>
 
           <Card className="p-8 text-center">
-            <Building2 className="h-12 w-12 mx-auto mb-4 text-muted-foreground" />
+            <Building2 className="h-12 w-12 mx-auto mb-4 text-muted-foreground animate-pulse" />
             <h2 className="text-2xl font-bold mb-2">Request Pending</h2>
             <p className="text-muted-foreground mb-6">
-              You already have a pending affiliate request. Please wait for the business owner to review it.
+              Your affiliate request is currently under review. The business owner will review your application and you'll be notified once a decision is made.
             </p>
-            <Button onClick={() => navigate('/settings')}>
-              Back to Settings
-            </Button>
+            <div className="flex gap-3 justify-center">
+              <Button
+                variant="outline"
+                onClick={() => navigate('/settings')}
+              >
+                Back to Settings
+              </Button>
+              <Button onClick={() => navigate('/home')}>
+                Back to Feed
+              </Button>
+            </div>
           </Card>
         </div>
       </div>
