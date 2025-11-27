@@ -31,6 +31,24 @@
       max-height: 100dvh;
     }
   }
+
+  /* Hide scrollbar */
+  .scrollbar-hide {
+    -ms-overflow-style: none;
+    scrollbar-width: none;
+  }
+  
+  .scrollbar-hide::-webkit-scrollbar {
+    display: none;
+  }
+
+  /* Grid background pattern */
+  .bg-grid-white\/5 {
+    background-image: 
+      linear-gradient(to right, hsl(var(--border) / 0.1) 1px, transparent 1px),
+      linear-gradient(to bottom, hsl(var(--border) / 0.1) 1px, transparent 1px);
+    background-size: 64px 64px;
+  }
 }
 
 /* AfuChat Design System - Optimized for low-bandwidth, high readability
