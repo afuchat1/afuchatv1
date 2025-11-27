@@ -32,7 +32,7 @@ const TermsOfUse = () => {
       <main className="container max-w-4xl mx-auto px-4 sm:px-6 py-8 pb-24">
         <article className="prose prose-slate dark:prose-invert max-w-none">
           <h1 className="text-3xl sm:text-4xl font-bold mb-2">Terms of Use</h1>
-          <p className="text-muted-foreground mb-8">Last Updated: January 2025</p>
+          <p className="text-muted-foreground mb-8">Version 2.0.0 | Last Updated: November 27, 2025</p>
 
           <section className="mb-8">
             <h2 className="text-2xl font-semibold mb-4">Acceptance of Terms</h2>
@@ -59,7 +59,11 @@ const TermsOfUse = () => {
               <li>AI-powered features and chatbot</li>
               <li>Gamification elements and leaderboards</li>
               <li>Business and affiliate programs</li>
+              <li>Advertising services and sponsored content (clearly labeled)</li>
             </ul>
+            <p className="text-foreground/90 leading-relaxed mb-4">
+              As of Version 2.0.0, AfuChat includes advertising services. All ads are clearly labeled as "Sponsored" and comply with applicable advertising regulations. We use Google AdSense to display relevant ads throughout the platform to support our free services.
+            </p>
             <p className="text-foreground/90 leading-relaxed mb-4">
               We reserve the right to modify, suspend, or discontinue any part of our services at any time without prior notice. We strive to provide reliable service but do not guarantee uninterrupted or error-free access.
             </p>
