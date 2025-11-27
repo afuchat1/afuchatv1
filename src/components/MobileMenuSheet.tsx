@@ -28,7 +28,8 @@ import {
   FileText,
   Lock,
   HelpCircle,
-  Briefcase
+  Briefcase,
+  Store
 } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 import { supabase } from '@/integrations/supabase/client';
@@ -53,11 +54,22 @@ export function MobileMenuSheet() {
   const [isAdmin, setIsAdmin] = useState(false);
   const [isBusinessMode, setIsBusinessMode] = useState(false);
   const [isAffiliate, setIsAffiliate] = useState(false);
+  const [hasAffiliateRequest, setHasAffiliateRequest] = useState(false);
 
   useEffect(() => {
     if (user) {
       checkUserStatus();
     }
+    
+    // Refresh status when user returns to the app
+    const handleVisibilityChange = () => {
+      if (!document.hidden && user) {
+        checkUserStatus();
+      }
+    };
+    
+    document.addEventListener('visibilitychange', handleVisibilityChange);
+    return () => document.removeEventListener('visibilitychange', handleVisibilityChange);
   }, [user]);
 
   const checkUserStatus = async () => {
@@ -73,6 +85,18 @@ export function MobileMenuSheet() {
       setIsAdmin(data.is_admin || false);
       setIsBusinessMode(data.is_business_mode || false);
       setIsAffiliate(data.is_affiliate || false);
+      
+      // Check if user has pending affiliate request
+      if (!data.is_affiliate) {
+        const { data: requestData } = await supabase
+          .from('affiliate_requests')
+          .select('id')
+          .eq('user_id', user.id)
+          .eq('status', 'pending')
+          .maybeSingle();
+        
+        setHasAffiliateRequest(!!requestData);
+      }
     }
   };
 
@@ -86,38 +110,47 @@ export function MobileMenuSheet() {
     { icon: Hash, label: 'Trending', path: '/trending' },
     { icon: Grid3x3, label: 'Mini Programs', path: '/mini-programs' },
     { icon: Bell, label: 'Notifications', path: '/notifications', requiresAuth: true },
-    { icon: Briefcase, label: 'Affiliate Request', path: '/affiliate-request', requiresAuth: true },
     { icon: Settings, label: 'Settings', path: '/settings', requiresAuth: true },
     { icon: FileText, label: 'Terms v2.0.0', path: '/terms' },
     { icon: Lock, label: 'Privacy v2.0.0', path: '/privacy' },
     { icon: HelpCircle, label: 'Support', path: '/support' },
   ];
 
-  // Add business mode item
-  if (isBusinessMode && mode === 'business') {
-    menuItems.push({ 
-      icon: BarChart3, 
-      label: 'Business', 
+  // Business mode navigation - show regardless of mode for easy access
+  if (isBusinessMode) {
+    menuItems.splice(10, 0, { 
+      icon: Store, 
+      label: 'Business Hub', 
       path: '/business/dashboard', 
       requiresBusiness: true 
     });
   }
 
-  // Add affiliate item
+  // Affiliate navigation - conditional based on status
   if (isAffiliate) {
-    menuItems.push({ 
+    // User is approved affiliate - show dashboard
+    menuItems.splice(10, 0, { 
       icon: TrendingUp, 
-      label: 'Affiliate', 
+      label: 'Affiliate Dashboard', 
       path: '/affiliate-dashboard', 
       requiresAffiliate: true 
     });
+  } else if (!isAffiliate && !hasAffiliateRequest && !isBusinessMode) {
+    // User hasn't requested yet and is not business - show request option
+    menuItems.splice(10, 0, { 
+      icon: Briefcase, 
+      label: 'Become Affiliate', 
+      path: '/affiliate-request', 
+      requiresAuth: true 
+    });
   }
+  // If hasAffiliateRequest is true, don't show anything (request is pending)
 
-  // Add admin item
+  // Admin navigation
   if (isAdmin) {
-    menuItems.push({ 
+    menuItems.splice(10, 0, { 
       icon: Shield, 
-      label: 'Admin', 
+      label: 'Admin Panel', 
       path: '/admin', 
       requiresAdmin: true 
     });
@@ -127,6 +160,13 @@ export function MobileMenuSheet() {
     navigate(path);
     setOpen(false);
   };
+  
+  // Refresh status when menu opens
+  useEffect(() => {
+    if (open && user) {
+      checkUserStatus();
+    }
+  }, [open, user]);
 
   return (
     <Sheet open={open} onOpenChange={setOpen}>
@@ -144,6 +184,13 @@ export function MobileMenuSheet() {
       >
         <SheetHeader className="pb-6">
           <SheetTitle className="text-xl font-bold">Quick Access</SheetTitle>
+          {hasAffiliateRequest && !isAffiliate && (
+            <div className="mt-2 px-3 py-2 bg-muted/50 rounded-lg border border-border/50">
+              <p className="text-xs text-muted-foreground">
+                ⏳ Affiliate request pending review
+              </p>
+            </div>
+          )}
         </SheetHeader>
         
         <div className="overflow-y-auto max-h-[calc(85vh-8rem)] px-2">
