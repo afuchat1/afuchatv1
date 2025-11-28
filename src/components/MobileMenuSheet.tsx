@@ -199,7 +199,7 @@ export function MobileMenuSheet() {
             // Check if item should be shown based on requirements
             if (item.requiresAuth && !user) return null;
             if (item.requiresAdmin && !isAdmin) return null;
-            if (item.requiresBusiness && (!isBusinessMode || mode !== 'business')) return null;
+            if (item.requiresBusiness && !isBusinessMode) return null;
             if (item.requiresAffiliate && !isAffiliate) return null;
 
             return (
