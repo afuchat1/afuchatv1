@@ -35,6 +35,7 @@ interface EditProfileForm {
   show_read_receipts: boolean;
   avatar_url: string | null;
   country: string;
+  business_category: string;
 }
 
 const EditProfile: React.FC = () => {
@@ -54,6 +55,7 @@ const EditProfile: React.FC = () => {
     show_read_receipts: true,
     avatar_url: null,
     country: '',
+    business_category: '',
   });
   const [loadingProfile, setLoadingProfile] = useState<boolean>(true); 
   const [saving, setSaving] = useState<boolean>(false);
@@ -107,6 +109,7 @@ const EditProfile: React.FC = () => {
             show_read_receipts: data.show_read_receipts || true,
             avatar_url: data.avatar_url || null,
             country: data.country || '',
+            business_category: data.business_category || '',
           });
           setIsBusiness(data.is_business_mode || false);
           setIsAffiliate(data.is_affiliate || false);
@@ -121,6 +124,7 @@ const EditProfile: React.FC = () => {
             show_read_receipts: true,
             avatar_url: null,
             country: '',
+            business_category: '',
           });
         }
       } catch (error: any) {
@@ -184,6 +188,7 @@ const EditProfile: React.FC = () => {
         show_online_status: profile.show_online_status,
         show_read_receipts: profile.show_read_receipts,
         country: profile.country || null,
+        business_category: isBusiness ? (profile.business_category.trim() || null) : null,
         updated_at: new Date().toISOString(),
       };
 
@@ -482,6 +487,43 @@ const EditProfile: React.FC = () => {
                 Your location helps connect you with local content
               </p>
             </div>
+
+            {/* Business Category - Only for business accounts */}
+            {isBusiness && (
+              <div className="space-y-2">
+                <Label htmlFor="business_category" className="text-sm font-medium text-foreground flex items-center gap-2">
+                  <Building2 className="h-4 w-4 text-primary" />
+                  Business Category
+                </Label>
+                <Select 
+                  value={profile.business_category} 
+                  onValueChange={(value) => setProfile((prev) => ({ ...prev, business_category: value }))}
+                >
+                  <SelectTrigger className="h-11 bg-input/50 border border-border/80">
+                    <SelectValue placeholder="Select your business category" />
+                  </SelectTrigger>
+                  <SelectContent className="max-h-[300px]">
+                    <SelectItem value="Restaurant">Restaurant</SelectItem>
+                    <SelectItem value="Tech Company">Tech Company</SelectItem>
+                    <SelectItem value="Retail">Retail</SelectItem>
+                    <SelectItem value="Services">Services</SelectItem>
+                    <SelectItem value="Healthcare">Healthcare</SelectItem>
+                    <SelectItem value="Education">Education</SelectItem>
+                    <SelectItem value="Finance">Finance</SelectItem>
+                    <SelectItem value="Real Estate">Real Estate</SelectItem>
+                    <SelectItem value="Entertainment">Entertainment</SelectItem>
+                    <SelectItem value="Manufacturing">Manufacturing</SelectItem>
+                    <SelectItem value="E-commerce">E-commerce</SelectItem>
+                    <SelectItem value="Consulting">Consulting</SelectItem>
+                    <SelectItem value="Marketing">Marketing</SelectItem>
+                    <SelectItem value="Other">Other</SelectItem>
+                  </SelectContent>
+                </Select>
+                <p className="text-xs text-muted-foreground pt-1">
+                  Choose the category that best describes your business
+                </p>
+              </div>
+            )}
 
             <Separator className="my-8 bg-border/50" />
 
