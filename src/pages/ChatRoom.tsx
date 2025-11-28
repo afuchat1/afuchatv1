@@ -153,6 +153,15 @@ const ChatRoom = () => {
   const [isGroupAdmin, setIsGroupAdmin] = useState(false);
   const [isMember, setIsMember] = useState(true);
   const [isJoining, setIsJoining] = useState(false);
+  const [prevMessageCount, setPrevMessageCount] = useState(0);
+
+  // Improved scroll behavior - only scroll on new messages
+  useEffect(() => {
+    if (messages.length > prevMessageCount) {
+      messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
+      setPrevMessageCount(messages.length);
+    }
+  }, [messages.length, prevMessageCount]);
 
   // Load theme and wallpaper data
   useEffect(() => {
@@ -176,7 +185,7 @@ const ChatRoom = () => {
           });
         }
       } catch (error) {
-        console.error('Error loading theme:', error);
+        // Silent fail - theme loading is not critical
       }
 
       if (!chatPreferences.wallpaper) return;
@@ -196,7 +205,7 @@ const ChatRoom = () => {
           });
         }
       } catch (error) {
-        console.error('Error loading wallpaper:', error);
+        // Silent fail - wallpaper loading is not critical
       }
     };
 
@@ -296,7 +305,7 @@ const ChatRoom = () => {
             .single()
             .then(async ({ data: profile, error }) => {
               if (error) {
-                console.error('Error fetching sender profile:', error);
+                // Silent fail - profile fetch is not critical
                 return;
               }
               if (profile) {
@@ -460,10 +469,6 @@ const ChatRoom = () => {
     };
   }, [chatId, user]);
 
-  useEffect(() => {
-    messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
-  }, [messages]);
-
   const fetchChatInfo = async () => {
     const { data } = await supabase
       .from('chats')
@@ -543,7 +548,6 @@ const ChatRoom = () => {
     console.log('Fetched messages:', data, 'Error:', error);
 
     if (error) {
-      console.error('Fetch messages error:', error);
       toast.error('Failed to load messages');
       return;
     }
@@ -622,7 +626,6 @@ const ChatRoom = () => {
       toast.success(t('chat.recording'));
     } catch (err) {
       toast.error(t('chat.stopRecording'));
-      console.error('Recording error:', err);
     }
   };
 
@@ -693,7 +696,6 @@ const ChatRoom = () => {
       toast.success('Voice message sent');
     } catch (err) {
       toast.error('Failed to send voice message');
-      console.error(err);
     }
     setUploading(false);
   };
@@ -909,7 +911,6 @@ const ChatRoom = () => {
       if (error.name === 'ZodError') {
         toast.error('Message is too long or invalid');
       } else {
-        console.error('Error editing message:', error);
         toast.error('Failed to edit message');
       }
     }
@@ -927,7 +928,7 @@ const ChatRoom = () => {
       });
 
     if (error) {
-      console.error('Error adding reaction:', error);
+      // Silent fail - reaction errors are not critical
     }
   };
 
@@ -960,7 +961,6 @@ const ChatRoom = () => {
       // Refresh chat info
       await fetchChatInfo();
     } catch (error) {
-      console.error('Error joining group:', error);
       toast.error(t('chat.joinGroupError'));
     } finally {
       setIsJoining(false);
@@ -982,7 +982,6 @@ const ChatRoom = () => {
       toast.success(t('chat.leftGroup'));
       navigate('/chats');
     } catch (error) {
-      console.error('Error leaving group:', error);
       toast.error(t('chat.leaveGroupError'));
     }
   };
@@ -1099,7 +1098,7 @@ const ChatRoom = () => {
 
         {/* Messages with customizable background */}
         <div 
-          className="flex-1 overflow-y-auto px-3 py-2" 
+          className="flex-1 overflow-y-auto overflow-x-hidden px-3 py-2 scrollbar-hide" 
           style={{ 
             paddingBottom: '120px',
             fontSize: `${chatPreferences.fontSize}px`,

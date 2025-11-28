@@ -4,6 +4,7 @@ import { supabase } from '@/integrations/supabase/client';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Dialog, DialogContent, DialogClose } from '@/components/ui/dialog';
 import { toast } from 'sonner';
@@ -11,6 +12,7 @@ import { toast } from 'sonner';
 import { X, Eye, EyeOff, User, AtSign, Mail, Lock, MessageCircle, ShoppingCart, Cpu } from 'lucide-react'; 
 import Logo from '@/components/Logo';
 import { emailSchema, passwordSchema, handleSchema, displayNameSchema } from '@/lib/validation';
+import { countries } from '@/lib/countries';
 
 interface AuthSheetContentProps {
   onClose: () => void;
@@ -30,6 +32,7 @@ const AuthSheetContent: React.FC<AuthSheetContentProps> = ({ onClose }) => {
   const [showPassword, setShowPassword] = useState(false);
   const [displayName, setDisplayName] = useState('');
   const [handle, setHandle] = useState('');
+  const [country, setCountry] = useState('');
 
   // Capture referral code from URL
   const urlParams = new URLSearchParams(window.location.search);
@@ -58,6 +61,7 @@ const AuthSheetContent: React.FC<AuthSheetContentProps> = ({ onClose }) => {
         const signupData: any = {
           display_name: displayName,
           handle,
+          country,
         };
 
         // Include referral code if present
@@ -178,6 +182,24 @@ const AuthSheetContent: React.FC<AuthSheetContentProps> = ({ onClose }) => {
                 </div>
               </div>
             </>
+          )}
+
+          {isSignUp && (
+            <div className="space-y-0.5">
+              <Label htmlFor="country" className="text-xs font-medium">Country</Label>
+              <Select value={country} onValueChange={setCountry}>
+                <SelectTrigger className="h-9 text-xs bg-background/80">
+                  <SelectValue placeholder="Select country" />
+                </SelectTrigger>
+                <SelectContent className="max-h-[200px]">
+                  {countries.map((c) => (
+                    <SelectItem key={c} value={c} className="text-xs">
+                      {c}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
           )}
 
           <div className="space-y-0.5">

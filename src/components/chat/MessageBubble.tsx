@@ -8,6 +8,7 @@ import { AttachmentPreview } from './AttachmentPreview';
 import { useState } from 'react';
 import { ImageLightbox } from '@/components/ui/ImageLightbox';
 import { VerifiedBadge } from '@/components/VerifiedBadge';
+import { toast } from 'sonner';
 
 export interface Reaction {
   reaction: string;
@@ -161,7 +162,7 @@ export const MessageBubble = ({
       window.URL.revokeObjectURL(url);
       document.body.removeChild(a);
     } catch (error) {
-      console.error('Download failed:', error);
+      toast.error('Download failed');
     }
   };
 

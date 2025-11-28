@@ -4,12 +4,14 @@ import { supabase } from '@/integrations/supabase/client';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { toast } from 'sonner';
 import { Eye, EyeOff, X, CheckCircle2, XCircle, Upload, User } from 'lucide-react';
 import Logo from '@/components/Logo';
 import { emailSchema, passwordSchema, handleSchema, displayNameSchema } from '@/lib/validation';
 import { Separator } from '@/components/ui/separator';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
+import { countries, detectUserCountry } from '@/lib/countries';
 
 const SignUp = () => {
   const navigate = useNavigate();
@@ -27,10 +29,20 @@ const SignUp = () => {
   const [avatarFile, setAvatarFile] = useState<File | null>(null);
   const [avatarPreview, setAvatarPreview] = useState<string | null>(null);
   const [uploadingAvatar, setUploadingAvatar] = useState(false);
+  const [country, setCountry] = useState('');
 
   // Capture referral code from URL
   const urlParams = new URLSearchParams(window.location.search);
   const referralCode = urlParams.get('ref');
+
+  // Auto-detect country on mount
+  useEffect(() => {
+    detectUserCountry().then((detectedCountry) => {
+      if (detectedCountry && countries.includes(detectedCountry)) {
+        setCountry(detectedCountry);
+      }
+    });
+  }, []);
 
   // Check username availability with debounce
   const checkUsernameAvailability = useCallback(async (username: string) => {
@@ -145,6 +157,7 @@ const SignUp = () => {
       const signupData: any = {
         display_name: displayName,
         handle,
+        country,
       };
 
       // Include referral code if present
@@ -431,6 +444,25 @@ const SignUp = () => {
                   Usernames are case-insensitive (e.g., "User" and "user" are the same)
                 </p>
               )}
+            </div>
+
+            <div className="space-y-2">
+              <Label htmlFor="country">Country</Label>
+              <Select value={country} onValueChange={setCountry}>
+                <SelectTrigger className="h-12">
+                  <SelectValue placeholder="Select your country" />
+                </SelectTrigger>
+                <SelectContent className="max-h-[300px]">
+                  {countries.map((c) => (
+                    <SelectItem key={c} value={c}>
+                      {c}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+              <p className="text-xs text-muted-foreground">
+                {country ? 'Detected country' : 'Select your country'}
+              </p>
             </div>
 
             <div className="space-y-2">

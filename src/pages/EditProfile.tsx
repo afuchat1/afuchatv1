@@ -8,6 +8,7 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { Switch } from '@/components/ui/switch';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Separator } from '@/components/ui/separator'; 
 import { User, Lock, Eye, MessageCircle, Upload, X, Building2 } from 'lucide-react';
@@ -16,6 +17,7 @@ import { handleSchema, displayNameSchema, bioSchema } from '@/lib/validation';
 import { useNexa } from '@/hooks/useNexa';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { CircularImageCrop } from '@/components/profile/CircularImageCrop';
+import { countries } from '@/lib/countries';
 
 // Import Supabase types
 import type { Database } from '@/integrations/supabase/types';
@@ -32,6 +34,7 @@ interface EditProfileForm {
   show_online_status: boolean;
   show_read_receipts: boolean;
   avatar_url: string | null;
+  country: string;
 }
 
 const EditProfile: React.FC = () => {
@@ -50,6 +53,7 @@ const EditProfile: React.FC = () => {
     show_online_status: true,
     show_read_receipts: true,
     avatar_url: null,
+    country: '',
   });
   const [loadingProfile, setLoadingProfile] = useState<boolean>(true); 
   const [saving, setSaving] = useState<boolean>(false);
@@ -102,6 +106,7 @@ const EditProfile: React.FC = () => {
             show_online_status: data.show_online_status || true,
             show_read_receipts: data.show_read_receipts || true,
             avatar_url: data.avatar_url || null,
+            country: data.country || '',
           });
           setIsBusiness(data.is_business_mode || false);
           setIsAffiliate(data.is_affiliate || false);
@@ -115,6 +120,7 @@ const EditProfile: React.FC = () => {
             show_online_status: true,
             show_read_receipts: true,
             avatar_url: null,
+            country: '',
           });
         }
       } catch (error: any) {
@@ -177,6 +183,7 @@ const EditProfile: React.FC = () => {
         is_private: profile.is_private,
         show_online_status: profile.show_online_status,
         show_read_receipts: profile.show_read_receipts,
+        country: profile.country || null,
         updated_at: new Date().toISOString(),
       };
 
@@ -420,6 +427,25 @@ const EditProfile: React.FC = () => {
             </div>
 
             <div className="space-y-2">
+              <Label htmlFor="country" className="text-sm font-medium text-foreground">Country</Label>
+              <Select value={profile.country} onValueChange={(value) => setProfile((prev) => ({ ...prev, country: value }))}>
+                <SelectTrigger className="h-11 bg-input/50 border border-border/80">
+                  <SelectValue placeholder="Select your country" />
+                </SelectTrigger>
+                <SelectContent className="max-h-[300px]">
+                  {countries.map((c) => (
+                    <SelectItem key={c} value={c}>
+                      {c}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+              <p className="text-xs text-muted-foreground pt-1">
+                Your location helps connect you with local content
+              </p>
+            </div>
+
+            <div className="space-y-2">
               <Label htmlFor="bio" className="text-sm font-medium text-foreground">Bio</Label>
               <Textarea
                 id="bio"
@@ -435,6 +461,25 @@ const EditProfile: React.FC = () => {
               <p className="text-xs text-muted-foreground flex justify-between">
                 <span>Keep it short and punchy!</span>
                 <span>{profile.bio.length}/150</span>
+              </p>
+            </div>
+
+            <div className="space-y-2">
+              <Label htmlFor="country" className="text-sm font-medium text-foreground">Country</Label>
+              <Select value={profile.country} onValueChange={(value) => setProfile((prev) => ({ ...prev, country: value }))}>
+                <SelectTrigger className="h-11 bg-input/50 border border-border/80">
+                  <SelectValue placeholder="Select your country" />
+                </SelectTrigger>
+                <SelectContent className="max-h-[300px]">
+                  {countries.map((c) => (
+                    <SelectItem key={c} value={c}>
+                      {c}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+              <p className="text-xs text-muted-foreground pt-1">
+                Your location helps connect you with local content
               </p>
             </div>
 
