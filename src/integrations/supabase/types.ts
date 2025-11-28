@@ -1623,6 +1623,7 @@ export type Database = {
           avatar_url: string | null
           banner_url: string | null
           bio: string | null
+          business_category: string | null
           country: string | null
           created_at: string | null
           current_grade: string | null
@@ -1656,6 +1657,7 @@ export type Database = {
           avatar_url?: string | null
           banner_url?: string | null
           bio?: string | null
+          business_category?: string | null
           country?: string | null
           created_at?: string | null
           current_grade?: string | null
@@ -1689,6 +1691,7 @@ export type Database = {
           avatar_url?: string | null
           banner_url?: string | null
           bio?: string | null
+          business_category?: string | null
           country?: string | null
           created_at?: string | null
           current_grade?: string | null

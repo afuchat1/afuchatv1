@@ -5,7 +5,7 @@ import { useAuth } from '@/contexts/AuthContext';
 import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { toast } from 'sonner';
-import { ArrowLeft, MessageSquare, UserPlus, Pencil, Calendar, Lock, LogOut, Camera } from 'lucide-react';
+import { ArrowLeft, MessageSquare, UserPlus, Pencil, Calendar, Lock, LogOut, Camera, Building2 } from 'lucide-react';
 import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/ui/tabs';
 import { Separator } from '@/components/ui/separator';
 import { CustomLoader } from '@/components/ui/CustomLoader';
@@ -50,6 +50,8 @@ interface Profile {
 	banner_url?: string | null;
 	website_url?: string | null;
 	is_business_mode?: boolean;
+	business_category?: string | null;
+	country?: string | null;
 	affiliated_business_id?: string | null;
 	affiliated_business?: {
 		avatar_url: string | null;
@@ -1017,6 +1019,22 @@ const Profile = ({ mustExist = false }: ProfileProps) => {
 					{profile.bio && (
 						<ContentParser content={profile.bio} isBio={true} />
 					)}
+
+					{/* Business Category & Country - Display publicly */}
+					<div className="flex flex-wrap gap-3 mt-2">
+						{profile.is_business_mode && profile.business_category && (
+							<div className="flex items-center gap-1.5 text-sm text-muted-foreground">
+								<Building2 className="h-4 w-4 text-primary" />
+								<span className="font-medium">{profile.business_category}</span>
+							</div>
+						)}
+						{profile.country && (
+							<div className="flex items-center gap-1.5 text-sm text-muted-foreground">
+								<span className="text-base">📍</span>
+								<span className="font-medium">{profile.country}</span>
+							</div>
+						)}
+					</div>
 
 					{/* Website URL - Display for business profiles */}
 					{profile.is_business_mode && profile.website_url && (
