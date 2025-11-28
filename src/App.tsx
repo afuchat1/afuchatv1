@@ -24,6 +24,7 @@ import SignIn from "./pages/auth/SignIn";
 import SignUp from "./pages/auth/SignUp";
 import NotFound from "./pages/NotFound";
 import UserNotFound from "./pages/UserNotFound";
+import CompleteProfile from "./pages/CompleteProfile";
 
 // Lazy load other pages
 const ForgotPassword = lazy(() => import("./pages/auth/ForgotPassword"));
@@ -118,6 +119,7 @@ const AppRoutes = () => {
       }>
         <Routes>
       <Route path="/" element={<Index />} />
+      <Route path="/complete-profile" element={<CompleteProfile />} />
       <Route path="/home" element={<Home />} />
       <Route path="/auth" element={<Welcome />} />
       <Route path="/auth/signin" element={<SignIn />} />

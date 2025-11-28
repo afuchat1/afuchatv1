@@ -56,20 +56,24 @@ const InstallPromptBanner = () => {
 
   const handleInstallClick = async () => {
     if (!deferredPrompt) {
-      // Redirect to install page for manual instructions
       navigate('/install');
       return;
     }
 
-    deferredPrompt.prompt();
-    const { outcome } = await deferredPrompt.userChoice;
+    try {
+      deferredPrompt.prompt();
+      const { outcome } = await deferredPrompt.userChoice;
 
-    if (outcome === 'accepted') {
-      setShowBanner(false);
-      setIsInstalled(true);
+      if (outcome === 'accepted') {
+        setShowBanner(false);
+        setIsInstalled(true);
+      }
+
+      setDeferredPrompt(null);
+    } catch (error) {
+      console.error('Install error:', error);
+      navigate('/install');
     }
-
-    setDeferredPrompt(null);
   };
 
   const handleDismiss = () => {

@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Download, Check, Smartphone, Zap, Wifi } from 'lucide-react';
+import { toast } from 'sonner';
 import Logo from '@/components/Logo';
 
 interface BeforeInstallPromptEvent extends Event {
@@ -34,14 +35,23 @@ const Install = () => {
   }, []);
 
   const handleInstallClick = async () => {
-    if (!deferredPrompt) return;
+    if (!deferredPrompt) {
+      toast.error('Install prompt not available. Please use your browser menu to install.');
+      return;
+    }
 
-    deferredPrompt.prompt();
-    const { outcome } = await deferredPrompt.userChoice;
+    try {
+      deferredPrompt.prompt();
+      const { outcome } = await deferredPrompt.userChoice;
 
-    if (outcome === 'accepted') {
-      setIsInstalled(true);
-      setDeferredPrompt(null);
+      if (outcome === 'accepted') {
+        toast.success('App installed successfully!');
+        setIsInstalled(true);
+        setDeferredPrompt(null);
+      }
+    } catch (error) {
+      console.error('Install prompt error:', error);
+      toast.error('Failed to install app');
     }
   };
 
@@ -127,19 +137,20 @@ const Install = () => {
             </div>
           ) : (
             <div className="space-y-3">
-              <div className="text-sm text-muted-foreground text-center space-y-2 p-4 bg-muted/50 rounded-lg">
-                <p className="font-semibold">Manual Installation</p>
-                <p className="text-xs">
-                  <strong>iPhone:</strong> Tap Share → Add to Home Screen<br />
-                  <strong>Android:</strong> Tap Menu → Install App
-                </p>
-              </div>
+              <Button 
+                onClick={handleInstallClick}
+                className="w-full"
+                size="lg"
+              >
+                <Download className="h-5 w-5 mr-2" />
+                Install Now
+              </Button>
               <Button 
                 onClick={() => navigate('/')}
-                variant="default"
+                variant="outline"
                 className="w-full"
               >
-                Continue to App
+                Maybe Later
               </Button>
             </div>
           )}

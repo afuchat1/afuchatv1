@@ -77,14 +77,35 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         if ((event === 'SIGNED_IN' || event === 'TOKEN_REFRESHED') && session) {
           setTimeout(() => recordUserSession(session), 100);
           
-          // Redirect to /home after sign-in using window.location for navigation outside Router
-          if (event === 'SIGNED_IN') {
+          // Check profile completion and redirect accordingly
+          if (event === 'SIGNED_IN' && session) {
             const currentPath = window.location.pathname;
-            if (currentPath === '/' || currentPath.startsWith('/auth')) {
-              setTimeout(() => {
-                window.location.href = '/home';
-              }, 100);
-            }
+            
+            // Check if profile is complete
+            supabase
+              .from('profiles')
+              .select('display_name, handle, phone_number, country, avatar_url')
+              .eq('id', session.user.id)
+              .single()
+              .then(({ data: profile }) => {
+                const isProfileComplete = profile?.display_name && 
+                                         profile?.handle && 
+                                         profile?.phone_number && 
+                                         profile?.country && 
+                                         profile?.avatar_url;
+
+                // If on landing/auth pages
+                if (currentPath === '/' || currentPath.startsWith('/auth')) {
+                  if (!isProfileComplete) {
+                    window.location.href = '/complete-profile';
+                  } else {
+                    window.location.href = '/home';
+                  }
+                } else if (currentPath !== '/complete-profile' && !isProfileComplete) {
+                  // Block access to other pages if profile incomplete
+                  window.location.href = '/complete-profile';
+                }
+              });
           }
         }
       }
