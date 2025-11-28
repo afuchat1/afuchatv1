@@ -64,9 +64,9 @@ const CompleteProfile = () => {
     
     if (!user) return;
     
-    // Validation
-    if (!formData.display_name || !formData.handle || !formData.phone_number || !formData.country) {
-      toast.error('All fields are required');
+    // Validation - only require essential fields
+    if (!formData.display_name || !formData.handle) {
+      toast.error('Display name and username are required');
       return;
     }
     
@@ -120,7 +120,7 @@ const CompleteProfile = () => {
           </div>
           <CardTitle className="text-2xl">Complete Your Profile</CardTitle>
           <CardDescription>
-            Please provide the following information to continue
+            Required: Profile picture, display name, and username. Phone and country are optional.
           </CardDescription>
         </CardHeader>
         
@@ -176,24 +176,22 @@ const CompleteProfile = () => {
 
             {/* Phone Number */}
             <div className="space-y-2">
-              <Label htmlFor="phone_number">Phone Number *</Label>
+              <Label htmlFor="phone_number">Phone Number (Optional)</Label>
               <Input
                 id="phone_number"
                 type="tel"
                 value={formData.phone_number}
                 onChange={(e) => setFormData({ ...formData, phone_number: e.target.value })}
                 placeholder="+1234567890"
-                required
               />
             </div>
 
             {/* Country */}
             <div className="space-y-2">
-              <Label htmlFor="country">Country *</Label>
+              <Label htmlFor="country">Country (Optional)</Label>
               <Select
                 value={formData.country}
                 onValueChange={(value) => setFormData({ ...formData, country: value })}
-                required
               >
                 <SelectTrigger>
                   <SelectValue placeholder="Select your country" />

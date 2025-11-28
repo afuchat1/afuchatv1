@@ -81,28 +81,35 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
           if (event === 'SIGNED_IN' && session) {
             const currentPath = window.location.pathname;
             
-            // Check if profile is complete
+            // Check if essential profile fields are complete
             supabase
               .from('profiles')
-              .select('display_name, handle, phone_number, country, avatar_url')
+              .select('display_name, handle, avatar_url')
               .eq('id', session.user.id)
               .single()
-              .then(({ data: profile }) => {
-                const isProfileComplete = profile?.display_name && 
-                                         profile?.handle && 
-                                         profile?.phone_number && 
-                                         profile?.country && 
-                                         profile?.avatar_url;
+              .then(({ data: profile, error }) => {
+                if (error) {
+                  console.error('Profile check error:', error);
+                  // If profile doesn't exist yet, redirect to complete profile
+                  if (currentPath === '/' || currentPath.startsWith('/auth')) {
+                    window.location.href = '/complete-profile';
+                  }
+                  return;
+                }
+
+                const hasEssentialFields = profile?.display_name && 
+                                          profile?.handle && 
+                                          profile?.avatar_url;
 
                 // If on landing/auth pages
                 if (currentPath === '/' || currentPath.startsWith('/auth')) {
-                  if (!isProfileComplete) {
+                  if (!hasEssentialFields) {
                     window.location.href = '/complete-profile';
                   } else {
                     window.location.href = '/home';
                   }
-                } else if (currentPath !== '/complete-profile' && !isProfileComplete) {
-                  // Block access to other pages if profile incomplete
+                } else if (currentPath !== '/complete-profile' && !hasEssentialFields) {
+                  // Block access to other pages if essential fields incomplete
                   window.location.href = '/complete-profile';
                 }
               });

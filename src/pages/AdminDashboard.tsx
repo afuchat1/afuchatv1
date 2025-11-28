@@ -4,7 +4,7 @@ import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/contexts/AuthContext';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Skeleton } from '@/components/ui/skeleton';
-import { Users, MessageSquare, Package, Activity, ArrowLeft, Shield, Gift, Coins, TrendingUp, Database, Globe } from 'lucide-react';
+import { Users, MessageSquare, Package, Activity, ArrowLeft, Shield, Gift, Coins, TrendingUp, Database, Globe, Briefcase } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Badge } from '@/components/ui/badge';
@@ -305,14 +305,23 @@ const AdminDashboard = () => {
   return (
     <div className="min-h-screen bg-background">
       <div className="container mx-auto px-4 py-6 max-w-7xl">
-        <div className="flex items-center gap-4 mb-6">
-          <Button variant="ghost" size="icon" onClick={() => navigate(-1)}>
-            <ArrowLeft className="h-5 w-5" />
-          </Button>
-          <div>
-            <h1 className="text-3xl font-bold">Admin Dashboard</h1>
-            <p className="text-muted-foreground">Complete platform overview and management</p>
+        <div className="flex items-center justify-between mb-6">
+          <div className="flex items-center gap-4">
+            <Button variant="ghost" size="icon" onClick={() => navigate(-1)}>
+              <ArrowLeft className="h-5 w-5" />
+            </Button>
+            <div>
+              <h1 className="text-3xl font-bold">Admin Dashboard</h1>
+              <p className="text-muted-foreground">Complete platform overview and management</p>
+            </div>
           </div>
+          <Button
+            onClick={() => navigate('/business-dashboard')}
+            className="gap-2"
+          >
+            <Briefcase className="h-4 w-4" />
+            Business Dashboard
+          </Button>
         </div>
 
         {/* Stats Overview */}
