@@ -80,14 +80,27 @@ export const ChatMenuDrawer = ({ isOpen, onClose }: ChatMenuDrawerProps) => {
   };
 
   const handleLogout = async () => {
-    const { error } = await supabase.auth.signOut();
-    if (error) {
-      toast.error('Failed to log out');
-    } else {
+    try {
+      const { error } = await supabase.auth.signOut();
+      if (error) {
+        console.error('Logout error:', error);
+        // Force clear local session as fallback
+        localStorage.clear();
+        onClose();
+        window.location.href = '/';
+        return;
+      }
       toast.success('Logged out successfully');
+      onClose();
       navigate('/');
+    } catch (error: any) {
+      console.error('Logout error:', error);
+      toast.error(error?.message || 'Failed to log out');
+      // Force logout as fallback
+      localStorage.clear();
+      onClose();
+      window.location.href = '/';
     }
-    onClose();
   };
 
   const handleNavigation = (path: string) => {

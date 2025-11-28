@@ -759,13 +759,23 @@ const Profile = ({ mustExist = false }: ProfileProps) => {
 	};
 
 	const handleLogout = async () => {
-		const { error } = await supabase.auth.signOut();
-		if (error) {
-			toast.error('Failed to log out');
-			console.error('Logout error:', error);
-		} else {
+		try {
+			const { error } = await supabase.auth.signOut();
+			if (error) {
+				console.error('Logout error:', error);
+				// Force clear local session as fallback
+				localStorage.clear();
+				window.location.href = '/';
+				return;
+			}
 			toast.success('Logged out successfully');
 			navigate('/');
+		} catch (error: any) {
+			console.error('Logout error:', error);
+			toast.error(error?.message || 'Failed to log out');
+			// Force logout as fallback
+			localStorage.clear();
+			window.location.href = '/';
 		}
 	};
 
