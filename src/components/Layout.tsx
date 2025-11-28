@@ -3,7 +3,7 @@ import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { useAuth } from '@/contexts/AuthContext';
 import { useAccountMode } from '@/contexts/AccountModeContext';
 import { useSettings } from '@/contexts/SettingsContext';
-import { Home, MessageSquare, Search, Bell, User, Settings, Shield, BarChart3, Grid3x3, Gamepad2, Bot, ShoppingBag, Wallet, Send, Gift, Image as ImageIcon, Hash, TrendingUp } from 'lucide-react';
+import { Home, MessageSquare, Search, Bell, User, Settings, Shield, BarChart3, Grid3x3, Gamepad2, Bot, ShoppingBag, Wallet, Send, Gift, Image as ImageIcon, Hash, TrendingUp, Building2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import Logo from '@/components/Logo';
 import NotificationIcon from '@/components/nav/NotificationIcon';
@@ -210,6 +210,22 @@ const Layout = ({ children }: LayoutProps) => {
             </Link>
             
             <MobileMenuSheet />
+            
+            {isBusinessMode && (
+              <Link
+                to="/business/dashboard"
+                className={cn(
+                  "flex flex-col items-center justify-center gap-1 flex-1 py-1.5 transition-colors",
+                  isActive('/business/dashboard') ? "text-primary" : "text-muted-foreground"
+                )}
+              >
+                <Building2 className={cn(
+                  "h-6 w-6",
+                  isActive('/business/dashboard') && "fill-current"
+                )} />
+                <span className="text-[10px] font-medium">Business</span>
+              </Link>
+            )}
             
             <Link
               to="/chats"
