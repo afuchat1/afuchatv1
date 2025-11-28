@@ -211,22 +211,6 @@ const Layout = ({ children }: LayoutProps) => {
             
             <MobileMenuSheet />
             
-            {isBusinessMode && (
-              <Link
-                to="/business/dashboard"
-                className={cn(
-                  "flex flex-col items-center justify-center gap-1 flex-1 py-1.5 transition-colors",
-                  isActive('/business/dashboard') ? "text-primary" : "text-muted-foreground"
-                )}
-              >
-                <Building2 className={cn(
-                  "h-6 w-6",
-                  isActive('/business/dashboard') && "fill-current"
-                )} />
-                <span className="text-[10px] font-medium">Business</span>
-              </Link>
-            )}
-            
             <Link
               to="/chats"
               className={cn(
