@@ -7,6 +7,7 @@ import NewPostModal from '@/components/ui/NewPostModal';
 import FloatingActionButton from '@/components/ui/FloatingActionButton';
 import Layout from '@/components/Layout';
 import { CustomLoader } from '@/components/ui/CustomLoader';
+import { ProfileCompletionBanner } from '@/components/ProfileCompletionBanner';
 
 const Home = () => {
   const { user } = useAuth();
@@ -77,6 +78,7 @@ const Home = () => {
   return (
     <Layout>
       <div className="relative">
+        <ProfileCompletionBanner />
         <Feed />
         <FloatingActionButton />
         {user && (
