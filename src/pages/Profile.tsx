@@ -33,6 +33,7 @@ import { OnlineStatus } from '@/components/OnlineStatus';
 import { StoryAvatar } from '@/components/moments/StoryAvatar';
 import { SEO } from '@/components/SEO';
 import { UserPremiumBadge } from '@/components/UserPremiumBadge';
+import { BusinessBenefitsSheet } from '@/components/BusinessBenefitsSheet';
 
 interface Profile {
 	id: string;
@@ -282,6 +283,7 @@ const Profile = ({ mustExist = false }: ProfileProps) => {
 	const [isActionsSheetOpen, setIsActionsSheetOpen] = useState(false);
 	const [isUploadingBanner, setIsUploadingBanner] = useState(false);
 	const [currentUserIsVerified, setCurrentUserIsVerified] = useState(false);
+	const [isBusinessBenefitsOpen, setIsBusinessBenefitsOpen] = useState(false);
 
 
 	const handleBannerUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -951,7 +953,9 @@ const Profile = ({ mustExist = false }: ProfileProps) => {
 								</div>
 								
 								{profile.is_business_mode && (
-									<BusinessBadge />
+									<div onClick={() => setIsBusinessBenefitsOpen(true)} className="cursor-pointer">
+										<BusinessBadge />
+									</div>
 								)}
 								
 								<UserPremiumBadge userId={profileId} />
@@ -989,7 +993,9 @@ const Profile = ({ mustExist = false }: ProfileProps) => {
 							</div>
 							
 							{profile.is_business_mode && (
-								<BusinessBadge />
+								<div onClick={() => setIsBusinessBenefitsOpen(true)} className="cursor-pointer">
+									<BusinessBadge />
+								</div>
 							)}
 							
 							<UserPremiumBadge userId={profileId} />
@@ -998,7 +1004,9 @@ const Profile = ({ mustExist = false }: ProfileProps) => {
 							<div className="flex items-center gap-1">
 								<h1 className="text-xl font-extrabold leading-tight">{profile.display_name}</h1>
 								{profile.is_business_mode && (
-									<BusinessBadge />
+									<div onClick={() => setIsBusinessBenefitsOpen(true)} className="cursor-pointer">
+										<BusinessBadge />
+									</div>
 								)}
 								<UserPremiumBadge userId={profileId} />
 							</div>
@@ -1263,6 +1271,13 @@ const Profile = ({ mustExist = false }: ProfileProps) => {
 					isOrgVerified={selectedVerified.isOrgVerified}
 					createdAt={selectedVerified.createdAt}
 					viewerIsVerified={currentUserIsVerified}
+				/>
+			)}
+
+			{isBusinessBenefitsOpen && (
+				<BusinessBenefitsSheet
+					open={isBusinessBenefitsOpen}
+					onOpenChange={setIsBusinessBenefitsOpen}
 				/>
 			)}
 		</div>
