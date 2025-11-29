@@ -22,6 +22,7 @@ export const PhoneNumberInput = () => {
   const [isEditing, setIsEditing] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
   const [error, setError] = useState('');
+  const [countryCode, setCountryCode] = useState('');
 
   useEffect(() => {
     loadPhoneNumber();
@@ -33,48 +34,79 @@ export const PhoneNumberInput = () => {
     try {
       const { data, error } = await supabase
         .from('profiles')
-        .select('phone_number')
+        .select('phone_number, country')
         .eq('id', user.id)
         .single();
 
       if (error) throw error;
 
       const phone = data?.phone_number || '';
-      setPhoneNumber(phone);
-      setOriginalPhone(phone);
+      const userCountry = data?.country || '';
+      
+      // Get country code based on user's country
+      const code = getCountryCode(userCountry);
+      setCountryCode(code);
+      
+      // Extract phone number without country code if it exists
+      const phoneWithoutCode = phone.startsWith(code) ? phone.substring(code.length) : phone;
+      setPhoneNumber(phoneWithoutCode);
+      setOriginalPhone(phoneWithoutCode);
     } catch (error) {
       console.error('Error loading phone number:', error);
     }
   };
 
-  const formatPhoneNumber = (value: string) => {
-    // Remove all non-digit characters except the leading +
-    let cleaned = value.replace(/[^\d+]/g, '');
-    
-    // Ensure it starts with +
-    if (!cleaned.startsWith('+')) {
-      if (cleaned.startsWith('00')) {
-        cleaned = '+' + cleaned.substring(2);
-      } else if (cleaned.length > 0) {
-        cleaned = '+' + cleaned;
-      }
-    }
-    
-    return cleaned;
+  const getCountryCode = (country: string): string => {
+    const countryCodes: Record<string, string> = {
+      'United States': '+1',
+      'Canada': '+1',
+      'United Kingdom': '+44',
+      'India': '+91',
+      'China': '+86',
+      'Japan': '+81',
+      'Germany': '+49',
+      'France': '+33',
+      'Brazil': '+55',
+      'Australia': '+61',
+      'South Africa': '+27',
+      'Nigeria': '+234',
+      'Kenya': '+254',
+      'Egypt': '+20',
+      'Mexico': '+52',
+      'Spain': '+34',
+      'Italy': '+39',
+      'Russia': '+7',
+      'South Korea': '+82',
+      'Indonesia': '+62',
+      'Thailand': '+66',
+      'Vietnam': '+84',
+      'Philippines': '+63',
+      'Turkey': '+90',
+      'Saudi Arabia': '+966',
+      'UAE': '+971',
+      'Argentina': '+54',
+      'Colombia': '+57',
+      'Chile': '+56',
+      'Peru': '+51',
+    };
+    return countryCodes[country] || '+1';
   };
 
   const handlePhoneChange = (value: string) => {
-    const formatted = formatPhoneNumber(value);
-    setPhoneNumber(formatted);
+    // Only allow digits and limit length
+    const cleaned = value.replace(/\D/g, '');
+    setPhoneNumber(cleaned);
     setError('');
   };
 
   const validateAndSave = async () => {
     if (!user) return;
 
+    const fullPhoneNumber = countryCode + phoneNumber;
+
     // Validate phone number
     try {
-      phoneSchema.parse(phoneNumber);
+      phoneSchema.parse(fullPhoneNumber);
     } catch (err) {
       if (err instanceof z.ZodError) {
         setError(err.errors[0].message);
@@ -88,7 +120,7 @@ export const PhoneNumberInput = () => {
     try {
       const { error: updateError } = await supabase
         .from('profiles')
-        .update({ phone_number: phoneNumber })
+        .update({ phone_number: fullPhoneNumber })
         .eq('id', user.id);
 
       if (updateError) throw updateError;
@@ -155,12 +187,12 @@ export const PhoneNumberInput = () => {
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-3">
                 <Phone className="h-5 w-5 text-muted-foreground" />
-                <div>
-                  <p className="font-medium">Phone Number</p>
-                  <p className="text-sm text-muted-foreground">
-                    {originalPhone || 'Not configured'}
-                  </p>
-                </div>
+              <div>
+                <p className="font-medium">Phone Number</p>
+                <p className="text-sm text-muted-foreground">
+                  {originalPhone ? `${countryCode}${originalPhone}` : 'Not configured'}
+                </p>
+              </div>
               </div>
               <Button
                 variant="ghost"
@@ -175,21 +207,26 @@ export const PhoneNumberInput = () => {
           <div className="space-y-4">
             <div className="space-y-2">
               <Label htmlFor="phone">
-                Phone Number <span className="text-muted-foreground text-xs">(International format)</span>
+                Phone Number
               </Label>
-              <Input
-                id="phone"
-                type="tel"
-                placeholder="+1234567890"
-                value={phoneNumber}
-                onChange={(e) => handlePhoneChange(e.target.value)}
-                className={error ? 'border-red-500' : ''}
-              />
+              <div className="flex gap-2">
+                <div className="w-20 flex items-center justify-center bg-muted rounded-md px-3 text-sm font-medium">
+                  {countryCode}
+                </div>
+                <Input
+                  id="phone"
+                  type="tel"
+                  placeholder="1234567890"
+                  value={phoneNumber}
+                  onChange={(e) => handlePhoneChange(e.target.value)}
+                  className={error ? 'border-red-500' : ''}
+                />
+              </div>
               {error && (
                 <p className="text-sm text-red-500">{error}</p>
               )}
               <p className="text-xs text-muted-foreground">
-                Enter your phone number with country code (e.g., +1 for US, +44 for UK, +91 for India)
+                Country code is set based on your profile country. Enter only your phone number.
               </p>
             </div>
 
