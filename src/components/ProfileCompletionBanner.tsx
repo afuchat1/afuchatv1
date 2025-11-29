@@ -10,6 +10,7 @@ export const ProfileCompletionBanner = () => {
   const navigate = useNavigate();
   const [show, setShow] = useState(false);
   const [dismissed, setDismissed] = useState(false);
+  const [userHandle, setUserHandle] = useState<string>('');
 
   useEffect(() => {
     const checkProfile = async () => {
@@ -17,12 +18,15 @@ export const ProfileCompletionBanner = () => {
 
       const { data: profile } = await supabase
         .from('profiles')
-        .select('phone_number, country, avatar_url, bio')
+        .select('phone_number, country, avatar_url, bio, handle')
         .eq('id', user.id)
         .single();
 
-      if (profile && (!profile.phone_number || !profile.country || !profile.avatar_url || !profile.bio)) {
-        setShow(true);
+      if (profile) {
+        setUserHandle(profile.handle);
+        if (!profile.phone_number || !profile.country || !profile.avatar_url || !profile.bio) {
+          setShow(true);
+        }
       }
     };
 
@@ -36,7 +40,9 @@ export const ProfileCompletionBanner = () => {
   };
 
   const handleComplete = () => {
-    navigate('/edit-profile');
+    if (userHandle) {
+      navigate(`/${userHandle}/edit`);
+    }
   };
 
   if (!show) return null;
