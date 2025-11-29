@@ -13,6 +13,7 @@ import Logo from '@/components/Logo';
 import { countries } from '@/lib/countries';
 import { Progress } from '@/components/ui/progress';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from '@/components/ui/dialog';
+import { getCountryFlag } from '@/lib/countryFlags';
 
 const CompleteProfile = () => {
   const { user } = useAuth();
@@ -305,15 +306,31 @@ const CompleteProfile = () => {
                 value={formData.country}
                 onValueChange={(value) => setFormData({ ...formData, country: value })}
               >
-                <SelectTrigger>
-                  <SelectValue placeholder="Select your country" />
+                <SelectTrigger className="h-12 bg-background">
+                  <SelectValue placeholder="Select your country">
+                    {formData.country && (
+                      <div className="flex items-center gap-2.5">
+                        <span className="text-2xl">{getCountryFlag(formData.country)}</span>
+                        <span className="font-medium">{formData.country}</span>
+                      </div>
+                    )}
+                  </SelectValue>
                 </SelectTrigger>
-                <SelectContent>
-                  {countries.map((country) => (
-                    <SelectItem key={country} value={country}>
-                      {country}
-                    </SelectItem>
-                  ))}
+                <SelectContent className="max-h-[400px] bg-background/98 backdrop-blur-xl border border-border/50 z-50">
+                  <div className="p-2">
+                    {countries.map((country) => (
+                      <SelectItem 
+                        key={country} 
+                        value={country}
+                        className="h-11 cursor-pointer rounded-lg hover:bg-accent/80 focus:bg-accent/80 transition-all duration-200"
+                      >
+                        <div className="flex items-center gap-3">
+                          <span className="text-2xl">{getCountryFlag(country)}</span>
+                          <span className="font-medium">{country}</span>
+                        </div>
+                      </SelectItem>
+                    ))}
+                  </div>
                 </SelectContent>
               </Select>
             </div>

@@ -12,6 +12,7 @@ import { emailSchema, passwordSchema, handleSchema, displayNameSchema } from '@/
 import { Separator } from '@/components/ui/separator';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { countries, detectUserCountry } from '@/lib/countries';
+import { getCountryFlag } from '@/lib/countryFlags';
 
 const SignUp = () => {
   const navigate = useNavigate();
@@ -449,15 +450,31 @@ const SignUp = () => {
             <div className="space-y-2">
               <Label htmlFor="country">Country</Label>
               <Select value={country} onValueChange={setCountry}>
-                <SelectTrigger className="h-12">
-                  <SelectValue placeholder="Select your country" />
+                <SelectTrigger className="h-12 bg-background">
+                  <SelectValue placeholder="Select your country">
+                    {country && (
+                      <div className="flex items-center gap-2.5">
+                        <span className="text-2xl">{getCountryFlag(country)}</span>
+                        <span className="font-medium">{country}</span>
+                      </div>
+                    )}
+                  </SelectValue>
                 </SelectTrigger>
-                <SelectContent className="max-h-[300px]">
-                  {countries.map((c) => (
-                    <SelectItem key={c} value={c}>
-                      {c}
-                    </SelectItem>
-                  ))}
+                <SelectContent className="max-h-[400px] bg-background/98 backdrop-blur-xl border border-border/50 z-50">
+                  <div className="p-2">
+                    {countries.map((c) => (
+                      <SelectItem 
+                        key={c} 
+                        value={c}
+                        className="h-11 cursor-pointer rounded-lg hover:bg-accent/80 focus:bg-accent/80 transition-all duration-200"
+                      >
+                        <div className="flex items-center gap-3">
+                          <span className="text-2xl">{getCountryFlag(c)}</span>
+                          <span className="font-medium">{c}</span>
+                        </div>
+                      </SelectItem>
+                    ))}
+                  </div>
                 </SelectContent>
               </Select>
               <p className="text-xs text-muted-foreground">

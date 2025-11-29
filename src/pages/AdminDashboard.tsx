@@ -10,6 +10,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Badge } from '@/components/ui/badge';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { toast } from 'sonner';
+import { getCountryFlag } from '@/lib/countryFlags';
 
 interface DashboardStats {
   totalUsers: number;
@@ -476,7 +477,14 @@ const AdminDashboard = () => {
                           <TableCell className="font-medium">{user.display_name}</TableCell>
                           <TableCell>@{user.handle}</TableCell>
                           <TableCell>{user.phone_number || 'N/A'}</TableCell>
-                          <TableCell>{user.country || 'N/A'}</TableCell>
+                          <TableCell>
+                            {user.country ? (
+                              <div className="flex items-center gap-1.5">
+                                <span className="text-lg">{getCountryFlag(user.country)}</span>
+                                <span>{user.country}</span>
+                              </div>
+                            ) : 'N/A'}
+                          </TableCell>
                           <TableCell>{user.xp}</TableCell>
                           <TableCell>{user.acoin}</TableCell>
                           <TableCell>

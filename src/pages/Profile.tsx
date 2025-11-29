@@ -34,6 +34,7 @@ import { StoryAvatar } from '@/components/moments/StoryAvatar';
 import { SEO } from '@/components/SEO';
 import { UserPremiumBadge } from '@/components/UserPremiumBadge';
 import { BusinessBenefitsSheet } from '@/components/BusinessBenefitsSheet';
+import { getCountryFlag } from '@/lib/countryFlags';
 
 interface Profile {
 	id: string;
@@ -1036,12 +1037,12 @@ const Profile = ({ mustExist = false }: ProfileProps) => {
 								<span className="font-medium">{profile.business_category}</span>
 							</div>
 						)}
-						{profile.country && (
-							<div className="flex items-center gap-1.5 text-sm text-muted-foreground">
-								<span className="text-base">📍</span>
-								<span className="font-medium">{profile.country}</span>
-							</div>
-						)}
+					{profile.country && (
+						<div className="flex items-center gap-2 text-sm text-muted-foreground">
+							<span className="text-2xl">{getCountryFlag(profile.country)}</span>
+							<span className="font-medium">{profile.country}</span>
+						</div>
+					)}
 					</div>
 
 					{/* Website URL - Display for business profiles */}

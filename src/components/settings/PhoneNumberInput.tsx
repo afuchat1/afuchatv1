@@ -8,6 +8,7 @@ import { useAuth } from '@/contexts/AuthContext';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
 import { z } from 'zod';
+import { getCountryFlag, getCountryCode } from '@/lib/countryFlags';
 
 // Phone number validation schema - international format with country code
 const phoneSchema = z.string()
@@ -23,6 +24,7 @@ export const PhoneNumberInput = () => {
   const [isSaving, setIsSaving] = useState(false);
   const [error, setError] = useState('');
   const [countryCode, setCountryCode] = useState('');
+  const [profile, setProfile] = useState<{ country: string } | null>(null);
 
   useEffect(() => {
     loadPhoneNumber();
@@ -43,6 +45,9 @@ export const PhoneNumberInput = () => {
       const phone = data?.phone_number || '';
       const userCountry = data?.country || '';
       
+      // Store profile for country flag display
+      setProfile({ country: userCountry });
+      
       // Get country code based on user's country
       const code = getCountryCode(userCountry);
       setCountryCode(code);
@@ -56,41 +61,6 @@ export const PhoneNumberInput = () => {
     }
   };
 
-  const getCountryCode = (country: string): string => {
-    const countryCodes: Record<string, string> = {
-      'United States': '+1',
-      'Canada': '+1',
-      'United Kingdom': '+44',
-      'India': '+91',
-      'China': '+86',
-      'Japan': '+81',
-      'Germany': '+49',
-      'France': '+33',
-      'Brazil': '+55',
-      'Australia': '+61',
-      'South Africa': '+27',
-      'Nigeria': '+234',
-      'Kenya': '+254',
-      'Egypt': '+20',
-      'Mexico': '+52',
-      'Spain': '+34',
-      'Italy': '+39',
-      'Russia': '+7',
-      'South Korea': '+82',
-      'Indonesia': '+62',
-      'Thailand': '+66',
-      'Vietnam': '+84',
-      'Philippines': '+63',
-      'Turkey': '+90',
-      'Saudi Arabia': '+966',
-      'UAE': '+971',
-      'Argentina': '+54',
-      'Colombia': '+57',
-      'Chile': '+56',
-      'Peru': '+51',
-    };
-    return countryCodes[country] || '+1';
-  };
 
   const handlePhoneChange = (value: string) => {
     // Only allow digits and limit length
@@ -210,8 +180,9 @@ export const PhoneNumberInput = () => {
                 Phone Number
               </Label>
               <div className="flex gap-2">
-                <div className="w-20 flex items-center justify-center bg-muted rounded-md px-3 text-sm font-medium">
-                  {countryCode}
+                <div className="min-w-24 flex items-center justify-center gap-1.5 bg-muted rounded-md px-3 text-sm font-medium">
+                  <span className="text-2xl">{getCountryFlag(profile?.country || '')}</span>
+                  <span>{countryCode}</span>
                 </div>
                 <Input
                   id="phone"

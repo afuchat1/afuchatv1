@@ -18,6 +18,7 @@ import { useNexa } from '@/hooks/useNexa';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { CircularImageCrop } from '@/components/profile/CircularImageCrop';
 import { countries } from '@/lib/countries';
+import { getCountryFlag } from '@/lib/countryFlags';
 
 // Import Supabase types
 import type { Database } from '@/integrations/supabase/types';
@@ -467,15 +468,31 @@ const EditProfile: React.FC = () => {
               <div className="space-y-2">
                 <Label htmlFor="country" className="text-sm font-medium">Country</Label>
                 <Select value={profile.country} onValueChange={(value) => setProfile((prev) => ({ ...prev, country: value }))}>
-                  <SelectTrigger className="h-11">
-                    <SelectValue placeholder="Select your country" />
+                  <SelectTrigger className="h-12 bg-background">
+                    <SelectValue placeholder="Select your country">
+                      {profile.country && (
+                        <div className="flex items-center gap-2.5">
+                          <span className="text-2xl">{getCountryFlag(profile.country)}</span>
+                          <span className="font-medium">{profile.country}</span>
+                        </div>
+                      )}
+                    </SelectValue>
                   </SelectTrigger>
-                  <SelectContent className="max-h-[300px]">
-                    {countries.map((c) => (
-                      <SelectItem key={c} value={c}>
-                        {c}
-                      </SelectItem>
-                    ))}
+                  <SelectContent className="max-h-[400px] bg-background/98 backdrop-blur-xl border border-border/50 z-50">
+                    <div className="p-2">
+                      {countries.map((c) => (
+                        <SelectItem 
+                          key={c} 
+                          value={c}
+                          className="h-11 cursor-pointer rounded-lg hover:bg-accent/80 focus:bg-accent/80 transition-all duration-200"
+                        >
+                          <div className="flex items-center gap-3">
+                            <span className="text-2xl">{getCountryFlag(c)}</span>
+                            <span className="font-medium">{c}</span>
+                          </div>
+                        </SelectItem>
+                      ))}
+                    </div>
                   </SelectContent>
                 </Select>
                 <p className="text-xs text-muted-foreground">
