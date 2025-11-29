@@ -84,7 +84,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
             // Check if essential profile fields are complete
             supabase
               .from('profiles')
-              .select('display_name, handle, avatar_url')
+              .select('display_name, handle')
               .eq('id', session.user.id)
               .single()
               .then(({ data: profile, error }) => {
@@ -97,9 +97,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
                   return;
                 }
 
-                const hasEssentialFields = profile?.display_name && 
-                                          profile?.handle && 
-                                          profile?.avatar_url;
+                const hasEssentialFields = profile?.display_name && profile?.handle;
 
                 // If on landing/auth pages
                 if (currentPath === '/' || currentPath.startsWith('/auth')) {

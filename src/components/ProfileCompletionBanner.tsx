@@ -17,11 +17,11 @@ export const ProfileCompletionBanner = () => {
 
       const { data: profile } = await supabase
         .from('profiles')
-        .select('phone_number, country')
+        .select('phone_number, country, avatar_url, bio')
         .eq('id', user.id)
         .single();
 
-      if (profile && (!profile.phone_number || !profile.country)) {
+      if (profile && (!profile.phone_number || !profile.country || !profile.avatar_url || !profile.bio)) {
         setShow(true);
       }
     };
@@ -47,7 +47,7 @@ export const ProfileCompletionBanner = () => {
         <div className="flex items-center gap-3 flex-1">
           <AlertCircle className="h-5 w-5 text-primary flex-shrink-0" />
           <p className="text-sm text-foreground">
-            Complete your profile by adding your phone number and country for a better experience
+            Complete your profile (picture, bio, phone, country) to earn 100 Nexa rewards!
           </p>
         </div>
         <div className="flex items-center gap-2">
