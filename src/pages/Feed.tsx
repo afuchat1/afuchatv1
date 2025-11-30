@@ -418,30 +418,56 @@ const PostCard = ({ post, addReply, user, navigate, onAcknowledge, onDeletePost,
   const [hasTrackedView, setHasTrackedView] = useState(false);
   const [showViewsSheet, setShowViewsSheet] = useState(false);
 
-  // Track post view when it becomes visible
+  // Track post view when it becomes visible - optimized to prevent duplicates
   useEffect(() => {
     if (!user || !postRef.current || hasTrackedView) return;
+    
+    // Check if view was already tracked in this session
+    const viewKey = `${post.id}-${user.id}`;
+    const sessionViews = sessionStorage.getItem('viewedPosts');
+    let viewedSet: Set<string> = new Set();
+    
+    if (sessionViews) {
+      try {
+        viewedSet = new Set(JSON.parse(sessionViews));
+      } catch (e) {}
+    }
+    
+    if (viewedSet.has(viewKey)) {
+      setHasTrackedView(true);
+      return;
+    }
 
     const observer = new IntersectionObserver(
       async ([entry]) => {
         if (entry.isIntersecting && !hasTrackedView) {
           setHasTrackedView(true);
           
-          // Track the view in the database
-          try {
-            await supabase
-              .from('post_views')
-              .insert({
-                post_id: post.id,
-                viewer_id: user.id,
-              });
-          } catch (error) {
-            // Silently fail if view already exists (duplicate key constraint)
-            console.debug('View already tracked or error:', error);
+          // Track the view in the database only if not already tracked
+          if (!viewedSet.has(viewKey)) {
+            try {
+              const { error } = await supabase
+                .from('post_views')
+                .insert({
+                  post_id: post.id,
+                  viewer_id: user.id,
+                });
+              
+              if (!error) {
+                // Mark as viewed in session storage
+                viewedSet.add(viewKey);
+                sessionStorage.setItem('viewedPosts', JSON.stringify(Array.from(viewedSet)));
+              }
+            } catch (error: any) {
+              // Only log non-duplicate errors
+              if (!error?.message?.includes('duplicate')) {
+                console.debug('View tracking error:', error);
+              }
+            }
           }
         }
       },
-      { threshold: 0.5 } // Post must be 50% visible
+      { threshold: 0.5, rootMargin: '50px' } // Preload views slightly before visible
     );
 
     observer.observe(postRef.current);
@@ -1105,16 +1131,22 @@ const Feed = ({ defaultTab = 'foryou', guestMode = false }: FeedProps = {}) => {
   const [reportPostId, setReportPostId] = useState<string | null>(null);
   const [editPost, setEditPost] = useState<Post | null>(null);
   const [isDeleting, setIsDeleting] = useState(false);
-
-  // Shuffle function for randomizing posts
-  const shuffleArray = <T,>(array: T[]): T[] => {
-    const shuffled = [...array];
-    for (let i = shuffled.length - 1; i > 0; i--) {
-      const j = Math.floor(Math.random() * (i + 1));
-      [shuffled[i], shuffled[j]] = [shuffled[j], shuffled[i]];
+  
+  // Track which posts have had view attempts to prevent duplicates
+  const viewedPostsRef = useRef<Set<string>>(new Set());
+  
+  // Load previously viewed posts from session storage
+  useEffect(() => {
+    const savedViews = sessionStorage.getItem('viewedPosts');
+    if (savedViews) {
+      try {
+        const viewedArray = JSON.parse(savedViews);
+        viewedPostsRef.current = new Set(viewedArray);
+      } catch (e) {
+        console.error('Failed to parse viewed posts:', e);
+      }
     }
-    return shuffled;
-  };
+  }, []);
 
   // Sync activeTab when defaultTab changes
   useEffect(() => {
@@ -1134,6 +1166,7 @@ const Feed = ({ defaultTab = 'foryou', guestMode = false }: FeedProps = {}) => {
         setLoading(false); // Show cached content immediately
       } catch (e) {
         console.error('Failed to parse cached posts:', e);
+        sessionStorage.removeItem('feedPosts');
       }
     }
     
@@ -1142,11 +1175,25 @@ const Feed = ({ defaultTab = 'foryou', guestMode = false }: FeedProps = {}) => {
         setFollowingPosts(JSON.parse(cachedFollowing));
       } catch (e) {
         console.error('Failed to parse cached following posts:', e);
+        sessionStorage.removeItem('feedFollowingPosts');
       }
     }
     
     if (cachedTab) {
       setActiveTab(cachedTab as 'foryou' | 'following');
+    }
+    
+    // Clean up old viewed posts data (keep only last 500 views)
+    const viewedPosts = sessionStorage.getItem('viewedPosts');
+    if (viewedPosts) {
+      try {
+        const viewed = JSON.parse(viewedPosts);
+        if (viewed.length > 500) {
+          sessionStorage.setItem('viewedPosts', JSON.stringify(viewed.slice(-500)));
+        }
+      } catch (e) {
+        sessionStorage.removeItem('viewedPosts');
+      }
     }
     
     // Fetch fresh data in background
@@ -1177,16 +1224,35 @@ const Feed = ({ defaultTab = 'foryou', guestMode = false }: FeedProps = {}) => {
     }
   }, [user]);
 
-  // Save to cache whenever posts change
+  // Save to cache whenever posts change (debounced to reduce writes)
   useEffect(() => {
     if (posts.length > 0) {
-      sessionStorage.setItem('feedPosts', JSON.stringify(posts));
+      const timer = setTimeout(() => {
+        try {
+          sessionStorage.setItem('feedPosts', JSON.stringify(posts));
+        } catch (e) {
+          // Clear old data if storage is full
+          sessionStorage.removeItem('feedPosts');
+          console.debug('Session storage full, cleared cache');
+        }
+      }, 1000); // Debounce by 1 second
+      
+      return () => clearTimeout(timer);
     }
   }, [posts]);
 
   useEffect(() => {
     if (followingPosts.length > 0) {
-      sessionStorage.setItem('feedFollowingPosts', JSON.stringify(followingPosts));
+      const timer = setTimeout(() => {
+        try {
+          sessionStorage.setItem('feedFollowingPosts', JSON.stringify(followingPosts));
+        } catch (e) {
+          sessionStorage.removeItem('feedFollowingPosts');
+          console.debug('Session storage full, cleared cache');
+        }
+      }, 1000); // Debounce by 1 second
+      
+      return () => clearTimeout(timer);
     }
   }, [followingPosts]);
 
@@ -1455,15 +1521,21 @@ const Feed = ({ defaultTab = 'foryou', guestMode = false }: FeedProps = {}) => {
     }, 30000);
     
     try {
-      const POSTS_PER_PAGE = 50;
+      const POSTS_PER_PAGE = 30; // Reduced from 50 to save data
       const from = page * POSTS_PER_PAGE;
       const to = from + POSTS_PER_PAGE - 1;
 
-      // Fetch posts with optimized query
+      // Fetch posts with optimized query - only essential fields
       const { data: postData, error: postsError } = await supabase
         .from('posts')
         .select(`
-          *,
+          id,
+          content,
+          created_at,
+          updated_at,
+          author_id,
+          view_count,
+          image_url,
           profiles!inner(display_name, handle, is_verified, is_organization_verified, is_affiliate, is_business_mode, avatar_url, affiliated_business_id, last_seen, show_online_status),
           post_images(image_url, display_order, alt_text),
           post_link_previews(url, title, description, image_url, site_name)
@@ -1476,26 +1548,34 @@ const Feed = ({ defaultTab = 'foryou', guestMode = false }: FeedProps = {}) => {
 
       setHasMore(postData.length === POSTS_PER_PAGE);
 
-      // Fetch following posts efficiently
+      // Fetch following posts efficiently - only if user is logged in
       let followingPostData: any[] = [];
       if (user) {
         const { data: followingData } = await supabase
           .from('follows')
           .select('following_id')
-          .eq('follower_id', user.id);
+          .eq('follower_id', user.id)
+          .limit(100); // Limit to reduce data
 
         if (followingData?.length > 0) {
           const followingIds = followingData.map((f) => f.following_id);
           const { data } = await supabase
             .from('posts')
             .select(`
-              *,
+              id,
+              content,
+              created_at,
+              updated_at,
+              author_id,
+              view_count,
+              image_url,
               profiles!inner(display_name, handle, is_verified, is_organization_verified, is_affiliate, is_business_mode, avatar_url, affiliated_business_id, last_seen, show_online_status),
               post_images(image_url, display_order, alt_text),
               post_link_previews(url, title, description, image_url, site_name)
             `)
             .in('author_id', followingIds)
-            .order('created_at', { ascending: false });
+            .order('created_at', { ascending: false })
+            .limit(50); // Limit following posts
           followingPostData = data || [];
         }
       }
@@ -1601,8 +1681,14 @@ const Feed = ({ defaultTab = 'foryou', guestMode = false }: FeedProps = {}) => {
         } as Post;
       };
 
-      const finalPosts = shuffleArray(postData.map(mapPost));
-      const finalFollowingPosts = shuffleArray(followingPostData.map(mapPost));
+      // Sort posts by created_at (newest first) instead of shuffling
+      // This provides consistent ordering and reduces confusion
+      const finalPosts = postData.map(mapPost).sort((a, b) => 
+        new Date(b.created_at).getTime() - new Date(a.created_at).getTime()
+      );
+      const finalFollowingPosts = followingPostData.map(mapPost).sort((a, b) => 
+        new Date(b.created_at).getTime() - new Date(a.created_at).getTime()
+      );
       
       if (isInitial) {
         setPosts(finalPosts);
@@ -1624,7 +1710,7 @@ const Feed = ({ defaultTab = 'foryou', guestMode = false }: FeedProps = {}) => {
       setLoading(false);
       setLoadingMore(false);
     }
-  }, [user, shuffleArray]);
+  }, [user]);
 
   // Manually load next page of posts (used by scroll + button)
   const handleLoadMore = useCallback(() => {
