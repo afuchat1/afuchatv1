@@ -2247,10 +2247,10 @@ const Feed = ({ defaultTab = 'foryou', guestMode = false }: FeedProps = {}) => {
           </TabsList>
         </div>
 
-      {/* Adsterra Banner Ad */}
-      <AdsterraBannerAd />
-
         <TabsContent value={activeTab} className="flex-1 overflow-y-auto m-0" ref={feedRef}>
+          {/* Adsterra Banner Ad */}
+          <AdsterraBannerAd />
+          
           {currentPosts.length === 0 ? (
             <div className="text-center text-muted-foreground py-6 sm:py-8 text-xs sm:text-sm px-4">
               {activeTab === 'following' && user
