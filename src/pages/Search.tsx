@@ -11,7 +11,7 @@ import { toast } from 'sonner';
 import { useTranslation } from 'react-i18next';
 import { searchSchema } from '@/lib/validation';
 import { NativeAdCard } from '@/components/ads/NativeAdCard';
-import { AdsterraSocialAd } from '@/components/ads/AdsterraSocialAd';
+import { AdsterraBannerAd } from '@/components/ads/AdsterraBannerAd';
 
 interface SearchResult {
   type: 'user' | 'post' | 'group';
@@ -401,8 +401,8 @@ const Search = () => {
         </div>
       </div>
 
-      {/* Adsterra Social Ad */}
-      <AdsterraSocialAd />
+            {/* Adsterra Banner Ad */}
+            <AdsterraBannerAd />
 
       <div className="flex-1 overflow-y-auto p-4">
         {loading && isSearchActive ? (
