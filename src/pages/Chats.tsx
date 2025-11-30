@@ -11,6 +11,7 @@ import { StoryAvatar } from '@/components/moments/StoryAvatar';
 import { CreateGroupDialog } from '@/components/chat/CreateGroupDialog';
 import { toast } from 'sonner';
 import { NativeAdCard } from '@/components/ads/NativeAdCard';
+import { AdsterraBannerAd } from '@/components/ads/AdsterraBannerAd';
 
 interface Chat {
   id: string;
@@ -478,6 +479,9 @@ const Chats = () => {
         onToggleCollapse={setShouldCollapseStories}
         onSearch={setSearchQuery}
       />
+
+      {/* Adsterra Banner Ad */}
+      <AdsterraBannerAd />
 
       {/* Chat List Container - Main scrollable area */}
       <div 
