@@ -8,37 +8,17 @@ interface NativeAdCardProps {
 
 export const NativeAdCard = ({ slot }: NativeAdCardProps) => {
   const adRef = useRef<HTMLDivElement>(null);
-  const [adLoaded, setAdLoaded] = useState(false);
 
   useEffect(() => {
     try {
+      console.log('[NativeAdCard] Initializing AdSense for slot:', slot);
       // @ts-ignore
       (window.adsbygoogle = window.adsbygoogle || []).push({});
-      
-      // Check if ad loaded after a short delay
-      const checkAdLoad = setTimeout(() => {
-        if (adRef.current) {
-          const ins = adRef.current.querySelector('ins');
-          // Check if AdSense populated the ad slot
-          if (ins && ins.getAttribute('data-ad-status') === 'filled') {
-            setAdLoaded(true);
-          } else if (ins && ins.clientHeight > 0) {
-            // Fallback: check if ad has height
-            setAdLoaded(true);
-          }
-        }
-      }, 1000);
-
-      return () => clearTimeout(checkAdLoad);
+      console.log('[NativeAdCard] AdSense push successful');
     } catch (err) {
-      console.error('AdSense error:', err);
+      console.error('[NativeAdCard] AdSense error:', err);
     }
-  }, []);
-
-  // Don't render anything if ad didn't load
-  if (!adLoaded) {
-    return null;
-  }
+  }, [slot]);
 
   return (
     <div className="border-b border-border p-4 bg-background/50 backdrop-blur-sm">

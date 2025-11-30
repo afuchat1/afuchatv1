@@ -4,41 +4,33 @@ import { useEffect, useRef, useState } from 'react';
 
 export const AdsterraAdCard = () => {
   const adRef = useRef<HTMLDivElement>(null);
-  const [adLoaded, setAdLoaded] = useState(false);
 
   useEffect(() => {
+    console.log('[AdsterraAdCard] Loading Adsterra native ad script');
     // Load Adsterra script dynamically
     const script = document.createElement('script');
     script.async = true;
     script.setAttribute('data-cfasync', 'false');
     script.src = '//pl28165526.effectivegatecpm.com/3938e39e573566edcbbdc1594b4b1324/invoke.js';
     
+    script.onload = () => {
+      console.log('[AdsterraAdCard] Adsterra script loaded successfully');
+    };
+    
+    script.onerror = () => {
+      console.error('[AdsterraAdCard] Failed to load Adsterra script');
+    };
+    
     if (adRef.current) {
       adRef.current.appendChild(script);
     }
 
-    // Check if ad loaded after a short delay
-    const checkAdLoad = setTimeout(() => {
-      if (adRef.current) {
-        const container = adRef.current.querySelector('#container-3938e39e573566edcbbdc1594b4b1324');
-        if (container && container.children.length > 0) {
-          setAdLoaded(true);
-        }
-      }
-    }, 1500);
-
     return () => {
-      clearTimeout(checkAdLoad);
       if (adRef.current && script.parentNode === adRef.current) {
         adRef.current.removeChild(script);
       }
     };
   }, []);
-
-  // Don't render if ad didn't load
-  if (!adLoaded) {
-    return null;
-  }
 
   return (
     <div className="border-b border-border p-4 bg-accent/5 backdrop-blur-sm">
