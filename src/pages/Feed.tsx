@@ -1682,14 +1682,35 @@ const Feed = ({ defaultTab = 'foryou', guestMode = false }: FeedProps = {}) => {
         } as Post;
       };
 
-      // Sort posts by created_at (newest first) instead of shuffling
-      // This provides consistent ordering and reduces confusion
-      const finalPosts = postData.map(mapPost).sort((a, b) => 
-        new Date(b.created_at).getTime() - new Date(a.created_at).getTime()
-      );
-      const finalFollowingPosts = followingPostData.map(mapPost).sort((a, b) => 
-        new Date(b.created_at).getTime() - new Date(a.created_at).getTime()
-      );
+      // Personalized sorting: Mix chronological with randomization
+      // Use a session-based seed that changes on refresh for variety
+      const getShuffleSeed = () => {
+        let seed = sessionStorage.getItem('feedShuffleSeed');
+        if (!seed) {
+          seed = Date.now().toString();
+          sessionStorage.setItem('feedShuffleSeed', seed);
+        }
+        return parseInt(seed);
+      };
+
+      // Seeded shuffle function for consistent randomization within session
+      const shuffleWithSeed = (array: any[], seed: number) => {
+        const shuffled = [...array];
+        let currentSeed = seed;
+        
+        for (let i = shuffled.length - 1; i > 0; i--) {
+          // Simple seeded random number generator
+          currentSeed = (currentSeed * 9301 + 49297) % 233280;
+          const random = currentSeed / 233280;
+          const j = Math.floor(random * (i + 1));
+          [shuffled[i], shuffled[j]] = [shuffled[j], shuffled[i]];
+        }
+        return shuffled;
+      };
+
+      const seed = getShuffleSeed();
+      const finalPosts = shuffleWithSeed(postData.map(mapPost), seed);
+      const finalFollowingPosts = shuffleWithSeed(followingPostData.map(mapPost), seed + 1);
       
       if (isInitial) {
         setPosts(finalPosts);
@@ -2154,6 +2175,25 @@ const Feed = ({ defaultTab = 'foryou', guestMode = false }: FeedProps = {}) => {
           // You can re-enable scrolling logic here if needed
       }
   }, [posts]);
+
+  // Listen for feed refresh order event (when clicking home button while on home)
+  useEffect(() => {
+    const handleRefreshFeedOrder = () => {
+      // Clear shuffle seed and refetch with new order
+      sessionStorage.removeItem('feedShuffleSeed');
+      setCurrentPage(0);
+      setHasMore(true);
+      fetchPosts(0, true);
+      if (feedRef.current) {
+        feedRef.current.scrollTop = 0;
+      }
+    };
+
+    window.addEventListener('refresh-feed-order', handleRefreshFeedOrder);
+    return () => {
+      window.removeEventListener('refresh-feed-order', handleRefreshFeedOrder);
+    };
+  }, [fetchPosts]);
 
   if (loading && posts.length === 0 && followingPosts.length === 0) {
     return (

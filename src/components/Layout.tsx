@@ -182,7 +182,15 @@ const Layout = ({ children }: LayoutProps) => {
         )}>
           <div className="flex justify-around items-center px-2 py-2 pb-safe">
             <Link
-              to="/"
+              to="/home"
+              onClick={(e) => {
+                // If already on home, prevent navigation and trigger feed refresh with new order
+                if (location.pathname === '/home' || location.pathname === '/') {
+                  e.preventDefault();
+                  sessionStorage.removeItem('feedShuffleSeed');
+                  window.dispatchEvent(new Event('refresh-feed-order'));
+                }
+              }}
               className={cn(
                 "flex flex-col items-center justify-center gap-1 flex-1 py-1.5 transition-colors",
                 isActive('/') ? "text-primary" : "text-muted-foreground"

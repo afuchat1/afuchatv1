@@ -47,12 +47,12 @@ const FloatingActionButton = () => {
   };
 
   const handleNewPost = () => {
-    if (location.pathname === '/') {
+    if (location.pathname === '/' || location.pathname === '/home') {
       // Already on home, just trigger the event
       window.dispatchEvent(new Event('open-new-post'));
     } else {
       // Navigate to home first, then trigger after a delay
-      navigate('/');
+      navigate('/home');
       setTimeout(() => {
         window.dispatchEvent(new Event('open-new-post'));
       }, 300);
