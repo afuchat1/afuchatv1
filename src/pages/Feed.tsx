@@ -2277,8 +2277,8 @@ const Feed = ({ defaultTab = 'foryou', guestMode = false }: FeedProps = {}) => {
                     guestMode={guestMode}
                   />
                   
-                  {/* Single Adsterra Native Ad after the 3rd post */}
-                  {index === 2 && (
+                  {/* Single Adsterra Native Ad after the 10th post */}
+                  {index === 9 && (
                     <AdsterraNativeAdCard />
                   )}
                 </div>
