@@ -32,6 +32,7 @@ import { ViewsAnalyticsSheet } from '@/components/ViewsAnalyticsSheet';
 import { SEO } from '@/components/SEO';
 import { NativeAdCard } from '@/components/ads/NativeAdCard';
 import { AdsterraBannerAd } from '@/components/ads/AdsterraBannerAd';
+import { AdsterraNativeAdCard } from '@/components/ads/AdsterraNativeAdCard';
 
 // --- INTERFACES ---
 
@@ -2276,9 +2277,9 @@ const Feed = ({ defaultTab = 'foryou', guestMode = false }: FeedProps = {}) => {
                     guestMode={guestMode}
                   />
                   
-                  {/* Native Ad after every 3 posts */}
+                  {/* Adsterra Native Ad after every 3 posts */}
                   {(index + 1) % 3 === 0 && (
-                    <NativeAdCard slot="3847362951" />
+                    <AdsterraNativeAdCard />
                   )}
                 </div>
               ))}
