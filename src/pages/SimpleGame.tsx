@@ -7,6 +7,7 @@ import { useAuth } from '@/contexts/AuthContext';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
 import { motion, AnimatePresence } from 'framer-motion';
+import { AdGate } from '@/components/AdGate';
 
 interface Target {
   id: number;
@@ -26,6 +27,7 @@ const SimpleGame = () => {
   const [highScore, setHighScore] = useState(0);
   const [combo, setCombo] = useState(0);
   const [lastClickTime, setLastClickTime] = useState(0);
+  const [adWatched, setAdWatched] = useState(false);
   const audioContextRef = useRef<AudioContext | null>(null);
 
   useEffect(() => {
@@ -224,6 +226,13 @@ const SimpleGame = () => {
 
   return (
     <div className="min-h-screen bg-background pb-20">
+      {/* Ad Gate - Must watch ad before playing */}
+      {!adWatched && (
+        <AdGate 
+          onAdWatched={() => setAdWatched(true)} 
+          gameName="Nexa Collector Pro"
+        />
+      )}
 
       <main className="container max-w-4xl mx-auto px-4 py-6">
         <div className="text-center mb-6">
