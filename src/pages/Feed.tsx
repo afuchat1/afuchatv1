@@ -2275,6 +2275,11 @@ const Feed = ({ defaultTab = 'foryou', guestMode = false }: FeedProps = {}) => {
                     setExpandedPosts={setExpandedPosts}
                     guestMode={guestMode}
                   />
+                  
+                  {/* Native Ad after every 3 posts */}
+                  {(index + 1) % 3 === 0 && (
+                    <NativeAdCard slot="3847362951" />
+                  )}
                 </div>
               ))}
               
