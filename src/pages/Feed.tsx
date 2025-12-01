@@ -2279,7 +2279,7 @@ const Feed = ({ defaultTab = 'foryou', guestMode = false }: FeedProps = {}) => {
                   
                   {/* Adsterra Native Ad after every 3 posts */}
                   {(index + 1) % 3 === 0 && (
-                    <AdsterraNativeAdCard />
+                    <AdsterraNativeAdCard index={index} />
                   )}
                 </div>
               ))}
