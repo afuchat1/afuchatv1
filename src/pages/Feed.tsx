@@ -2204,6 +2204,7 @@ const Feed = ({ defaultTab = 'foryou', guestMode = false }: FeedProps = {}) => {
   }
 
   const currentPosts = activeTab === 'foryou' ? posts : followingPosts;
+  const adNativeIndex = currentPosts.length > 0 ? Math.min(9, currentPosts.length - 1) : -1;
 
   const handleLoadNewPosts = () => {
     setCurrentPage(0);
@@ -2277,8 +2278,8 @@ const Feed = ({ defaultTab = 'foryou', guestMode = false }: FeedProps = {}) => {
                     guestMode={guestMode}
                   />
                   
-                  {/* Single Adsterra Native Ad after the 10th post */}
-                  {index === 9 && (
+                  {/* Single Adsterra Native Ad after the 10th post (or last post if fewer) */}
+                  {index === adNativeIndex && (
                     <AdsterraNativeAdCard />
                   )}
                 </div>
