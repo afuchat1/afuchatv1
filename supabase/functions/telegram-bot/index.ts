@@ -1722,7 +1722,9 @@ async function handleMessage(message: any) {
           .eq('id', linkUser.user_id)
           .single();
         
-        const menu = buildMainMenu(true, profile);
+        // Check admin status
+        const isAdminUser = await isAdmin(linkUser.user_id);
+        const menu = buildMainMenu(true, profile, isAdminUser);
         await sendTelegramMessage(chatId, `✅ Account linked successfully!\n\nWelcome, ${profile?.display_name}!\n\n` + menu.text, menu.reply_markup);
       } else {
         await sendTelegramMessage(chatId, '❌ Invalid or expired link code. Please try again or get a new code.', {
@@ -2157,7 +2159,9 @@ ${suggestedMenu.text}`, suggestedMenu.reply_markup);
         .eq('id', foundUser.id)
         .single();
       
-      const menu = buildMainMenu(true, profile);
+      // Check admin status
+      const isAdminUser = await isAdmin(foundUser.id);
+      const menu = buildMainMenu(true, profile, isAdminUser);
       await sendTelegramMessage(chatId, `✅ <b>Account Linked Successfully!</b>\n\nWelcome back, ${profile?.display_name}!\n\n` + menu.text, menu.reply_markup);
       break;
     }
