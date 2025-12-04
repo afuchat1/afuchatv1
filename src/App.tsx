@@ -9,6 +9,7 @@ import { AccountModeProvider } from "./contexts/AccountModeContext";
 import { ThemeProvider } from "./contexts/ThemeContext";
 import { SettingsProvider } from "./contexts/SettingsContext";
 import { SettingsSheet } from "./components/SettingsSheet";
+import { TelegramWebAppProvider } from "./components/TelegramWebAppProvider";
 import { useDailyLogin } from "./hooks/useDailyLogin";
 import { useLanguageSync } from "./hooks/useLanguageSync";
 import { useScrollRestoration } from "./hooks/useScrollRestoration";
@@ -213,10 +214,12 @@ const App = () => (
                 <Toaster />
                 <Sonner />
                 <BrowserRouter future={{ v7_startTransition: true, v7_relativeSplatPath: true }}>
-                  <AnimatePresence mode="wait">
-                    <AppRoutes />
-                  </AnimatePresence>
-                  <SettingsSheet />
+                  <TelegramWebAppProvider>
+                    <AnimatePresence mode="wait">
+                      <AppRoutes />
+                    </AnimatePresence>
+                    <SettingsSheet />
+                  </TelegramWebAppProvider>
                 </BrowserRouter>
               </TooltipProvider>
             </SettingsProvider>
