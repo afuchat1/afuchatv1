@@ -99,6 +99,7 @@ ${isLinked ? '✅ Your account is linked' : '🔗 Link your account to access al
     [{ text: '📰 Feed', callback_data: 'menu_feed' }, { text: '💬 Chats', callback_data: 'menu_chats' }],
     [{ text: '💰 Wallet', callback_data: 'menu_wallet' }, { text: '🎁 Gifts', callback_data: 'menu_gifts' }],
     [{ text: '👤 Profile', callback_data: 'menu_profile' }, { text: '🔔 Notifications', callback_data: 'menu_notifications' }],
+    [{ text: '👥 Discover Users', callback_data: 'suggested_users' }],
     [{ text: '⚙️ Settings', callback_data: 'menu_settings' }],
   ] : [
     [{ text: '🔗 Link Existing Account', callback_data: 'link_account' }],
@@ -257,7 +258,62 @@ Manage your AfuChat account settings.`;
     [{ text: '🔒 Privacy Settings', callback_data: 'privacy_settings' }],
     [{ text: '🔗 Unlink Account', callback_data: 'unlink_account' }],
     [{ text: '🌐 Open Web App', callback_data: 'open_webapp' }],
+    [{ text: '🗑️ Delete Account', callback_data: 'delete_account' }],
     [{ text: '🏠 Main Menu', callback_data: 'main_menu' }],
+  ];
+
+  return { text, reply_markup: { inline_keyboard: buttons } };
+}
+
+function buildSuggestedUsersMenu(users: any[], followingIds: string[]) {
+  let text = '👥 <b>Suggested Users to Follow</b>\n\n';
+  text += 'Follow at least one user to get started!\n\n';
+  
+  if (users.length === 0) {
+    text += 'No suggested users available at the moment.';
+  } else {
+    users.forEach((user, i) => {
+      const verified = user.is_verified ? '✅' : '';
+      const business = user.is_business_mode ? '💼' : '';
+      const following = followingIds.includes(user.id) ? '✓ Following' : '';
+      text += `${i + 1}. <b>${user.display_name}</b> ${verified}${business}\n   @${user.handle} ${following}\n`;
+      if (user.bio) text += `   <i>${user.bio.slice(0, 50)}${user.bio.length > 50 ? '...' : ''}</i>\n`;
+      text += '\n';
+    });
+  }
+
+  const buttons = users.map(user => {
+    const isFollowing = followingIds.includes(user.id);
+    return [{ 
+      text: isFollowing ? `✓ Following @${user.handle}` : `➕ Follow @${user.handle}`, 
+      callback_data: `follow_${user.id}` 
+    }];
+  });
+  
+  buttons.push([{ text: '🔄 Refresh', callback_data: 'suggested_users' }]);
+  buttons.push([{ text: '🏠 Main Menu', callback_data: 'main_menu' }]);
+
+  return { text, reply_markup: { inline_keyboard: buttons } };
+}
+
+function buildDeleteAccountMenu() {
+  const text = `⚠️ <b>Delete Account</b>
+
+<b>WARNING:</b> This action is <b>PERMANENT</b> and cannot be undone!
+
+Deleting your account will remove:
+• All your posts and replies
+• All your messages and chats
+• All your followers and following
+• Your Nexa and ACoin balance
+• All gifts sent and received
+• All your data
+
+Are you absolutely sure you want to delete your account?`;
+
+  const buttons = [
+    [{ text: '⚠️ Yes, Delete My Account', callback_data: 'confirm_delete_account' }],
+    [{ text: '❌ Cancel', callback_data: 'menu_settings' }],
   ];
 
   return { text, reply_markup: { inline_keyboard: buttons } };
@@ -640,6 +696,180 @@ Enter the recipient's username (without @):`, {
       break;
     }
     
+    case 'delete_account': {
+      if (!isLinked) {
+        await editMessage(chatId, messageId, '🔗 No account linked to delete.', {
+          inline_keyboard: [[{ text: '🏠 Main Menu', callback_data: 'main_menu' }]]
+        });
+        return;
+      }
+      
+      const menu = buildDeleteAccountMenu();
+      await editMessage(chatId, messageId, menu.text, menu.reply_markup);
+      break;
+    }
+    
+    case 'confirm_delete_account': {
+      if (!isLinked || !tgUser.user_id) {
+        await editMessage(chatId, messageId, '❌ No account to delete.', {
+          inline_keyboard: [[{ text: '🏠 Main Menu', callback_data: 'main_menu' }]]
+        });
+        return;
+      }
+      
+      await editMessage(chatId, messageId, '⏳ <b>Deleting your account...</b>\n\nThis may take a moment...', {
+        inline_keyboard: []
+      });
+      
+      try {
+        // Delete user data in order (to respect foreign key constraints)
+        const userId = tgUser.user_id;
+        
+        // Delete messages
+        await supabase.from('message_reactions').delete().eq('user_id', userId);
+        await supabase.from('message_status').delete().eq('user_id', userId);
+        await supabase.from('messages').delete().eq('sender_id', userId);
+        await supabase.from('chat_members').delete().eq('user_id', userId);
+        await supabase.from('chats').delete().eq('created_by', userId);
+        
+        // Delete posts
+        await supabase.from('post_acknowledgments').delete().eq('user_id', userId);
+        await supabase.from('post_replies').delete().eq('author_id', userId);
+        const { data: userPosts } = await supabase.from('posts').select('id').eq('author_id', userId);
+        if (userPosts && userPosts.length > 0) {
+          const postIds = userPosts.map((p: any) => p.id);
+          await supabase.from('post_images').delete().in('post_id', postIds);
+          await supabase.from('post_link_previews').delete().in('post_id', postIds);
+          await supabase.from('post_views').delete().in('post_id', postIds);
+        }
+        await supabase.from('posts').delete().eq('author_id', userId);
+        
+        // Delete follows
+        await supabase.from('follows').delete().eq('follower_id', userId);
+        await supabase.from('follows').delete().eq('following_id', userId);
+        
+        // Delete tips
+        await supabase.from('tips').delete().eq('sender_id', userId);
+        await supabase.from('tips').delete().eq('receiver_id', userId);
+        
+        // Delete gifts
+        await supabase.from('gift_transactions').delete().eq('sender_id', userId);
+        await supabase.from('gift_transactions').delete().eq('receiver_id', userId);
+        await supabase.from('pinned_gifts').delete().eq('user_id', userId);
+        
+        // Delete red envelopes
+        await supabase.from('red_envelope_claims').delete().eq('claimer_id', userId);
+        await supabase.from('red_envelopes').delete().eq('sender_id', userId);
+        
+        // Delete game data
+        await supabase.from('game_scores').delete().eq('user_id', userId);
+        await supabase.from('game_sessions').delete().eq('player_id', userId);
+        await supabase.from('game_challenges').delete().eq('challenger_id', userId);
+        await supabase.from('game_challenges').delete().eq('opponent_id', userId);
+        
+        // Delete marketplace
+        await supabase.from('marketplace_listings').delete().eq('user_id', userId);
+        
+        // Delete notifications
+        await supabase.from('notifications').delete().eq('user_id', userId);
+        await supabase.from('notifications').delete().eq('actor_id', userId);
+        await supabase.from('notification_preferences').delete().eq('user_id', userId);
+        
+        // Delete user achievements
+        await supabase.from('user_achievements').delete().eq('user_id', userId);
+        await supabase.from('user_activity_log').delete().eq('user_id', userId);
+        await supabase.from('unlocked_accessories').delete().eq('user_id', userId);
+        
+        // Delete transactions
+        await supabase.from('acoin_transactions').delete().eq('user_id', userId);
+        
+        // Delete referrals
+        await supabase.from('referrals').delete().eq('referrer_id', userId);
+        await supabase.from('referrals').delete().eq('referred_id', userId);
+        
+        // Delete security
+        await supabase.from('security_alerts').delete().eq('user_id', userId);
+        await supabase.from('active_sessions').delete().eq('user_id', userId);
+        await supabase.from('login_history').delete().eq('user_id', userId);
+        
+        // Delete stories
+        await supabase.from('story_views').delete().eq('viewer_id', userId);
+        await supabase.from('stories').delete().eq('user_id', userId);
+        
+        // Delete chat preferences
+        await supabase.from('chat_preferences').delete().eq('user_id', userId);
+        await supabase.from('chat_folders').delete().eq('user_id', userId);
+        await supabase.from('chat_labels').delete().eq('user_id', userId);
+        
+        // Delete subscriptions
+        await supabase.from('user_subscriptions').delete().eq('user_id', userId);
+        
+        // Delete affiliate requests
+        await supabase.from('affiliate_requests').delete().eq('user_id', userId);
+        
+        // Delete telegram link
+        await supabase.from('telegram_users').delete().eq('user_id', userId);
+        
+        // Delete profile
+        await supabase.from('profiles').delete().eq('id', userId);
+        
+        // Delete auth user
+        const { error: deleteAuthError } = await supabase.auth.admin.deleteUser(userId);
+        
+        if (deleteAuthError) {
+          console.error('Error deleting auth user:', deleteAuthError);
+          throw new Error('Failed to delete authentication record');
+        }
+        
+        // Re-create telegram user entry (unlinked)
+        await supabase.from('telegram_users').insert({
+          telegram_id: telegramUser.id,
+          telegram_username: telegramUser.username,
+          telegram_first_name: telegramUser.first_name,
+          telegram_last_name: telegramUser.last_name,
+          is_linked: false
+        });
+        
+        const menu = buildMainMenu(false, null);
+        await editMessage(chatId, messageId, '✅ <b>Account Permanently Deleted</b>\n\nYour AfuChat account has been completely removed.\n\nYou can create a new account anytime.\n\n' + menu.text, menu.reply_markup);
+      } catch (error) {
+        console.error('Delete account error:', error);
+        await editMessage(chatId, messageId, '❌ Failed to delete account. Please try again or contact support.', {
+          inline_keyboard: [[{ text: '🔄 Try Again', callback_data: 'confirm_delete_account' }], [{ text: '🏠 Main Menu', callback_data: 'main_menu' }]]
+        });
+      }
+      break;
+    }
+    
+    case 'suggested_users': {
+      if (!isLinked || !tgUser.user_id) {
+        await editMessage(chatId, messageId, '🔗 Please link your account first.', {
+          inline_keyboard: [[{ text: '🔗 Link Account', callback_data: 'link_account' }], [{ text: '🏠 Main Menu', callback_data: 'main_menu' }]]
+        });
+        return;
+      }
+      
+      // Get suggested users
+      const { data: suggestedUsers } = await supabase
+        .from('profiles')
+        .select('id, display_name, handle, bio, avatar_url, is_verified, is_business_mode')
+        .neq('id', tgUser.user_id)
+        .order('xp', { ascending: false })
+        .limit(5);
+      
+      // Get current following
+      const { data: following } = await supabase
+        .from('follows')
+        .select('following_id')
+        .eq('follower_id', tgUser.user_id);
+      
+      const followingIds = (following || []).map((f: any) => f.following_id);
+      
+      const menu = buildSuggestedUsersMenu(suggestedUsers || [], followingIds);
+      await editMessage(chatId, messageId, menu.text, menu.reply_markup);
+      break;
+    }
+    
     default: {
       // Handle gift selection
       if (data.startsWith('gift_')) {
@@ -692,6 +922,65 @@ To send this gift, enter the recipient's username:`, {
         await editMessage(chatId, messageId, '🎁 Enter the recipient\'s username (without @):', {
           inline_keyboard: [[{ text: '⬅️ Cancel', callback_data: 'browse_gifts' }]]
         });
+      }
+      
+      // Handle follow user
+      if (data.startsWith('follow_')) {
+        if (!isLinked || !tgUser.user_id) {
+          await editMessage(chatId, messageId, '🔗 Please link your account first.', {
+            inline_keyboard: [[{ text: '🔗 Link Account', callback_data: 'link_account' }]]
+          });
+          return;
+        }
+        
+        const targetUserId = data.replace('follow_', '');
+        
+        // Check if already following
+        const { data: existingFollow } = await supabase
+          .from('follows')
+          .select('id')
+          .eq('follower_id', tgUser.user_id)
+          .eq('following_id', targetUserId)
+          .single();
+        
+        if (existingFollow) {
+          // Unfollow
+          await supabase
+            .from('follows')
+            .delete()
+            .eq('follower_id', tgUser.user_id)
+            .eq('following_id', targetUserId);
+          
+          await answerCallbackQuery(callbackQuery.id, 'Unfollowed!');
+        } else {
+          // Follow
+          await supabase
+            .from('follows')
+            .insert({
+              follower_id: tgUser.user_id,
+              following_id: targetUserId
+            });
+          
+          await answerCallbackQuery(callbackQuery.id, 'Followed!');
+        }
+        
+        // Refresh suggested users
+        const { data: suggestedUsers } = await supabase
+          .from('profiles')
+          .select('id, display_name, handle, bio, avatar_url, is_verified, is_business_mode')
+          .neq('id', tgUser.user_id)
+          .order('xp', { ascending: false })
+          .limit(5);
+        
+        const { data: following } = await supabase
+          .from('follows')
+          .select('following_id')
+          .eq('follower_id', tgUser.user_id);
+        
+        const followingIds = (following || []).map((f: any) => f.following_id);
+        
+        const menu = buildSuggestedUsersMenu(suggestedUsers || [], followingIds);
+        await editMessage(chatId, messageId, menu.text, menu.reply_markup);
       }
     }
   }
@@ -870,8 +1159,26 @@ async function handleMessage(message: any) {
         .eq('id', authData.user.id)
         .single();
       
-      const menu = buildMainMenu(true, profile);
-      await sendTelegramMessage(chatId, `🎉 <b>Account Created Successfully!</b>\n\nWelcome to AfuChat, ${displayName}!\n\nYou can now log in at afuchat.com with:\n📧 ${email}\n\n` + menu.text, menu.reply_markup);
+      // Get suggested users for new user
+      const { data: suggestedUsers } = await supabase
+        .from('profiles')
+        .select('id, display_name, handle, bio, avatar_url, is_verified, is_business_mode')
+        .neq('id', authData.user.id)
+        .order('xp', { ascending: false })
+        .limit(5);
+      
+      const suggestedMenu = buildSuggestedUsersMenu(suggestedUsers || [], []);
+      
+      await sendTelegramMessage(chatId, `🎉 <b>Account Created Successfully!</b>
+
+Welcome to AfuChat, ${displayName}!
+
+You can now log in at afuchat.com with:
+📧 ${email}
+
+━━━━━━━━━━━━━━━━━━━━
+
+${suggestedMenu.text}`, suggestedMenu.reply_markup);
       break;
     }
     
