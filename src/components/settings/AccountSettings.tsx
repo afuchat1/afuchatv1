@@ -15,6 +15,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { PhoneNumberInput } from './PhoneNumberInput';
+import { TelegramLinking } from './TelegramLinking';
 import { useState, useEffect } from 'react';
 
 export const AccountSettings = () => {
@@ -194,6 +195,8 @@ export const AccountSettings = () => {
       </Card>
 
       <PhoneNumberInput />
+
+      <TelegramLinking />
     </div>
   );
 };

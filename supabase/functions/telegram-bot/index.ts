@@ -85,7 +85,7 @@ async function getOrCreateTelegramUser(telegramUser: any) {
 }
 
 // Menu builders
-function buildMainMenu(isLinked: boolean, profile?: any) {
+function buildMainMenu(isLinked: boolean, profile?: any, isAdminUser = false) {
   const greeting = profile ? `👋 Welcome back, <b>${profile.display_name}</b>!` : '👋 Welcome to <b>AfuChat Bot</b>!';
   const balance = profile ? `\n\n💰 <b>Nexa:</b> ${profile.xp?.toLocaleString() || 0}\n🪙 <b>ACoin:</b> ${profile.acoin?.toLocaleString() || 0}` : '';
   
@@ -101,6 +101,7 @@ ${isLinked ? '✅ Your account is linked' : '🔗 Link your account to access al
     [{ text: '👤 Profile', callback_data: 'menu_profile' }, { text: '🔔 Notifications', callback_data: 'menu_notifications' }],
     [{ text: '👥 Discover Users', callback_data: 'suggested_users' }],
     [{ text: '⚙️ Settings', callback_data: 'menu_settings' }],
+    ...(isAdminUser ? [[{ text: '🔐 Admin Panel', callback_data: 'admin_menu' }]] : []),
   ] : [
     [{ text: '🔗 Link Existing Account', callback_data: 'link_account' }],
     [{ text: '📝 Create New Account', callback_data: 'create_account' }],
@@ -319,6 +320,234 @@ Are you absolutely sure you want to delete your account?`;
   return { text, reply_markup: { inline_keyboard: buttons } };
 }
 
+// Admin menu builders
+async function isAdmin(userId: string): Promise<boolean> {
+  const { data } = await supabase
+    .from('user_roles')
+    .select('role')
+    .eq('user_id', userId)
+    .eq('role', 'admin')
+    .single();
+  return !!data;
+}
+
+function buildAdminMenu() {
+  const text = `🔐 <b>Admin Dashboard</b>
+
+Manage the AfuChat platform:`;
+
+  const buttons = [
+    [{ text: '👥 Manage Users', callback_data: 'admin_users' }],
+    [{ text: '📰 Manage Posts', callback_data: 'admin_posts' }],
+    [{ text: '💰 Manage Wallets', callback_data: 'admin_wallets' }],
+    [{ text: '📊 Platform Stats', callback_data: 'admin_stats' }],
+    [{ text: '🎁 Manage Gifts', callback_data: 'admin_gifts' }],
+    [{ text: '⭐ Subscriptions', callback_data: 'admin_subscriptions' }],
+    [{ text: '🏠 Main Menu', callback_data: 'main_menu' }],
+  ];
+
+  return { text, reply_markup: { inline_keyboard: buttons } };
+}
+
+async function buildAdminStatsMenu() {
+  const { count: userCount } = await supabase.from('profiles').select('*', { count: 'exact', head: true });
+  const { count: postCount } = await supabase.from('posts').select('*', { count: 'exact', head: true });
+  const { count: messageCount } = await supabase.from('messages').select('*', { count: 'exact', head: true });
+  const { count: activeSubCount } = await supabase.from('user_subscriptions').select('*', { count: 'exact', head: true }).eq('is_active', true);
+  const { count: giftTxCount } = await supabase.from('gift_transactions').select('*', { count: 'exact', head: true });
+  const { data: totalNexa } = await supabase.from('profiles').select('xp');
+  const { data: totalACoin } = await supabase.from('profiles').select('acoin');
+  
+  const totalNexaSum = totalNexa?.reduce((acc: number, p: any) => acc + (p.xp || 0), 0) || 0;
+  const totalACoinSum = totalACoin?.reduce((acc: number, p: any) => acc + (p.acoin || 0), 0) || 0;
+  
+  const text = `📊 <b>Platform Statistics</b>
+
+<b>Users:</b>
+👥 Total Users: ${userCount?.toLocaleString() || 0}
+⭐ Active Subscriptions: ${activeSubCount?.toLocaleString() || 0}
+
+<b>Content:</b>
+📰 Total Posts: ${postCount?.toLocaleString() || 0}
+💬 Total Messages: ${messageCount?.toLocaleString() || 0}
+🎁 Gift Transactions: ${giftTxCount?.toLocaleString() || 0}
+
+<b>Economy:</b>
+⚡ Total Nexa in Circulation: ${totalNexaSum.toLocaleString()}
+🪙 Total ACoin in Circulation: ${totalACoinSum.toLocaleString()}`;
+
+  const buttons = [
+    [{ text: '🔄 Refresh', callback_data: 'admin_stats' }],
+    [{ text: '⬅️ Admin Menu', callback_data: 'admin_menu' }],
+  ];
+
+  return { text, reply_markup: { inline_keyboard: buttons } };
+}
+
+async function buildAdminUsersMenu(page = 0) {
+  const pageSize = 5;
+  const { data: users, count } = await supabase
+    .from('profiles')
+    .select('id, display_name, handle, xp, acoin, is_verified, is_business_mode, created_at', { count: 'exact' })
+    .order('created_at', { ascending: false })
+    .range(page * pageSize, (page + 1) * pageSize - 1);
+
+  let text = `👥 <b>User Management</b>\n\nPage ${page + 1} of ${Math.ceil((count || 0) / pageSize)}\n\n`;
+  
+  (users || []).forEach((u: any, i: number) => {
+    const verified = u.is_verified ? '✅' : '';
+    const business = u.is_business_mode ? '💼' : '';
+    text += `${page * pageSize + i + 1}. <b>${u.display_name}</b> ${verified}${business}\n   @${u.handle} | ${u.xp} Nexa\n\n`;
+  });
+
+  const buttons = (users || []).map((u: any) => ([
+    { text: `👤 ${u.display_name}`, callback_data: `admin_user_${u.id}` }
+  ]));
+  
+  const navButtons = [];
+  if (page > 0) navButtons.push({ text: '⬅️ Prev', callback_data: `admin_users_page_${page - 1}` });
+  if ((count || 0) > (page + 1) * pageSize) navButtons.push({ text: 'Next ➡️', callback_data: `admin_users_page_${page + 1}` });
+  if (navButtons.length > 0) buttons.push(navButtons);
+  
+  buttons.push([{ text: '🔍 Search User', callback_data: 'admin_search_user' }]);
+  buttons.push([{ text: '⬅️ Admin Menu', callback_data: 'admin_menu' }]);
+
+  return { text, reply_markup: { inline_keyboard: buttons } };
+}
+
+async function buildAdminUserDetailMenu(userId: string) {
+  const { data: user } = await supabase
+    .from('profiles')
+    .select('*')
+    .eq('id', userId)
+    .single();
+  
+  if (!user) {
+    return { text: '❌ User not found', reply_markup: { inline_keyboard: [[{ text: '⬅️ Back', callback_data: 'admin_users' }]] } };
+  }
+
+  const { count: postCount } = await supabase.from('posts').select('*', { count: 'exact', head: true }).eq('author_id', userId);
+  const { count: followerCount } = await supabase.from('follows').select('*', { count: 'exact', head: true }).eq('following_id', userId);
+  
+  const verified = user.is_verified ? '✅' : '❌';
+  const business = user.is_business_mode ? '💼 Business' : '👤 Personal';
+  
+  const text = `👤 <b>${user.display_name}</b>
+
+<b>Handle:</b> @${user.handle}
+<b>Bio:</b> ${user.bio || 'No bio'}
+<b>Country:</b> ${user.country || 'Not set'}
+
+<b>Status:</b>
+• Verified: ${verified}
+• Account Type: ${business}
+• Grade: ${user.current_grade || 'Newcomer'}
+
+<b>Economy:</b>
+• Nexa: ${user.xp?.toLocaleString() || 0}
+• ACoin: ${user.acoin?.toLocaleString() || 0}
+
+<b>Stats:</b>
+• Posts: ${postCount || 0}
+• Followers: ${followerCount || 0}
+• Login Streak: ${user.login_streak || 0} days
+
+<b>Created:</b> ${new Date(user.created_at).toLocaleDateString()}`;
+
+  const buttons = [
+    [{ text: '➕ Give Nexa', callback_data: `admin_give_nexa_${userId}` }, { text: '➕ Give ACoin', callback_data: `admin_give_acoin_${userId}` }],
+    [{ text: user.is_verified ? '❌ Remove Verified' : '✅ Verify User', callback_data: `admin_toggle_verify_${userId}` }],
+    [{ text: '🗑️ Delete User', callback_data: `admin_delete_user_${userId}` }],
+    [{ text: '⬅️ Back to Users', callback_data: 'admin_users' }],
+  ];
+
+  return { text, reply_markup: { inline_keyboard: buttons } };
+}
+
+async function buildAdminPostsMenu(page = 0) {
+  const pageSize = 5;
+  const { data: posts, count } = await supabase
+    .from('posts')
+    .select('id, content, author_id, created_at, profiles(display_name, handle)', { count: 'exact' })
+    .order('created_at', { ascending: false })
+    .range(page * pageSize, (page + 1) * pageSize - 1);
+
+  let text = `📰 <b>Post Management</b>\n\nPage ${page + 1} of ${Math.ceil((count || 0) / pageSize)}\n\n`;
+  
+  (posts || []).forEach((p: any, i: number) => {
+    const content = p.content.slice(0, 50) + (p.content.length > 50 ? '...' : '');
+    text += `${page * pageSize + i + 1}. <b>${p.profiles?.display_name || 'Unknown'}</b>\n   ${content}\n\n`;
+  });
+
+  const buttons = (posts || []).map((p: any) => ([
+    { text: `📄 Post by ${p.profiles?.display_name || 'Unknown'}`, callback_data: `admin_post_${p.id}` }
+  ]));
+  
+  const navButtons = [];
+  if (page > 0) navButtons.push({ text: '⬅️ Prev', callback_data: `admin_posts_page_${page - 1}` });
+  if ((count || 0) > (page + 1) * pageSize) navButtons.push({ text: 'Next ➡️', callback_data: `admin_posts_page_${page + 1}` });
+  if (navButtons.length > 0) buttons.push(navButtons);
+  
+  buttons.push([{ text: '⬅️ Admin Menu', callback_data: 'admin_menu' }]);
+
+  return { text, reply_markup: { inline_keyboard: buttons } };
+}
+
+async function buildAdminPostDetailMenu(postId: string) {
+  const { data: post } = await supabase
+    .from('posts')
+    .select('*, profiles(display_name, handle)')
+    .eq('id', postId)
+    .single();
+  
+  if (!post) {
+    return { text: '❌ Post not found', reply_markup: { inline_keyboard: [[{ text: '⬅️ Back', callback_data: 'admin_posts' }]] } };
+  }
+
+  const { count: likeCount } = await supabase.from('post_acknowledgments').select('*', { count: 'exact', head: true }).eq('post_id', postId);
+  const { count: replyCount } = await supabase.from('post_replies').select('*', { count: 'exact', head: true }).eq('post_id', postId);
+  
+  const text = `📰 <b>Post Details</b>
+
+<b>Author:</b> ${post.profiles?.display_name} (@${post.profiles?.handle})
+<b>Created:</b> ${new Date(post.created_at).toLocaleString()}
+
+<b>Content:</b>
+${post.content}
+
+<b>Stats:</b>
+❤️ ${likeCount || 0} likes | 💬 ${replyCount || 0} replies | 👁️ ${post.view_count || 0} views`;
+
+  const buttons = [
+    [{ text: '🗑️ Delete Post', callback_data: `admin_delete_post_${postId}` }],
+    [{ text: '⬅️ Back to Posts', callback_data: 'admin_posts' }],
+  ];
+
+  return { text, reply_markup: { inline_keyboard: buttons } };
+}
+
+async function buildAdminSubscriptionsMenu() {
+  const { data: subs, count } = await supabase
+    .from('user_subscriptions')
+    .select('*, profiles(display_name, handle), subscription_plans(name)', { count: 'exact' })
+    .eq('is_active', true)
+    .order('created_at', { ascending: false })
+    .limit(10);
+
+  let text = `⭐ <b>Active Subscriptions</b>\n\nTotal Active: ${count || 0}\n\n`;
+  
+  (subs || []).forEach((s: any, i: number) => {
+    text += `${i + 1}. <b>${s.profiles?.display_name}</b> (@${s.profiles?.handle})\n   Plan: ${s.subscription_plans?.name || 'Unknown'}\n   Expires: ${new Date(s.expires_at).toLocaleDateString()}\n\n`;
+  });
+
+  const buttons = [
+    [{ text: '🔄 Refresh', callback_data: 'admin_subscriptions' }],
+    [{ text: '⬅️ Admin Menu', callback_data: 'admin_menu' }],
+  ];
+
+  return { text, reply_markup: { inline_keyboard: buttons } };
+}
+
 function buildLinkAccountMenu() {
   const text = `🔗 <b>Link Your AfuChat Account</b>
 
@@ -391,10 +620,65 @@ async function handleCallback(callbackQuery: any) {
   const isLinked = tgUser?.is_linked && tgUser?.user_id;
   const profile = tgUser?.profiles;
 
+  // Check if user is admin
+  const isAdminUser = isLinked && tgUser?.user_id ? await isAdmin(tgUser.user_id) : false;
+
   switch (data) {
     case 'main_menu': {
-      const menu = buildMainMenu(isLinked, profile);
+      const menu = buildMainMenu(isLinked, profile, isAdminUser);
       await editMessage(chatId, messageId, menu.text, menu.reply_markup);
+      break;
+    }
+    
+    case 'admin_menu': {
+      if (!isLinked || !isAdminUser) {
+        await editMessage(chatId, messageId, '❌ Access denied. Admin privileges required.', {
+          inline_keyboard: [[{ text: '🏠 Main Menu', callback_data: 'main_menu' }]]
+        });
+        return;
+      }
+      const menu = buildAdminMenu();
+      await editMessage(chatId, messageId, menu.text, menu.reply_markup);
+      break;
+    }
+    
+    case 'admin_stats': {
+      if (!isAdminUser) return;
+      const menu = await buildAdminStatsMenu();
+      await editMessage(chatId, messageId, menu.text, menu.reply_markup);
+      break;
+    }
+    
+    case 'admin_users': {
+      if (!isAdminUser) return;
+      const menu = await buildAdminUsersMenu(0);
+      await editMessage(chatId, messageId, menu.text, menu.reply_markup);
+      break;
+    }
+    
+    case 'admin_posts': {
+      if (!isAdminUser) return;
+      const menu = await buildAdminPostsMenu(0);
+      await editMessage(chatId, messageId, menu.text, menu.reply_markup);
+      break;
+    }
+    
+    case 'admin_subscriptions': {
+      if (!isAdminUser) return;
+      const menu = await buildAdminSubscriptionsMenu();
+      await editMessage(chatId, messageId, menu.text, menu.reply_markup);
+      break;
+    }
+    
+    case 'admin_search_user': {
+      if (!isAdminUser) return;
+      await supabase
+        .from('telegram_users')
+        .update({ current_menu: 'admin_awaiting_user_search' })
+        .eq('telegram_id', telegramUser.id);
+      await editMessage(chatId, messageId, '🔍 Enter username or display name to search:', {
+        inline_keyboard: [[{ text: '⬅️ Cancel', callback_data: 'admin_users' }]]
+      });
       break;
     }
     
@@ -871,6 +1155,131 @@ Enter the recipient's username (without @):`, {
     }
     
     default: {
+      // Admin pagination handlers
+      if (data.startsWith('admin_users_page_')) {
+        if (!isAdminUser) return;
+        const page = parseInt(data.replace('admin_users_page_', ''));
+        const menu = await buildAdminUsersMenu(page);
+        await editMessage(chatId, messageId, menu.text, menu.reply_markup);
+        return;
+      }
+      
+      if (data.startsWith('admin_posts_page_')) {
+        if (!isAdminUser) return;
+        const page = parseInt(data.replace('admin_posts_page_', ''));
+        const menu = await buildAdminPostsMenu(page);
+        await editMessage(chatId, messageId, menu.text, menu.reply_markup);
+        return;
+      }
+      
+      if (data.startsWith('admin_user_')) {
+        if (!isAdminUser) return;
+        const userId = data.replace('admin_user_', '');
+        const menu = await buildAdminUserDetailMenu(userId);
+        await editMessage(chatId, messageId, menu.text, menu.reply_markup);
+        return;
+      }
+      
+      if (data.startsWith('admin_post_')) {
+        if (!isAdminUser) return;
+        const postId = data.replace('admin_post_', '');
+        const menu = await buildAdminPostDetailMenu(postId);
+        await editMessage(chatId, messageId, menu.text, menu.reply_markup);
+        return;
+      }
+      
+      if (data.startsWith('admin_give_nexa_')) {
+        if (!isAdminUser) return;
+        const targetUserId = data.replace('admin_give_nexa_', '');
+        await supabase
+          .from('telegram_users')
+          .update({ current_menu: 'admin_awaiting_nexa_amount', menu_data: { target_user_id: targetUserId } })
+          .eq('telegram_id', telegramUser.id);
+        await editMessage(chatId, messageId, '➕ Enter the amount of Nexa to give:', {
+          inline_keyboard: [[{ text: '⬅️ Cancel', callback_data: `admin_user_${targetUserId}` }]]
+        });
+        return;
+      }
+      
+      if (data.startsWith('admin_give_acoin_')) {
+        if (!isAdminUser) return;
+        const targetUserId = data.replace('admin_give_acoin_', '');
+        await supabase
+          .from('telegram_users')
+          .update({ current_menu: 'admin_awaiting_acoin_amount', menu_data: { target_user_id: targetUserId } })
+          .eq('telegram_id', telegramUser.id);
+        await editMessage(chatId, messageId, '➕ Enter the amount of ACoin to give:', {
+          inline_keyboard: [[{ text: '⬅️ Cancel', callback_data: `admin_user_${targetUserId}` }]]
+        });
+        return;
+      }
+      
+      if (data.startsWith('admin_toggle_verify_')) {
+        if (!isAdminUser) return;
+        const targetUserId = data.replace('admin_toggle_verify_', '');
+        const { data: user } = await supabase.from('profiles').select('is_verified').eq('id', targetUserId).single();
+        await supabase.from('profiles').update({ is_verified: !user?.is_verified }).eq('id', targetUserId);
+        const menu = await buildAdminUserDetailMenu(targetUserId);
+        await editMessage(chatId, messageId, `✅ User verification ${user?.is_verified ? 'removed' : 'granted'}!\n\n` + menu.text, menu.reply_markup);
+        return;
+      }
+      
+      if (data.startsWith('admin_delete_user_')) {
+        if (!isAdminUser) return;
+        const targetUserId = data.replace('admin_delete_user_', '');
+        await editMessage(chatId, messageId, '⚠️ Are you sure you want to DELETE this user? This cannot be undone!', {
+          inline_keyboard: [
+            [{ text: '⚠️ Yes, Delete User', callback_data: `admin_confirm_delete_user_${targetUserId}` }],
+            [{ text: '❌ Cancel', callback_data: `admin_user_${targetUserId}` }]
+          ]
+        });
+        return;
+      }
+      
+      if (data.startsWith('admin_confirm_delete_user_')) {
+        if (!isAdminUser) return;
+        const targetUserId = data.replace('admin_confirm_delete_user_', '');
+        // Delete user data (simplified - main tables)
+        await supabase.from('posts').delete().eq('author_id', targetUserId);
+        await supabase.from('follows').delete().eq('follower_id', targetUserId);
+        await supabase.from('follows').delete().eq('following_id', targetUserId);
+        await supabase.from('notifications').delete().eq('user_id', targetUserId);
+        await supabase.from('telegram_users').delete().eq('user_id', targetUserId);
+        await supabase.from('profiles').delete().eq('id', targetUserId);
+        await supabase.auth.admin.deleteUser(targetUserId);
+        
+        const menu = await buildAdminUsersMenu(0);
+        await editMessage(chatId, messageId, '✅ User deleted successfully!\n\n' + menu.text, menu.reply_markup);
+        return;
+      }
+      
+      if (data.startsWith('admin_delete_post_')) {
+        if (!isAdminUser) return;
+        const postId = data.replace('admin_delete_post_', '');
+        await editMessage(chatId, messageId, '⚠️ Are you sure you want to DELETE this post?', {
+          inline_keyboard: [
+            [{ text: '⚠️ Yes, Delete Post', callback_data: `admin_confirm_delete_post_${postId}` }],
+            [{ text: '❌ Cancel', callback_data: `admin_post_${postId}` }]
+          ]
+        });
+        return;
+      }
+      
+      if (data.startsWith('admin_confirm_delete_post_')) {
+        if (!isAdminUser) return;
+        const postId = data.replace('admin_confirm_delete_post_', '');
+        await supabase.from('post_acknowledgments').delete().eq('post_id', postId);
+        await supabase.from('post_replies').delete().eq('post_id', postId);
+        await supabase.from('post_images').delete().eq('post_id', postId);
+        await supabase.from('post_link_previews').delete().eq('post_id', postId);
+        await supabase.from('post_views').delete().eq('post_id', postId);
+        await supabase.from('posts').delete().eq('id', postId);
+        
+        const menu = await buildAdminPostsMenu(0);
+        await editMessage(chatId, messageId, '✅ Post deleted successfully!\n\n' + menu.text, menu.reply_markup);
+        return;
+      }
+
       // Handle gift selection
       if (data.startsWith('gift_')) {
         const giftId = data.replace('gift_', '');
@@ -999,16 +1408,18 @@ async function handleMessage(message: any) {
     
     // Get profile if linked
     let profile = null;
-    if (isLinked) {
+    let isAdminUser = false;
+    if (isLinked && tgUser.user_id) {
       const { data } = await supabase
         .from('profiles')
         .select('*')
         .eq('id', tgUser.user_id)
         .single();
       profile = data;
+      isAdminUser = await isAdmin(tgUser.user_id);
     }
     
-    const menu = buildMainMenu(isLinked, profile);
+    const menu = buildMainMenu(isLinked, profile, isAdminUser);
     await sendTelegramMessage(chatId, menu.text, menu.reply_markup);
     return;
   }
@@ -1018,11 +1429,13 @@ async function handleMessage(message: any) {
     const tgUser = await getOrCreateTelegramUser(telegramUser);
     const isLinked = tgUser?.is_linked && tgUser?.user_id;
     let profile = null;
-    if (isLinked) {
+    let isAdminUser = false;
+    if (isLinked && tgUser.user_id) {
       const { data } = await supabase.from('profiles').select('*').eq('id', tgUser.user_id).single();
       profile = data;
+      isAdminUser = await isAdmin(tgUser.user_id);
     }
-    const menu = buildMainMenu(isLinked, profile);
+    const menu = buildMainMenu(isLinked, profile, isAdminUser);
     await sendTelegramMessage(chatId, menu.text, menu.reply_markup);
     return;
   }
@@ -1363,6 +1776,80 @@ ${suggestedMenu.text}`, suggestedMenu.reply_markup);
           inline_keyboard: [[{ text: '🎁 Send More', callback_data: 'browse_gifts' }], [{ text: '🏠 Main Menu', callback_data: 'main_menu' }]]
         });
       }
+      break;
+    }
+    
+    case 'admin_awaiting_user_search': {
+      const searchTerm = text.trim().toLowerCase();
+      const { data: users } = await supabase
+        .from('profiles')
+        .select('id, display_name, handle, xp, is_verified')
+        .or(`handle.ilike.%${searchTerm}%,display_name.ilike.%${searchTerm}%`)
+        .limit(10);
+      
+      if (!users || users.length === 0) {
+        await sendTelegramMessage(chatId, '❌ No users found matching that search.', {
+          inline_keyboard: [[{ text: '🔍 Search Again', callback_data: 'admin_search_user' }], [{ text: '⬅️ Back', callback_data: 'admin_users' }]]
+        });
+      } else {
+        let text = `🔍 <b>Search Results</b>\n\nFound ${users.length} user(s):\n\n`;
+        users.forEach((u: any, i: number) => {
+          const verified = u.is_verified ? '✅' : '';
+          text += `${i + 1}. <b>${u.display_name}</b> ${verified}\n   @${u.handle} | ${u.xp} Nexa\n\n`;
+        });
+        
+        const buttons = users.map((u: any) => ([{ text: `👤 ${u.display_name}`, callback_data: `admin_user_${u.id}` }]));
+        buttons.push([{ text: '🔍 Search Again', callback_data: 'admin_search_user' }]);
+        buttons.push([{ text: '⬅️ Back', callback_data: 'admin_users' }]);
+        
+        await sendTelegramMessage(chatId, text, { inline_keyboard: buttons });
+      }
+      
+      await supabase.from('telegram_users').update({ current_menu: 'main' }).eq('telegram_id', telegramUser.id);
+      break;
+    }
+    
+    case 'admin_awaiting_nexa_amount': {
+      const amount = parseInt(text.trim());
+      const targetUserId = tgUser.menu_data?.target_user_id;
+      
+      if (isNaN(amount) || amount <= 0) {
+        await sendTelegramMessage(chatId, '❌ Please enter a valid positive number:', {
+          inline_keyboard: [[{ text: '⬅️ Cancel', callback_data: `admin_user_${targetUserId}` }]]
+        });
+        return;
+      }
+      
+      await supabase.from('profiles').update({ xp: supabase.rpc('', {}) }).eq('id', targetUserId);
+      // Direct update
+      const { data: currentProfile } = await supabase.from('profiles').select('xp').eq('id', targetUserId).single();
+      await supabase.from('profiles').update({ xp: (currentProfile?.xp || 0) + amount }).eq('id', targetUserId);
+      
+      await supabase.from('telegram_users').update({ current_menu: 'main', menu_data: {} }).eq('telegram_id', telegramUser.id);
+      
+      const menu = await buildAdminUserDetailMenu(targetUserId);
+      await sendTelegramMessage(chatId, `✅ Added ${amount} Nexa to user!\n\n` + menu.text, menu.reply_markup);
+      break;
+    }
+    
+    case 'admin_awaiting_acoin_amount': {
+      const amount = parseInt(text.trim());
+      const targetUserId = tgUser.menu_data?.target_user_id;
+      
+      if (isNaN(amount) || amount <= 0) {
+        await sendTelegramMessage(chatId, '❌ Please enter a valid positive number:', {
+          inline_keyboard: [[{ text: '⬅️ Cancel', callback_data: `admin_user_${targetUserId}` }]]
+        });
+        return;
+      }
+      
+      const { data: currentProfile } = await supabase.from('profiles').select('acoin').eq('id', targetUserId).single();
+      await supabase.from('profiles').update({ acoin: (currentProfile?.acoin || 0) + amount }).eq('id', targetUserId);
+      
+      await supabase.from('telegram_users').update({ current_menu: 'main', menu_data: {} }).eq('telegram_id', telegramUser.id);
+      
+      const menu = await buildAdminUserDetailMenu(targetUserId);
+      await sendTelegramMessage(chatId, `✅ Added ${amount} ACoin to user!\n\n` + menu.text, menu.reply_markup);
       break;
     }
     
