@@ -1,3 +1,4 @@
+import { useState } from 'react';
 import { useGiftImage } from '@/hooks/useGiftImage';
 import { Skeleton } from '@/components/ui/skeleton';
 import { motion } from 'framer-motion';
@@ -20,6 +21,7 @@ export const GiftImage = ({
   className = '' 
 }: GiftImageProps) => {
   const { imageUrl, isLoading, error } = useGiftImage(giftId, giftName, emoji, rarity);
+  const [imgError, setImgError] = useState(false);
 
   const sizeClasses = {
     xs: 'w-4 h-4 sm:w-6 sm:h-6',
@@ -39,7 +41,7 @@ export const GiftImage = ({
     );
   }
 
-  if (error || !imageUrl) {
+  if (error || !imageUrl || imgError) {
     return (
       <div className={`${sizeClass} ${className} flex items-center justify-center`}>
         <span className="drop-shadow-lg text-5xl">{emoji}</span>
@@ -73,6 +75,7 @@ export const GiftImage = ({
         alt={giftName}
         className={`${sizeClass} object-contain drop-shadow-lg`}
         style={{ transformStyle: 'preserve-3d' }}
+        onError={() => setImgError(true)}
         whileHover={{ 
           scale: 1.2,
           rotateX: 15,
