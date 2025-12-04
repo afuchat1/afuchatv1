@@ -13,6 +13,7 @@ import { Separator } from '@/components/ui/separator';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { countries, detectUserCountry } from '@/lib/countries';
 import { getCountryFlag } from '@/lib/countryFlags';
+import TelegramLoginButton from '@/components/auth/TelegramLoginButton';
 
 const SignUp = () => {
   const navigate = useNavigate();
@@ -329,6 +330,11 @@ const SignUp = () => {
                 )}
                 Continue with GitHub
               </Button>
+
+              <TelegramLoginButton 
+                disabled={googleLoading || githubLoading || loading} 
+                mode="signup"
+              />
 
               <div className="relative">
                 <div className="absolute inset-0 flex items-center">

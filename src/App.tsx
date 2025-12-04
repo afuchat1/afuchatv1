@@ -30,6 +30,7 @@ import CompleteProfile from "./pages/CompleteProfile";
 // Lazy load other pages
 const ForgotPassword = lazy(() => import("./pages/auth/ForgotPassword"));
 const ResetPassword = lazy(() => import("./pages/auth/ResetPassword"));
+const TelegramCallback = lazy(() => import("./pages/auth/TelegramCallback"));
 const ChatsPage = lazy(() => import("./pages/Chats"));
 const ChatRoom = lazy(() => import("./pages/ChatRoom"));
 const SearchPage = lazy(() => import("./pages/Search"));
@@ -127,6 +128,7 @@ const AppRoutes = () => {
       <Route path="/auth/signup" element={<SignUp />} />
       <Route path="/auth/forgot-password" element={<ForgotPassword />} />
       <Route path="/auth/reset-password" element={<ResetPassword />} />
+      <Route path="/auth/telegram-callback" element={<TelegramCallback />} />
       <Route path="/chats" element={<Layout><ChatsPage /></Layout>} />
       <Route path="/chat/:chatId" element={<Layout><ChatRoom /></Layout>} />
       <Route path="/search" element={<Layout><SearchPage /></Layout>} />

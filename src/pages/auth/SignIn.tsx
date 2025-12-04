@@ -9,6 +9,7 @@ import { Eye, EyeOff, X } from 'lucide-react';
 import Logo from '@/components/Logo';
 import { emailSchema, passwordSchema } from '@/lib/validation';
 import { Separator } from '@/components/ui/separator';
+import TelegramLoginButton from '@/components/auth/TelegramLoginButton';
 
 const SignIn = () => {
   const navigate = useNavigate();
@@ -142,6 +143,11 @@ const SignIn = () => {
             )}
             Continue with GitHub
           </Button>
+
+          <TelegramLoginButton 
+            disabled={googleLoading || githubLoading || loading} 
+            mode="signin"
+          />
 
           <div className="relative">
             <div className="absolute inset-0 flex items-center">
