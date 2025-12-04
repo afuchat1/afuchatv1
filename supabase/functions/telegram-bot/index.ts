@@ -1699,22 +1699,33 @@ async function handleMessage(message: any) {
       const { data: linkUser } = await supabase
         .from('telegram_users')
         .select('*')
-        .eq('link_token', text.trim())
+        .eq('link_token', text.trim().toUpperCase())
         .gt('link_token_expires_at', new Date().toISOString())
         .single();
       
       if (linkUser && linkUser.user_id) {
-        // Link the accounts
+        // Delete the current telegram user's entry (if exists and different from link entry)
+        if (linkUser.telegram_id !== telegramUser.id) {
+          await supabase
+            .from('telegram_users')
+            .delete()
+            .eq('telegram_id', telegramUser.id);
+        }
+        
+        // Update the link entry with real telegram info
         await supabase
           .from('telegram_users')
           .update({
-            user_id: linkUser.user_id,
+            telegram_id: telegramUser.id,
+            telegram_username: telegramUser.username,
+            telegram_first_name: telegramUser.first_name,
+            telegram_last_name: telegramUser.last_name,
             is_linked: true,
             link_token: null,
             link_token_expires_at: null,
             current_menu: 'main'
           })
-          .eq('telegram_id', telegramUser.id);
+          .eq('id', linkUser.id);
         
         const { data: profile } = await supabase
           .from('profiles')
@@ -2130,7 +2141,7 @@ ${suggestedMenu.text}`, suggestedMenu.reply_markup);
       // Check if this AfuChat account is already linked to another Telegram
       const { data: existingLink } = await supabase
         .from('telegram_users')
-        .select('telegram_id')
+        .select('id, telegram_id')
         .eq('user_id', foundUser.id)
         .eq('is_linked', true)
         .single();
@@ -2143,7 +2154,14 @@ ${suggestedMenu.text}`, suggestedMenu.reply_markup);
         return;
       }
       
-      // Link the account
+      // Delete any placeholder entries for this user_id (from web link code generation)
+      await supabase
+        .from('telegram_users')
+        .delete()
+        .eq('user_id', foundUser.id)
+        .neq('telegram_id', telegramUser.id);
+      
+      // Update this telegram user's entry
       await supabase
         .from('telegram_users')
         .update({
