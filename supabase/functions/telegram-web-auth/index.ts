@@ -7,7 +7,6 @@ const corsHeaders = {
 };
 
 serve(async (req) => {
-  // Handle CORS preflight
   if (req.method === 'OPTIONS') {
     return new Response(null, { headers: corsHeaders });
   }
@@ -26,45 +25,30 @@ serve(async (req) => {
 
     const supabaseUrl = Deno.env.get('SUPABASE_URL')!;
     const supabaseServiceKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!;
-    const supabase = createClient(supabaseUrl, supabaseServiceKey);
+    const supabase = createClient(supabaseUrl, supabaseServiceKey, {
+      auth: { autoRefreshToken: false, persistSession: false }
+    });
 
-    // Clean the identifier (remove @ if present)
     const cleanIdentifier = telegramIdentifier.replace('@', '').trim();
-    
-    // Check if it's a phone number or username
     const isPhoneNumber = /^\+?\d+$/.test(cleanIdentifier);
     
     console.log('Looking up telegram user:', { cleanIdentifier, isPhoneNumber });
 
-    // Look up the telegram user
-    let query = supabase.from('telegram_users').select('*');
-    
+    let telegramUser: any = null;
+    let profile: any = null;
+
     if (isPhoneNumber) {
-      // For phone numbers, we'd need to match against profiles
-      // First get telegram users that are linked
       const { data: linkedUsers, error: linkedError } = await supabase
         .from('telegram_users')
-        .select(`
-          *,
-          profiles:user_id (
-            id,
-            phone_number,
-            display_name,
-            handle
-          )
-        `)
+        .select(`*, profiles:user_id (id, phone_number, display_name, handle, avatar_url)`)
         .eq('is_linked', true);
 
-      if (linkedError) {
-        console.error('Error fetching linked users:', linkedError);
-        throw linkedError;
-      }
+      if (linkedError) throw linkedError;
 
-      // Find user with matching phone number
       const matchedUser = linkedUsers?.find(u => {
-        const profile = u.profiles as any;
-        if (profile?.phone_number) {
-          const cleanPhone = profile.phone_number.replace(/\D/g, '');
+        const p = u.profiles as any;
+        if (p?.phone_number) {
+          const cleanPhone = p.phone_number.replace(/\D/g, '');
           const searchPhone = cleanIdentifier.replace(/\D/g, '');
           return cleanPhone.includes(searchPhone) || searchPhone.includes(cleanPhone);
         }
@@ -72,76 +56,81 @@ serve(async (req) => {
       });
 
       if (matchedUser) {
-        const profile = matchedUser.profiles as any;
-        // Generate credentials based on telegram_id
-        const email = `telegram_${matchedUser.telegram_id}@afuchat.telegram`;
-        const password = `tg_secure_${matchedUser.telegram_id}_${matchedUser.created_at.replace(/\D/g, '').slice(0, 10)}`;
-
-        console.log('Found user by phone number:', matchedUser.telegram_id);
-
-        return new Response(
-          JSON.stringify({
-            success: true,
-            email,
-            password,
-            telegramId: matchedUser.telegram_id,
-            displayName: profile?.display_name || matchedUser.telegram_first_name,
-            handle: profile?.handle
-          }),
-          { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
-        );
+        telegramUser = matchedUser;
+        profile = matchedUser.profiles;
       }
     } else {
-      // Search by telegram username
-      const { data: telegramUser, error: fetchError } = await supabase
+      const { data, error } = await supabase
         .from('telegram_users')
-        .select(`
-          *,
-          profiles:user_id (
-            id,
-            display_name,
-            handle
-          )
-        `)
+        .select(`*, profiles:user_id (id, display_name, handle, avatar_url)`)
         .ilike('telegram_username', cleanIdentifier)
         .eq('is_linked', true)
         .maybeSingle();
 
-      if (fetchError) {
-        console.error('Error fetching telegram user:', fetchError);
-        throw fetchError;
-      }
-
-      if (telegramUser) {
-        const profile = telegramUser.profiles as any;
-        // Generate credentials based on telegram_id
-        const email = `telegram_${telegramUser.telegram_id}@afuchat.telegram`;
-        const password = `tg_secure_${telegramUser.telegram_id}_${telegramUser.created_at.replace(/\D/g, '').slice(0, 10)}`;
-
-        console.log('Found user by username:', telegramUser.telegram_id);
-
-        return new Response(
-          JSON.stringify({
-            success: true,
-            email,
-            password,
-            telegramId: telegramUser.telegram_id,
-            displayName: profile?.display_name || telegramUser.telegram_first_name,
-            handle: profile?.handle
-          }),
-          { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
-        );
+      if (error) throw error;
+      if (data) {
+        telegramUser = data;
+        profile = data.profiles;
       }
     }
 
-    // User not found
-    console.log('Telegram user not found');
+    if (!telegramUser || !telegramUser.user_id) {
+      console.log('Telegram user not found or not linked');
+      return new Response(
+        JSON.stringify({ 
+          notFound: true,
+          error: mode === 'signin' 
+            ? 'No account linked to this Telegram. Please link your account first via @AfuChatBot'
+            : 'Please complete signup via @AfuChatBot first'
+        }),
+        { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      );
+    }
+
+    console.log('Found linked telegram user:', telegramUser.telegram_id, 'user_id:', telegramUser.user_id);
+
+    // Get the existing auth user
+    const { data: authUser, error: authError } = await supabase.auth.admin.getUserById(telegramUser.user_id);
+    
+    if (authError || !authUser?.user) {
+      console.error('Auth user not found:', authError);
+      return new Response(
+        JSON.stringify({ error: 'User account not found. Please contact support.' }),
+        { headers: { ...corsHeaders, 'Content-Type': 'application/json' }, status: 400 }
+      );
+    }
+
+    // Generate a magic link for the user (valid for 1 hour)
+    const { data: linkData, error: linkError } = await supabase.auth.admin.generateLink({
+      type: 'magiclink',
+      email: authUser.user.email!,
+      options: {
+        redirectTo: `${req.headers.get('origin') || 'https://afuchat.com'}/home`
+      }
+    });
+
+    if (linkError) {
+      console.error('Error generating magic link:', linkError);
+      throw linkError;
+    }
+
+    console.log('Generated magic link for user:', telegramUser.user_id);
+
+    // Extract the token from the magic link
+    const magicLinkUrl = new URL(linkData.properties.action_link);
+    const token = magicLinkUrl.searchParams.get('token');
+    const type = magicLinkUrl.searchParams.get('type');
+
     return new Response(
-      JSON.stringify({ 
-        notFound: true,
-        error: mode === 'signin' 
-          ? 'No account linked to this Telegram. Please link your account first via @AfuChatBot'
-          : 'Please complete signup via @AfuChatBot first'
+      JSON.stringify({
+        success: true,
+        magicLink: linkData.properties.action_link,
+        token,
+        type,
+        email: authUser.user.email,
+        telegramId: telegramUser.telegram_id,
+        displayName: profile?.display_name || telegramUser.telegram_first_name,
+        handle: profile?.handle
       }),
       { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
     );

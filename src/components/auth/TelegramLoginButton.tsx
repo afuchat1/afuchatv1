@@ -33,7 +33,6 @@ const TelegramLoginButton = ({ disabled, mode = 'signin' }: TelegramLoginButtonP
 
     setLoading(true);
     try {
-      // Call edge function to verify and authenticate
       const { data, error } = await supabase.functions.invoke('telegram-web-auth', {
         body: { 
           telegramIdentifier: telegramInput.trim().replace('@', ''),
@@ -48,38 +47,20 @@ const TelegramLoginButton = ({ disabled, mode = 'signin' }: TelegramLoginButtonP
         return;
       }
 
-      if (data.success && data.email && data.password) {
-        // Sign in with the returned credentials
-        const { error: signInError } = await supabase.auth.signInWithPassword({
+      if (data.success && data.token && data.email) {
+        // Verify OTP using the magic link token
+        const { error: verifyError } = await supabase.auth.verifyOtp({
           email: data.email,
-          password: data.password,
+          token: data.token,
+          type: 'magiclink',
         });
 
-        if (signInError) {
-          // If sign in fails for signup mode, try to sign up
-          if (mode === 'signup') {
-            const { error: signUpError } = await supabase.auth.signUp({
-              email: data.email,
-              password: data.password,
-              options: {
-                data: {
-                  display_name: data.displayName || telegramInput,
-                  handle: data.handle || `tg_${telegramInput.replace('@', '')}`,
-                  telegram_id: data.telegramId,
-                },
-                emailRedirectTo: `${window.location.origin}/home`,
-              },
-            });
-
-            if (signUpError) throw signUpError;
-            toast.success('Account created! Welcome to AfuChat!');
-          } else {
-            throw signInError;
-          }
-        } else {
-          toast.success('Signed in successfully!');
+        if (verifyError) {
+          console.error('OTP verification error:', verifyError);
+          throw verifyError;
         }
 
+        toast.success('Signed in successfully!');
         setOpen(false);
         navigate('/home');
       } else if (data.notFound) {
