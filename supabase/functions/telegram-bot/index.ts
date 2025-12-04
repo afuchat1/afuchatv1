@@ -198,7 +198,7 @@ function buildChatsMenu(chats: any[]) {
   return { text, reply_markup: { inline_keyboard: buttons } };
 }
 
-function buildProfileMenu(profile: any) {
+function buildProfileMenu(profile: any, followerCount = 0, followingCount = 0) {
   const verified = profile?.is_verified ? '✅' : '';
   const premium = profile?.is_verified ? '⭐ Premium' : '';
   
@@ -207,10 +207,13 @@ function buildProfileMenu(profile: any) {
 <b>Name:</b> ${profile?.display_name || 'Not set'} ${verified}
 <b>Handle:</b> @${profile?.handle || 'not_set'}
 <b>Bio:</b> ${profile?.bio || 'No bio yet'}
+<b>Country:</b> ${profile?.country || 'Not set'}
 
 <b>Stats:</b>
 • Grade: ${profile?.current_grade || 'Newcomer'}
 • Nexa: ${profile?.xp?.toLocaleString() || 0}
+• Followers: ${followerCount}
+• Following: ${followingCount}
 • Login Streak: ${profile?.login_streak || 0} days 🔥
 
 ${premium}`;
@@ -218,9 +221,83 @@ ${premium}`;
   const buttons = [
     [{ text: '✏️ Edit Profile', callback_data: 'edit_profile' }],
     [{ text: '📊 View Stats', callback_data: 'view_stats' }],
-    [{ text: '👥 Followers', callback_data: 'my_followers' }, { text: '👥 Following', callback_data: 'my_following' }],
+    [{ text: `👥 Followers (${followerCount})`, callback_data: 'my_followers' }, { text: `👥 Following (${followingCount})`, callback_data: 'my_following' }],
     [{ text: '🏠 Main Menu', callback_data: 'main_menu' }],
   ];
+
+  return { text, reply_markup: { inline_keyboard: buttons } };
+}
+
+function buildEditProfileMenu(profile: any) {
+  const text = `✏️ <b>Edit Profile</b>
+
+Current values:
+• <b>Name:</b> ${profile?.display_name || 'Not set'}
+• <b>Username:</b> @${profile?.handle || 'not_set'}
+• <b>Bio:</b> ${profile?.bio || 'No bio yet'}
+• <b>Country:</b> ${profile?.country || 'Not set'}
+
+Select what you want to edit:`;
+
+  const buttons = [
+    [{ text: '📝 Edit Name', callback_data: 'edit_display_name' }],
+    [{ text: '📝 Edit Bio', callback_data: 'edit_bio' }],
+    [{ text: '🌍 Edit Country', callback_data: 'edit_country' }],
+    [{ text: '⬅️ Back to Profile', callback_data: 'menu_profile' }],
+  ];
+
+  return { text, reply_markup: { inline_keyboard: buttons } };
+}
+
+function buildFollowersMenu(followers: any[], page = 0, totalCount = 0) {
+  let text = `👥 <b>Your Followers</b>\n\nTotal: ${totalCount}\n\n`;
+  
+  if (followers.length === 0) {
+    text += 'No followers yet.';
+  } else {
+    followers.forEach((f, i) => {
+      const verified = f.is_verified ? '✅' : '';
+      text += `${page * 5 + i + 1}. <b>${f.display_name}</b> ${verified}\n   @${f.handle}\n`;
+    });
+  }
+
+  const buttons: any[] = [];
+  
+  const navButtons = [];
+  if (page > 0) navButtons.push({ text: '⬅️ Prev', callback_data: `followers_page_${page - 1}` });
+  if (totalCount > (page + 1) * 5) navButtons.push({ text: 'Next ➡️', callback_data: `followers_page_${page + 1}` });
+  if (navButtons.length > 0) buttons.push(navButtons);
+  
+  buttons.push([{ text: '⬅️ Back to Profile', callback_data: 'menu_profile' }]);
+
+  return { text, reply_markup: { inline_keyboard: buttons } };
+}
+
+function buildFollowingMenu(following: any[], page = 0, totalCount = 0) {
+  let text = `👥 <b>Following</b>\n\nTotal: ${totalCount}\n\n`;
+  
+  if (following.length === 0) {
+    text += 'Not following anyone yet.';
+  } else {
+    following.forEach((f, i) => {
+      const verified = f.is_verified ? '✅' : '';
+      text += `${page * 5 + i + 1}. <b>${f.display_name}</b> ${verified}\n   @${f.handle}\n`;
+    });
+  }
+
+  const buttons: any[] = [];
+  
+  // Add unfollow buttons
+  following.forEach(f => {
+    buttons.push([{ text: `❌ Unfollow @${f.handle}`, callback_data: `unfollow_${f.id}` }]);
+  });
+  
+  const navButtons = [];
+  if (page > 0) navButtons.push({ text: '⬅️ Prev', callback_data: `following_page_${page - 1}` });
+  if (totalCount > (page + 1) * 5) navButtons.push({ text: 'Next ➡️', callback_data: `following_page_${page + 1}` });
+  if (navButtons.length > 0) buttons.push(navButtons);
+  
+  buttons.push([{ text: '⬅️ Back to Profile', callback_data: 'menu_profile' }]);
 
   return { text, reply_markup: { inline_keyboard: buttons } };
 }
@@ -551,17 +628,14 @@ async function buildAdminSubscriptionsMenu() {
 function buildLinkAccountMenu() {
   const text = `🔗 <b>Link Your AfuChat Account</b>
 
-To link your existing AfuChat account:
+Choose how you want to link your account:
 
-1. Go to AfuChat web/app
-2. Navigate to Settings → Security
-3. Click "Link Telegram"
-4. Enter the code shown there
-
-Or enter your email to receive a link code:`;
+<b>Option 1:</b> Enter your AfuChat email address
+<b>Option 2:</b> Enter a link code from the app
+<b>Option 3:</b> Generate code in Settings → Security`;
 
   const buttons = [
-    [{ text: '📧 Send Link Code to Email', callback_data: 'link_via_email' }],
+    [{ text: '📧 Link via Email', callback_data: 'link_via_email' }],
     [{ text: '🔑 Enter Link Code', callback_data: 'enter_link_code' }],
     [{ text: '⬅️ Back', callback_data: 'main_menu' }],
   ];
@@ -795,8 +869,111 @@ async function handleCallback(callbackQuery: any) {
         .eq('id', tgUser.user_id)
         .single();
       
-      const menu = buildProfileMenu(freshProfile);
+      const { count: followerCount } = await supabase
+        .from('follows')
+        .select('*', { count: 'exact', head: true })
+        .eq('following_id', tgUser.user_id);
+      
+      const { count: followingCount } = await supabase
+        .from('follows')
+        .select('*', { count: 'exact', head: true })
+        .eq('follower_id', tgUser.user_id);
+      
+      const menu = buildProfileMenu(freshProfile, followerCount || 0, followingCount || 0);
       await editMessage(chatId, messageId, menu.text, menu.reply_markup);
+      break;
+    }
+    
+    case 'edit_profile': {
+      if (!isLinked) return;
+      
+      const { data: freshProfile } = await supabase
+        .from('profiles')
+        .select('*')
+        .eq('id', tgUser.user_id)
+        .single();
+      
+      const menu = buildEditProfileMenu(freshProfile);
+      await editMessage(chatId, messageId, menu.text, menu.reply_markup);
+      break;
+    }
+    
+    case 'edit_display_name': {
+      if (!isLinked) return;
+      await supabase
+        .from('telegram_users')
+        .update({ current_menu: 'awaiting_display_name' })
+        .eq('telegram_id', telegramUser.id);
+      await editMessage(chatId, messageId, '📝 Enter your new display name:', {
+        inline_keyboard: [[{ text: '⬅️ Cancel', callback_data: 'edit_profile' }]]
+      });
+      break;
+    }
+    
+    case 'edit_bio': {
+      if (!isLinked) return;
+      await supabase
+        .from('telegram_users')
+        .update({ current_menu: 'awaiting_bio' })
+        .eq('telegram_id', telegramUser.id);
+      await editMessage(chatId, messageId, '📝 Enter your new bio (max 160 characters):', {
+        inline_keyboard: [[{ text: '⬅️ Cancel', callback_data: 'edit_profile' }]]
+      });
+      break;
+    }
+    
+    case 'edit_country': {
+      if (!isLinked) return;
+      await supabase
+        .from('telegram_users')
+        .update({ current_menu: 'awaiting_country' })
+        .eq('telegram_id', telegramUser.id);
+      await editMessage(chatId, messageId, '🌍 Enter your country name (e.g., United States, Uganda, Germany):', {
+        inline_keyboard: [[{ text: '⬅️ Cancel', callback_data: 'edit_profile' }]]
+      });
+      break;
+    }
+    
+    case 'my_followers': {
+      if (!isLinked) return;
+      
+      const { data: followers, count } = await supabase
+        .from('follows')
+        .select('follower_id, profiles!follows_follower_id_fkey(id, display_name, handle, is_verified)', { count: 'exact' })
+        .eq('following_id', tgUser.user_id)
+        .order('created_at', { ascending: false })
+        .range(0, 4);
+      
+      const followerProfiles = (followers || []).map((f: any) => f.profiles).filter(Boolean);
+      const menu = buildFollowersMenu(followerProfiles, 0, count || 0);
+      await editMessage(chatId, messageId, menu.text, menu.reply_markup);
+      break;
+    }
+    
+    case 'my_following': {
+      if (!isLinked) return;
+      
+      const { data: following, count } = await supabase
+        .from('follows')
+        .select('following_id, profiles!follows_following_id_fkey(id, display_name, handle, is_verified)', { count: 'exact' })
+        .eq('follower_id', tgUser.user_id)
+        .order('created_at', { ascending: false })
+        .range(0, 4);
+      
+      const followingProfiles = (following || []).map((f: any) => f.profiles).filter(Boolean);
+      const menu = buildFollowingMenu(followingProfiles, 0, count || 0);
+      await editMessage(chatId, messageId, menu.text, menu.reply_markup);
+      break;
+    }
+    
+    case 'link_via_email': {
+      await supabase
+        .from('telegram_users')
+        .update({ current_menu: 'awaiting_email_link' })
+        .eq('telegram_id', telegramUser.id);
+      await editMessage(chatId, messageId, '📧 <b>Link via Email</b>\n\nEnter the email address associated with your AfuChat account:', {
+        inline_keyboard: [[{ text: '⬅️ Cancel', callback_data: 'link_account' }]]
+      });
       break;
     }
     
@@ -1390,6 +1567,70 @@ To send this gift, enter the recipient's username:`, {
         
         const menu = buildSuggestedUsersMenu(suggestedUsers || [], followingIds);
         await editMessage(chatId, messageId, menu.text, menu.reply_markup);
+        return;
+      }
+      
+      // Handle unfollow from following list
+      if (data.startsWith('unfollow_')) {
+        if (!isLinked || !tgUser.user_id) return;
+        
+        const targetUserId = data.replace('unfollow_', '');
+        
+        await supabase
+          .from('follows')
+          .delete()
+          .eq('follower_id', tgUser.user_id)
+          .eq('following_id', targetUserId);
+        
+        await answerCallbackQuery(callbackQuery.id, 'Unfollowed!');
+        
+        // Refresh following list
+        const { data: following, count } = await supabase
+          .from('follows')
+          .select('following_id, profiles!follows_following_id_fkey(id, display_name, handle, is_verified)', { count: 'exact' })
+          .eq('follower_id', tgUser.user_id)
+          .order('created_at', { ascending: false })
+          .range(0, 4);
+        
+        const followingProfiles = (following || []).map((f: any) => f.profiles).filter(Boolean);
+        const menu = buildFollowingMenu(followingProfiles, 0, count || 0);
+        await editMessage(chatId, messageId, menu.text, menu.reply_markup);
+        return;
+      }
+      
+      // Handle followers/following pagination
+      if (data.startsWith('followers_page_')) {
+        if (!isLinked) return;
+        const page = parseInt(data.replace('followers_page_', ''));
+        
+        const { data: followers, count } = await supabase
+          .from('follows')
+          .select('follower_id, profiles!follows_follower_id_fkey(id, display_name, handle, is_verified)', { count: 'exact' })
+          .eq('following_id', tgUser.user_id)
+          .order('created_at', { ascending: false })
+          .range(page * 5, (page + 1) * 5 - 1);
+        
+        const followerProfiles = (followers || []).map((f: any) => f.profiles).filter(Boolean);
+        const menu = buildFollowersMenu(followerProfiles, page, count || 0);
+        await editMessage(chatId, messageId, menu.text, menu.reply_markup);
+        return;
+      }
+      
+      if (data.startsWith('following_page_')) {
+        if (!isLinked) return;
+        const page = parseInt(data.replace('following_page_', ''));
+        
+        const { data: following, count } = await supabase
+          .from('follows')
+          .select('following_id, profiles!follows_following_id_fkey(id, display_name, handle, is_verified)', { count: 'exact' })
+          .eq('follower_id', tgUser.user_id)
+          .order('created_at', { ascending: false })
+          .range(page * 5, (page + 1) * 5 - 1);
+        
+        const followingProfiles = (following || []).map((f: any) => f.profiles).filter(Boolean);
+        const menu = buildFollowingMenu(followingProfiles, page, count || 0);
+        await editMessage(chatId, messageId, menu.text, menu.reply_markup);
+        return;
       }
     }
   }
@@ -1850,6 +2091,143 @@ ${suggestedMenu.text}`, suggestedMenu.reply_markup);
       
       const menu = await buildAdminUserDetailMenu(targetUserId);
       await sendTelegramMessage(chatId, `✅ Added ${amount} ACoin to user!\n\n` + menu.text, menu.reply_markup);
+      break;
+    }
+    
+    case 'awaiting_email_link': {
+      const email = text.trim().toLowerCase();
+      const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+      
+      if (!emailRegex.test(email)) {
+        await sendTelegramMessage(chatId, '❌ Invalid email format. Please enter a valid email:', {
+          inline_keyboard: [[{ text: '⬅️ Cancel', callback_data: 'link_account' }]]
+        });
+        return;
+      }
+      
+      // Find user by email via auth
+      const { data: authUsers, error: authError } = await supabase.auth.admin.listUsers();
+      
+      if (authError) {
+        await sendTelegramMessage(chatId, '❌ Error searching for account. Please try again.', {
+          inline_keyboard: [[{ text: '🔗 Try Again', callback_data: 'link_via_email' }], [{ text: '🏠 Main Menu', callback_data: 'main_menu' }]]
+        });
+        return;
+      }
+      
+      const foundUser = authUsers?.users?.find(u => u.email?.toLowerCase() === email);
+      
+      if (!foundUser) {
+        await sendTelegramMessage(chatId, '❌ No AfuChat account found with this email.\n\nMake sure you\'re using the same email you registered with, or create a new account.', {
+          inline_keyboard: [[{ text: '🔑 Try Link Code', callback_data: 'enter_link_code' }], [{ text: '📝 Create Account', callback_data: 'create_account' }], [{ text: '🏠 Main Menu', callback_data: 'main_menu' }]]
+        });
+        await supabase.from('telegram_users').update({ current_menu: 'main' }).eq('telegram_id', telegramUser.id);
+        return;
+      }
+      
+      // Check if this AfuChat account is already linked to another Telegram
+      const { data: existingLink } = await supabase
+        .from('telegram_users')
+        .select('telegram_id')
+        .eq('user_id', foundUser.id)
+        .eq('is_linked', true)
+        .single();
+      
+      if (existingLink && existingLink.telegram_id !== telegramUser.id) {
+        await sendTelegramMessage(chatId, '⚠️ This AfuChat account is already linked to another Telegram account.\n\nPlease unlink it from the other Telegram first, or use a different account.', {
+          inline_keyboard: [[{ text: '🔑 Use Link Code', callback_data: 'enter_link_code' }], [{ text: '🏠 Main Menu', callback_data: 'main_menu' }]]
+        });
+        await supabase.from('telegram_users').update({ current_menu: 'main' }).eq('telegram_id', telegramUser.id);
+        return;
+      }
+      
+      // Link the account
+      await supabase
+        .from('telegram_users')
+        .update({
+          user_id: foundUser.id,
+          is_linked: true,
+          current_menu: 'main'
+        })
+        .eq('telegram_id', telegramUser.id);
+      
+      const { data: profile } = await supabase
+        .from('profiles')
+        .select('*')
+        .eq('id', foundUser.id)
+        .single();
+      
+      const menu = buildMainMenu(true, profile);
+      await sendTelegramMessage(chatId, `✅ <b>Account Linked Successfully!</b>\n\nWelcome back, ${profile?.display_name}!\n\n` + menu.text, menu.reply_markup);
+      break;
+    }
+    
+    case 'awaiting_display_name': {
+      const newName = text.trim();
+      
+      if (newName.length < 1 || newName.length > 50) {
+        await sendTelegramMessage(chatId, '❌ Name must be between 1 and 50 characters. Try again:', {
+          inline_keyboard: [[{ text: '⬅️ Cancel', callback_data: 'edit_profile' }]]
+        });
+        return;
+      }
+      
+      await supabase
+        .from('profiles')
+        .update({ display_name: newName })
+        .eq('id', tgUser.user_id);
+      
+      await supabase.from('telegram_users').update({ current_menu: 'main' }).eq('telegram_id', telegramUser.id);
+      
+      const { data: freshProfile } = await supabase.from('profiles').select('*').eq('id', tgUser.user_id).single();
+      const menu = buildEditProfileMenu(freshProfile);
+      await sendTelegramMessage(chatId, `✅ Name updated to: <b>${newName}</b>\n\n` + menu.text, menu.reply_markup);
+      break;
+    }
+    
+    case 'awaiting_bio': {
+      const newBio = text.trim();
+      
+      if (newBio.length > 160) {
+        await sendTelegramMessage(chatId, '❌ Bio must be 160 characters or less. Try again:', {
+          inline_keyboard: [[{ text: '⬅️ Cancel', callback_data: 'edit_profile' }]]
+        });
+        return;
+      }
+      
+      await supabase
+        .from('profiles')
+        .update({ bio: newBio })
+        .eq('id', tgUser.user_id);
+      
+      await supabase.from('telegram_users').update({ current_menu: 'main' }).eq('telegram_id', telegramUser.id);
+      
+      const { data: freshProfile } = await supabase.from('profiles').select('*').eq('id', tgUser.user_id).single();
+      const menu = buildEditProfileMenu(freshProfile);
+      await sendTelegramMessage(chatId, `✅ Bio updated!\n\n` + menu.text, menu.reply_markup);
+      break;
+    }
+    
+    case 'awaiting_country': {
+      const newCountry = text.trim();
+      
+      if (newCountry.length < 2 || newCountry.length > 100) {
+        await sendTelegramMessage(chatId, '❌ Please enter a valid country name:', {
+          inline_keyboard: [[{ text: '⬅️ Cancel', callback_data: 'edit_profile' }]]
+        });
+        return;
+      }
+      
+      await supabase
+        .from('profiles')
+        .update({ country: newCountry })
+        .eq('id', tgUser.user_id);
+      
+      await supabase.from('telegram_users').update({ current_menu: 'main' }).eq('telegram_id', telegramUser.id);
+      
+      const { data: freshProfile } = await supabase.from('profiles').select('*').eq('id', tgUser.user_id).single();
+      const menu = buildEditProfileMenu(freshProfile);
+      await sendTelegramMessage(chatId, `✅ Country updated to: <b>${newCountry}</b>\n\n` + menu.text, menu.reply_markup);
       break;
     }
     
