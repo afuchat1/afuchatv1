@@ -2054,6 +2054,62 @@ export type Database = {
         }
         Relationships: []
       }
+      telegram_users: {
+        Row: {
+          created_at: string
+          current_menu: string | null
+          id: string
+          is_linked: boolean | null
+          link_token: string | null
+          link_token_expires_at: string | null
+          menu_data: Json | null
+          telegram_first_name: string | null
+          telegram_id: number
+          telegram_last_name: string | null
+          telegram_username: string | null
+          updated_at: string
+          user_id: string | null
+        }
+        Insert: {
+          created_at?: string
+          current_menu?: string | null
+          id?: string
+          is_linked?: boolean | null
+          link_token?: string | null
+          link_token_expires_at?: string | null
+          menu_data?: Json | null
+          telegram_first_name?: string | null
+          telegram_id: number
+          telegram_last_name?: string | null
+          telegram_username?: string | null
+          updated_at?: string
+          user_id?: string | null
+        }
+        Update: {
+          created_at?: string
+          current_menu?: string | null
+          id?: string
+          is_linked?: boolean | null
+          link_token?: string | null
+          link_token_expires_at?: string | null
+          menu_data?: Json | null
+          telegram_first_name?: string | null
+          telegram_id?: number
+          telegram_last_name?: string | null
+          telegram_username?: string | null
+          updated_at?: string
+          user_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "telegram_users_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       tips: {
         Row: {
           created_at: string | null
