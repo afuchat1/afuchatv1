@@ -32,3 +32,6 @@ verify_jwt = true
 
 [functions.generate-gift-image]
 verify_jwt = false
+
+[functions.telegram-bot]
+verify_jwt = false
