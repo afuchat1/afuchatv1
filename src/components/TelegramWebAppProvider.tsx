@@ -13,10 +13,11 @@ export const TelegramWebAppProvider = ({ children }: TelegramWebAppProviderProps
   const location = useLocation();
   const navigate = useNavigate();
 
-  // Sync theme with Telegram
+  // Sync theme with Telegram - only when in Telegram environment
   useEffect(() => {
-    if (isTelegram) {
-      setTheme(colorScheme);
+    if (isTelegram && colorScheme) {
+      // Telegram provides 'light' or 'dark', which matches our Theme type
+      setTheme(colorScheme as 'light' | 'dark');
     }
   }, [isTelegram, colorScheme, setTheme]);
 
