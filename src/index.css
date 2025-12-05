@@ -57,12 +57,12 @@ All colors MUST be HSL.
 
 @layer base {
   :root {
-    /* Vibrant Cyan from chat bubbles */
-    --primary: 187 100% 42%;
+    /* Brand Cyan #00C2CB */
+    --primary: 183 100% 40%;
     --primary-foreground: 0 0% 100%;
     
     /* Lighter cyan accent */
-    --accent: 187 100% 50%;
+    --accent: 183 100% 48%;
     --accent-foreground: 0 0% 100%;
     
     /* Clean white backgrounds */
@@ -84,7 +84,7 @@ All colors MUST be HSL.
     /* Refined borders */
     --border: 0 0% 90%;
     --input: 0 0% 90%;
-    --ring: 187 100% 42%;
+    --ring: 183 100% 40%;
     
     /* Secondary light gray */
     --secondary: 0 0% 92%;
@@ -99,21 +99,21 @@ All colors MUST be HSL.
     /* Sidebar */
     --sidebar-background: 0 0% 98%;
     --sidebar-foreground: 0 0% 13%;
-    --sidebar-primary: 187 100% 42%;
+    --sidebar-primary: 183 100% 40%;
     --sidebar-primary-foreground: 0 0% 100%;
-    --sidebar-accent: 187 100% 50%;
+    --sidebar-accent: 183 100% 48%;
     --sidebar-accent-foreground: 0 0% 100%;
     --sidebar-border: 0 0% 90%;
-    --sidebar-ring: 187 100% 42%;
+    --sidebar-ring: 183 100% 40%;
   }
 
   .dark {
-    /* Vibrant Cyan - Dark mode */
-    --primary: 187 100% 45%;
+    /* Brand Cyan #00C2CB - Dark mode */
+    --primary: 183 100% 40%;
     --primary-foreground: 0 0% 100%;
     
     /* Lighter cyan accent */
-    --accent: 187 100% 55%;
+    --accent: 183 100% 48%;
     --accent-foreground: 0 0% 100%;
     
     /* Dark backgrounds */
@@ -134,7 +134,7 @@ All colors MUST be HSL.
     /* Subtle borders */
     --border: 0 0% 18%;
     --input: 0 0% 18%;
-    --ring: 187 100% 45%;
+    --ring: 183 100% 40%;
     
     /* Secondary surface */
     --secondary: 0 0% 13%;
@@ -147,12 +147,12 @@ All colors MUST be HSL.
     /* Sidebar */
     --sidebar-background: 0 0% 10%;
     --sidebar-foreground: 0 0% 95%;
-    --sidebar-primary: 187 100% 45%;
+    --sidebar-primary: 183 100% 40%;
     --sidebar-primary-foreground: 0 0% 100%;
-    --sidebar-accent: 187 100% 55%;
+    --sidebar-accent: 183 100% 48%;
     --sidebar-accent-foreground: 0 0% 100%;
     --sidebar-border: 0 0% 18%;
-    --sidebar-ring: 187 100% 45%;
+    --sidebar-ring: 183 100% 40%;
   }
 }
 
