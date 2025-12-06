@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Progress } from '@/components/ui/progress';
 import { useAuth } from '@/contexts/AuthContext';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
@@ -17,11 +18,69 @@ import {
   Target,
   Crown,
   Timer,
-  Loader2
+  Loader2,
+  Heart,
+  Shield,
+  Crosshair,
+  Flame,
+  Snowflake,
+  Star,
+  ArrowLeft,
+  Volume2,
+  VolumeX,
+  RefreshCw
 } from 'lucide-react';
-import Layout from '@/components/Layout';
 
 type GameStatus = 'waiting' | 'playing' | 'finished';
+
+interface Player {
+  id: string;
+  x: number;
+  y: number;
+  health: number;
+  maxHealth: number;
+  score: number;
+  weapon: 'pistol' | 'rifle' | 'shotgun' | 'sniper';
+  ammo: number;
+  shield: number;
+  speed: number;
+  lastShot: number;
+  direction: number; // angle in degrees
+  isMoving: boolean;
+  ability: 'dash' | 'heal' | 'freeze' | 'rage';
+  abilityCooldown: number;
+  respawnTimer: number;
+  kills: number;
+  deaths: number;
+}
+
+interface Projectile {
+  id: string;
+  x: number;
+  y: number;
+  dx: number;
+  dy: number;
+  ownerId: string;
+  damage: number;
+  speed: number;
+}
+
+interface PowerUp {
+  id: string;
+  x: number;
+  y: number;
+  type: 'health' | 'shield' | 'ammo' | 'speed' | 'weapon';
+  value: number | string;
+}
+
+interface GameState {
+  players: Record<string, Player>;
+  projectiles: Projectile[];
+  powerUps: PowerUp[];
+  gameTime: number;
+  maxTime: number;
+  killFeed: { killer: string; victim: string; weapon: string; timestamp: number }[];
+}
 
 interface GameRoom {
   id: string;
@@ -40,6 +99,8 @@ interface GameRoom {
   created_at: string;
   started_at: string | null;
   ended_at: string | null;
+  player_data: Record<string, Player>;
+  game_state: GameState;
 }
 
 interface PlayerInfo {
@@ -47,6 +108,20 @@ interface PlayerInfo {
   display_name: string;
   avatar_url: string | null;
 }
+
+const WEAPON_STATS: Record<string, { damage: number; fireRate: number; ammo: number; speed: number; spread: number; pellets?: number }> = {
+  pistol: { damage: 15, fireRate: 400, ammo: 30, speed: 12, spread: 0.05 },
+  rifle: { damage: 12, fireRate: 150, ammo: 60, speed: 15, spread: 0.1 },
+  shotgun: { damage: 8, fireRate: 800, ammo: 16, speed: 10, spread: 0.4, pellets: 5 },
+  sniper: { damage: 75, fireRate: 1200, ammo: 10, speed: 20, spread: 0 }
+};
+
+const ABILITY_COOLDOWNS: Record<string, number> = {
+  dash: 5000,
+  heal: 10000,
+  freeze: 15000,
+  rage: 20000
+};
 
 const AfuArena = () => {
   const navigate = useNavigate();
@@ -57,39 +132,45 @@ const AfuArena = () => {
   const [joinCode, setJoinCode] = useState('');
   const [copied, setCopied] = useState(false);
   const [loading, setLoading] = useState(false);
-  const [targetVisible, setTargetVisible] = useState(false);
   const [countdown, setCountdown] = useState<number | null>(null);
-  const [roundWinner, setRoundWinner] = useState<string | null>(null);
+  const [soundEnabled, setSoundEnabled] = useState(true);
+  const [keys, setKeys] = useState<Set<string>>(new Set());
+  const [mousePos, setMousePos] = useState({ x: 0, y: 0 });
+  const [isMouseDown, setIsMouseDown] = useState(false);
+  
   const gameAreaRef = useRef<HTMLDivElement>(null);
   const audioContextRef = useRef<AudioContext | null>(null);
+  const gameLoopRef = useRef<number | null>(null);
+  const lastUpdateRef = useRef<number>(0);
+  const localGameStateRef = useRef<GameState | null>(null);
 
   // Initialize audio
   useEffect(() => {
     audioContextRef.current = new (window.AudioContext || (window as any).webkitAudioContext)();
     return () => {
       audioContextRef.current?.close();
+      if (gameLoopRef.current) cancelAnimationFrame(gameLoopRef.current);
     };
   }, []);
 
-  const playSound = (frequency: number, duration: number) => {
-    if (!audioContextRef.current) return;
-    const oscillator = audioContextRef.current.createOscillator();
-    const gainNode = audioContextRef.current.createGain();
-    oscillator.connect(gainNode);
-    gainNode.connect(audioContextRef.current.destination);
-    oscillator.frequency.value = frequency;
-    oscillator.type = 'sine';
-    gainNode.gain.setValueAtTime(0.15, audioContextRef.current.currentTime);
-    gainNode.gain.exponentialRampToValueAtTime(0.01, audioContextRef.current.currentTime + duration);
-    oscillator.start(audioContextRef.current.currentTime);
-    oscillator.stop(audioContextRef.current.currentTime + duration);
-  };
+  const playSound = useCallback((frequency: number, duration: number, type: OscillatorType = 'sine') => {
+    if (!soundEnabled || !audioContextRef.current) return;
+    try {
+      const oscillator = audioContextRef.current.createOscillator();
+      const gainNode = audioContextRef.current.createGain();
+      oscillator.connect(gainNode);
+      gainNode.connect(audioContextRef.current.destination);
+      oscillator.frequency.value = frequency;
+      oscillator.type = type;
+      gainNode.gain.setValueAtTime(0.1, audioContextRef.current.currentTime);
+      gainNode.gain.exponentialRampToValueAtTime(0.01, audioContextRef.current.currentTime + duration);
+      oscillator.start(audioContextRef.current.currentTime);
+      oscillator.stop(audioContextRef.current.currentTime + duration);
+    } catch (e) {}
+  }, [soundEnabled]);
 
-  const generateRoomCode = () => {
-    return Math.random().toString(36).substring(2, 8).toUpperCase();
-  };
+  const generateRoomCode = () => Math.random().toString(36).substring(2, 8).toUpperCase();
 
-  // Fetch player info
   const fetchPlayerInfo = async (playerId: string): Promise<PlayerInfo | null> => {
     const { data } = await supabase
       .from('profiles')
@@ -99,7 +180,39 @@ const AfuArena = () => {
     return data;
   };
 
-  // Create a new game room
+  const createInitialPlayer = (id: string, isHost: boolean): Player => ({
+    id,
+    x: isHost ? 15 : 85,
+    y: 50,
+    health: 100,
+    maxHealth: 100,
+    score: 0,
+    weapon: 'pistol',
+    ammo: 30,
+    shield: 0,
+    speed: 5,
+    lastShot: 0,
+    direction: isHost ? 0 : 180,
+    isMoving: false,
+    ability: isHost ? 'dash' : 'heal',
+    abilityCooldown: 0,
+    respawnTimer: 0,
+    kills: 0,
+    deaths: 0
+  });
+
+  const createInitialGameState = (hostId: string, guestId: string): GameState => ({
+    players: {
+      [hostId]: createInitialPlayer(hostId, true),
+      [guestId]: createInitialPlayer(guestId, false)
+    },
+    projectiles: [],
+    powerUps: [],
+    gameTime: 0,
+    maxTime: 180, // 3 minutes
+    killFeed: []
+  });
+
   const createRoom = async () => {
     if (!user) {
       toast.error('Please sign in to play');
@@ -113,13 +226,21 @@ const AfuArena = () => {
         .insert({
           room_code: roomCode,
           host_id: user.id,
-          status: 'waiting'
+          status: 'waiting',
+          max_rounds: 10,
+          player_data: {},
+          game_state: {}
         })
         .select()
         .single();
 
       if (error) throw error;
-      const typedData: GameRoom = { ...data, status: data.status as GameStatus };
+      const typedData: GameRoom = { 
+        ...data, 
+        status: data.status as GameStatus,
+        player_data: (data.player_data as unknown as Record<string, Player>) || {},
+        game_state: (data.game_state as unknown as GameState) || {} as GameState
+      };
       setGameRoom(typedData);
       const hostData = await fetchPlayerInfo(user.id);
       setHostInfo(hostData);
@@ -131,7 +252,6 @@ const AfuArena = () => {
     }
   };
 
-  // Join an existing room
   const joinRoom = async () => {
     if (!user) {
       toast.error('Please sign in to play');
@@ -143,7 +263,6 @@ const AfuArena = () => {
     }
     setLoading(true);
     try {
-      // Find the room
       const { data: room, error: findError } = await supabase
         .from('game_rooms')
         .select('*')
@@ -161,7 +280,6 @@ const AfuArena = () => {
         return;
       }
 
-      // Join the room
       const { data, error } = await supabase
         .from('game_rooms')
         .update({ guest_id: user.id })
@@ -170,7 +288,12 @@ const AfuArena = () => {
         .single();
 
       if (error) throw error;
-      const typedData: GameRoom = { ...data, status: data.status as GameStatus };
+      const typedData: GameRoom = { 
+        ...data, 
+        status: data.status as GameStatus,
+        player_data: (data.player_data as unknown as Record<string, Player>) || {},
+        game_state: (data.game_state as unknown as GameState) || {} as GameState
+      };
       setGameRoom(typedData);
       
       const [hostData, guestData] = await Promise.all([
@@ -203,24 +326,23 @@ const AfuArena = () => {
           filter: `id=eq.${gameRoom.id}`
         },
         async (payload) => {
-          const newRoom = payload.new as GameRoom;
-          setGameRoom(newRoom);
+          const newRoom = payload.new as any;
+          const typedRoom: GameRoom = {
+            ...newRoom,
+            status: newRoom.status as GameStatus,
+            player_data: newRoom.player_data || {},
+            game_state: newRoom.game_state || {}
+          };
+          setGameRoom(typedRoom);
 
-          // Load guest info when they join
           if (newRoom.guest_id && !guestInfo) {
             const guestData = await fetchPlayerInfo(newRoom.guest_id);
             setGuestInfo(guestData);
           }
 
-          // Handle target spawn
-          if (newRoom.current_target_x !== null && newRoom.current_target_y !== null) {
-            setTargetVisible(true);
-            playSound(880, 0.1);
-          }
-
-          // Handle round winner
-          if (newRoom.status === 'finished') {
-            playSound(660, 0.5);
+          // Sync game state from remote
+          if (typedRoom.game_state && Object.keys(typedRoom.game_state).length > 0) {
+            localGameStateRef.current = typedRoom.game_state as GameState;
           }
         }
       )
@@ -231,7 +353,43 @@ const AfuArena = () => {
     };
   }, [gameRoom?.id, guestInfo]);
 
-  // Start the game (host only)
+  // Keyboard controls
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      const key = e.key.toLowerCase();
+      if (['w', 'a', 's', 'd', ' ', 'e', 'r'].includes(key)) {
+        e.preventDefault();
+        setKeys(prev => new Set(prev).add(key));
+      }
+    };
+    const handleKeyUp = (e: KeyboardEvent) => {
+      const key = e.key.toLowerCase();
+      setKeys(prev => {
+        const next = new Set(prev);
+        next.delete(key);
+        return next;
+      });
+    };
+
+    window.addEventListener('keydown', handleKeyDown);
+    window.addEventListener('keyup', handleKeyUp);
+    return () => {
+      window.removeEventListener('keydown', handleKeyDown);
+      window.removeEventListener('keyup', handleKeyUp);
+    };
+  }, []);
+
+  // Mouse controls
+  const handleMouseMove = (e: React.MouseEvent) => {
+    if (!gameAreaRef.current) return;
+    const rect = gameAreaRef.current.getBoundingClientRect();
+    setMousePos({
+      x: ((e.clientX - rect.left) / rect.width) * 100,
+      y: ((e.clientY - rect.top) / rect.height) * 100
+    });
+  };
+
+  // Start the game
   const startGame = async () => {
     if (!gameRoom || !user || gameRoom.host_id !== user.id) return;
     if (!gameRoom.guest_id) {
@@ -239,7 +397,6 @@ const AfuArena = () => {
       return;
     }
 
-    // Countdown
     for (let i = 3; i > 0; i--) {
       setCountdown(i);
       playSound(440, 0.2);
@@ -248,107 +405,317 @@ const AfuArena = () => {
     setCountdown(null);
     playSound(880, 0.3);
 
-    // Start game
+    const initialState = createInitialGameState(gameRoom.host_id, gameRoom.guest_id);
+    localGameStateRef.current = initialState;
+
     await supabase
       .from('game_rooms')
       .update({ 
         status: 'playing',
-        started_at: new Date().toISOString()
+        started_at: new Date().toISOString(),
+        game_state: JSON.parse(JSON.stringify(initialState))
       })
       .eq('id', gameRoom.id);
-
-    spawnTarget();
   };
 
-  // Spawn a target at random position
-  const spawnTarget = async () => {
-    if (!gameRoom) return;
+  // Game loop
+  useEffect(() => {
+    if (gameRoom?.status !== 'playing' || !user) return;
+
+    const gameLoop = (timestamp: number) => {
+      const deltaTime = timestamp - lastUpdateRef.current;
+      
+      if (deltaTime >= 16) { // ~60fps
+        lastUpdateRef.current = timestamp;
+        updateGame(deltaTime / 1000);
+      }
+      
+      gameLoopRef.current = requestAnimationFrame(gameLoop);
+    };
+
+    gameLoopRef.current = requestAnimationFrame(gameLoop);
     
-    const x = 10 + Math.random() * 80; // 10-90% of width
-    const y = 10 + Math.random() * 80; // 10-90% of height
+    return () => {
+      if (gameLoopRef.current) cancelAnimationFrame(gameLoopRef.current);
+    };
+  }, [gameRoom?.status, user, keys, mousePos, isMouseDown]);
 
-    await supabase
-      .from('game_rooms')
-      .update({
-        current_target_x: x,
-        current_target_y: y,
-        target_spawned_at: new Date().toISOString()
-      })
-      .eq('id', gameRoom.id);
-
-    setTargetVisible(true);
-  };
-
-  // Handle target click
-  const handleTargetClick = async () => {
-    if (!gameRoom || !user || !targetVisible) return;
+  const updateGame = async (dt: number) => {
+    if (!localGameStateRef.current || !user || !gameRoom) return;
     
-    setTargetVisible(false);
-    playSound(523, 0.2);
-
-    const isHost = gameRoom.host_id === user.id;
-    const newHostScore = isHost ? gameRoom.host_score + 1 : gameRoom.host_score;
-    const newGuestScore = !isHost ? gameRoom.guest_score + 1 : gameRoom.guest_score;
-    const newRound = gameRoom.round + 1;
-    
-    setRoundWinner(user.id);
-    setTimeout(() => setRoundWinner(null), 1000);
-
-    // Check if game is over
-    if (newRound > gameRoom.max_rounds) {
-      const winnerId = newHostScore > newGuestScore 
-        ? gameRoom.host_id 
-        : newGuestScore > newHostScore 
-          ? gameRoom.guest_id 
-          : null;
-
-      await supabase
-        .from('game_rooms')
-        .update({
-          host_score: newHostScore,
-          guest_score: newGuestScore,
-          round: newRound,
-          status: 'finished',
-          winner_id: winnerId,
-          ended_at: new Date().toISOString(),
-          current_target_x: null,
-          current_target_y: null
-        })
-        .eq('id', gameRoom.id);
-
-      // Award XP to winner
-      if (winnerId === user.id) {
-        try {
-          await supabase.rpc('award_xp', {
-            p_user_id: user.id,
-            p_action_type: 'game_played',
-            p_xp_amount: 100,
-            p_metadata: { game: 'afu_arena', won: true }
-          });
-          toast.success('Victory! +100 Nexa');
-        } catch (e) {
-          console.error(e);
+    const state = { ...localGameStateRef.current };
+    const player = state.players[user.id];
+    if (!player || player.respawnTimer > 0) {
+      // Handle respawn
+      if (player && player.respawnTimer > 0) {
+        player.respawnTimer -= dt;
+        if (player.respawnTimer <= 0) {
+          player.health = player.maxHealth;
+          player.x = player.id === gameRoom.host_id ? 15 : 85;
+          player.y = 50;
+          player.respawnTimer = 0;
         }
       }
+      localGameStateRef.current = state;
+      return;
+    }
+
+    // Movement
+    let dx = 0, dy = 0;
+    if (keys.has('w')) dy -= 1;
+    if (keys.has('s')) dy += 1;
+    if (keys.has('a')) dx -= 1;
+    if (keys.has('d')) dx += 1;
+
+    if (dx !== 0 || dy !== 0) {
+      const mag = Math.sqrt(dx * dx + dy * dy);
+      dx /= mag;
+      dy /= mag;
+      player.x = Math.max(2, Math.min(98, player.x + dx * player.speed * dt * 20));
+      player.y = Math.max(2, Math.min(98, player.y + dy * player.speed * dt * 20));
+      player.isMoving = true;
     } else {
-      // Next round
+      player.isMoving = false;
+    }
+
+    // Direction (aim towards mouse)
+    player.direction = Math.atan2(mousePos.y - player.y, mousePos.x - player.x) * 180 / Math.PI;
+
+    // Shooting
+    const now = Date.now();
+    if (isMouseDown && player.ammo > 0) {
+      const weapon = WEAPON_STATS[player.weapon];
+      if (now - player.lastShot >= weapon.fireRate) {
+        player.lastShot = now;
+        player.ammo -= 1;
+        playSound(200 + Math.random() * 100, 0.1, 'square');
+
+        const pelletCount = weapon.pellets || 1;
+        for (let i = 0; i < pelletCount; i++) {
+          const spreadAngle = (Math.random() - 0.5) * weapon.spread;
+          const angle = (player.direction * Math.PI / 180) + spreadAngle;
+          const projectile: Projectile = {
+            id: `${user.id}-${now}-${i}`,
+            x: player.x,
+            y: player.y,
+            dx: Math.cos(angle) * weapon.speed,
+            dy: Math.sin(angle) * weapon.speed,
+            ownerId: user.id,
+            damage: weapon.damage,
+            speed: weapon.speed
+          };
+          state.projectiles.push(projectile);
+        }
+      }
+    }
+
+    // Ability use
+    if (keys.has('e') && player.abilityCooldown <= 0) {
+      useAbility(player, state);
+      player.abilityCooldown = ABILITY_COOLDOWNS[player.ability];
+      playSound(600, 0.3, 'triangle');
+    }
+
+    // Reload
+    if (keys.has('r')) {
+      player.ammo = WEAPON_STATS[player.weapon].ammo;
+      playSound(300, 0.2);
+    }
+
+    // Reduce cooldown
+    if (player.abilityCooldown > 0) {
+      player.abilityCooldown -= dt * 1000;
+    }
+
+    // Update projectiles
+    state.projectiles = state.projectiles.filter(proj => {
+      proj.x += proj.dx * dt * 10;
+      proj.y += proj.dy * dt * 10;
+
+      // Check bounds
+      if (proj.x < 0 || proj.x > 100 || proj.y < 0 || proj.y > 100) {
+        return false;
+      }
+
+      // Check collision with other players
+      for (const playerId in state.players) {
+        if (playerId === proj.ownerId) continue;
+        const target = state.players[playerId];
+        if (target.respawnTimer > 0) continue;
+
+        const dist = Math.sqrt((proj.x - target.x) ** 2 + (proj.y - target.y) ** 2);
+        if (dist < 4) { // Hit!
+          let damage = proj.damage;
+          if (target.shield > 0) {
+            const shieldAbsorb = Math.min(target.shield, damage * 0.5);
+            target.shield -= shieldAbsorb;
+            damage -= shieldAbsorb;
+          }
+          target.health -= damage;
+          playSound(150, 0.1);
+
+          if (target.health <= 0) {
+            // Kill!
+            target.deaths += 1;
+            target.respawnTimer = 3;
+            player.kills += 1;
+            player.score += 100;
+            state.killFeed.unshift({
+              killer: proj.ownerId,
+              victim: playerId,
+              weapon: player.weapon,
+              timestamp: now
+            });
+            playSound(800, 0.4, 'sawtooth');
+
+            // Check win condition
+            if (player.kills >= 10) {
+              endGame(proj.ownerId);
+            }
+          }
+          return false;
+        }
+      }
+      return true;
+    });
+
+    // Update powerups
+    state.powerUps.forEach((powerUp, index) => {
+      const dist = Math.sqrt((powerUp.x - player.x) ** 2 + (powerUp.y - player.y) ** 2);
+      if (dist < 5) {
+        applyPowerUp(player, powerUp);
+        state.powerUps.splice(index, 1);
+        playSound(500, 0.2);
+      }
+    });
+
+    // Spawn powerups periodically
+    state.gameTime += dt;
+    if (state.powerUps.length < 3 && Math.random() < 0.005) {
+      spawnPowerUp(state);
+    }
+
+    // Check time limit
+    if (state.gameTime >= state.maxTime) {
+      const winner = Object.values(state.players).reduce((a, b) => a.kills > b.kills ? a : b);
+      endGame(winner.id);
+    }
+
+    state.players[user.id] = player;
+    localGameStateRef.current = state;
+
+    // Sync to database periodically
+    if (Math.random() < 0.05) { // ~5% of frames
       await supabase
         .from('game_rooms')
-        .update({
-          host_score: newHostScore,
-          guest_score: newGuestScore,
-          round: newRound,
-          current_target_x: null,
-          current_target_y: null
-        })
+        .update({ game_state: JSON.parse(JSON.stringify(state)) })
         .eq('id', gameRoom.id);
-
-      // Spawn next target after delay
-      setTimeout(() => spawnTarget(), 1000 + Math.random() * 2000);
     }
   };
 
-  // Copy room code
+  const useAbility = (player: Player, state: GameState) => {
+    switch (player.ability) {
+      case 'dash':
+        const dashDist = 15;
+        const angle = player.direction * Math.PI / 180;
+        player.x = Math.max(2, Math.min(98, player.x + Math.cos(angle) * dashDist));
+        player.y = Math.max(2, Math.min(98, player.y + Math.sin(angle) * dashDist));
+        break;
+      case 'heal':
+        player.health = Math.min(player.maxHealth, player.health + 50);
+        break;
+      case 'freeze':
+        // Slow enemies temporarily
+        Object.values(state.players).forEach(p => {
+          if (p.id !== player.id) p.speed = 2;
+        });
+        setTimeout(() => {
+          if (localGameStateRef.current) {
+            Object.values(localGameStateRef.current.players).forEach(p => p.speed = 5);
+          }
+        }, 3000);
+        break;
+      case 'rage':
+        player.speed = 8;
+        setTimeout(() => {
+          if (localGameStateRef.current?.players[player.id]) {
+            localGameStateRef.current.players[player.id].speed = 5;
+          }
+        }, 5000);
+        break;
+    }
+  };
+
+  const applyPowerUp = (player: Player, powerUp: PowerUp) => {
+    switch (powerUp.type) {
+      case 'health':
+        player.health = Math.min(player.maxHealth, player.health + (powerUp.value as number));
+        break;
+      case 'shield':
+        player.shield = Math.min(50, player.shield + (powerUp.value as number));
+        break;
+      case 'ammo':
+        player.ammo += powerUp.value as number;
+        break;
+      case 'speed':
+        player.speed += powerUp.value as number;
+        break;
+      case 'weapon':
+        player.weapon = powerUp.value as Player['weapon'];
+        player.ammo = WEAPON_STATS[player.weapon].ammo;
+        break;
+    }
+  };
+
+  const spawnPowerUp = (state: GameState) => {
+    const types: PowerUp['type'][] = ['health', 'shield', 'ammo', 'speed', 'weapon'];
+    const type = types[Math.floor(Math.random() * types.length)];
+    const weapons: Player['weapon'][] = ['rifle', 'shotgun', 'sniper'];
+    
+    const powerUp: PowerUp = {
+      id: `pu-${Date.now()}`,
+      x: 10 + Math.random() * 80,
+      y: 10 + Math.random() * 80,
+      type,
+      value: type === 'weapon' 
+        ? weapons[Math.floor(Math.random() * weapons.length)]
+        : type === 'health' ? 30 
+        : type === 'shield' ? 25 
+        : type === 'ammo' ? 20 
+        : 1
+    };
+    state.powerUps.push(powerUp);
+  };
+
+  const endGame = async (winnerId: string) => {
+    if (!gameRoom) return;
+    
+    await supabase
+      .from('game_rooms')
+      .update({
+        status: 'finished',
+        winner_id: winnerId,
+        ended_at: new Date().toISOString()
+      })
+      .eq('id', gameRoom.id);
+
+    if (winnerId === user?.id) {
+      try {
+        await supabase.rpc('award_xp', {
+          p_user_id: user.id,
+          p_action_type: 'game_won',
+          p_xp_amount: 150,
+          p_metadata: { game: 'afu_arena', mode: 'battle_royale' }
+        });
+        toast.success('Victory! +150 Nexa');
+      } catch (e) {
+        console.error(e);
+      }
+    }
+
+    if (gameLoopRef.current) cancelAnimationFrame(gameLoopRef.current);
+  };
+
   const copyRoomCode = () => {
     if (gameRoom?.room_code) {
       navigator.clipboard.writeText(gameRoom.room_code);
@@ -358,9 +725,10 @@ const AfuArena = () => {
     }
   };
 
-  // Leave/cleanup room
   const leaveRoom = async () => {
     if (!gameRoom || !user) return;
+    
+    if (gameLoopRef.current) cancelAnimationFrame(gameLoopRef.current);
     
     if (gameRoom.host_id === user.id) {
       await supabase.from('game_rooms').delete().eq('id', gameRoom.id);
@@ -374,12 +742,14 @@ const AfuArena = () => {
     setGameRoom(null);
     setHostInfo(null);
     setGuestInfo(null);
-    setTargetVisible(false);
+    localGameStateRef.current = null;
   };
 
-  // Play again
   const playAgain = async () => {
-    if (!gameRoom || !user || gameRoom.host_id !== user.id) return;
+    if (!gameRoom || !user || gameRoom.host_id !== user.id || !gameRoom.guest_id) return;
+
+    const newState = createInitialGameState(gameRoom.host_id, gameRoom.guest_id);
+    localGameStateRef.current = newState;
 
     await supabase
       .from('game_rooms')
@@ -390,333 +760,451 @@ const AfuArena = () => {
         round: 1,
         current_target_x: null,
         current_target_y: null,
-        winner_id: null,
-        started_at: null,
-        ended_at: null
+        winner_id: null as unknown as string,
+        started_at: null as unknown as string,
+        ended_at: null as unknown as string,
+        game_state: JSON.parse(JSON.stringify(newState))
       })
       .eq('id', gameRoom.id);
   };
 
   const isHost = user && gameRoom?.host_id === user.id;
-  const isGuest = user && gameRoom?.guest_id === user.id;
+  const gameState = localGameStateRef.current || (gameRoom?.game_state as GameState);
+  const myPlayer = gameState?.players?.[user?.id || ''];
+  const opponent = gameState?.players?.[Object.keys(gameState?.players || {}).find(k => k !== user?.id) || ''];
 
   return (
-    <Layout>
-      <div className="min-h-screen bg-background pb-24">
-        <main className="container max-w-2xl mx-auto px-4 py-6">
-          {/* Header */}
-          <div className="text-center mb-8">
-            <div className="flex items-center justify-center gap-3 mb-2">
-              <Swords className="h-10 w-10 text-primary" />
-              <h1 className="text-4xl font-bold bg-gradient-to-r from-primary to-primary/60 bg-clip-text text-transparent">
-                Afu Arena
-              </h1>
+    <div className="min-h-screen bg-background">
+      {/* Header */}
+      <div className="sticky top-0 z-50 bg-background/95 backdrop-blur border-b border-border/50 px-4 py-3">
+        <div className="flex items-center justify-between max-w-4xl mx-auto">
+          <div className="flex items-center gap-3">
+            <Button variant="ghost" size="icon" onClick={() => navigate(-1)}>
+              <ArrowLeft className="h-5 w-5" />
+            </Button>
+            <div className="flex items-center gap-2">
+              <Swords className="h-6 w-6 text-primary" />
+              <span className="font-bold text-lg">Afu Arena</span>
             </div>
-            <p className="text-muted-foreground">Real-time 1v1 reflex battle</p>
           </div>
-
-          {!gameRoom ? (
-            /* Lobby */
-            <div className="space-y-6">
-              <Card className="border-primary/20">
-                <CardHeader>
-                  <CardTitle className="flex items-center gap-2">
-                    <Users className="h-5 w-5" />
-                    Create or Join Game
-                  </CardTitle>
-                </CardHeader>
-                <CardContent className="space-y-4">
-                  <Button 
-                    onClick={createRoom} 
-                    className="w-full h-14 text-lg"
-                    disabled={loading || !user}
-                  >
-                    {loading ? <Loader2 className="h-5 w-5 animate-spin mr-2" /> : <Swords className="h-5 w-5 mr-2" />}
-                    Create Room
-                  </Button>
-
-                  <div className="relative">
-                    <div className="absolute inset-0 flex items-center">
-                      <span className="w-full border-t" />
-                    </div>
-                    <div className="relative flex justify-center text-xs uppercase">
-                      <span className="bg-background px-2 text-muted-foreground">or</span>
-                    </div>
-                  </div>
-
-                  <div className="flex gap-2">
-                    <Input
-                      placeholder="Enter room code"
-                      value={joinCode}
-                      onChange={(e) => setJoinCode(e.target.value.toUpperCase())}
-                      className="h-14 text-center text-xl font-mono tracking-widest uppercase"
-                      maxLength={6}
-                    />
-                    <Button 
-                      onClick={joinRoom}
-                      disabled={loading || !user || !joinCode.trim()}
-                      className="h-14 px-6"
-                    >
-                      {loading ? <Loader2 className="h-5 w-5 animate-spin" /> : 'Join'}
-                    </Button>
-                  </div>
-
-                  {!user && (
-                    <p className="text-center text-sm text-muted-foreground">
-                      Sign in to play multiplayer
-                    </p>
-                  )}
-                </CardContent>
-              </Card>
-
-              {/* How to play */}
-              <Card>
-                <CardHeader>
-                  <CardTitle className="flex items-center gap-2">
-                    <Zap className="h-5 w-5 text-yellow-500" />
-                    How to Play
-                  </CardTitle>
-                </CardHeader>
-                <CardContent>
-                  <ul className="space-y-3 text-sm text-muted-foreground">
-                    <li className="flex items-start gap-2">
-                      <Target className="h-4 w-4 text-primary mt-0.5" />
-                      <span>Targets appear randomly on screen</span>
-                    </li>
-                    <li className="flex items-start gap-2">
-                      <Zap className="h-4 w-4 text-yellow-500 mt-0.5" />
-                      <span>Be the first to tap the target to score</span>
-                    </li>
-                    <li className="flex items-start gap-2">
-                      <Trophy className="h-4 w-4 text-amber-500 mt-0.5" />
-                      <span>Win 5 rounds to claim victory (+100 Nexa)</span>
-                    </li>
-                  </ul>
-                </CardContent>
-              </Card>
-            </div>
-          ) : gameRoom.status === 'waiting' ? (
-            /* Waiting Room */
-            <div className="space-y-6">
-              <Card className="border-primary/30 bg-gradient-to-br from-primary/5 to-transparent">
-                <CardContent className="pt-6">
-                  <div className="text-center mb-6">
-                    <p className="text-sm text-muted-foreground mb-2">Room Code</p>
-                    <div className="flex items-center justify-center gap-2">
-                      <span className="text-4xl font-mono font-bold tracking-widest text-primary">
-                        {gameRoom.room_code}
-                      </span>
-                      <Button variant="ghost" size="icon" onClick={copyRoomCode}>
-                        {copied ? <Check className="h-5 w-5 text-green-500" /> : <Copy className="h-5 w-5" />}
-                      </Button>
-                    </div>
-                  </div>
-
-                  {/* Players */}
-                  <div className="grid grid-cols-2 gap-4 mb-6">
-                    <div className="bg-background rounded-xl p-4 text-center border">
-                      <div className="w-16 h-16 mx-auto mb-2 rounded-full bg-primary/20 flex items-center justify-center overflow-hidden">
-                        {hostInfo?.avatar_url ? (
-                          <img src={hostInfo.avatar_url} alt="" className="w-full h-full object-cover" />
-                        ) : (
-                          <Crown className="h-8 w-8 text-primary" />
-                        )}
-                      </div>
-                      <p className="font-semibold truncate">{hostInfo?.display_name || 'Host'}</p>
-                      <p className="text-xs text-muted-foreground">Host</p>
-                    </div>
-                    <div className="bg-background rounded-xl p-4 text-center border border-dashed">
-                      {guestInfo ? (
-                        <>
-                          <div className="w-16 h-16 mx-auto mb-2 rounded-full bg-muted flex items-center justify-center overflow-hidden">
-                            {guestInfo.avatar_url ? (
-                              <img src={guestInfo.avatar_url} alt="" className="w-full h-full object-cover" />
-                            ) : (
-                              <Users className="h-8 w-8 text-muted-foreground" />
-                            )}
-                          </div>
-                          <p className="font-semibold truncate">{guestInfo.display_name}</p>
-                          <p className="text-xs text-muted-foreground">Challenger</p>
-                        </>
-                      ) : (
-                        <>
-                          <div className="w-16 h-16 mx-auto mb-2 rounded-full border-2 border-dashed border-muted-foreground/30 flex items-center justify-center">
-                            <Loader2 className="h-6 w-6 text-muted-foreground animate-spin" />
-                          </div>
-                          <p className="text-muted-foreground">Waiting...</p>
-                          <p className="text-xs text-muted-foreground">Share code to invite</p>
-                        </>
-                      )}
-                    </div>
-                  </div>
-
-                  {isHost && (
-                    <Button 
-                      onClick={startGame} 
-                      className="w-full h-14 text-lg"
-                      disabled={!gameRoom.guest_id}
-                    >
-                      <Zap className="h-5 w-5 mr-2" />
-                      {gameRoom.guest_id ? 'Start Battle!' : 'Waiting for opponent...'}
-                    </Button>
-                  )}
-
-                  {isGuest && (
-                    <div className="text-center py-4">
-                      <Loader2 className="h-8 w-8 animate-spin mx-auto mb-2 text-primary" />
-                      <p className="text-muted-foreground">Waiting for host to start...</p>
-                    </div>
-                  )}
-                </CardContent>
-              </Card>
-
-              <Button variant="outline" onClick={leaveRoom} className="w-full">
-                Leave Room
-              </Button>
-            </div>
-          ) : gameRoom.status === 'playing' ? (
-            /* Game Area */
-            <div className="space-y-4">
-              {/* Countdown overlay */}
-              <AnimatePresence>
-                {countdown !== null && (
-                  <motion.div
-                    initial={{ opacity: 0, scale: 0.5 }}
-                    animate={{ opacity: 1, scale: 1 }}
-                    exit={{ opacity: 0, scale: 0.5 }}
-                    className="fixed inset-0 z-50 flex items-center justify-center bg-background/80 backdrop-blur-sm"
-                  >
-                    <span className="text-9xl font-bold text-primary">{countdown}</span>
-                  </motion.div>
-                )}
-              </AnimatePresence>
-
-              {/* Score Board */}
-              <div className="grid grid-cols-3 gap-2">
-                <div className={`rounded-xl p-3 text-center transition-all ${isHost ? 'bg-primary/20 ring-2 ring-primary' : 'bg-muted'}`}>
-                  <p className="text-xs text-muted-foreground truncate">{hostInfo?.display_name || 'Host'}</p>
-                  <p className="text-3xl font-bold">{gameRoom.host_score}</p>
-                </div>
-                <div className="rounded-xl p-3 text-center bg-muted/50">
-                  <p className="text-xs text-muted-foreground">Round</p>
-                  <p className="text-2xl font-bold">{Math.min(gameRoom.round, gameRoom.max_rounds)}/{gameRoom.max_rounds}</p>
-                </div>
-                <div className={`rounded-xl p-3 text-center transition-all ${isGuest ? 'bg-primary/20 ring-2 ring-primary' : 'bg-muted'}`}>
-                  <p className="text-xs text-muted-foreground truncate">{guestInfo?.display_name || 'Guest'}</p>
-                  <p className="text-3xl font-bold">{gameRoom.guest_score}</p>
-                </div>
-              </div>
-
-              {/* Game Arena */}
-              <div 
-                ref={gameAreaRef}
-                className="relative w-full aspect-square bg-gradient-to-br from-muted/50 to-muted rounded-2xl border-2 border-primary/20 overflow-hidden"
-              >
-                <AnimatePresence>
-                  {targetVisible && gameRoom.current_target_x !== null && gameRoom.current_target_y !== null && (
-                    <motion.button
-                      initial={{ scale: 0, opacity: 0 }}
-                      animate={{ scale: 1, opacity: 1 }}
-                      exit={{ scale: 0, opacity: 0 }}
-                      transition={{ type: 'spring', damping: 15 }}
-                      onClick={handleTargetClick}
-                      className="absolute w-16 h-16 -translate-x-1/2 -translate-y-1/2 rounded-full bg-gradient-to-br from-primary to-primary/80 shadow-lg shadow-primary/30 flex items-center justify-center hover:scale-110 active:scale-95 transition-transform"
-                      style={{
-                        left: `${gameRoom.current_target_x}%`,
-                        top: `${gameRoom.current_target_y}%`
-                      }}
-                    >
-                      <Target className="h-8 w-8 text-primary-foreground" />
-                    </motion.button>
-                  )}
-                </AnimatePresence>
-
-                {/* Round winner flash */}
-                <AnimatePresence>
-                  {roundWinner && (
-                    <motion.div
-                      initial={{ opacity: 0 }}
-                      animate={{ opacity: 1 }}
-                      exit={{ opacity: 0 }}
-                      className="absolute inset-0 flex items-center justify-center bg-primary/20"
-                    >
-                      <span className="text-4xl font-bold text-primary">
-                        {roundWinner === user?.id ? 'You scored!' : 'Opponent scored!'}
-                      </span>
-                    </motion.div>
-                  )}
-                </AnimatePresence>
-
-                {!targetVisible && !roundWinner && (
-                  <div className="absolute inset-0 flex items-center justify-center">
-                    <p className="text-muted-foreground animate-pulse">Get ready...</p>
-                  </div>
-                )}
-              </div>
-            </div>
-          ) : (
-            /* Game Over */
-            <div className="space-y-6">
-              <Card className="border-primary/30 overflow-hidden">
-                <div className="bg-gradient-to-br from-primary/20 to-transparent p-6 text-center">
-                  <Trophy className="h-16 w-16 mx-auto mb-4 text-amber-500" />
-                  <h2 className="text-3xl font-bold mb-2">
-                    {gameRoom.winner_id === user?.id 
-                      ? 'Victory!' 
-                      : gameRoom.winner_id === null 
-                        ? 'Draw!' 
-                        : 'Defeat'}
-                  </h2>
-                  <p className="text-muted-foreground">
-                    {gameRoom.winner_id === user?.id 
-                      ? 'You dominated the arena!' 
-                      : gameRoom.winner_id === null
-                        ? 'An even match!'
-                        : 'Better luck next time!'}
-                  </p>
-                </div>
-                <CardContent className="pt-6">
-                  {/* Final Scores */}
-                  <div className="grid grid-cols-2 gap-4 mb-6">
-                    <div className={`rounded-xl p-4 text-center ${gameRoom.winner_id === gameRoom.host_id ? 'bg-amber-500/20 ring-2 ring-amber-500' : 'bg-muted'}`}>
-                      <p className="text-sm text-muted-foreground mb-1">{hostInfo?.display_name || 'Host'}</p>
-                      <p className="text-4xl font-bold">{gameRoom.host_score}</p>
-                      {gameRoom.winner_id === gameRoom.host_id && (
-                        <Crown className="h-5 w-5 mx-auto mt-2 text-amber-500" />
-                      )}
-                    </div>
-                    <div className={`rounded-xl p-4 text-center ${gameRoom.winner_id === gameRoom.guest_id ? 'bg-amber-500/20 ring-2 ring-amber-500' : 'bg-muted'}`}>
-                      <p className="text-sm text-muted-foreground mb-1">{guestInfo?.display_name || 'Guest'}</p>
-                      <p className="text-4xl font-bold">{gameRoom.guest_score}</p>
-                      {gameRoom.winner_id === gameRoom.guest_id && (
-                        <Crown className="h-5 w-5 mx-auto mt-2 text-amber-500" />
-                      )}
-                    </div>
-                  </div>
-
-                  {isHost && (
-                    <Button onClick={playAgain} className="w-full h-12 mb-3">
-                      <Zap className="h-5 w-5 mr-2" />
-                      Play Again
-                    </Button>
-                  )}
-
-                  {isGuest && (
-                    <div className="text-center py-4 mb-3">
-                      <p className="text-muted-foreground">Waiting for host to restart...</p>
-                    </div>
-                  )}
-
-                  <Button variant="outline" onClick={leaveRoom} className="w-full">
-                    Leave Room
-                  </Button>
-                </CardContent>
-              </Card>
-            </div>
-          )}
-        </main>
+          <Button 
+            variant="ghost" 
+            size="icon"
+            onClick={() => setSoundEnabled(!soundEnabled)}
+          >
+            {soundEnabled ? <Volume2 className="h-5 w-5" /> : <VolumeX className="h-5 w-5" />}
+          </Button>
+        </div>
       </div>
-    </Layout>
+
+      <main className="container max-w-4xl mx-auto px-4 py-6">
+        {!gameRoom ? (
+          /* Lobby */
+          <div className="space-y-6">
+            <Card className="border-primary/20 bg-gradient-to-br from-background to-primary/5">
+              <CardHeader className="text-center">
+                <div className="flex justify-center mb-4">
+                  <div className="p-4 rounded-2xl bg-primary/10">
+                    <Crosshair className="h-12 w-12 text-primary" />
+                  </div>
+                </div>
+                <CardTitle className="text-2xl">Battle Royale Arena</CardTitle>
+                <p className="text-muted-foreground">Real-time 1v1 combat with weapons & abilities</p>
+              </CardHeader>
+              <CardContent className="space-y-4">
+                <Button 
+                  onClick={createRoom} 
+                  className="w-full h-14 text-lg"
+                  disabled={loading || !user}
+                >
+                  {loading ? <Loader2 className="h-5 w-5 animate-spin mr-2" /> : <Swords className="h-5 w-5 mr-2" />}
+                  Create Room
+                </Button>
+
+                <div className="relative">
+                  <div className="absolute inset-0 flex items-center">
+                    <span className="w-full border-t" />
+                  </div>
+                  <div className="relative flex justify-center text-xs uppercase">
+                    <span className="bg-background px-2 text-muted-foreground">or join</span>
+                  </div>
+                </div>
+
+                <div className="flex gap-2">
+                  <Input
+                    placeholder="Room code"
+                    value={joinCode}
+                    onChange={(e) => setJoinCode(e.target.value.toUpperCase())}
+                    className="h-14 text-center text-xl font-mono tracking-widest uppercase"
+                    maxLength={6}
+                  />
+                  <Button 
+                    onClick={joinRoom}
+                    disabled={loading || !user || !joinCode.trim()}
+                    className="h-14 px-6"
+                  >
+                    {loading ? <Loader2 className="h-5 w-5 animate-spin" /> : 'Join'}
+                  </Button>
+                </div>
+
+                {!user && (
+                  <p className="text-center text-sm text-muted-foreground">
+                    Sign in to play multiplayer
+                  </p>
+                )}
+              </CardContent>
+            </Card>
+
+            {/* Game Features */}
+            <div className="grid grid-cols-2 gap-4">
+              <Card className="p-4">
+                <div className="flex items-center gap-3 mb-2">
+                  <Crosshair className="h-5 w-5 text-red-500" />
+                  <span className="font-semibold">Weapons</span>
+                </div>
+                <p className="text-xs text-muted-foreground">Pistol, Rifle, Shotgun, Sniper</p>
+              </Card>
+              <Card className="p-4">
+                <div className="flex items-center gap-3 mb-2">
+                  <Zap className="h-5 w-5 text-yellow-500" />
+                  <span className="font-semibold">Abilities</span>
+                </div>
+                <p className="text-xs text-muted-foreground">Dash, Heal, Freeze, Rage</p>
+              </Card>
+              <Card className="p-4">
+                <div className="flex items-center gap-3 mb-2">
+                  <Star className="h-5 w-5 text-purple-500" />
+                  <span className="font-semibold">Power-ups</span>
+                </div>
+                <p className="text-xs text-muted-foreground">Health, Shield, Ammo, Speed</p>
+              </Card>
+              <Card className="p-4">
+                <div className="flex items-center gap-3 mb-2">
+                  <Trophy className="h-5 w-5 text-amber-500" />
+                  <span className="font-semibold">Win Reward</span>
+                </div>
+                <p className="text-xs text-muted-foreground">+150 Nexa for victory</p>
+              </Card>
+            </div>
+
+            {/* Controls */}
+            <Card>
+              <CardHeader>
+                <CardTitle className="text-lg">Controls</CardTitle>
+              </CardHeader>
+              <CardContent className="grid grid-cols-2 gap-3 text-sm">
+                <div><kbd className="px-2 py-1 bg-muted rounded">W A S D</kbd> Move</div>
+                <div><kbd className="px-2 py-1 bg-muted rounded">Mouse</kbd> Aim & Shoot</div>
+                <div><kbd className="px-2 py-1 bg-muted rounded">E</kbd> Use Ability</div>
+                <div><kbd className="px-2 py-1 bg-muted rounded">R</kbd> Reload</div>
+              </CardContent>
+            </Card>
+          </div>
+        ) : gameRoom.status === 'waiting' ? (
+          /* Waiting Room */
+          <div className="space-y-6">
+            <Card className="border-primary/20">
+              <CardContent className="pt-6 text-center">
+                <div className="p-4 rounded-2xl bg-primary/10 inline-flex mb-4">
+                  <Users className="h-10 w-10 text-primary" />
+                </div>
+                <h2 className="text-xl font-bold mb-2">Waiting for Opponent</h2>
+                
+                <div className="flex items-center justify-center gap-2 p-3 bg-muted rounded-xl mb-4">
+                  <span className="font-mono text-2xl tracking-widest">{gameRoom.room_code}</span>
+                  <Button variant="ghost" size="icon" onClick={copyRoomCode}>
+                    {copied ? <Check className="h-4 w-4 text-green-500" /> : <Copy className="h-4 w-4" />}
+                  </Button>
+                </div>
+
+                <div className="flex justify-center gap-8 mb-6">
+                  <div className="text-center">
+                    <div className="w-16 h-16 rounded-full bg-primary/20 flex items-center justify-center mb-2">
+                      {hostInfo?.avatar_url ? (
+                        <img src={hostInfo.avatar_url} className="w-full h-full rounded-full object-cover" />
+                      ) : (
+                        <Users className="h-8 w-8 text-primary" />
+                      )}
+                    </div>
+                    <p className="text-sm font-medium">{hostInfo?.display_name || 'Host'}</p>
+                    <span className="text-xs text-primary">Host</span>
+                  </div>
+                  <div className="flex items-center">
+                    <span className="text-2xl font-bold text-muted-foreground">VS</span>
+                  </div>
+                  <div className="text-center">
+                    <div className="w-16 h-16 rounded-full bg-muted flex items-center justify-center mb-2">
+                      {guestInfo ? (
+                        guestInfo.avatar_url ? (
+                          <img src={guestInfo.avatar_url} className="w-full h-full rounded-full object-cover" />
+                        ) : (
+                          <Users className="h-8 w-8" />
+                        )
+                      ) : (
+                        <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
+                      )}
+                    </div>
+                    <p className="text-sm font-medium">{guestInfo?.display_name || 'Waiting...'}</p>
+                  </div>
+                </div>
+
+                {isHost && (
+                  <Button 
+                    onClick={startGame} 
+                    disabled={!gameRoom.guest_id}
+                    className="w-full h-12"
+                  >
+                    <Swords className="h-5 w-5 mr-2" />
+                    Start Battle
+                  </Button>
+                )}
+
+                <Button variant="ghost" onClick={leaveRoom} className="mt-4">
+                  Leave Room
+                </Button>
+              </CardContent>
+            </Card>
+          </div>
+        ) : gameRoom.status === 'playing' ? (
+          /* Game Arena */
+          <div className="space-y-4">
+            {/* HUD */}
+            <div className="grid grid-cols-3 gap-4">
+              {/* My Stats */}
+              <Card className="p-3">
+                <div className="flex items-center gap-2 mb-2">
+                  <Heart className="h-4 w-4 text-red-500" />
+                  <Progress value={myPlayer?.health || 0} className="h-2" />
+                  <span className="text-xs">{myPlayer?.health || 0}</span>
+                </div>
+                {(myPlayer?.shield || 0) > 0 && (
+                  <div className="flex items-center gap-2 mb-2">
+                    <Shield className="h-4 w-4 text-blue-500" />
+                    <Progress value={myPlayer?.shield || 0} max={50} className="h-2" />
+                  </div>
+                )}
+                <div className="flex items-center justify-between text-xs text-muted-foreground">
+                  <span>{myPlayer?.weapon?.toUpperCase()}</span>
+                  <span>{myPlayer?.ammo || 0} ammo</span>
+                </div>
+              </Card>
+
+              {/* Score */}
+              <Card className="p-3 text-center">
+                <div className="text-2xl font-bold">
+                  <span className="text-primary">{myPlayer?.kills || 0}</span>
+                  <span className="mx-2 text-muted-foreground">-</span>
+                  <span className="text-red-500">{opponent?.kills || 0}</span>
+                </div>
+                <div className="text-xs text-muted-foreground">
+                  First to 10 kills
+                </div>
+              </Card>
+
+              {/* Timer */}
+              <Card className="p-3 text-center">
+                <div className="flex items-center justify-center gap-2">
+                  <Timer className="h-4 w-4" />
+                  <span className="text-lg font-mono">
+                    {Math.floor((gameState?.maxTime || 180) - (gameState?.gameTime || 0))}s
+                  </span>
+                </div>
+                <div className="text-xs text-muted-foreground">
+                  Ability: {myPlayer?.abilityCooldown && myPlayer.abilityCooldown > 0 
+                    ? `${Math.ceil(myPlayer.abilityCooldown / 1000)}s` 
+                    : 'Ready (E)'}
+                </div>
+              </Card>
+            </div>
+
+            {/* Countdown */}
+            <AnimatePresence>
+              {countdown !== null && (
+                <motion.div
+                  initial={{ scale: 0.5, opacity: 0 }}
+                  animate={{ scale: 1, opacity: 1 }}
+                  exit={{ scale: 1.5, opacity: 0 }}
+                  className="fixed inset-0 flex items-center justify-center z-50 bg-background/80 backdrop-blur"
+                >
+                  <span className="text-8xl font-bold text-primary">{countdown}</span>
+                </motion.div>
+              )}
+            </AnimatePresence>
+
+            {/* Game Area */}
+            <div
+              ref={gameAreaRef}
+              className="relative aspect-[16/10] bg-gradient-to-br from-slate-900 to-slate-800 rounded-2xl overflow-hidden cursor-crosshair border-2 border-primary/30"
+              onMouseMove={handleMouseMove}
+              onMouseDown={() => setIsMouseDown(true)}
+              onMouseUp={() => setIsMouseDown(false)}
+              onMouseLeave={() => setIsMouseDown(false)}
+            >
+              {/* Grid lines */}
+              <div className="absolute inset-0 opacity-10">
+                {[...Array(10)].map((_, i) => (
+                  <div key={i} className="absolute left-0 right-0 border-t border-white" style={{ top: `${(i + 1) * 10}%` }} />
+                ))}
+                {[...Array(10)].map((_, i) => (
+                  <div key={i} className="absolute top-0 bottom-0 border-l border-white" style={{ left: `${(i + 1) * 10}%` }} />
+                ))}
+              </div>
+
+              {/* Power-ups */}
+              {gameState?.powerUps?.map(pu => (
+                <motion.div
+                  key={pu.id}
+                  className={`absolute w-6 h-6 rounded-full flex items-center justify-center ${
+                    pu.type === 'health' ? 'bg-red-500' :
+                    pu.type === 'shield' ? 'bg-blue-500' :
+                    pu.type === 'ammo' ? 'bg-yellow-500' :
+                    pu.type === 'speed' ? 'bg-green-500' :
+                    'bg-purple-500'
+                  }`}
+                  style={{ left: `${pu.x}%`, top: `${pu.y}%`, transform: 'translate(-50%, -50%)' }}
+                  animate={{ scale: [1, 1.2, 1] }}
+                  transition={{ repeat: Infinity, duration: 1 }}
+                >
+                  {pu.type === 'health' && <Heart className="h-3 w-3 text-white" />}
+                  {pu.type === 'shield' && <Shield className="h-3 w-3 text-white" />}
+                  {pu.type === 'ammo' && <Target className="h-3 w-3 text-white" />}
+                  {pu.type === 'speed' && <Zap className="h-3 w-3 text-white" />}
+                  {pu.type === 'weapon' && <Crosshair className="h-3 w-3 text-white" />}
+                </motion.div>
+              ))}
+
+              {/* Projectiles */}
+              {gameState?.projectiles?.map(proj => (
+                <motion.div
+                  key={proj.id}
+                  className="absolute w-2 h-2 rounded-full bg-yellow-400 shadow-lg shadow-yellow-400/50"
+                  style={{ left: `${proj.x}%`, top: `${proj.y}%`, transform: 'translate(-50%, -50%)' }}
+                />
+              ))}
+
+              {/* Players */}
+              {gameState?.players && Object.values(gameState.players).map(player => (
+                <motion.div
+                  key={player.id}
+                  className={`absolute w-10 h-10 rounded-full flex items-center justify-center ${
+                    player.id === user?.id ? 'bg-primary' : 'bg-red-500'
+                  } ${player.respawnTimer > 0 ? 'opacity-30' : ''}`}
+                  style={{ 
+                    left: `${player.x}%`, 
+                    top: `${player.y}%`, 
+                    transform: 'translate(-50%, -50%)',
+                  }}
+                  animate={player.isMoving ? { scale: [1, 1.05, 1] } : {}}
+                  transition={{ repeat: Infinity, duration: 0.3 }}
+                >
+                  {/* Direction indicator */}
+                  <div 
+                    className="absolute w-6 h-1 bg-white/50 origin-left rounded"
+                    style={{ transform: `rotate(${player.direction}deg)` }}
+                  />
+                  <Crosshair className="h-5 w-5 text-white" />
+                  
+                  {/* Health bar */}
+                  <div className="absolute -top-3 left-1/2 -translate-x-1/2 w-12 h-1.5 bg-black/50 rounded-full overflow-hidden">
+                    <div 
+                      className={`h-full ${player.id === user?.id ? 'bg-green-500' : 'bg-red-400'}`}
+                      style={{ width: `${player.health}%` }}
+                    />
+                  </div>
+                  
+                  {/* Shield indicator */}
+                  {player.shield > 0 && (
+                    <div className="absolute -top-5 left-1/2 -translate-x-1/2 w-12 h-1 bg-blue-500/50 rounded-full overflow-hidden">
+                      <div className="h-full bg-blue-400" style={{ width: `${player.shield * 2}%` }} />
+                    </div>
+                  )}
+                </motion.div>
+              ))}
+
+              {/* Kill Feed */}
+              <div className="absolute top-2 right-2 space-y-1">
+                {gameState?.killFeed?.slice(0, 3).map((kill, i) => (
+                  <motion.div
+                    key={kill.timestamp}
+                    initial={{ x: 50, opacity: 0 }}
+                    animate={{ x: 0, opacity: 1 }}
+                    className="px-2 py-1 bg-black/50 rounded text-xs text-white"
+                  >
+                    <span className={kill.killer === user?.id ? 'text-primary' : 'text-red-400'}>
+                      {kill.killer === user?.id ? 'You' : 'Enemy'}
+                    </span>
+                    {' '}🔫{' '}
+                    <span className={kill.victim === user?.id ? 'text-red-400' : 'text-primary'}>
+                      {kill.victim === user?.id ? 'You' : 'Enemy'}
+                    </span>
+                  </motion.div>
+                ))}
+              </div>
+
+              {/* Respawn Timer */}
+              {myPlayer?.respawnTimer > 0 && (
+                <div className="absolute inset-0 flex items-center justify-center bg-black/50">
+                  <div className="text-center">
+                    <p className="text-white text-2xl font-bold">Respawning...</p>
+                    <p className="text-white text-4xl">{Math.ceil(myPlayer.respawnTimer)}</p>
+                  </div>
+                </div>
+              )}
+            </div>
+          </div>
+        ) : (
+          /* Game Over */
+          <Card className="border-primary/20">
+            <CardContent className="pt-6 text-center">
+              {gameRoom.winner_id === user?.id ? (
+                <>
+                  <motion.div
+                    initial={{ scale: 0 }}
+                    animate={{ scale: 1 }}
+                    className="inline-flex p-6 rounded-full bg-gradient-to-br from-amber-400 to-orange-500 mb-4"
+                  >
+                    <Trophy className="h-16 w-16 text-white" />
+                  </motion.div>
+                  <h2 className="text-3xl font-bold text-primary mb-2">Victory!</h2>
+                  <p className="text-lg text-muted-foreground mb-6">+150 Nexa</p>
+                </>
+              ) : (
+                <>
+                  <div className="inline-flex p-6 rounded-full bg-muted mb-4">
+                    <Swords className="h-16 w-16 text-muted-foreground" />
+                  </div>
+                  <h2 className="text-3xl font-bold mb-2">Defeat</h2>
+                  <p className="text-muted-foreground mb-6">Better luck next time!</p>
+                </>
+              )}
+
+              <div className="grid grid-cols-2 gap-4 mb-6">
+                <div className="p-4 bg-muted rounded-xl">
+                  <p className="text-sm text-muted-foreground">Your Kills</p>
+                  <p className="text-3xl font-bold">{myPlayer?.kills || 0}</p>
+                </div>
+                <div className="p-4 bg-muted rounded-xl">
+                  <p className="text-sm text-muted-foreground">Your Deaths</p>
+                  <p className="text-3xl font-bold">{myPlayer?.deaths || 0}</p>
+                </div>
+              </div>
+
+              <div className="flex gap-3">
+                {isHost && (
+                  <Button onClick={playAgain} className="flex-1 h-12">
+                    <RefreshCw className="h-4 w-4 mr-2" />
+                    Play Again
+                  </Button>
+                )}
+                <Button variant="outline" onClick={leaveRoom} className="flex-1 h-12">
+                  Leave
+                </Button>
+              </div>
+            </CardContent>
+          </Card>
+        )}
+      </main>
+    </div>
   );
 };
 

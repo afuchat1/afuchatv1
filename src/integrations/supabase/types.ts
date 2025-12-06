@@ -714,6 +714,7 @@ export type Database = {
           current_target_x: number | null
           current_target_y: number | null
           ended_at: string | null
+          game_state: Json | null
           game_type: string
           guest_id: string | null
           guest_score: number
@@ -721,6 +722,7 @@ export type Database = {
           host_score: number
           id: string
           max_rounds: number
+          player_data: Json | null
           room_code: string
           round: number
           started_at: string | null
@@ -733,6 +735,7 @@ export type Database = {
           current_target_x?: number | null
           current_target_y?: number | null
           ended_at?: string | null
+          game_state?: Json | null
           game_type?: string
           guest_id?: string | null
           guest_score?: number
@@ -740,6 +743,7 @@ export type Database = {
           host_score?: number
           id?: string
           max_rounds?: number
+          player_data?: Json | null
           room_code: string
           round?: number
           started_at?: string | null
@@ -752,6 +756,7 @@ export type Database = {
           current_target_x?: number | null
           current_target_y?: number | null
           ended_at?: string | null
+          game_state?: Json | null
           game_type?: string
           guest_id?: string | null
           guest_score?: number
@@ -759,6 +764,7 @@ export type Database = {
           host_score?: number
           id?: string
           max_rounds?: number
+          player_data?: Json | null
           room_code?: string
           round?: number
           started_at?: string | null
