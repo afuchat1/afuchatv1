@@ -1075,7 +1075,7 @@ const AfuArena = () => {
 
   const getPlayerAvatar = (playerId: string) => {
     if (playerId === BOT_ID) return BOT_AVATAR;
-    if (playerId === user?.id) return profile?.avatar_url || null;
+    if (playerId === user?.id) return myProfile?.avatar_url || null;
     if (playerId === hostInfo?.id) return hostInfo?.avatar_url;
     if (playerId === guestInfo?.id) return guestInfo?.avatar_url;
     return null;
@@ -1191,12 +1191,12 @@ const AfuArena = () => {
               {/* My Stats */}
               <div className="flex items-center gap-2 p-2 bg-muted/50 rounded-xl">
                 <div className="w-8 h-8 rounded-full overflow-hidden border-2 border-primary">
-                  {profile?.avatar_url ? (
-                    <img src={profile.avatar_url} className="w-full h-full object-cover" />
+                  {myProfile?.avatar_url ? (
+                    <img src={myProfile.avatar_url} className="w-full h-full object-cover" />
                   ) : (
                     <div className="w-full h-full bg-primary flex items-center justify-center">
                       <span className="text-xs text-primary-foreground font-bold">
-                        {profile?.display_name?.[0] || 'U'}
+                        {myProfile?.display_name?.[0] || 'U'}
                       </span>
                     </div>
                   )}
