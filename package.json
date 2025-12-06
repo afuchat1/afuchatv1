@@ -69,6 +69,7 @@
     "tailwindcss-animate": "^1.0.7",
     "vaul": "^0.9.9",
     "vite-plugin-pwa": "^1.1.0",
+    "workbox-cacheable-response": "^7.4.0",
     "workbox-expiration": "^7.1.0",
     "workbox-precaching": "^7.1.0",
     "workbox-routing": "^7.1.0",
