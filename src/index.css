@@ -228,3 +228,30 @@ All colors MUST be HSL.
     radial-gradient(circle at 80% 70%, hsla(210, 20%, 25%, 0.1) 0%, transparent 50%),
     radial-gradient(circle at 40% 80%, hsla(210, 20%, 25%, 0.08) 0%, transparent 50%);
 }
+
+/* Game fullscreen mode - forces landscape on mobile */
+.game-fullscreen {
+  @media screen and (max-width: 768px) and (orientation: portrait) {
+    transform: rotate(90deg);
+    transform-origin: left top;
+    width: 100vh;
+    height: 100vw;
+    position: fixed;
+    top: 0;
+    left: 100vw;
+    overflow: hidden;
+  }
+}
+
+/* Fullscreen game wrapper */
+:fullscreen {
+  background-color: hsl(var(--background));
+}
+
+:fullscreen .game-fullscreen {
+  transform: none;
+  width: 100%;
+  height: 100%;
+  position: relative;
+  left: 0;
+}

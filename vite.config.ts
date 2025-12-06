@@ -21,30 +21,34 @@ export default defineConfig(({ mode }) => ({
       filename: 'sw.ts',
       
       injectManifest: {
-        maximumFileSizeToCacheInBytes: 4 * 1024 * 1024, // 4 MB limit
-        globPatterns: ['**/*.{js,css,html,ico,png,jpg,jpeg,svg,woff,woff2}']
+        maximumFileSizeToCacheInBytes: 5 * 1024 * 1024, // 5 MB limit
+        globPatterns: ['**/*.{js,css,html,ico,png,jpg,jpeg,svg,woff,woff2,json}']
       },
 
       manifest: {
         name: 'AfuChat',
         short_name: 'AfuChat',
-        description: 'Fast, text-only messaging platform',
-        theme_color: '#1B9AAA',
+        description: 'Fast, offline-first messaging platform',
+        theme_color: '#00C2CB',
         background_color: '#000000',
         display: 'standalone',
-        orientation: 'portrait',
+        orientation: 'any',
         start_url: '/',
         scope: '/',
+        categories: ['social', 'communication'],
+        prefer_related_applications: false,
         icons: [
           {
             src: '/favicon.png',
             sizes: '192x192',
-            type: 'image/png'
+            type: 'image/png',
+            purpose: 'any maskable'
           },
           {
             src: '/favicon.png',
             sizes: '512x512',
-            type: 'image/png'
+            type: 'image/png',
+            purpose: 'any maskable'
           }
         ],
         shortcuts: [
@@ -71,8 +75,6 @@ export default defineConfig(({ mode }) => ({
           }
         ]
       },
-      // The 'workbox' config is no longer needed here,
-      // as we will define caching rules in our custom 'src/sw.ts' file.
     })
   ].filter(Boolean),
   resolve: {
