@@ -55,7 +55,7 @@ const MiniPrograms = () => {
       description: 'Real-time 1v1 reflex battle with friends',
       icon: Swords,
       category: 'games',
-      route: '/afu-arena',
+      route: '/games/AfuArena',
       color: 'bg-primary',
       gradient: 'from-primary to-primary/60',
       isBuiltIn: true,

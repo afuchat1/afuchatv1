@@ -165,7 +165,7 @@ const AppRoutes = () => {
       <Route path="/developer-sdk" element={<Layout><DeveloperSDK /></Layout>} />
       <Route path="/verification-request" element={<Layout><VerificationRequest /></Layout>} />
       <Route path="/games" element={<Layout><Games /></Layout>} />
-      <Route path="/afu-arena" element={<AfuArena />} />
+      <Route path="/games/AfuArena" element={<AfuArena />} />
       <Route path="/game" element={<Layout><SimpleGame /></Layout>} />
       <Route path="/memory-game" element={<Layout><MemoryGame /></Layout>} />
       <Route path="/puzzle-game" element={<Layout><PuzzleGame /></Layout>} />
