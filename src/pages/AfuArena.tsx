@@ -45,7 +45,7 @@ interface Player {
   shield: number;
   speed: number;
   lastShot: number;
-  direction: number; // angle in degrees
+  direction: number;
   isMoving: boolean;
   ability: 'dash' | 'heal' | 'freeze' | 'rage';
   abilityCooldown: number;
@@ -126,6 +126,7 @@ const ABILITY_COOLDOWNS: Record<string, number> = {
 const AfuArena = () => {
   const navigate = useNavigate();
   const { user } = useAuth();
+  const [myProfile, setMyProfile] = useState<PlayerInfo | null>(null);
   const [gameRoom, setGameRoom] = useState<GameRoom | null>(null);
   const [hostInfo, setHostInfo] = useState<PlayerInfo | null>(null);
   const [guestInfo, setGuestInfo] = useState<PlayerInfo | null>(null);
@@ -134,22 +135,25 @@ const AfuArena = () => {
   const [loading, setLoading] = useState(false);
   const [countdown, setCountdown] = useState<number | null>(null);
   const [soundEnabled, setSoundEnabled] = useState(true);
-  const [keys, setKeys] = useState<Set<string>>(new Set());
-  const [mousePos, setMousePos] = useState({ x: 0, y: 0 });
-  const [isMouseDown, setIsMouseDown] = useState(false);
   const [isSinglePlayer, setIsSinglePlayer] = useState(false);
   const [singlePlayerState, setSinglePlayerState] = useState<GameState | null>(null);
   const [singlePlayerStatus, setSinglePlayerStatus] = useState<'idle' | 'playing' | 'finished'>('idle');
   const [singlePlayerWon, setSinglePlayerWon] = useState(false);
   
+  // Mobile touch controls state
+  const [joystickPos, setJoystickPos] = useState({ x: 0, y: 0 });
+  const [isJoystickActive, setIsJoystickActive] = useState(false);
+  const [isShooting, setIsShooting] = useState(false);
+  const [aimDirection, setAimDirection] = useState(0);
+  
   const gameAreaRef = useRef<HTMLDivElement>(null);
+  const joystickRef = useRef<HTMLDivElement>(null);
   const audioContextRef = useRef<AudioContext | null>(null);
   const gameLoopRef = useRef<number | null>(null);
   const lastUpdateRef = useRef<number>(0);
   const localGameStateRef = useRef<GameState | null>(null);
-  const aiUpdateRef = useRef<number>(0);
+  const joystickOriginRef = useRef({ x: 0, y: 0 });
 
-  // Initialize audio
   useEffect(() => {
     audioContextRef.current = new (window.AudioContext || (window as any).webkitAudioContext)();
     return () => {
@@ -187,7 +191,7 @@ const AfuArena = () => {
 
   const createInitialPlayer = (id: string, isHost: boolean): Player => ({
     id,
-    x: isHost ? 15 : 85,
+    x: isHost ? 20 : 80,
     y: 50,
     health: 100,
     maxHealth: 100,
@@ -214,11 +218,12 @@ const AfuArena = () => {
     projectiles: [],
     powerUps: [],
     gameTime: 0,
-    maxTime: 180, // 3 minutes
+    maxTime: 180,
     killFeed: []
   });
 
   const BOT_ID = 'bot-player-1';
+  const BOT_AVATAR = 'https://api.dicebear.com/7.x/bottts/svg?seed=afu-bot';
 
   const createSinglePlayerGameState = (playerId: string): GameState => ({
     players: {
@@ -232,7 +237,6 @@ const AfuArena = () => {
     killFeed: []
   });
 
-  // Start single player game
   const startSinglePlayer = async () => {
     if (!user) {
       toast.error('Please sign in to play');
@@ -255,49 +259,93 @@ const AfuArena = () => {
     setSinglePlayerStatus('playing');
   };
 
-  // AI Bot logic
+  // Touch handlers for joystick
+  const handleJoystickStart = (e: React.TouchEvent) => {
+    e.preventDefault();
+    const touch = e.touches[0];
+    const rect = joystickRef.current?.getBoundingClientRect();
+    if (rect) {
+      joystickOriginRef.current = { x: rect.left + rect.width / 2, y: rect.top + rect.height / 2 };
+      setIsJoystickActive(true);
+    }
+  };
+
+  const handleJoystickMove = (e: React.TouchEvent) => {
+    if (!isJoystickActive) return;
+    e.preventDefault();
+    const touch = e.touches[0];
+    const dx = touch.clientX - joystickOriginRef.current.x;
+    const dy = touch.clientY - joystickOriginRef.current.y;
+    const maxDist = 40;
+    const dist = Math.sqrt(dx * dx + dy * dy);
+    const clampedDist = Math.min(dist, maxDist);
+    const angle = Math.atan2(dy, dx);
+    setJoystickPos({
+      x: (Math.cos(angle) * clampedDist) / maxDist,
+      y: (Math.sin(angle) * clampedDist) / maxDist
+    });
+  };
+
+  const handleJoystickEnd = () => {
+    setIsJoystickActive(false);
+    setJoystickPos({ x: 0, y: 0 });
+  };
+
+  // Touch handler for shooting
+  const handleShootAreaTouch = (e: React.TouchEvent) => {
+    e.preventDefault();
+    const touch = e.touches[0];
+    const rect = gameAreaRef.current?.getBoundingClientRect();
+    if (rect && localGameStateRef.current && user) {
+      const player = localGameStateRef.current.players[user.id];
+      if (player) {
+        const touchX = ((touch.clientX - rect.left) / rect.width) * 100;
+        const touchY = ((touch.clientY - rect.top) / rect.height) * 100;
+        const angle = Math.atan2(touchY - player.y, touchX - player.x) * 180 / Math.PI;
+        setAimDirection(angle);
+      }
+    }
+    setIsShooting(true);
+  };
+
+  const handleShootAreaEnd = () => {
+    setIsShooting(false);
+  };
+
   const updateBot = (state: GameState, dt: number) => {
     const bot = state.players[BOT_ID];
     const player = Object.values(state.players).find(p => p.id !== BOT_ID);
     if (!bot || !player || bot.respawnTimer > 0) return;
 
-    // Bot AI: Move towards player with some randomness
     const dx = player.x - bot.x;
     const dy = player.y - bot.y;
     const dist = Math.sqrt(dx * dx + dy * dy);
     
-    // Keep some distance, not too close
     const idealDist = 25;
     let moveX = 0, moveY = 0;
     
     if (dist > idealDist + 5) {
-      // Move closer
       moveX = dx / dist;
       moveY = dy / dist;
     } else if (dist < idealDist - 5) {
-      // Move away
       moveX = -dx / dist;
       moveY = -dy / dist;
     } else {
-      // Strafe randomly
       const strafeAngle = Math.atan2(dy, dx) + (Math.random() > 0.5 ? Math.PI/2 : -Math.PI/2);
       moveX = Math.cos(strafeAngle) * 0.5;
       moveY = Math.sin(strafeAngle) * 0.5;
     }
 
-    // Add some randomness to movement
     moveX += (Math.random() - 0.5) * 0.3;
     moveY += (Math.random() - 0.5) * 0.3;
 
-    bot.x = Math.max(5, Math.min(95, bot.x + moveX * bot.speed * dt * 15));
-    bot.y = Math.max(5, Math.min(95, bot.y + moveY * bot.speed * dt * 15));
+    bot.x = Math.max(8, Math.min(92, bot.x + moveX * bot.speed * dt * 15));
+    bot.y = Math.max(8, Math.min(92, bot.y + moveY * bot.speed * dt * 15));
     bot.isMoving = true;
 
-    // Aim at player with some inaccuracy
-    const aimError = (Math.random() - 0.5) * 15; // degrees of error
+    const aimError = (Math.random() - 0.5) * 15;
     bot.direction = Math.atan2(player.y - bot.y, player.x - bot.x) * 180 / Math.PI + aimError;
 
-    // Shoot at player if in range and line of sight
     const now = Date.now();
     if (dist < 50 && player.respawnTimer <= 0) {
       const weapon = WEAPON_STATS[bot.weapon];
@@ -322,19 +370,16 @@ const AfuArena = () => {
             });
           }
         } else {
-          // Reload
           bot.ammo = WEAPON_STATS[bot.weapon].ammo;
         }
       }
     }
 
-    // Use ability occasionally
     if (bot.abilityCooldown <= 0 && Math.random() < 0.01) {
       useAbility(bot, state);
       bot.abilityCooldown = ABILITY_COOLDOWNS[bot.ability];
     }
 
-    // Collect nearby powerups
     state.powerUps.forEach((pu, idx) => {
       const puDist = Math.sqrt((pu.x - bot.x) ** 2 + (pu.y - bot.y) ** 2);
       if (puDist < 5) {
@@ -375,7 +420,7 @@ const AfuArena = () => {
       setGameRoom(typedData);
       const hostData = await fetchPlayerInfo(user.id);
       setHostInfo(hostData);
-      toast.success('Room created! Share the code with a friend');
+      toast.success('Room created!');
     } catch (error: any) {
       toast.error(error.message || 'Failed to create room');
     } finally {
@@ -402,12 +447,12 @@ const AfuArena = () => {
         .single();
 
       if (findError || !room) {
-        toast.error('Room not found or game already started');
+        toast.error('Room not found');
         return;
       }
 
       if (room.host_id === user.id) {
-        toast.error('You cannot join your own room');
+        toast.error('Cannot join your own room');
         return;
       }
 
@@ -433,7 +478,6 @@ const AfuArena = () => {
       ]);
       setHostInfo(hostData);
       setGuestInfo(guestData);
-      
       toast.success('Joined room!');
     } catch (error: any) {
       toast.error(error.message || 'Failed to join room');
@@ -442,7 +486,6 @@ const AfuArena = () => {
     }
   };
 
-  // Subscribe to room updates
   useEffect(() => {
     if (!gameRoom?.id) return;
 
@@ -471,7 +514,6 @@ const AfuArena = () => {
             setGuestInfo(guestData);
           }
 
-          // Sync game state from remote
           if (typedRoom.game_state && Object.keys(typedRoom.game_state).length > 0) {
             localGameStateRef.current = typedRoom.game_state as GameState;
           }
@@ -484,47 +526,10 @@ const AfuArena = () => {
     };
   }, [gameRoom?.id, guestInfo]);
 
-  // Keyboard controls
-  useEffect(() => {
-    const handleKeyDown = (e: KeyboardEvent) => {
-      const key = e.key.toLowerCase();
-      if (['w', 'a', 's', 'd', ' ', 'e', 'r'].includes(key)) {
-        e.preventDefault();
-        setKeys(prev => new Set(prev).add(key));
-      }
-    };
-    const handleKeyUp = (e: KeyboardEvent) => {
-      const key = e.key.toLowerCase();
-      setKeys(prev => {
-        const next = new Set(prev);
-        next.delete(key);
-        return next;
-      });
-    };
-
-    window.addEventListener('keydown', handleKeyDown);
-    window.addEventListener('keyup', handleKeyUp);
-    return () => {
-      window.removeEventListener('keydown', handleKeyDown);
-      window.removeEventListener('keyup', handleKeyUp);
-    };
-  }, []);
-
-  // Mouse controls
-  const handleMouseMove = (e: React.MouseEvent) => {
-    if (!gameAreaRef.current) return;
-    const rect = gameAreaRef.current.getBoundingClientRect();
-    setMousePos({
-      x: ((e.clientX - rect.left) / rect.width) * 100,
-      y: ((e.clientY - rect.top) / rect.height) * 100
-    });
-  };
-
-  // Start the game
   const startGame = async () => {
     if (!gameRoom || !user || gameRoom.host_id !== user.id) return;
     if (!gameRoom.guest_id) {
-      toast.error('Waiting for opponent to join');
+      toast.error('Waiting for opponent');
       return;
     }
 
@@ -549,14 +554,13 @@ const AfuArena = () => {
       .eq('id', gameRoom.id);
   };
 
-  // Game loop
   useEffect(() => {
     if ((gameRoom?.status !== 'playing' && singlePlayerStatus !== 'playing') || !user) return;
 
     const gameLoop = (timestamp: number) => {
       const deltaTime = timestamp - lastUpdateRef.current;
       
-      if (deltaTime >= 16) { // ~60fps
+      if (deltaTime >= 16) {
         lastUpdateRef.current = timestamp;
         if (isSinglePlayer) {
           updateSinglePlayerGame(deltaTime / 1000);
@@ -573,7 +577,7 @@ const AfuArena = () => {
     return () => {
       if (gameLoopRef.current) cancelAnimationFrame(gameLoopRef.current);
     };
-  }, [gameRoom?.status, singlePlayerStatus, user, keys, mousePos, isMouseDown, isSinglePlayer]);
+  }, [gameRoom?.status, singlePlayerStatus, user, joystickPos, isShooting, aimDirection, isSinglePlayer]);
 
   const updateSinglePlayerGame = async (dt: number) => {
     if (!localGameStateRef.current || !user) return;
@@ -582,23 +586,21 @@ const AfuArena = () => {
     const player = state.players[user.id];
     const bot = state.players[BOT_ID];
 
-    // Handle player respawn
     if (player && player.respawnTimer > 0) {
       player.respawnTimer -= dt;
       if (player.respawnTimer <= 0) {
         player.health = player.maxHealth;
-        player.x = 15;
+        player.x = 20;
         player.y = 50;
         player.respawnTimer = 0;
       }
     }
 
-    // Handle bot respawn
     if (bot && bot.respawnTimer > 0) {
       bot.respawnTimer -= dt;
       if (bot.respawnTimer <= 0) {
         bot.health = bot.maxHealth;
-        bot.x = 85;
+        bot.x = 80;
         bot.y = 50;
         bot.respawnTimer = 0;
       }
@@ -610,30 +612,20 @@ const AfuArena = () => {
       return;
     }
 
-    // Player Movement
-    let dx = 0, dy = 0;
-    if (keys.has('w')) dy -= 1;
-    if (keys.has('s')) dy += 1;
-    if (keys.has('a')) dx -= 1;
-    if (keys.has('d')) dx += 1;
-
-    if (dx !== 0 || dy !== 0) {
-      const mag = Math.sqrt(dx * dx + dy * dy);
-      dx /= mag;
-      dy /= mag;
-      player.x = Math.max(2, Math.min(98, player.x + dx * player.speed * dt * 20));
-      player.y = Math.max(2, Math.min(98, player.y + dy * player.speed * dt * 20));
+    // Movement from joystick
+    if (joystickPos.x !== 0 || joystickPos.y !== 0) {
+      player.x = Math.max(8, Math.min(92, player.x + joystickPos.x * player.speed * dt * 25));
+      player.y = Math.max(8, Math.min(92, player.y + joystickPos.y * player.speed * dt * 25));
       player.isMoving = true;
+      player.direction = Math.atan2(joystickPos.y, joystickPos.x) * 180 / Math.PI;
     } else {
       player.isMoving = false;
     }
 
-    // Direction
-    player.direction = Math.atan2(mousePos.y - player.y, mousePos.x - player.x) * 180 / Math.PI;
-
     // Shooting
     const now = Date.now();
-    if (isMouseDown && player.ammo > 0) {
+    if (isShooting && player.ammo > 0) {
+      player.direction = aimDirection;
       const weapon = WEAPON_STATS[player.weapon];
       if (now - player.lastShot >= weapon.fireRate) {
         player.lastShot = now;
@@ -658,25 +650,10 @@ const AfuArena = () => {
       }
     }
 
-    // Ability
-    if (keys.has('e') && player.abilityCooldown <= 0) {
-      useAbility(player, state);
-      player.abilityCooldown = ABILITY_COOLDOWNS[player.ability];
-      playSound(600, 0.3, 'triangle');
-    }
-
-    // Reload
-    if (keys.has('r')) {
-      player.ammo = WEAPON_STATS[player.weapon].ammo;
-      playSound(300, 0.2);
-    }
-
-    // Reduce cooldown
     if (player.abilityCooldown > 0) {
       player.abilityCooldown -= dt * 1000;
     }
 
-    // Update bot AI
     updateBot(state, dt);
     if (bot && bot.abilityCooldown > 0) {
       bot.abilityCooldown -= dt * 1000;
@@ -697,7 +674,7 @@ const AfuArena = () => {
         if (target.respawnTimer > 0) continue;
 
         const dist = Math.sqrt((proj.x - target.x) ** 2 + (proj.y - target.y) ** 2);
-        if (dist < 4) {
+        if (dist < 6) {
           let damage = proj.damage;
           if (target.shield > 0) {
             const shieldAbsorb = Math.min(target.shield, damage * 0.5);
@@ -723,7 +700,6 @@ const AfuArena = () => {
             });
             playSound(800, 0.4, 'sawtooth');
 
-            // Check win condition
             if (killer && killer.kills >= 10) {
               endSinglePlayerGame(proj.ownerId === user.id);
             }
@@ -734,23 +710,20 @@ const AfuArena = () => {
       return true;
     });
 
-    // Power-ups for player
     state.powerUps.forEach((powerUp, index) => {
       const dist = Math.sqrt((powerUp.x - player.x) ** 2 + (powerUp.y - player.y) ** 2);
-      if (dist < 5) {
+      if (dist < 6) {
         applyPowerUp(player, powerUp);
         state.powerUps.splice(index, 1);
         playSound(500, 0.2);
       }
     });
 
-    // Spawn powerups
     state.gameTime += dt;
     if (state.powerUps.length < 3 && Math.random() < 0.005) {
       spawnPowerUp(state);
     }
 
-    // Time limit
     if (state.gameTime >= state.maxTime) {
       const winner = Object.values(state.players).reduce((a, b) => a.kills > b.kills ? a : b);
       endSinglePlayerGame(winner.id === user.id);
@@ -795,12 +768,11 @@ const AfuArena = () => {
     const state = { ...localGameStateRef.current };
     const player = state.players[user.id];
     if (!player || player.respawnTimer > 0) {
-      // Handle respawn
       if (player && player.respawnTimer > 0) {
         player.respawnTimer -= dt;
         if (player.respawnTimer <= 0) {
           player.health = player.maxHealth;
-          player.x = player.id === gameRoom.host_id ? 15 : 85;
+          player.x = player.id === gameRoom.host_id ? 20 : 80;
           player.y = 50;
           player.respawnTimer = 0;
         }
@@ -809,30 +781,19 @@ const AfuArena = () => {
       return;
     }
 
-    // Movement
-    let dx = 0, dy = 0;
-    if (keys.has('w')) dy -= 1;
-    if (keys.has('s')) dy += 1;
-    if (keys.has('a')) dx -= 1;
-    if (keys.has('d')) dx += 1;
-
-    if (dx !== 0 || dy !== 0) {
-      const mag = Math.sqrt(dx * dx + dy * dy);
-      dx /= mag;
-      dy /= mag;
-      player.x = Math.max(2, Math.min(98, player.x + dx * player.speed * dt * 20));
-      player.y = Math.max(2, Math.min(98, player.y + dy * player.speed * dt * 20));
+    // Movement from joystick
+    if (joystickPos.x !== 0 || joystickPos.y !== 0) {
+      player.x = Math.max(8, Math.min(92, player.x + joystickPos.x * player.speed * dt * 25));
+      player.y = Math.max(8, Math.min(92, player.y + joystickPos.y * player.speed * dt * 25));
       player.isMoving = true;
+      player.direction = Math.atan2(joystickPos.y, joystickPos.x) * 180 / Math.PI;
     } else {
       player.isMoving = false;
     }
 
-    // Direction (aim towards mouse)
-    player.direction = Math.atan2(mousePos.y - player.y, mousePos.x - player.x) * 180 / Math.PI;
-
-    // Shooting
     const now = Date.now();
-    if (isMouseDown && player.ammo > 0) {
+    if (isShooting && player.ammo > 0) {
+      player.direction = aimDirection;
       const weapon = WEAPON_STATS[player.weapon];
       if (now - player.lastShot >= weapon.fireRate) {
         player.lastShot = now;
@@ -858,42 +819,25 @@ const AfuArena = () => {
       }
     }
 
-    // Ability use
-    if (keys.has('e') && player.abilityCooldown <= 0) {
-      useAbility(player, state);
-      player.abilityCooldown = ABILITY_COOLDOWNS[player.ability];
-      playSound(600, 0.3, 'triangle');
-    }
-
-    // Reload
-    if (keys.has('r')) {
-      player.ammo = WEAPON_STATS[player.weapon].ammo;
-      playSound(300, 0.2);
-    }
-
-    // Reduce cooldown
     if (player.abilityCooldown > 0) {
       player.abilityCooldown -= dt * 1000;
     }
 
-    // Update projectiles
     state.projectiles = state.projectiles.filter(proj => {
       proj.x += proj.dx * dt * 10;
       proj.y += proj.dy * dt * 10;
 
-      // Check bounds
       if (proj.x < 0 || proj.x > 100 || proj.y < 0 || proj.y > 100) {
         return false;
       }
 
-      // Check collision with other players
       for (const playerId in state.players) {
         if (playerId === proj.ownerId) continue;
         const target = state.players[playerId];
         if (target.respawnTimer > 0) continue;
 
         const dist = Math.sqrt((proj.x - target.x) ** 2 + (proj.y - target.y) ** 2);
-        if (dist < 4) { // Hit!
+        if (dist < 6) {
           let damage = proj.damage;
           if (target.shield > 0) {
             const shieldAbsorb = Math.min(target.shield, damage * 0.5);
@@ -904,7 +848,6 @@ const AfuArena = () => {
           playSound(150, 0.1);
 
           if (target.health <= 0) {
-            // Kill!
             target.deaths += 1;
             target.respawnTimer = 3;
             player.kills += 1;
@@ -917,7 +860,6 @@ const AfuArena = () => {
             });
             playSound(800, 0.4, 'sawtooth');
 
-            // Check win condition
             if (player.kills >= 10) {
               endGame(proj.ownerId);
             }
@@ -928,23 +870,20 @@ const AfuArena = () => {
       return true;
     });
 
-    // Update powerups
     state.powerUps.forEach((powerUp, index) => {
       const dist = Math.sqrt((powerUp.x - player.x) ** 2 + (powerUp.y - player.y) ** 2);
-      if (dist < 5) {
+      if (dist < 6) {
         applyPowerUp(player, powerUp);
         state.powerUps.splice(index, 1);
         playSound(500, 0.2);
       }
     });
 
-    // Spawn powerups periodically
     state.gameTime += dt;
     if (state.powerUps.length < 3 && Math.random() < 0.005) {
       spawnPowerUp(state);
     }
 
-    // Check time limit
     if (state.gameTime >= state.maxTime) {
       const winner = Object.values(state.players).reduce((a, b) => a.kills > b.kills ? a : b);
       endGame(winner.id);
@@ -953,8 +892,7 @@ const AfuArena = () => {
     state.players[user.id] = player;
     localGameStateRef.current = state;
 
-    // Sync to database periodically
-    if (Math.random() < 0.05) { // ~5% of frames
+    if (Math.random() < 0.05) {
       await supabase
         .from('game_rooms')
         .update({ game_state: JSON.parse(JSON.stringify(state)) })
@@ -967,14 +905,13 @@ const AfuArena = () => {
       case 'dash':
         const dashDist = 15;
         const angle = player.direction * Math.PI / 180;
-        player.x = Math.max(2, Math.min(98, player.x + Math.cos(angle) * dashDist));
-        player.y = Math.max(2, Math.min(98, player.y + Math.sin(angle) * dashDist));
+        player.x = Math.max(8, Math.min(92, player.x + Math.cos(angle) * dashDist));
+        player.y = Math.max(8, Math.min(92, player.y + Math.sin(angle) * dashDist));
         break;
       case 'heal':
         player.health = Math.min(player.maxHealth, player.health + 50);
         break;
       case 'freeze':
-        // Slow enemies temporarily
         Object.values(state.players).forEach(p => {
           if (p.id !== player.id) p.speed = 2;
         });
@@ -1023,8 +960,8 @@ const AfuArena = () => {
     
     const powerUp: PowerUp = {
       id: `pu-${Date.now()}`,
-      x: 10 + Math.random() * 80,
-      y: 10 + Math.random() * 80,
+      x: 15 + Math.random() * 70,
+      y: 15 + Math.random() * 70,
       type,
       value: type === 'weapon' 
         ? weapons[Math.floor(Math.random() * weapons.length)]
@@ -1117,23 +1054,122 @@ const AfuArena = () => {
       .eq('id', gameRoom.id);
   };
 
+  const handleUseAbility = () => {
+    if (!localGameStateRef.current || !user) return;
+    const player = localGameStateRef.current.players[user.id];
+    if (player && player.abilityCooldown <= 0) {
+      useAbility(player, localGameStateRef.current);
+      player.abilityCooldown = ABILITY_COOLDOWNS[player.ability];
+      playSound(600, 0.3, 'triangle');
+    }
+  };
+
+  const handleReload = () => {
+    if (!localGameStateRef.current || !user) return;
+    const player = localGameStateRef.current.players[user.id];
+    if (player) {
+      player.ammo = WEAPON_STATS[player.weapon].ammo;
+      playSound(300, 0.2);
+    }
+  };
+
+  const getPlayerAvatar = (playerId: string) => {
+    if (playerId === BOT_ID) return BOT_AVATAR;
+    if (playerId === user?.id) return profile?.avatar_url || null;
+    if (playerId === hostInfo?.id) return hostInfo?.avatar_url;
+    if (playerId === guestInfo?.id) return guestInfo?.avatar_url;
+    return null;
+  };
+
+  const getPlayerName = (playerId: string) => {
+    if (playerId === BOT_ID) return 'Bot';
+    if (playerId === user?.id) return 'You';
+    if (playerId === hostInfo?.id) return hostInfo?.display_name || 'Host';
+    if (playerId === guestInfo?.id) return guestInfo?.display_name || 'Guest';
+    return 'Player';
+  };
+
   const isHost = user && gameRoom?.host_id === user.id;
   const gameState = localGameStateRef.current || (gameRoom?.game_state as GameState);
   const myPlayer = gameState?.players?.[user?.id || ''];
   const opponent = gameState?.players?.[Object.keys(gameState?.players || {}).find(k => k !== user?.id) || ''];
 
+  // Render Player Component with Avatar
+  const renderPlayer = (player: Player) => {
+    const avatarUrl = getPlayerAvatar(player.id);
+    const isMe = player.id === user?.id;
+    
+    return (
+      <motion.div
+        key={player.id}
+        className={`absolute flex flex-col items-center ${player.respawnTimer > 0 ? 'opacity-30' : ''}`}
+        style={{ 
+          left: `${player.x}%`, 
+          top: `${player.y}%`, 
+          transform: 'translate(-50%, -50%)',
+        }}
+        animate={player.isMoving ? { scale: [1, 1.05, 1] } : {}}
+        transition={{ repeat: Infinity, duration: 0.3 }}
+      >
+        {/* Health bar above player */}
+        <div className="absolute -top-6 w-14 h-2 bg-black/50 rounded-full overflow-hidden">
+          <div 
+            className={`h-full ${isMe ? 'bg-green-500' : 'bg-red-400'}`}
+            style={{ width: `${player.health}%` }}
+          />
+        </div>
+        
+        {/* Shield bar */}
+        {player.shield > 0 && (
+          <div className="absolute -top-8 w-14 h-1.5 bg-blue-900/50 rounded-full overflow-hidden">
+            <div className="h-full bg-blue-400" style={{ width: `${player.shield * 2}%` }} />
+          </div>
+        )}
+
+        {/* Player avatar */}
+        <div 
+          className={`relative w-12 h-12 rounded-full overflow-hidden border-3 ${
+            isMe ? 'border-primary' : 'border-red-500'
+          } shadow-lg`}
+          style={{ borderWidth: 3 }}
+        >
+          {avatarUrl ? (
+            <img src={avatarUrl} alt="" className="w-full h-full object-cover" />
+          ) : (
+            <div className={`w-full h-full flex items-center justify-center ${isMe ? 'bg-primary' : 'bg-red-500'}`}>
+              <Crosshair className="h-6 w-6 text-white" />
+            </div>
+          )}
+          
+          {/* Direction indicator overlay */}
+          <div 
+            className="absolute inset-0 pointer-events-none"
+            style={{ 
+              background: `linear-gradient(${player.direction}deg, transparent 40%, ${isMe ? 'hsl(var(--primary) / 0.5)' : 'rgba(239,68,68,0.5)'} 100%)`
+            }}
+          />
+        </div>
+
+        {/* Name tag below */}
+        <div className="absolute -bottom-5 px-2 py-0.5 bg-black/60 rounded text-[10px] text-white whitespace-nowrap">
+          {getPlayerName(player.id)}
+        </div>
+      </motion.div>
+    );
+  };
+
   return (
-    <div className="min-h-screen bg-background">
+    <div className="min-h-screen bg-background flex flex-col">
       {/* Header */}
       <div className="sticky top-0 z-50 bg-background/95 backdrop-blur border-b border-border/50 px-4 py-3">
-        <div className="flex items-center justify-between max-w-4xl mx-auto">
+        <div className="flex items-center justify-between">
           <div className="flex items-center gap-3">
             <Button variant="ghost" size="icon" onClick={() => navigate(-1)}>
               <ArrowLeft className="h-5 w-5" />
             </Button>
             <div className="flex items-center gap-2">
-              <Swords className="h-6 w-6 text-primary" />
-              <span className="font-bold text-lg">Afu Arena</span>
+              <Swords className="h-5 w-5 text-primary" />
+              <span className="font-bold">Afu Arena</span>
             </div>
           </div>
           <Button 
@@ -1146,68 +1182,56 @@ const AfuArena = () => {
         </div>
       </div>
 
-      <main className="container max-w-4xl mx-auto px-4 py-6">
-        {/* Single Player Mode */}
+      <main className="flex-1 flex flex-col">
+        {/* Single Player Playing */}
         {isSinglePlayer && singlePlayerStatus === 'playing' ? (
-          <div className="space-y-4">
+          <div className="flex-1 flex flex-col">
             {/* HUD */}
-            <div className="grid grid-cols-3 gap-4">
-              <Card className="p-3">
-                <div className="flex items-center gap-2 mb-2">
-                  <div className="w-8 h-8 rounded-full bg-primary flex items-center justify-center">
-                    <Crosshair className="h-4 w-4 text-primary-foreground" />
-                  </div>
-                  <span className="font-semibold">You</span>
+            <div className="px-4 py-2 grid grid-cols-3 gap-2">
+              {/* My Stats */}
+              <div className="flex items-center gap-2 p-2 bg-muted/50 rounded-xl">
+                <div className="w-8 h-8 rounded-full overflow-hidden border-2 border-primary">
+                  {profile?.avatar_url ? (
+                    <img src={profile.avatar_url} className="w-full h-full object-cover" />
+                  ) : (
+                    <div className="w-full h-full bg-primary flex items-center justify-center">
+                      <span className="text-xs text-primary-foreground font-bold">
+                        {profile?.display_name?.[0] || 'U'}
+                      </span>
+                    </div>
+                  )}
                 </div>
-                <div className="space-y-1">
-                  <div className="flex items-center gap-2">
-                    <Heart className="h-3 w-3 text-red-500" />
-                    <Progress value={singlePlayerState?.players[user?.id || '']?.health || 0} className="h-2" />
-                  </div>
-                  <div className="flex items-center gap-2">
-                    <Shield className="h-3 w-3 text-blue-500" />
-                    <Progress value={(singlePlayerState?.players[user?.id || '']?.shield || 0) * 2} className="h-2" />
+                <div className="flex-1 min-w-0">
+                  <div className="text-xs font-semibold truncate">You</div>
+                  <div className="text-lg font-bold text-primary">
+                    {singlePlayerState?.players[user?.id || '']?.kills || 0}
                   </div>
                 </div>
-                <div className="flex justify-between text-xs mt-2">
-                  <span>Kills: {singlePlayerState?.players[user?.id || '']?.kills || 0}</span>
-                  <span>Ammo: {singlePlayerState?.players[user?.id || '']?.ammo || 0}</span>
-                </div>
-              </Card>
+              </div>
 
-              <Card className="p-3">
-                <div className="flex items-center gap-2 mb-2">
-                  <div className="w-8 h-8 rounded-full bg-red-500 flex items-center justify-center">
-                    <Target className="h-4 w-4 text-white" />
-                  </div>
-                  <span className="font-semibold">Bot</span>
-                </div>
-                <div className="space-y-1">
-                  <div className="flex items-center gap-2">
-                    <Heart className="h-3 w-3 text-red-500" />
-                    <Progress value={singlePlayerState?.players[BOT_ID]?.health || 0} className="h-2" />
-                  </div>
-                  <div className="flex items-center gap-2">
-                    <Shield className="h-3 w-3 text-blue-500" />
-                    <Progress value={(singlePlayerState?.players[BOT_ID]?.shield || 0) * 2} className="h-2" />
-                  </div>
-                </div>
-                <div className="text-xs mt-2">
-                  Kills: {singlePlayerState?.players[BOT_ID]?.kills || 0}
-                </div>
-              </Card>
-
-              <Card className="p-3 text-center">
-                <div className="flex items-center justify-center gap-2">
-                  <Timer className="h-4 w-4" />
-                  <span className="text-lg font-mono">
+              {/* Timer */}
+              <div className="flex flex-col items-center justify-center p-2 bg-muted/50 rounded-xl">
+                <div className="flex items-center gap-1">
+                  <Timer className="h-3 w-3" />
+                  <span className="text-sm font-mono font-bold">
                     {Math.floor((singlePlayerState?.maxTime || 180) - (singlePlayerState?.gameTime || 0))}s
                   </span>
                 </div>
-                <div className="text-xs text-muted-foreground">
-                  First to 10 kills
+                <div className="text-[10px] text-muted-foreground">First to 10</div>
+              </div>
+
+              {/* Bot Stats */}
+              <div className="flex items-center gap-2 p-2 bg-muted/50 rounded-xl justify-end">
+                <div className="flex-1 min-w-0 text-right">
+                  <div className="text-xs font-semibold truncate">Bot</div>
+                  <div className="text-lg font-bold text-red-500">
+                    {singlePlayerState?.players[BOT_ID]?.kills || 0}
+                  </div>
                 </div>
-              </Card>
+                <div className="w-8 h-8 rounded-full overflow-hidden border-2 border-red-500">
+                  <img src={BOT_AVATAR} className="w-full h-full object-cover" />
+                </div>
+              </div>
             </div>
 
             {/* Countdown */}
@@ -1224,22 +1248,21 @@ const AfuArena = () => {
               )}
             </AnimatePresence>
 
-            {/* Game Area */}
+            {/* Game Area - Touch to shoot */}
             <div
               ref={gameAreaRef}
-              className="relative aspect-[16/10] bg-gradient-to-br from-slate-900 to-slate-800 rounded-2xl overflow-hidden cursor-crosshair border-2 border-primary/30"
-              onMouseMove={handleMouseMove}
-              onMouseDown={() => setIsMouseDown(true)}
-              onMouseUp={() => setIsMouseDown(false)}
-              onMouseLeave={() => setIsMouseDown(false)}
+              className="flex-1 relative bg-gradient-to-br from-slate-900 to-slate-800 overflow-hidden touch-none"
+              onTouchStart={handleShootAreaTouch}
+              onTouchMove={handleShootAreaTouch}
+              onTouchEnd={handleShootAreaEnd}
             >
-              {/* Grid lines */}
+              {/* Grid pattern */}
               <div className="absolute inset-0 opacity-10">
-                {[...Array(10)].map((_, i) => (
-                  <div key={i} className="absolute left-0 right-0 border-t border-white" style={{ top: `${(i + 1) * 10}%` }} />
+                {[...Array(8)].map((_, i) => (
+                  <div key={`h-${i}`} className="absolute left-0 right-0 border-t border-white/30" style={{ top: `${(i + 1) * 12.5}%` }} />
                 ))}
-                {[...Array(10)].map((_, i) => (
-                  <div key={i} className="absolute top-0 bottom-0 border-l border-white" style={{ left: `${(i + 1) * 10}%` }} />
+                {[...Array(8)].map((_, i) => (
+                  <div key={`v-${i}`} className="absolute top-0 bottom-0 border-l border-white/30" style={{ left: `${(i + 1) * 12.5}%` }} />
                 ))}
               </div>
 
@@ -1247,22 +1270,22 @@ const AfuArena = () => {
               {singlePlayerState?.powerUps?.map(pu => (
                 <motion.div
                   key={pu.id}
-                  className={`absolute w-6 h-6 rounded-full flex items-center justify-center ${
-                    pu.type === 'health' ? 'bg-red-500' :
-                    pu.type === 'shield' ? 'bg-blue-500' :
-                    pu.type === 'ammo' ? 'bg-yellow-500' :
-                    pu.type === 'speed' ? 'bg-green-500' :
-                    'bg-purple-500'
+                  className={`absolute w-8 h-8 rounded-full flex items-center justify-center shadow-lg ${
+                    pu.type === 'health' ? 'bg-red-500 shadow-red-500/50' :
+                    pu.type === 'shield' ? 'bg-blue-500 shadow-blue-500/50' :
+                    pu.type === 'ammo' ? 'bg-yellow-500 shadow-yellow-500/50' :
+                    pu.type === 'speed' ? 'bg-green-500 shadow-green-500/50' :
+                    'bg-purple-500 shadow-purple-500/50'
                   }`}
                   style={{ left: `${pu.x}%`, top: `${pu.y}%`, transform: 'translate(-50%, -50%)' }}
-                  animate={{ scale: [1, 1.2, 1] }}
-                  transition={{ repeat: Infinity, duration: 1 }}
+                  animate={{ scale: [1, 1.2, 1], rotate: [0, 180, 360] }}
+                  transition={{ repeat: Infinity, duration: 2 }}
                 >
-                  {pu.type === 'health' && <Heart className="h-3 w-3 text-white" />}
-                  {pu.type === 'shield' && <Shield className="h-3 w-3 text-white" />}
-                  {pu.type === 'ammo' && <Target className="h-3 w-3 text-white" />}
-                  {pu.type === 'speed' && <Zap className="h-3 w-3 text-white" />}
-                  {pu.type === 'weapon' && <Crosshair className="h-3 w-3 text-white" />}
+                  {pu.type === 'health' && <Heart className="h-4 w-4 text-white" />}
+                  {pu.type === 'shield' && <Shield className="h-4 w-4 text-white" />}
+                  {pu.type === 'ammo' && <Target className="h-4 w-4 text-white" />}
+                  {pu.type === 'speed' && <Zap className="h-4 w-4 text-white" />}
+                  {pu.type === 'weapon' && <Crosshair className="h-4 w-4 text-white" />}
                 </motion.div>
               ))}
 
@@ -1270,46 +1293,13 @@ const AfuArena = () => {
               {singlePlayerState?.projectiles?.map(proj => (
                 <motion.div
                   key={proj.id}
-                  className="absolute w-2 h-2 rounded-full bg-yellow-400 shadow-lg shadow-yellow-400/50"
+                  className="absolute w-3 h-3 rounded-full bg-yellow-400 shadow-lg shadow-yellow-400/50"
                   style={{ left: `${proj.x}%`, top: `${proj.y}%`, transform: 'translate(-50%, -50%)' }}
                 />
               ))}
 
-              {/* Players */}
-              {singlePlayerState?.players && Object.values(singlePlayerState.players).map(player => (
-                <motion.div
-                  key={player.id}
-                  className={`absolute w-10 h-10 rounded-full flex items-center justify-center ${
-                    player.id === user?.id ? 'bg-primary' : 'bg-red-500'
-                  } ${player.respawnTimer > 0 ? 'opacity-30' : ''}`}
-                  style={{ 
-                    left: `${player.x}%`, 
-                    top: `${player.y}%`, 
-                    transform: 'translate(-50%, -50%)',
-                  }}
-                  animate={player.isMoving ? { scale: [1, 1.05, 1] } : {}}
-                  transition={{ repeat: Infinity, duration: 0.3 }}
-                >
-                  <div 
-                    className="absolute w-6 h-1 bg-white/50 origin-left rounded"
-                    style={{ transform: `rotate(${player.direction}deg)` }}
-                  />
-                  <Crosshair className="h-5 w-5 text-white" />
-                  
-                  <div className="absolute -top-3 left-1/2 -translate-x-1/2 w-12 h-1.5 bg-black/50 rounded-full overflow-hidden">
-                    <div 
-                      className={`h-full ${player.id === user?.id ? 'bg-green-500' : 'bg-red-400'}`}
-                      style={{ width: `${player.health}%` }}
-                    />
-                  </div>
-                  
-                  {player.shield > 0 && (
-                    <div className="absolute -top-5 left-1/2 -translate-x-1/2 w-12 h-1 bg-blue-500/50 rounded-full overflow-hidden">
-                      <div className="h-full bg-blue-400" style={{ width: `${player.shield * 2}%` }} />
-                    </div>
-                  )}
-                </motion.div>
-              ))}
+              {/* Players with avatars */}
+              {singlePlayerState?.players && Object.values(singlePlayerState.players).map(renderPlayer)}
 
               {/* Kill Feed */}
               <div className="absolute top-2 right-2 space-y-1">
@@ -1318,208 +1308,246 @@ const AfuArena = () => {
                     key={kill.timestamp}
                     initial={{ x: 50, opacity: 0 }}
                     animate={{ x: 0, opacity: 1 }}
-                    className="px-2 py-1 bg-black/50 rounded text-xs text-white"
+                    className="px-2 py-1 bg-black/70 rounded text-xs text-white flex items-center gap-1"
                   >
                     <span className={kill.killer === user?.id ? 'text-primary' : 'text-red-400'}>
-                      {kill.killer === user?.id ? 'You' : 'Bot'}
+                      {getPlayerName(kill.killer)}
                     </span>
-                    {' '}🔫{' '}
+                    <span>🔫</span>
                     <span className={kill.victim === user?.id ? 'text-red-400' : 'text-primary'}>
-                      {kill.victim === user?.id ? 'You' : 'Bot'}
+                      {getPlayerName(kill.victim)}
                     </span>
                   </motion.div>
                 ))}
               </div>
 
-              {/* Respawn Timer */}
+              {/* Respawn Overlay */}
               {singlePlayerState?.players[user?.id || '']?.respawnTimer > 0 && (
-                <div className="absolute inset-0 flex items-center justify-center bg-black/50">
+                <div className="absolute inset-0 flex items-center justify-center bg-black/60">
                   <div className="text-center">
-                    <p className="text-white text-2xl font-bold">Respawning...</p>
-                    <p className="text-white text-4xl">{Math.ceil(singlePlayerState.players[user?.id || ''].respawnTimer)}</p>
+                    <p className="text-white text-xl font-bold">Respawning...</p>
+                    <p className="text-white text-5xl font-bold">{Math.ceil(singlePlayerState.players[user?.id || ''].respawnTimer)}</p>
                   </div>
                 </div>
               )}
             </div>
 
-            <Button variant="outline" onClick={restartSinglePlayer} className="w-full">
-              Exit Game
-            </Button>
+            {/* Mobile Controls */}
+            <div className="p-4 bg-background border-t border-border/50">
+              <div className="flex items-end justify-between">
+                {/* Left: Joystick */}
+                <div
+                  ref={joystickRef}
+                  className="relative w-28 h-28 rounded-full bg-muted/50 border-2 border-border/50"
+                  onTouchStart={handleJoystickStart}
+                  onTouchMove={handleJoystickMove}
+                  onTouchEnd={handleJoystickEnd}
+                >
+                  <div 
+                    className="absolute w-14 h-14 rounded-full bg-primary/80 shadow-lg"
+                    style={{
+                      left: `50%`,
+                      top: `50%`,
+                      transform: `translate(calc(-50% + ${joystickPos.x * 30}px), calc(-50% + ${joystickPos.y * 30}px))`
+                    }}
+                  />
+                </div>
+
+                {/* Center: Info */}
+                <div className="flex flex-col items-center gap-2">
+                  <div className="flex items-center gap-2 text-xs">
+                    <span className="px-2 py-1 bg-muted rounded">{myPlayer?.weapon?.toUpperCase() || 'PISTOL'}</span>
+                    <span className="px-2 py-1 bg-muted rounded">{myPlayer?.ammo || 0} 🔫</span>
+                  </div>
+                  <div className="flex items-center gap-1">
+                    <Heart className="h-3 w-3 text-red-500" />
+                    <div className="w-20 h-2 bg-muted rounded-full overflow-hidden">
+                      <div 
+                        className="h-full bg-red-500"
+                        style={{ width: `${singlePlayerState?.players[user?.id || '']?.health || 0}%` }}
+                      />
+                    </div>
+                  </div>
+                </div>
+
+                {/* Right: Action buttons */}
+                <div className="flex flex-col gap-2">
+                  <Button 
+                    size="sm"
+                    variant="outline"
+                    onClick={handleReload}
+                    className="h-10 px-4"
+                  >
+                    Reload
+                  </Button>
+                  <Button 
+                    size="sm"
+                    onClick={handleUseAbility}
+                    disabled={(myPlayer?.abilityCooldown || 0) > 0}
+                    className="h-10 px-4"
+                  >
+                    {(myPlayer?.abilityCooldown || 0) > 0 
+                      ? `${Math.ceil((myPlayer?.abilityCooldown || 0) / 1000)}s`
+                      : myPlayer?.ability?.toUpperCase() || 'ABILITY'
+                    }
+                  </Button>
+                </div>
+              </div>
+              
+              <p className="text-center text-xs text-muted-foreground mt-2">
+                Tap game area to shoot
+              </p>
+            </div>
           </div>
         ) : isSinglePlayer && singlePlayerStatus === 'finished' ? (
           /* Single Player Game Over */
-          <Card className="border-primary/20">
-            <CardContent className="pt-6 text-center">
-              {singlePlayerWon ? (
-                <>
-                  <motion.div
-                    initial={{ scale: 0 }}
-                    animate={{ scale: 1 }}
-                    className="inline-flex p-6 rounded-full bg-gradient-to-br from-amber-400 to-orange-500 mb-4"
-                  >
-                    <Trophy className="h-16 w-16 text-white" />
-                  </motion.div>
-                  <h2 className="text-3xl font-bold text-primary mb-2">Victory!</h2>
-                  <p className="text-lg text-muted-foreground mb-6">+100 Nexa</p>
-                </>
-              ) : (
-                <>
-                  <div className="inline-flex p-6 rounded-full bg-muted mb-4">
-                    <Swords className="h-16 w-16 text-muted-foreground" />
-                  </div>
-                  <h2 className="text-3xl font-bold mb-2">Defeat</h2>
-                  <p className="text-muted-foreground mb-6">The bot won this time!</p>
-                </>
-              )}
+          <div className="flex-1 flex items-center justify-center p-4">
+            <Card className="w-full max-w-sm border-primary/20">
+              <CardContent className="pt-6 text-center">
+                {singlePlayerWon ? (
+                  <>
+                    <motion.div
+                      initial={{ scale: 0 }}
+                      animate={{ scale: 1 }}
+                      className="inline-flex p-6 rounded-full bg-gradient-to-br from-amber-400 to-orange-500 mb-4"
+                    >
+                      <Trophy className="h-16 w-16 text-white" />
+                    </motion.div>
+                    <h2 className="text-3xl font-bold text-primary mb-2">Victory!</h2>
+                    <p className="text-lg text-muted-foreground mb-6">+100 Nexa</p>
+                  </>
+                ) : (
+                  <>
+                    <div className="inline-flex p-6 rounded-full bg-muted mb-4">
+                      <Swords className="h-16 w-16 text-muted-foreground" />
+                    </div>
+                    <h2 className="text-3xl font-bold mb-2">Defeat</h2>
+                    <p className="text-muted-foreground mb-6">Better luck next time!</p>
+                  </>
+                )}
 
-              <div className="grid grid-cols-2 gap-4 mb-6">
-                <div className="p-4 bg-muted rounded-xl">
-                  <p className="text-sm text-muted-foreground">Your Kills</p>
-                  <p className="text-3xl font-bold">{singlePlayerState?.players[user?.id || '']?.kills || 0}</p>
-                </div>
-                <div className="p-4 bg-muted rounded-xl">
-                  <p className="text-sm text-muted-foreground">Your Deaths</p>
-                  <p className="text-3xl font-bold">{singlePlayerState?.players[user?.id || '']?.deaths || 0}</p>
-                </div>
-              </div>
-
-              <div className="flex gap-3">
-                <Button onClick={startSinglePlayer} className="flex-1 h-12">
-                  <RefreshCw className="h-4 w-4 mr-2" />
-                  Play Again
-                </Button>
-                <Button variant="outline" onClick={restartSinglePlayer} className="flex-1 h-12">
-                  Back to Menu
-                </Button>
-              </div>
-            </CardContent>
-          </Card>
-        ) : !gameRoom ? (
-          /* Lobby */
-          <div className="space-y-6">
-            <Card className="border-primary/20 bg-gradient-to-br from-background to-primary/5">
-              <CardHeader className="text-center">
-                <div className="flex justify-center mb-4">
-                  <div className="p-4 rounded-2xl bg-primary/10">
-                    <Crosshair className="h-12 w-12 text-primary" />
+                <div className="grid grid-cols-2 gap-4 mb-6">
+                  <div className="p-4 bg-muted rounded-xl">
+                    <p className="text-sm text-muted-foreground">Your Kills</p>
+                    <p className="text-3xl font-bold">{singlePlayerState?.players[user?.id || '']?.kills || 0}</p>
                   </div>
-                </div>
-                <CardTitle className="text-2xl">Battle Royale Arena</CardTitle>
-                <p className="text-muted-foreground">Real-time combat with weapons & abilities</p>
-              </CardHeader>
-              <CardContent className="space-y-4">
-                {/* Single Player Option */}
-                <Button 
-                  onClick={startSinglePlayer} 
-                  variant="outline"
-                  className="w-full h-14 text-lg border-primary/50"
-                  disabled={loading || !user}
-                >
-                  <Target className="h-5 w-5 mr-2" />
-                  Single Player (vs Bot)
-                </Button>
-
-                <div className="relative">
-                  <div className="absolute inset-0 flex items-center">
-                    <span className="w-full border-t" />
-                  </div>
-                  <div className="relative flex justify-center text-xs uppercase">
-                    <span className="bg-background px-2 text-muted-foreground">multiplayer</span>
+                  <div className="p-4 bg-muted rounded-xl">
+                    <p className="text-sm text-muted-foreground">Your Deaths</p>
+                    <p className="text-3xl font-bold">{singlePlayerState?.players[user?.id || '']?.deaths || 0}</p>
                   </div>
                 </div>
 
-                <Button 
-                  onClick={createRoom} 
-                  className="w-full h-14 text-lg"
-                  disabled={loading || !user}
-                >
-                  {loading ? <Loader2 className="h-5 w-5 animate-spin mr-2" /> : <Swords className="h-5 w-5 mr-2" />}
-                  Create Room
-                </Button>
-
-                <div className="relative">
-                  <div className="absolute inset-0 flex items-center">
-                    <span className="w-full border-t" />
-                  </div>
-                  <div className="relative flex justify-center text-xs uppercase">
-                    <span className="bg-background px-2 text-muted-foreground">or join</span>
-                  </div>
-                </div>
-
-                <div className="flex gap-2">
-                  <Input
-                    placeholder="Room code"
-                    value={joinCode}
-                    onChange={(e) => setJoinCode(e.target.value.toUpperCase())}
-                    className="h-14 text-center text-xl font-mono tracking-widest uppercase"
-                    maxLength={6}
-                  />
-                  <Button 
-                    onClick={joinRoom}
-                    disabled={loading || !user || !joinCode.trim()}
-                    className="h-14 px-6"
-                  >
-                    {loading ? <Loader2 className="h-5 w-5 animate-spin" /> : 'Join'}
+                <div className="flex gap-3">
+                  <Button onClick={startSinglePlayer} className="flex-1 h-12">
+                    <RefreshCw className="h-4 w-4 mr-2" />
+                    Play Again
+                  </Button>
+                  <Button variant="outline" onClick={restartSinglePlayer} className="flex-1 h-12">
+                    Menu
                   </Button>
                 </div>
+              </CardContent>
+            </Card>
+          </div>
+        ) : !gameRoom ? (
+          /* Lobby */
+          <div className="flex-1 p-4 space-y-4 overflow-auto">
+            <Card className="border-primary/20 bg-gradient-to-br from-background to-primary/5">
+              <CardContent className="pt-6 text-center">
+                <div className="flex justify-center mb-4">
+                  <div className="p-4 rounded-2xl bg-primary/10">
+                    <Swords className="h-12 w-12 text-primary" />
+                  </div>
+                </div>
+                <h1 className="text-2xl font-bold mb-2">Battle Arena</h1>
+                <p className="text-muted-foreground mb-6">First to 10 kills wins!</p>
 
-                {!user && (
-                  <p className="text-center text-sm text-muted-foreground">
-                    Sign in to play
-                  </p>
-                )}
+                <div className="space-y-3">
+                  <Button 
+                    onClick={startSinglePlayer} 
+                    disabled={loading} 
+                    className="w-full h-14 text-lg"
+                  >
+                    <Target className="h-5 w-5 mr-2" />
+                    Single Player
+                  </Button>
+                  
+                  <Button 
+                    onClick={createRoom} 
+                    disabled={loading} 
+                    variant="outline"
+                    className="w-full h-12"
+                  >
+                    {loading ? <Loader2 className="h-4 w-4 animate-spin mr-2" /> : <Crown className="h-4 w-4 mr-2" />}
+                    Create Room
+                  </Button>
+                  
+                  <div className="flex gap-2">
+                    <Input
+                      placeholder="Room Code"
+                      value={joinCode}
+                      onChange={(e) => setJoinCode(e.target.value.toUpperCase())}
+                      className="h-12 text-center uppercase"
+                      maxLength={6}
+                    />
+                    <Button onClick={joinRoom} disabled={loading || !joinCode} className="h-12 px-6">
+                      {loading ? <Loader2 className="h-4 w-4 animate-spin" /> : <Users className="h-4 w-4" />}
+                    </Button>
+                  </div>
+                </div>
               </CardContent>
             </Card>
 
-            {/* Game Features */}
-            <div className="grid grid-cols-2 gap-4">
-              <Card className="p-4">
-                <div className="flex items-center gap-3 mb-2">
-                  <Crosshair className="h-5 w-5 text-red-500" />
-                  <span className="font-semibold">Weapons</span>
+            {/* Game Info */}
+            <div className="grid grid-cols-2 gap-3">
+              <Card className="p-3">
+                <div className="flex items-center gap-2 text-primary mb-1">
+                  <Crosshair className="h-4 w-4" />
+                  <span className="font-semibold text-sm">Weapons</span>
                 </div>
                 <p className="text-xs text-muted-foreground">Pistol, Rifle, Shotgun, Sniper</p>
               </Card>
-              <Card className="p-4">
-                <div className="flex items-center gap-3 mb-2">
-                  <Zap className="h-5 w-5 text-yellow-500" />
-                  <span className="font-semibold">Abilities</span>
+              <Card className="p-3">
+                <div className="flex items-center gap-2 text-primary mb-1">
+                  <Zap className="h-4 w-4" />
+                  <span className="font-semibold text-sm">Abilities</span>
                 </div>
                 <p className="text-xs text-muted-foreground">Dash, Heal, Freeze, Rage</p>
               </Card>
-              <Card className="p-4">
-                <div className="flex items-center gap-3 mb-2">
-                  <Star className="h-5 w-5 text-purple-500" />
-                  <span className="font-semibold">Power-ups</span>
+              <Card className="p-3">
+                <div className="flex items-center gap-2 text-primary mb-1">
+                  <Star className="h-4 w-4" />
+                  <span className="font-semibold text-sm">Power-ups</span>
                 </div>
                 <p className="text-xs text-muted-foreground">Health, Shield, Ammo, Speed</p>
               </Card>
-              <Card className="p-4">
-                <div className="flex items-center gap-3 mb-2">
-                  <Trophy className="h-5 w-5 text-amber-500" />
-                  <span className="font-semibold">Win Reward</span>
+              <Card className="p-3">
+                <div className="flex items-center gap-2 text-primary mb-1">
+                  <Trophy className="h-4 w-4" />
+                  <span className="font-semibold text-sm">Rewards</span>
                 </div>
-                <p className="text-xs text-muted-foreground">+100-150 Nexa for victory</p>
+                <p className="text-xs text-muted-foreground">+100-150 Nexa</p>
               </Card>
             </div>
 
-            {/* Controls */}
-            <Card>
-              <CardHeader>
-                <CardTitle className="text-lg">Controls</CardTitle>
-              </CardHeader>
-              <CardContent className="grid grid-cols-2 gap-3 text-sm">
-                <div><kbd className="px-2 py-1 bg-muted rounded">W A S D</kbd> Move</div>
-                <div><kbd className="px-2 py-1 bg-muted rounded">Mouse</kbd> Aim & Shoot</div>
-                <div><kbd className="px-2 py-1 bg-muted rounded">E</kbd> Use Ability</div>
-                <div><kbd className="px-2 py-1 bg-muted rounded">R</kbd> Reload</div>
-              </CardContent>
+            <Card className="p-4">
+              <h3 className="font-semibold mb-3">Controls</h3>
+              <div className="space-y-2 text-sm text-muted-foreground">
+                <div className="flex items-center gap-3">
+                  <div className="w-8 h-8 rounded-full bg-muted flex items-center justify-center">👆</div>
+                  <span>Drag left joystick to move</span>
+                </div>
+                <div className="flex items-center gap-3">
+                  <div className="w-8 h-8 rounded-full bg-muted flex items-center justify-center">🎯</div>
+                  <span>Tap game area to aim & shoot</span>
+                </div>
+              </div>
             </Card>
           </div>
         ) : gameRoom.status === 'waiting' ? (
           /* Waiting Room */
-          <div className="space-y-6">
-            <Card className="border-primary/20">
+          <div className="flex-1 flex items-center justify-center p-4">
+            <Card className="w-full max-w-sm border-primary/20">
               <CardContent className="pt-6 text-center">
                 <div className="p-4 rounded-2xl bg-primary/10 inline-flex mb-4">
                   <Users className="h-10 w-10 text-primary" />
@@ -1533,13 +1561,15 @@ const AfuArena = () => {
                   </Button>
                 </div>
 
-                <div className="flex justify-center gap-8 mb-6">
+                <div className="flex justify-center gap-6 mb-6">
                   <div className="text-center">
-                    <div className="w-16 h-16 rounded-full bg-primary/20 flex items-center justify-center mb-2">
+                    <div className="w-16 h-16 rounded-full overflow-hidden border-2 border-primary mb-2 mx-auto">
                       {hostInfo?.avatar_url ? (
-                        <img src={hostInfo.avatar_url} className="w-full h-full rounded-full object-cover" />
+                        <img src={hostInfo.avatar_url} className="w-full h-full object-cover" />
                       ) : (
-                        <Users className="h-8 w-8 text-primary" />
+                        <div className="w-full h-full bg-primary/20 flex items-center justify-center">
+                          <Users className="h-8 w-8 text-primary" />
+                        </div>
                       )}
                     </div>
                     <p className="text-sm font-medium">{hostInfo?.display_name || 'Host'}</p>
@@ -1549,15 +1579,19 @@ const AfuArena = () => {
                     <span className="text-2xl font-bold text-muted-foreground">VS</span>
                   </div>
                   <div className="text-center">
-                    <div className="w-16 h-16 rounded-full bg-muted flex items-center justify-center mb-2">
+                    <div className="w-16 h-16 rounded-full overflow-hidden border-2 border-muted mb-2 mx-auto">
                       {guestInfo ? (
                         guestInfo.avatar_url ? (
-                          <img src={guestInfo.avatar_url} className="w-full h-full rounded-full object-cover" />
+                          <img src={guestInfo.avatar_url} className="w-full h-full object-cover" />
                         ) : (
-                          <Users className="h-8 w-8" />
+                          <div className="w-full h-full bg-muted flex items-center justify-center">
+                            <Users className="h-8 w-8" />
+                          </div>
                         )
                       ) : (
-                        <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
+                        <div className="w-full h-full bg-muted flex items-center justify-center">
+                          <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
+                        </div>
                       )}
                     </div>
                     <p className="text-sm font-medium">{guestInfo?.display_name || 'Waiting...'}</p>
@@ -1582,58 +1616,53 @@ const AfuArena = () => {
             </Card>
           </div>
         ) : gameRoom.status === 'playing' ? (
-          /* Game Arena */
-          <div className="space-y-4">
+          /* Multiplayer Game */
+          <div className="flex-1 flex flex-col">
             {/* HUD */}
-            <div className="grid grid-cols-3 gap-4">
-              {/* My Stats */}
-              <Card className="p-3">
-                <div className="flex items-center gap-2 mb-2">
-                  <Heart className="h-4 w-4 text-red-500" />
-                  <Progress value={myPlayer?.health || 0} className="h-2" />
-                  <span className="text-xs">{myPlayer?.health || 0}</span>
+            <div className="px-4 py-2 grid grid-cols-3 gap-2">
+              <div className="flex items-center gap-2 p-2 bg-muted/50 rounded-xl">
+                <div className="w-8 h-8 rounded-full overflow-hidden border-2 border-primary">
+                  {getPlayerAvatar(user?.id || '') ? (
+                    <img src={getPlayerAvatar(user?.id || '') || ''} className="w-full h-full object-cover" />
+                  ) : (
+                    <div className="w-full h-full bg-primary flex items-center justify-center">
+                      <span className="text-xs text-primary-foreground font-bold">U</span>
+                    </div>
+                  )}
                 </div>
-                {(myPlayer?.shield || 0) > 0 && (
-                  <div className="flex items-center gap-2 mb-2">
-                    <Shield className="h-4 w-4 text-blue-500" />
-                    <Progress value={myPlayer?.shield || 0} max={50} className="h-2" />
-                  </div>
-                )}
-                <div className="flex items-center justify-between text-xs text-muted-foreground">
-                  <span>{myPlayer?.weapon?.toUpperCase()}</span>
-                  <span>{myPlayer?.ammo || 0} ammo</span>
+                <div className="flex-1 min-w-0">
+                  <div className="text-xs font-semibold truncate">You</div>
+                  <div className="text-lg font-bold text-primary">{myPlayer?.kills || 0}</div>
                 </div>
-              </Card>
+              </div>
 
-              {/* Score */}
-              <Card className="p-3 text-center">
-                <div className="text-2xl font-bold">
-                  <span className="text-primary">{myPlayer?.kills || 0}</span>
-                  <span className="mx-2 text-muted-foreground">-</span>
-                  <span className="text-red-500">{opponent?.kills || 0}</span>
-                </div>
-                <div className="text-xs text-muted-foreground">
-                  First to 10 kills
-                </div>
-              </Card>
-
-              {/* Timer */}
-              <Card className="p-3 text-center">
-                <div className="flex items-center justify-center gap-2">
-                  <Timer className="h-4 w-4" />
-                  <span className="text-lg font-mono">
+              <div className="flex flex-col items-center justify-center p-2 bg-muted/50 rounded-xl">
+                <div className="flex items-center gap-1">
+                  <Timer className="h-3 w-3" />
+                  <span className="text-sm font-mono font-bold">
                     {Math.floor((gameState?.maxTime || 180) - (gameState?.gameTime || 0))}s
                   </span>
                 </div>
-                <div className="text-xs text-muted-foreground">
-                  Ability: {myPlayer?.abilityCooldown && myPlayer.abilityCooldown > 0 
-                    ? `${Math.ceil(myPlayer.abilityCooldown / 1000)}s` 
-                    : 'Ready (E)'}
+                <div className="text-[10px] text-muted-foreground">First to 10</div>
+              </div>
+
+              <div className="flex items-center gap-2 p-2 bg-muted/50 rounded-xl justify-end">
+                <div className="flex-1 min-w-0 text-right">
+                  <div className="text-xs font-semibold truncate">Opponent</div>
+                  <div className="text-lg font-bold text-red-500">{opponent?.kills || 0}</div>
                 </div>
-              </Card>
+                <div className="w-8 h-8 rounded-full overflow-hidden border-2 border-red-500">
+                  {getPlayerAvatar(opponent?.id || '') ? (
+                    <img src={getPlayerAvatar(opponent?.id || '') || ''} className="w-full h-full object-cover" />
+                  ) : (
+                    <div className="w-full h-full bg-red-500 flex items-center justify-center">
+                      <span className="text-xs text-white font-bold">O</span>
+                    </div>
+                  )}
+                </div>
+              </div>
             </div>
 
-            {/* Countdown */}
             <AnimatePresence>
               {countdown !== null && (
                 <motion.div
@@ -1650,174 +1679,197 @@ const AfuArena = () => {
             {/* Game Area */}
             <div
               ref={gameAreaRef}
-              className="relative aspect-[16/10] bg-gradient-to-br from-slate-900 to-slate-800 rounded-2xl overflow-hidden cursor-crosshair border-2 border-primary/30"
-              onMouseMove={handleMouseMove}
-              onMouseDown={() => setIsMouseDown(true)}
-              onMouseUp={() => setIsMouseDown(false)}
-              onMouseLeave={() => setIsMouseDown(false)}
+              className="flex-1 relative bg-gradient-to-br from-slate-900 to-slate-800 overflow-hidden touch-none"
+              onTouchStart={handleShootAreaTouch}
+              onTouchMove={handleShootAreaTouch}
+              onTouchEnd={handleShootAreaEnd}
             >
-              {/* Grid lines */}
               <div className="absolute inset-0 opacity-10">
-                {[...Array(10)].map((_, i) => (
-                  <div key={i} className="absolute left-0 right-0 border-t border-white" style={{ top: `${(i + 1) * 10}%` }} />
+                {[...Array(8)].map((_, i) => (
+                  <div key={`h-${i}`} className="absolute left-0 right-0 border-t border-white/30" style={{ top: `${(i + 1) * 12.5}%` }} />
                 ))}
-                {[...Array(10)].map((_, i) => (
-                  <div key={i} className="absolute top-0 bottom-0 border-l border-white" style={{ left: `${(i + 1) * 10}%` }} />
+                {[...Array(8)].map((_, i) => (
+                  <div key={`v-${i}`} className="absolute top-0 bottom-0 border-l border-white/30" style={{ left: `${(i + 1) * 12.5}%` }} />
                 ))}
               </div>
 
-              {/* Power-ups */}
               {gameState?.powerUps?.map(pu => (
                 <motion.div
                   key={pu.id}
-                  className={`absolute w-6 h-6 rounded-full flex items-center justify-center ${
-                    pu.type === 'health' ? 'bg-red-500' :
-                    pu.type === 'shield' ? 'bg-blue-500' :
-                    pu.type === 'ammo' ? 'bg-yellow-500' :
-                    pu.type === 'speed' ? 'bg-green-500' :
-                    'bg-purple-500'
+                  className={`absolute w-8 h-8 rounded-full flex items-center justify-center shadow-lg ${
+                    pu.type === 'health' ? 'bg-red-500 shadow-red-500/50' :
+                    pu.type === 'shield' ? 'bg-blue-500 shadow-blue-500/50' :
+                    pu.type === 'ammo' ? 'bg-yellow-500 shadow-yellow-500/50' :
+                    pu.type === 'speed' ? 'bg-green-500 shadow-green-500/50' :
+                    'bg-purple-500 shadow-purple-500/50'
                   }`}
                   style={{ left: `${pu.x}%`, top: `${pu.y}%`, transform: 'translate(-50%, -50%)' }}
-                  animate={{ scale: [1, 1.2, 1] }}
-                  transition={{ repeat: Infinity, duration: 1 }}
+                  animate={{ scale: [1, 1.2, 1], rotate: [0, 180, 360] }}
+                  transition={{ repeat: Infinity, duration: 2 }}
                 >
-                  {pu.type === 'health' && <Heart className="h-3 w-3 text-white" />}
-                  {pu.type === 'shield' && <Shield className="h-3 w-3 text-white" />}
-                  {pu.type === 'ammo' && <Target className="h-3 w-3 text-white" />}
-                  {pu.type === 'speed' && <Zap className="h-3 w-3 text-white" />}
-                  {pu.type === 'weapon' && <Crosshair className="h-3 w-3 text-white" />}
+                  {pu.type === 'health' && <Heart className="h-4 w-4 text-white" />}
+                  {pu.type === 'shield' && <Shield className="h-4 w-4 text-white" />}
+                  {pu.type === 'ammo' && <Target className="h-4 w-4 text-white" />}
+                  {pu.type === 'speed' && <Zap className="h-4 w-4 text-white" />}
+                  {pu.type === 'weapon' && <Crosshair className="h-4 w-4 text-white" />}
                 </motion.div>
               ))}
 
-              {/* Projectiles */}
               {gameState?.projectiles?.map(proj => (
                 <motion.div
                   key={proj.id}
-                  className="absolute w-2 h-2 rounded-full bg-yellow-400 shadow-lg shadow-yellow-400/50"
+                  className="absolute w-3 h-3 rounded-full bg-yellow-400 shadow-lg shadow-yellow-400/50"
                   style={{ left: `${proj.x}%`, top: `${proj.y}%`, transform: 'translate(-50%, -50%)' }}
                 />
               ))}
 
-              {/* Players */}
-              {gameState?.players && Object.values(gameState.players).map(player => (
-                <motion.div
-                  key={player.id}
-                  className={`absolute w-10 h-10 rounded-full flex items-center justify-center ${
-                    player.id === user?.id ? 'bg-primary' : 'bg-red-500'
-                  } ${player.respawnTimer > 0 ? 'opacity-30' : ''}`}
-                  style={{ 
-                    left: `${player.x}%`, 
-                    top: `${player.y}%`, 
-                    transform: 'translate(-50%, -50%)',
-                  }}
-                  animate={player.isMoving ? { scale: [1, 1.05, 1] } : {}}
-                  transition={{ repeat: Infinity, duration: 0.3 }}
-                >
-                  {/* Direction indicator */}
-                  <div 
-                    className="absolute w-6 h-1 bg-white/50 origin-left rounded"
-                    style={{ transform: `rotate(${player.direction}deg)` }}
-                  />
-                  <Crosshair className="h-5 w-5 text-white" />
-                  
-                  {/* Health bar */}
-                  <div className="absolute -top-3 left-1/2 -translate-x-1/2 w-12 h-1.5 bg-black/50 rounded-full overflow-hidden">
-                    <div 
-                      className={`h-full ${player.id === user?.id ? 'bg-green-500' : 'bg-red-400'}`}
-                      style={{ width: `${player.health}%` }}
-                    />
-                  </div>
-                  
-                  {/* Shield indicator */}
-                  {player.shield > 0 && (
-                    <div className="absolute -top-5 left-1/2 -translate-x-1/2 w-12 h-1 bg-blue-500/50 rounded-full overflow-hidden">
-                      <div className="h-full bg-blue-400" style={{ width: `${player.shield * 2}%` }} />
-                    </div>
-                  )}
-                </motion.div>
-              ))}
+              {gameState?.players && Object.values(gameState.players).map(renderPlayer)}
 
-              {/* Kill Feed */}
               <div className="absolute top-2 right-2 space-y-1">
-                {gameState?.killFeed?.slice(0, 3).map((kill, i) => (
+                {gameState?.killFeed?.slice(0, 3).map((kill) => (
                   <motion.div
                     key={kill.timestamp}
                     initial={{ x: 50, opacity: 0 }}
                     animate={{ x: 0, opacity: 1 }}
-                    className="px-2 py-1 bg-black/50 rounded text-xs text-white"
+                    className="px-2 py-1 bg-black/70 rounded text-xs text-white flex items-center gap-1"
                   >
                     <span className={kill.killer === user?.id ? 'text-primary' : 'text-red-400'}>
-                      {kill.killer === user?.id ? 'You' : 'Enemy'}
+                      {getPlayerName(kill.killer)}
                     </span>
-                    {' '}🔫{' '}
+                    <span>🔫</span>
                     <span className={kill.victim === user?.id ? 'text-red-400' : 'text-primary'}>
-                      {kill.victim === user?.id ? 'You' : 'Enemy'}
+                      {getPlayerName(kill.victim)}
                     </span>
                   </motion.div>
                 ))}
               </div>
 
-              {/* Respawn Timer */}
               {myPlayer?.respawnTimer > 0 && (
-                <div className="absolute inset-0 flex items-center justify-center bg-black/50">
+                <div className="absolute inset-0 flex items-center justify-center bg-black/60">
                   <div className="text-center">
-                    <p className="text-white text-2xl font-bold">Respawning...</p>
-                    <p className="text-white text-4xl">{Math.ceil(myPlayer.respawnTimer)}</p>
+                    <p className="text-white text-xl font-bold">Respawning...</p>
+                    <p className="text-white text-5xl font-bold">{Math.ceil(myPlayer.respawnTimer)}</p>
                   </div>
                 </div>
               )}
             </div>
+
+            {/* Mobile Controls */}
+            <div className="p-4 bg-background border-t border-border/50">
+              <div className="flex items-end justify-between">
+                <div
+                  ref={joystickRef}
+                  className="relative w-28 h-28 rounded-full bg-muted/50 border-2 border-border/50"
+                  onTouchStart={handleJoystickStart}
+                  onTouchMove={handleJoystickMove}
+                  onTouchEnd={handleJoystickEnd}
+                >
+                  <div 
+                    className="absolute w-14 h-14 rounded-full bg-primary/80 shadow-lg"
+                    style={{
+                      left: `50%`,
+                      top: `50%`,
+                      transform: `translate(calc(-50% + ${joystickPos.x * 30}px), calc(-50% + ${joystickPos.y * 30}px))`
+                    }}
+                  />
+                </div>
+
+                <div className="flex flex-col items-center gap-2">
+                  <div className="flex items-center gap-2 text-xs">
+                    <span className="px-2 py-1 bg-muted rounded">{myPlayer?.weapon?.toUpperCase() || 'PISTOL'}</span>
+                    <span className="px-2 py-1 bg-muted rounded">{myPlayer?.ammo || 0} 🔫</span>
+                  </div>
+                  <div className="flex items-center gap-1">
+                    <Heart className="h-3 w-3 text-red-500" />
+                    <div className="w-20 h-2 bg-muted rounded-full overflow-hidden">
+                      <div 
+                        className="h-full bg-red-500"
+                        style={{ width: `${myPlayer?.health || 0}%` }}
+                      />
+                    </div>
+                  </div>
+                </div>
+
+                <div className="flex flex-col gap-2">
+                  <Button 
+                    size="sm"
+                    variant="outline"
+                    onClick={handleReload}
+                    className="h-10 px-4"
+                  >
+                    Reload
+                  </Button>
+                  <Button 
+                    size="sm"
+                    onClick={handleUseAbility}
+                    disabled={(myPlayer?.abilityCooldown || 0) > 0}
+                    className="h-10 px-4"
+                  >
+                    {(myPlayer?.abilityCooldown || 0) > 0 
+                      ? `${Math.ceil((myPlayer?.abilityCooldown || 0) / 1000)}s`
+                      : myPlayer?.ability?.toUpperCase() || 'ABILITY'
+                    }
+                  </Button>
+                </div>
+              </div>
+              
+              <p className="text-center text-xs text-muted-foreground mt-2">
+                Tap game area to shoot
+              </p>
+            </div>
           </div>
         ) : (
           /* Game Over */
-          <Card className="border-primary/20">
-            <CardContent className="pt-6 text-center">
-              {gameRoom.winner_id === user?.id ? (
-                <>
-                  <motion.div
-                    initial={{ scale: 0 }}
-                    animate={{ scale: 1 }}
-                    className="inline-flex p-6 rounded-full bg-gradient-to-br from-amber-400 to-orange-500 mb-4"
-                  >
-                    <Trophy className="h-16 w-16 text-white" />
-                  </motion.div>
-                  <h2 className="text-3xl font-bold text-primary mb-2">Victory!</h2>
-                  <p className="text-lg text-muted-foreground mb-6">+150 Nexa</p>
-                </>
-              ) : (
-                <>
-                  <div className="inline-flex p-6 rounded-full bg-muted mb-4">
-                    <Swords className="h-16 w-16 text-muted-foreground" />
-                  </div>
-                  <h2 className="text-3xl font-bold mb-2">Defeat</h2>
-                  <p className="text-muted-foreground mb-6">Better luck next time!</p>
-                </>
-              )}
-
-              <div className="grid grid-cols-2 gap-4 mb-6">
-                <div className="p-4 bg-muted rounded-xl">
-                  <p className="text-sm text-muted-foreground">Your Kills</p>
-                  <p className="text-3xl font-bold">{myPlayer?.kills || 0}</p>
-                </div>
-                <div className="p-4 bg-muted rounded-xl">
-                  <p className="text-sm text-muted-foreground">Your Deaths</p>
-                  <p className="text-3xl font-bold">{myPlayer?.deaths || 0}</p>
-                </div>
-              </div>
-
-              <div className="flex gap-3">
-                {isHost && (
-                  <Button onClick={playAgain} className="flex-1 h-12">
-                    <RefreshCw className="h-4 w-4 mr-2" />
-                    Play Again
-                  </Button>
+          <div className="flex-1 flex items-center justify-center p-4">
+            <Card className="w-full max-w-sm border-primary/20">
+              <CardContent className="pt-6 text-center">
+                {gameRoom.winner_id === user?.id ? (
+                  <>
+                    <motion.div
+                      initial={{ scale: 0 }}
+                      animate={{ scale: 1 }}
+                      className="inline-flex p-6 rounded-full bg-gradient-to-br from-amber-400 to-orange-500 mb-4"
+                    >
+                      <Trophy className="h-16 w-16 text-white" />
+                    </motion.div>
+                    <h2 className="text-3xl font-bold text-primary mb-2">Victory!</h2>
+                    <p className="text-lg text-muted-foreground mb-6">+150 Nexa</p>
+                  </>
+                ) : (
+                  <>
+                    <div className="inline-flex p-6 rounded-full bg-muted mb-4">
+                      <Swords className="h-16 w-16 text-muted-foreground" />
+                    </div>
+                    <h2 className="text-3xl font-bold mb-2">Defeat</h2>
+                    <p className="text-muted-foreground mb-6">Better luck next time!</p>
+                  </>
                 )}
-                <Button variant="outline" onClick={leaveRoom} className="flex-1 h-12">
-                  Leave
-                </Button>
-              </div>
-            </CardContent>
-          </Card>
+
+                <div className="grid grid-cols-2 gap-4 mb-6">
+                  <div className="p-4 bg-muted rounded-xl">
+                    <p className="text-sm text-muted-foreground">Your Kills</p>
+                    <p className="text-3xl font-bold">{myPlayer?.kills || 0}</p>
+                  </div>
+                  <div className="p-4 bg-muted rounded-xl">
+                    <p className="text-sm text-muted-foreground">Your Deaths</p>
+                    <p className="text-3xl font-bold">{myPlayer?.deaths || 0}</p>
+                  </div>
+                </div>
+
+                <div className="flex gap-3">
+                  {isHost && (
+                    <Button onClick={playAgain} className="flex-1 h-12">
+                      <RefreshCw className="h-4 w-4 mr-2" />
+                      Play Again
+                    </Button>
+                  )}
+                  <Button variant="outline" onClick={leaveRoom} className="flex-1 h-12">
+                    Leave
+                  </Button>
+                </div>
+              </CardContent>
+            </Card>
+          </div>
         )}
       </main>
     </div>
