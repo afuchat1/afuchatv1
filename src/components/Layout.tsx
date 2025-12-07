@@ -3,7 +3,7 @@ import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { useAuth } from '@/contexts/AuthContext';
 import { useAccountMode } from '@/contexts/AccountModeContext';
 import { useSettings } from '@/contexts/SettingsContext';
-import { Home, MessageSquare, Search, Bell, User, Settings, Shield, BarChart3, Grid3x3, Gamepad2, Bot, ShoppingBag, Wallet, Send, Gift, Image as ImageIcon, Hash, TrendingUp, Building2 } from 'lucide-react';
+import { Home, MessageSquare, Search, Bell, User, Settings, Shield, BarChart3, Grid3x3, Gamepad2, Bot, ShoppingBag, Wallet, Send, Gift, Image as ImageIcon, Hash, TrendingUp, Building2, Mail } from 'lucide-react';
 import menuIcon from '@/assets/menu-icon.png';
 import { Button } from '@/components/ui/button';
 import Logo from '@/components/Logo';
@@ -232,20 +232,14 @@ const Layout = ({ children }: LayoutProps) => {
                 to="/notifications"
                 className="flex items-center justify-center w-12 h-12 transition-colors relative"
               >
-                <Bell 
-                  className={cn(
-                    "h-6 w-6",
-                    isActive('/notifications') ? "text-primary fill-primary" : "text-foreground"
-                  )} 
-                  strokeWidth={isActive('/notifications') ? 2.5 : 1.5} 
-                />
+                <NotificationIcon />
               </Link>
               
               <Link
                 to="/chats"
                 className="flex items-center justify-center w-12 h-12 transition-colors"
               >
-                <MessageSquare 
+                <Mail 
                   className={cn(
                     "h-6 w-6",
                     isActive('/chats') ? "text-primary fill-primary" : "text-foreground"
