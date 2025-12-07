@@ -6,6 +6,118 @@ const corsHeaders = {
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
 };
 
+// Helper function to fetch comprehensive context for the reply
+async function fetchReplyContext(supabase: any, postId: string, mentioningUserId: string | null) {
+  try {
+    // Get the post with author details
+    const { data: post } = await supabase
+      .from('posts')
+      .select(`
+        id, content, created_at, view_count,
+        author:profiles!posts_author_id_fkey(id, display_name, handle, bio, xp, current_grade, is_verified)
+      `)
+      .eq('id', postId)
+      .single();
+
+    // Get all replies on this post for context
+    const { data: replies } = await supabase
+      .from('post_replies')
+      .select(`
+        id, content, created_at,
+        author:profiles!post_replies_author_id_fkey(display_name, handle)
+      `)
+      .eq('post_id', postId)
+      .order('created_at', { ascending: true })
+      .limit(20);
+
+    // Get mentioning user's profile if available
+    let mentioningUser = null;
+    if (mentioningUserId) {
+      const { data: profile } = await supabase
+        .from('profiles')
+        .select('id, display_name, handle, bio, xp, current_grade, is_verified, country')
+        .eq('id', mentioningUserId)
+        .single();
+      mentioningUser = profile;
+    }
+
+    // Get post engagement stats
+    const { count: likeCount } = await supabase
+      .from('post_acknowledgments')
+      .select('*', { count: 'exact', head: true })
+      .eq('post_id', postId);
+
+    const { count: replyCount } = await supabase
+      .from('post_replies')
+      .select('*', { count: 'exact', head: true })
+      .eq('post_id', postId);
+
+    return {
+      post,
+      replies,
+      mentioningUser,
+      engagement: {
+        likes: likeCount || 0,
+        replies: replyCount || 0,
+        views: post?.view_count || 0
+      }
+    };
+  } catch (error) {
+    console.error('Error fetching reply context:', error);
+    return null;
+  }
+}
+
+// Build context-aware system prompt
+function buildReplySystemPrompt(context: any) {
+  const postInfo = context?.post ? `
+POST CONTEXT:
+- Author: @${context.post.author?.handle || 'unknown'} (${context.post.author?.display_name || 'User'})
+- Author Grade: ${context.post.author?.current_grade || 'Newcomer'}
+- Author Verified: ${context.post.author?.is_verified ? 'Yes' : 'No'}
+- Post Content: "${context.post.content}"
+- Views: ${context.post.view_count}
+- Likes: ${context.engagement?.likes || 0}
+- Replies: ${context.engagement?.replies || 0}
+` : '';
+
+  const mentioningUserInfo = context?.mentioningUser ? `
+USER WHO MENTIONED YOU:
+- Name: ${context.mentioningUser.display_name}
+- Username: @${context.mentioningUser.handle}
+- Grade: ${context.mentioningUser.current_grade || 'Newcomer'}
+- Nexa Balance: ${context.mentioningUser.xp}
+- Verified: ${context.mentioningUser.is_verified ? 'Yes' : 'No'}
+- Country: ${context.mentioningUser.country || 'Unknown'}
+` : '';
+
+  const conversationContext = context?.replies?.length > 0 ? `
+CONVERSATION THREAD (recent replies):
+${context.replies.slice(-5).map((r: any) => `@${r.author?.handle || 'user'}: "${r.content.substring(0, 100)}"`).join('\n')}
+` : '';
+
+  return `You are AfuAI, the exclusive AI assistant for AfuChat social platform. You have FULL ACCESS to platform and user data.
+
+${postInfo}
+${mentioningUserInfo}
+${conversationContext}
+
+AFUCHAT PLATFORM KNOWLEDGE:
+- Nexa (XP): Platform currency earned through engagement
+- ACoin: Premium currency for subscriptions
+- Grades: Newcomer → Beginner → Active Chatter → Community Builder → Elite Creator → Legend
+- Premium subscribers get verified badge and AI access
+- Users can send gifts, create moments/stories, play games
+
+RESPONSE GUIDELINES:
+- Keep replies under 200 characters (platform limit)
+- Be helpful, friendly, and contextually aware
+- Reference the post content or user when relevant
+- Use emojis sparingly for engagement
+- Provide actionable advice when asked questions
+- If asked about AfuChat features, explain clearly`;
+}
+
 serve(async (req) => {
   if (req.method === 'OPTIONS') {
     return new Response(null, { headers: corsHeaders });
@@ -43,20 +155,6 @@ serve(async (req) => {
       );
     }
     
-    if (originalPostContent && typeof originalPostContent !== 'string') {
-      return new Response(
-        JSON.stringify({ error: 'Original post content must be a string' }),
-        { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
-      );
-    }
-    
-    if (originalPostContent && originalPostContent.length > 2000) {
-      return new Response(
-        JSON.stringify({ error: 'Original post content too long' }),
-        { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
-      );
-    }
-    
     const LOVABLE_API_KEY = Deno.env.get('LOVABLE_API_KEY');
     const SUPABASE_URL = Deno.env.get('SUPABASE_URL');
     const SUPABASE_SERVICE_ROLE_KEY = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY');
@@ -68,14 +166,14 @@ serve(async (req) => {
     const supabase = createClient(SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY);
 
     // Get the user who mentioned AfuAI to check premium status
-    let mentioningUserId = null;
+    let mentioningUserId: string | null = null;
     if (triggerReplyId) {
       const { data: replyData } = await supabase
         .from('post_replies')
         .select('author_id')
         .eq('id', triggerReplyId)
         .single();
-      mentioningUserId = replyData?.author_id;
+      mentioningUserId = replyData?.author_id || null;
     }
 
     // Check premium subscription for the mentioning user
@@ -96,41 +194,50 @@ serve(async (req) => {
       }
     }
 
-    // Get AfuAI user profile
-    const { data: afuAiProfile, error: profileError } = await supabase
+    // Fetch comprehensive context for the reply
+    console.log('Fetching reply context for post:', postId);
+    const context = await fetchReplyContext(supabase, postId, mentioningUserId);
+
+    // Get or create AfuAI user profile
+    let afuAiProfileId: string;
+    const { data: existingProfile } = await supabase
       .from('profiles')
       .select('id')
       .eq('handle', 'afuai')
       .single();
 
-    if (profileError || !afuAiProfile) {
-      console.error('AfuAI profile not found, creating one...');
+    if (existingProfile) {
+      afuAiProfileId = existingProfile.id;
+    } else {
+      console.log('Creating AfuAI profile...');
       const { data: newProfile, error: createError } = await supabase
         .from('profiles')
         .insert({
           display_name: 'AfuAI',
           handle: 'afuai',
-          bio: '🤖 AI Assistant for AfuChat - Here to help!',
+          bio: '🤖 AI Assistant for AfuChat - Here to help with everything!',
           is_verified: true,
         })
-        .select()
+        .select('id')
         .single();
       
-      if (createError) {
+      if (createError || !newProfile) {
         console.error('Failed to create AfuAI profile:', createError);
-        throw createError;
+        throw createError || new Error('Failed to create AfuAI profile');
       }
+      afuAiProfileId = newProfile.id;
     }
 
-    // Generate AI response using Lovable AI
-    const systemPrompt = `You are AfuAI, a helpful and friendly AI assistant for AfuChat social platform. 
-You provide concise, relevant responses to user mentions. Keep replies under 200 characters.
-Be encouraging, supportive, and helpful. Use emojis sparingly.`;
+    // Build context-aware system prompt
+    const systemPrompt = buildReplySystemPrompt(context);
 
-    const userPrompt = `Original post: "${originalPostContent}"
-User's mention: "${replyContent}"
+    const userPrompt = `User's mention/question: "${replyContent}"
 
-Please provide a helpful response.`;
+${originalPostContent && originalPostContent !== replyContent ? `Original post they're referencing: "${originalPostContent}"` : ''}
+
+Please provide a helpful, contextually aware response. Keep it under 200 characters.`;
+
+    console.log('Calling Lovable AI with full context');
 
     const response = await fetch('https://ai.gateway.lovable.dev/v1/chat/completions', {
       method: 'POST',
@@ -172,7 +279,12 @@ Please provide a helpful response.`;
       throw new Error('Invalid response from Lovable AI');
     }
     
-    const aiReply = aiData.choices[0].message.content;
+    let aiReply = aiData.choices[0].message.content;
+    
+    // Ensure reply is within character limit
+    if (aiReply.length > 280) {
+      aiReply = aiReply.substring(0, 277) + '...';
+    }
 
     // Award XP to the user who used AI
     if (mentioningUserId) {
@@ -185,17 +297,11 @@ Please provide a helpful response.`;
     }
 
     // Post AI reply
-    const afuAiUserId = afuAiProfile?.id || (await supabase
-      .from('profiles')
-      .select('id')
-      .eq('handle', 'afuai')
-      .single()).data?.id;
-
     const { error: replyError } = await supabase
       .from('post_replies')
       .insert({
         post_id: postId,
-        author_id: afuAiUserId,
+        author_id: afuAiProfileId,
         content: aiReply,
       });
 
@@ -203,6 +309,8 @@ Please provide a helpful response.`;
       console.error('Failed to post AI reply:', replyError);
       throw replyError;
     }
+
+    console.log('AfuAI reply posted successfully');
 
     return new Response(JSON.stringify({ success: true, reply: aiReply }), {
       headers: { ...corsHeaders, 'Content-Type': 'application/json' },
