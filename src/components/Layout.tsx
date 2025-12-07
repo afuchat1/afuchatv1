@@ -4,6 +4,7 @@ import { useAuth } from '@/contexts/AuthContext';
 import { useAccountMode } from '@/contexts/AccountModeContext';
 import { useSettings } from '@/contexts/SettingsContext';
 import { Home, MessageSquare, Search, Bell, User, Settings, Shield, BarChart3, Grid3x3, Gamepad2, Bot, ShoppingBag, Wallet, Send, Gift, Image as ImageIcon, Hash, TrendingUp, Building2 } from 'lucide-react';
+import menuIcon from '@/assets/menu-icon.png';
 import { Button } from '@/components/ui/button';
 import Logo from '@/components/Logo';
 import NotificationIcon from '@/components/nav/NotificationIcon';
@@ -180,8 +181,8 @@ const Layout = ({ children }: LayoutProps) => {
           "lg:hidden fixed bottom-0 left-0 right-0 z-50 transition-all duration-300",
           (isScrollingDown || chatScrollHide) ? "translate-y-full opacity-0" : "translate-y-0 opacity-100"
         )}>
-          <nav className="bg-background/95 backdrop-blur-md border-t border-border/40">
-            <div className="flex justify-around items-center h-14 max-w-lg mx-auto">
+          <nav className="bg-background border-t border-border/30">
+            <div className="flex justify-between items-center h-14 px-6 max-w-lg mx-auto">
               <Link
                 to="/home"
                 onClick={(e) => {
@@ -192,52 +193,62 @@ const Layout = ({ children }: LayoutProps) => {
                   }
                 }}
                 className={cn(
-                  "flex items-center justify-center w-14 h-14 transition-colors",
-                  isActive('/') ? "text-foreground" : "text-muted-foreground"
+                  "flex items-center justify-center w-12 h-12 transition-colors",
+                  isActive('/') || isActive('/home') ? "text-foreground" : "text-foreground/40"
                 )}
               >
                 <Home className={cn(
-                  "h-[26px] w-[26px]",
-                  isActive('/') && "fill-current"
-                )} strokeWidth={isActive('/') ? 2.5 : 1.75} />
+                  "h-6 w-6",
+                  (isActive('/') || isActive('/home')) && "fill-current"
+                )} strokeWidth={(isActive('/') || isActive('/home')) ? 2.5 : 1.5} />
               </Link>
               
               <Link
                 to="/search"
                 className={cn(
-                  "flex items-center justify-center w-14 h-14 transition-colors",
-                  isActive('/search') ? "text-foreground" : "text-muted-foreground"
+                  "flex items-center justify-center w-12 h-12 transition-colors",
+                  isActive('/search') ? "text-foreground" : "text-foreground/40"
                 )}
               >
-                <Search className="h-[26px] w-[26px]" strokeWidth={isActive('/search') ? 2.5 : 1.75} />
+                <Search className="h-6 w-6" strokeWidth={isActive('/search') ? 2.5 : 1.5} />
               </Link>
               
-              <MobileMenuSheet />
+              <MobileMenuSheet 
+                trigger={
+                  <button className="flex items-center justify-center w-12 h-12">
+                    <img 
+                      src={menuIcon} 
+                      alt="Menu" 
+                      className="h-7 w-7 rounded-full object-cover"
+                    />
+                  </button>
+                }
+              />
               
               <Link
                 to="/notifications"
                 className={cn(
-                  "flex items-center justify-center w-14 h-14 transition-colors relative",
-                  isActive('/notifications') ? "text-foreground" : "text-muted-foreground"
+                  "flex items-center justify-center w-12 h-12 transition-colors relative",
+                  isActive('/notifications') ? "text-foreground" : "text-foreground/40"
                 )}
               >
                 <Bell className={cn(
-                  "h-[26px] w-[26px]",
+                  "h-6 w-6",
                   isActive('/notifications') && "fill-current"
-                )} strokeWidth={isActive('/notifications') ? 2.5 : 1.75} />
+                )} strokeWidth={isActive('/notifications') ? 2.5 : 1.5} />
               </Link>
               
               <Link
                 to="/chats"
                 className={cn(
-                  "flex items-center justify-center w-14 h-14 transition-colors",
-                  isActive('/chats') ? "text-foreground" : "text-muted-foreground"
+                  "flex items-center justify-center w-12 h-12 transition-colors",
+                  isActive('/chats') ? "text-foreground" : "text-foreground/40"
                 )}
               >
                 <MessageSquare className={cn(
-                  "h-[26px] w-[26px]",
+                  "h-6 w-6",
                   isActive('/chats') && "fill-current"
-                )} strokeWidth={isActive('/chats') ? 2.5 : 1.75} />
+                )} strokeWidth={isActive('/chats') ? 2.5 : 1.5} />
               </Link>
             </div>
           </nav>

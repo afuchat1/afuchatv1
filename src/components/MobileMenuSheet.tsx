@@ -45,7 +45,11 @@ interface MenuItem {
   requiresAffiliate?: boolean;
 }
 
-export function MobileMenuSheet() {
+interface MobileMenuSheetProps {
+  trigger?: React.ReactNode;
+}
+
+export function MobileMenuSheet({ trigger }: MobileMenuSheetProps) {
   const { user } = useAuth();
   const { mode } = useAccountMode();
   const navigate = useNavigate();
@@ -171,12 +175,14 @@ export function MobileMenuSheet() {
   return (
     <Sheet open={open} onOpenChange={setOpen}>
       <SheetTrigger asChild>
-        <button 
-          className="flex flex-col items-center justify-center flex-1 h-full transition-colors text-muted-foreground hover:text-primary"
-          aria-label="More options"
-        >
-          <Grid3x3 className="h-6 w-6" />
-        </button>
+        {trigger || (
+          <button 
+            className="flex flex-col items-center justify-center flex-1 h-full transition-colors text-muted-foreground hover:text-primary"
+            aria-label="More options"
+          >
+            <Grid3x3 className="h-6 w-6" />
+          </button>
+        )}
       </SheetTrigger>
       <SheetContent 
         side="bottom" 
