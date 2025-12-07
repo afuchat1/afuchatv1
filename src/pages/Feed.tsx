@@ -4,12 +4,10 @@ import { useNavigate, Link } from 'react-router-dom';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/contexts/AuthContext';
 import { toast } from 'sonner';
-import { MessageSquare, Heart, Send, Ellipsis, Gift, Eye, TrendingUp, Crown, RefreshCw } from 'lucide-react';
+import { MessageSquare, Heart, Send, Ellipsis, Gift, Eye, TrendingUp, Crown } from 'lucide-react';
 import platformLogo from '@/assets/platform-logo.png';
 import aiSparkIcon from '@/assets/ai-spark-icon.png';
 import { usePremiumStatus } from '@/hooks/usePremiumStatus';
-import { usePullToRefresh } from '@/hooks/usePullToRefresh';
-import { PullToRefreshIndicator } from '@/components/PullToRefreshIndicator';
 import { CustomLoader, InlineLoader } from '@/components/ui/CustomLoader';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -1139,13 +1137,6 @@ const Feed = ({ defaultTab = 'foryou', guestMode = false }: FeedProps = {}) => {
   // Track which posts have had view attempts to prevent duplicates
   const viewedPostsRef = useRef<Set<string>>(new Set());
   
-  // Pull to refresh ref - will be populated later
-  const pullRefreshRef = useRef<() => Promise<void>>(() => Promise.resolve());
-  
-  const { pullDistance, isRefreshing, progress } = usePullToRefresh({
-    onRefresh: () => pullRefreshRef.current(),
-  });
-  
   // Load previously viewed posts from session storage
   useEffect(() => {
     const savedViews = sessionStorage.getItem('viewedPosts');
@@ -2205,25 +2196,10 @@ const Feed = ({ defaultTab = 'foryou', guestMode = false }: FeedProps = {}) => {
     }
   };
 
-  // Pull to refresh handler - assign to ref
-  useEffect(() => {
-    pullRefreshRef.current = async () => {
-      sessionStorage.removeItem('feedShuffleSeed');
-      setCurrentPage(0);
-      setHasMore(true);
-      await fetchPosts(0, true);
-      toast.success('Feed refreshed!');
-    };
-  }, [fetchPosts]);
 
   return (
     <div className="h-full flex flex-col max-w-4xl mx-auto">
-      <PullToRefreshIndicator 
-        pullDistance={pullDistance} 
-        isRefreshing={isRefreshing} 
-        progress={progress} 
-      />
-      <SEO 
+      <SEO
         title="Feed — Latest Posts, Updates & Trending Topics | AfuChat"
         description="Discover the latest posts, trending topics, viral content, and updates from your network on AfuChat's social feed. Share your thoughts, like posts, comment, and connect with friends and creators. Join conversations happening now on social media."
         keywords="social feed, latest posts, trending topics, social media feed, viral content, user posts, trending hashtags, social updates, share posts, like and comment, follow friends, online feed, social stream, community posts, news feed"
