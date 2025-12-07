@@ -134,8 +134,107 @@ async function fetchPlatformContext(supabase: any) {
   }
 }
 
+// Fetch user's AI memories (with cleanup of expired ones)
+async function fetchUserMemories(supabase: any, userId: string) {
+  try {
+    // First, cleanup expired memories for this user
+    await supabase
+      .from('ai_memories')
+      .delete()
+      .eq('user_id', userId)
+      .lt('expires_at', new Date().toISOString());
+
+    // Fetch active memories
+    const { data: memories } = await supabase
+      .from('ai_memories')
+      .select('content, memory_type, metadata, created_at')
+      .eq('user_id', userId)
+      .gte('expires_at', new Date().toISOString())
+      .order('created_at', { ascending: false })
+      .limit(50);
+
+    return memories || [];
+  } catch (error) {
+    console.error('Error fetching memories:', error);
+    return [];
+  }
+}
+
+// Extract and store new memories from conversation
+async function storeMemories(supabase: any, userId: string, userMessage: string, aiReply: string) {
+  try {
+    const memoriesToStore = [];
+
+    // Store user preferences/interests mentioned
+    const interestPatterns = [
+      /i (?:like|love|enjoy|prefer|want|need) (.+?)(?:\.|$)/gi,
+      /my (?:favorite|fav) (?:is|are) (.+?)(?:\.|$)/gi,
+      /i(?:'m| am) (?:interested in|looking for) (.+?)(?:\.|$)/gi,
+    ];
+
+    for (const pattern of interestPatterns) {
+      const matches = userMessage.matchAll(pattern);
+      for (const match of matches) {
+        if (match[1] && match[1].length < 200) {
+          memoriesToStore.push({
+            user_id: userId,
+            memory_type: 'preference',
+            content: match[1].trim(),
+            metadata: { source: 'user_message' },
+            expires_at: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString()
+          });
+        }
+      }
+    }
+
+    // Store conversation context summary
+    if (userMessage.length > 20) {
+      memoriesToStore.push({
+        user_id: userId,
+        memory_type: 'conversation',
+        content: `User asked: "${userMessage.substring(0, 150)}${userMessage.length > 150 ? '...' : ''}"`,
+        metadata: { 
+          ai_response_preview: aiReply.substring(0, 100),
+          timestamp: new Date().toISOString()
+        },
+        expires_at: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString()
+      });
+    }
+
+    // Store important facts the user mentions about themselves
+    const factPatterns = [
+      /i(?:'m| am) (?:a |an )?(.+?)(?:and|but|\.|,|$)/gi,
+      /i work (?:as|at|in|for) (.+?)(?:\.|$)/gi,
+      /my name is (.+?)(?:\.|$)/gi,
+    ];
+
+    for (const pattern of factPatterns) {
+      const matches = userMessage.matchAll(pattern);
+      for (const match of matches) {
+        if (match[1] && match[1].length > 2 && match[1].length < 100) {
+          memoriesToStore.push({
+            user_id: userId,
+            memory_type: 'fact',
+            content: match[1].trim(),
+            metadata: { source: 'self_description' },
+            expires_at: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString()
+          });
+        }
+      }
+    }
+
+    // Batch insert memories
+    if (memoriesToStore.length > 0) {
+      await supabase.from('ai_memories').insert(memoriesToStore);
+      console.log(`Stored ${memoriesToStore.length} memories for user ${userId}`);
+    }
+  } catch (error) {
+    console.error('Error storing memories:', error);
+  }
+}
+
 // Build comprehensive system prompt with full platform knowledge
-function buildSystemPrompt(userContext: any, platformContext: any) {
+function buildSystemPrompt(userContext: any, platformContext: any, memories: any[]) {
   const userInfo = userContext?.profile ? `
 CURRENT USER INFORMATION:
 - Display Name: ${userContext.profile.display_name}
@@ -169,6 +268,16 @@ RECENT GIFTS RECEIVED:
 ${userContext.giftsReceived.slice(0, 5).map((g: any) => `- ${g.gifts?.emoji || '🎁'} ${g.gifts?.name || 'Gift'} (${g.gifts?.rarity || 'common'})`).join('\n')}
 ` : '';
 
+  // Format memories for context
+  const memoriesInfo = memories.length > 0 ? `
+YOUR MEMORIES ABOUT THIS USER (from past conversations, expires after 7 days):
+${memories.slice(0, 20).map((m: any) => {
+  const type = m.memory_type === 'preference' ? '💡 Preference' : 
+               m.memory_type === 'fact' ? '📝 Fact' : '💬 Context';
+  return `- ${type}: ${m.content}`;
+}).join('\n')}
+` : '';
+
   const platformInfo = platformContext ? `
 PLATFORM STATISTICS:
 - Total Users: ${platformContext.totalUsers?.toLocaleString() || 'N/A'}
@@ -193,10 +302,13 @@ ${platformContext.gifts?.slice(0, 10).map((g: any) => `- ${g.emoji} ${g.name} ($
 
   return `You are AfuAI, the exclusive AI assistant for AfuChat social platform. You have FULL ACCESS to all platform data and user information.
 
+You have PERSISTENT MEMORY that lasts 7 days. Use your memories to personalize responses and remember what users told you previously.
+
 ${userInfo}
 ${recentActivity}
 ${achievementsInfo}
 ${giftsInfo}
+${memoriesInfo}
 ${platformInfo}
 
 AFUCHAT FEATURES YOU KNOW:
@@ -222,10 +334,12 @@ YOUR CAPABILITIES:
 - Explain subscription benefits
 - Give tips for growing followers
 - Assist with any platform-related questions
+- REMEMBER user preferences and past conversations for 7 days
 
 RESPONSE STYLE:
 - Be friendly, helpful, and personalized
 - Reference user's data when relevant (e.g., "With your ${userContext?.profile?.xp || 0} Nexa...")
+- Reference memories when relevant (e.g., "I remember you mentioned...")
 - Use emojis occasionally for engagement
 - Keep responses concise but informative
 - If asked about something you don't know, say so honestly`;
@@ -333,15 +447,18 @@ serve(async (req) => {
       throw new Error('LOVABLE_API_KEY not configured');
     }
 
-    // Fetch comprehensive context for AfuAI
+    // Fetch comprehensive context for AfuAI including memories
     console.log('Fetching user context for:', userId);
-    const [userContext, platformContext] = await Promise.all([
+    const [userContext, platformContext, memories] = await Promise.all([
       fetchUserContext(supabaseAdmin, userId),
-      fetchPlatformContext(supabaseAdmin)
+      fetchPlatformContext(supabaseAdmin),
+      fetchUserMemories(supabaseAdmin, userId)
     ]);
 
-    // Build comprehensive system prompt
-    const systemPrompt = buildSystemPrompt(userContext, platformContext);
+    console.log(`Loaded ${memories.length} memories for user`);
+
+    // Build comprehensive system prompt with memories
+    const systemPrompt = buildSystemPrompt(userContext, platformContext, memories);
 
     // Build messages for Lovable AI
     const messages: any[] = [
@@ -406,6 +523,9 @@ serve(async (req) => {
     }
     
     const reply = data.choices[0].message.content;
+
+    // Store new memories from this conversation (async, don't wait)
+    storeMemories(supabaseAdmin, userId, message, reply);
 
     // Award XP for using AI
     await supabaseAdmin.rpc('award_xp', {
