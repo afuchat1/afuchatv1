@@ -8,7 +8,7 @@ import { MessageSquare, Heart, Send, Ellipsis, Gift, Eye, TrendingUp, Crown, Ref
 import platformLogo from '@/assets/platform-logo.png';
 import aiSparkIcon from '@/assets/ai-spark-icon.png';
 import { usePremiumStatus } from '@/hooks/usePremiumStatus';
-import { PullToRefreshIndicator } from '@/components/PullToRefreshIndicator';
+
 import { CustomLoader, InlineLoader } from '@/components/ui/CustomLoader';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -1139,79 +1139,9 @@ const Feed = ({ defaultTab = 'foryou', guestMode = false }: FeedProps = {}) => {
   const [editPost, setEditPost] = useState<Post | null>(null);
   const [isDeleting, setIsDeleting] = useState(false);
   
-  // Scroll-based header visibility state
-  const [isScrollingDown, setIsScrollingDown] = useState(false);
-  const [lastScrollY, setLastScrollY] = useState(0);
-  // Pull to refresh state
-  const [isRefreshing, setIsRefreshing] = useState(false);
-  const [pullDistance, setPullDistance] = useState(0);
-  const pullStartY = useRef(0);
-  const isPulling = useRef(false);
   
   // Track which posts have had view attempts to prevent duplicates
   const viewedPostsRef = useRef<Set<string>>(new Set());
-  
-  // Pull to refresh touch handlers
-  useEffect(() => {
-    const threshold = 80;
-    const maxPull = 120;
-    
-    const handleTouchStart = (e: TouchEvent) => {
-      if (window.scrollY <= 0 && !isRefreshing) {
-        pullStartY.current = e.touches[0].pageY;
-        isPulling.current = true;
-      }
-    };
-    
-    const handleTouchMove = (e: TouchEvent) => {
-      if (!isPulling.current || isRefreshing) return;
-      
-      const currentY = e.touches[0].pageY;
-      const distance = Math.min(Math.max(0, currentY - pullStartY.current), maxPull);
-      
-      if (distance > 0 && window.scrollY <= 0) {
-        e.preventDefault();
-        setPullDistance(distance);
-      }
-    };
-    
-    const handleTouchEnd = async () => {
-      if (!isPulling.current) return;
-      
-      const currentDistance = pullDistance;
-      isPulling.current = false;
-      
-      if (currentDistance >= threshold && !isRefreshing) {
-        setIsRefreshing(true);
-        try {
-          sessionStorage.removeItem('feedShuffleSeed');
-          setCurrentPage(0);
-          setHasMore(true);
-          // Trigger refresh - fetchPosts will be called by the effect
-          window.dispatchEvent(new CustomEvent('feed-refresh'));
-        } finally {
-          setTimeout(() => {
-            setIsRefreshing(false);
-          }, 500);
-        }
-      }
-      
-      setPullDistance(0);
-      pullStartY.current = 0;
-    };
-    
-    const options: AddEventListenerOptions = { passive: false };
-    document.addEventListener('touchstart', handleTouchStart, options);
-    document.addEventListener('touchmove', handleTouchMove, options);
-    document.addEventListener('touchend', handleTouchEnd, options);
-    
-    return () => {
-      document.removeEventListener('touchstart', handleTouchStart);
-      document.removeEventListener('touchmove', handleTouchMove);
-      document.removeEventListener('touchend', handleTouchEnd);
-    };
-  }, [isRefreshing, pullDistance]);
-  
   // Load previously viewed posts from session storage
   useEffect(() => {
     const savedViews = sessionStorage.getItem('viewedPosts');
@@ -2163,23 +2093,6 @@ const Feed = ({ defaultTab = 'foryou', guestMode = false }: FeedProps = {}) => {
     };
   }, [fetchPosts]);
 
-  // Scroll-based header visibility (synced with bottom nav)
-  useEffect(() => {
-    const handleScroll = () => {
-      const currentScrollY = window.scrollY;
-      
-      if (currentScrollY > lastScrollY && currentScrollY > 60) {
-        setIsScrollingDown(true);
-      } else {
-        setIsScrollingDown(false);
-      }
-      
-      setLastScrollY(currentScrollY);
-    };
-
-    window.addEventListener('scroll', handleScroll, { passive: true });
-    return () => window.removeEventListener('scroll', handleScroll);
-  }, [lastScrollY]);
 
   // Premium button - memoized to prevent re-renders on scroll
   const premiumButton = useMemo(() => {
@@ -2247,23 +2160,14 @@ const Feed = ({ defaultTab = 'foryou', guestMode = false }: FeedProps = {}) => {
 
   return (
     <div className="h-full flex flex-col max-w-4xl mx-auto">
-      {/* Pull to refresh indicator */}
-      <PullToRefreshIndicator 
-        pullDistance={pullDistance} 
-        isRefreshing={isRefreshing} 
-        progress={Math.min(pullDistance / 80, 1)} 
-      />
       <SEO
         title="Feed — Latest Posts, Updates & Trending Topics | AfuChat"
         description="Discover the latest posts, trending topics, viral content, and updates from your network on AfuChat's social feed. Share your thoughts, like posts, comment, and connect with friends and creators. Join conversations happening now on social media."
         keywords="social feed, latest posts, trending topics, social media feed, viral content, user posts, trending hashtags, social updates, share posts, like and comment, follow friends, online feed, social stream, community posts, news feed"
       />
       
-      {/* Fixed Header - hides on scroll like X */}
-      <div className={cn(
-        "fixed top-0 left-0 right-0 z-30 bg-background/95 backdrop-blur-md transition-transform duration-300 max-w-4xl mx-auto",
-        isScrollingDown ? "-translate-y-full" : "translate-y-0"
-      )}>
+      {/* Fixed Header */}
+      <div className="fixed top-0 left-0 right-0 z-30 bg-background/95 backdrop-blur-md max-w-4xl mx-auto">
         <div className="flex items-center justify-between px-4 py-3">
           <Link to={user ? `/${user.id}` : '/auth'} className="flex-shrink-0">
             <Avatar className="h-8 w-8">
