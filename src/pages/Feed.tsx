@@ -1,4 +1,5 @@
 import { useEffect, useState, useCallback, useRef } from 'react';
+import { motion } from 'framer-motion';
 import { useNavigate, Link } from 'react-router-dom';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/contexts/AuthContext';
@@ -2277,7 +2278,7 @@ const Feed = ({ defaultTab = 'foryou', guestMode = false }: FeedProps = {}) => {
       
       {/* Fixed Header - hides on scroll like X */}
       <div className={cn(
-        "fixed top-0 left-0 right-0 z-30 bg-background/95 backdrop-blur-md border-b border-border transition-transform duration-300 max-w-4xl mx-auto",
+        "fixed top-0 left-0 right-0 z-30 bg-background/95 backdrop-blur-md transition-transform duration-300 max-w-4xl mx-auto",
         isScrollingDown ? "-translate-y-full" : "translate-y-0"
       )}>
         <div className="flex items-center justify-between px-4 py-3">
@@ -2299,7 +2300,7 @@ const Feed = ({ defaultTab = 'foryou', guestMode = false }: FeedProps = {}) => {
 
       <Tabs value={activeTab} onValueChange={(v) => setActiveTab(v as 'foryou' | 'following')} className="w-full flex-1">
         {/* Sticky Tabs - part of scrollable content */}
-        <div className="sticky top-0 z-20 bg-background/95 backdrop-blur-md border-b border-border">
+        <div className="sticky top-0 z-20 bg-background/95 backdrop-blur-md">
           {newPostsCount > 0 && (
             <button
               onClick={handleLoadNewPosts}
@@ -2308,23 +2309,37 @@ const Feed = ({ defaultTab = 'foryou', guestMode = false }: FeedProps = {}) => {
               <span>Show {newPostsCount} new {newPostsCount === 1 ? 'post' : 'posts'}</span>
             </button>
           )}
-          <TabsList className="grid grid-cols-2 w-full h-12 rounded-none bg-transparent">
+          <TabsList className="grid grid-cols-2 w-full h-12 rounded-none bg-transparent p-0">
             <TabsTrigger
               value="foryou"
-              className="data-[state=active]:bg-transparent data-[state=active]:text-foreground data-[state=inactive]:text-muted-foreground rounded-none font-bold h-full flex items-center gap-1.5 hover:bg-muted/50 transition-colors"
+              className="relative data-[state=active]:bg-transparent data-[state=active]:text-foreground data-[state=inactive]:text-muted-foreground data-[state=active]:shadow-none rounded-none font-bold h-full flex items-center gap-1.5 transition-colors data-[state=active]:after:absolute data-[state=active]:after:bottom-0 data-[state=active]:after:left-1/2 data-[state=active]:after:-translate-x-1/2 data-[state=active]:after:w-14 data-[state=active]:after:h-1 data-[state=active]:after:bg-primary data-[state=active]:after:rounded-full"
             >
               For you
             </TabsTrigger>
             <TabsTrigger
               value="following"
-              className="data-[state=active]:bg-transparent data-[state=active]:text-foreground data-[state=inactive]:text-muted-foreground rounded-none font-bold h-full hover:bg-muted/50 transition-colors"
+              className="relative data-[state=active]:bg-transparent data-[state=active]:text-foreground data-[state=inactive]:text-muted-foreground data-[state=active]:shadow-none rounded-none font-bold h-full transition-colors data-[state=active]:after:absolute data-[state=active]:after:bottom-0 data-[state=active]:after:left-1/2 data-[state=active]:after:-translate-x-1/2 data-[state=active]:after:w-14 data-[state=active]:after:h-1 data-[state=active]:after:bg-primary data-[state=active]:after:rounded-full"
             >
               Following
             </TabsTrigger>
           </TabsList>
         </div>
 
-        <TabsContent value={activeTab} className="flex-1 m-0" ref={feedRef}>
+        {/* Swipeable content area */}
+        <motion.div
+          className="flex-1"
+          drag="x"
+          dragConstraints={{ left: 0, right: 0 }}
+          dragElastic={0.2}
+          onDragEnd={(_, info) => {
+            if (info.offset.x > 100 && activeTab === 'following') {
+              setActiveTab('foryou');
+            } else if (info.offset.x < -100 && activeTab === 'foryou') {
+              setActiveTab('following');
+            }
+          }}
+        >
+          <TabsContent value={activeTab} className="flex-1 m-0" ref={feedRef}>
           {/* Adsterra Banner Ad */}
           <AdsterraBannerAd />
           
@@ -2389,7 +2404,8 @@ const Feed = ({ defaultTab = 'foryou', guestMode = false }: FeedProps = {}) => {
               )}
             </>
           )}
-        </TabsContent>
+          </TabsContent>
+        </motion.div>
       </Tabs>
       
       {/* Delete Confirmation Sheet */}
