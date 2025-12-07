@@ -2210,19 +2210,27 @@ const Feed = ({ defaultTab = 'foryou', guestMode = false }: FeedProps = {}) => {
 
   // Premium button component
   const PremiumButton = () => {
-    const { isPremium } = usePremiumStatus();
+    const { isPremium, expiresAt } = usePremiumStatus();
     
     if (isPremium) {
+      // For subscribers: show subtle verified/premium indicator
+      const daysLeft = expiresAt ? Math.ceil((new Date(expiresAt).getTime() - Date.now()) / (1000 * 60 * 60 * 24)) : 0;
       return (
-        <Link to="/premium" className="flex-shrink-0">
-          <Crown className="h-6 w-6 text-primary" />
+        <Link to="/premium" className="flex-shrink-0 flex items-center gap-1.5 px-2 py-1 rounded-full bg-primary/10">
+          <Crown className="h-4 w-4 text-primary" />
+          <span className="text-xs font-medium text-primary">{daysLeft}d</span>
         </Link>
       );
     }
     
+    // For non-subscribers: prominent upgrade button
     return (
-      <Link to="/premium" className="flex-shrink-0">
-        <Crown className="h-6 w-6 text-muted-foreground hover:text-primary transition-colors" />
+      <Link 
+        to="/premium" 
+        className="flex-shrink-0 flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-gradient-to-r from-primary to-primary/80 text-primary-foreground hover:opacity-90 transition-opacity animate-pulse"
+      >
+        <Crown className="h-4 w-4" />
+        <span className="text-xs font-semibold">Get Premium</span>
       </Link>
     );
   };
