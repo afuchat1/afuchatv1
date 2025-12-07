@@ -2093,6 +2093,16 @@ const Feed = ({ defaultTab = 'foryou', guestMode = false }: FeedProps = {}) => {
     };
   }, [fetchPosts]);
 
+  // Listen for feed refresh event
+  useEffect(() => {
+    const handleRefresh = () => {
+      fetchPosts(0, true);
+      toast.success('Feed refreshed!');
+    };
+    window.addEventListener('feed-refresh', handleRefresh);
+    return () => window.removeEventListener('feed-refresh', handleRefresh);
+  }, [fetchPosts]);
+
 
   // Premium button - memoized to prevent re-renders on scroll
   const premiumButton = useMemo(() => {
@@ -2147,16 +2157,6 @@ const Feed = ({ defaultTab = 'foryou', guestMode = false }: FeedProps = {}) => {
     }
   };
 
-
-  // Listen for feed refresh event
-  useEffect(() => {
-    const handleRefresh = () => {
-      fetchPosts(0, true);
-      toast.success('Feed refreshed!');
-    };
-    window.addEventListener('feed-refresh', handleRefresh);
-    return () => window.removeEventListener('feed-refresh', handleRefresh);
-  }, [fetchPosts]);
 
   return (
     <div className="h-full flex flex-col max-w-4xl mx-auto">
