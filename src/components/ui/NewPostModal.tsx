@@ -2,11 +2,12 @@ import React, { useState, useRef } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/contexts/AuthContext';
 import { useNexa } from '@/hooks/useNexa';
+import { usePremiumStatus } from '@/hooks/usePremiumStatus';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Textarea } from '@/components/ui/textarea';
 import { toast } from 'sonner';
-import { X, Sparkles, Image as ImageIcon, Globe } from 'lucide-react';
+import { X, Sparkles, Image as ImageIcon, Globe, Wand2, CheckCircle, RefreshCw } from 'lucide-react';
 import { ImageEditor } from '@/components/image-editor/ImageEditor';
 import { BatchImageEditor } from '@/components/image-editor/BatchImageEditor';
 import { postSchema } from '@/lib/validation';
@@ -19,6 +20,7 @@ import { cn } from '@/lib/utils';
 import { useLinkPreview } from '@/hooks/useLinkPreview';
 import { LinkPreviewCard } from '@/components/ui/LinkPreviewCard';
 import { extractUrls } from '@/lib/postUtils';
+import { useNavigate } from 'react-router-dom';
 
 interface NewPostModalProps {
     isOpen: boolean;
@@ -28,14 +30,14 @@ interface NewPostModalProps {
 const NewPostModal: React.FC<NewPostModalProps> = ({ isOpen, onClose }) => {
     const { user } = useAuth();
     const { awardNexa } = useNexa();
-    
-    // AI Features activated
-    const AI_COMING_SOON = false;
+    const { isPremium } = usePremiumStatus();
+    const navigate = useNavigate();
     
     const [newPost, setNewPost] = useState('');
     const [isPosting, setIsPosting] = useState(false);
     const [showAIDialog, setShowAIDialog] = useState(false);
     const [aiTopic, setAiTopic] = useState('');
+    const [aiMode, setAiMode] = useState<'generate' | 'improve' | 'complete'>('generate');
     const [generatingAI, setGeneratingAI] = useState(false);
     const [selectedImages, setSelectedImages] = useState<File[]>([]);
     const [imagePreviews, setImagePreviews] = useState<string[]>([]);
@@ -191,27 +193,40 @@ const NewPostModal: React.FC<NewPostModalProps> = ({ isOpen, onClose }) => {
         }
     };
 
-    const handleAIGenerate = async () => {
-        // AI Features coming soon - don't execute
-        if (AI_COMING_SOON) {
-            toast.info('AI features are coming soon! 🚀');
+    const handleAIGenerate = async (mode: 'generate' | 'improve' | 'complete' = 'generate') => {
+        if (!isPremium) {
+            toast.error('Premium subscription required for AI features');
+            navigate('/premium');
             return;
         }
 
-        if (!aiTopic.trim()) {
-            toast.error('Please enter a topic');
+        const content = mode === 'generate' ? aiTopic : newPost;
+        
+        if (!content.trim()) {
+            toast.error(mode === 'generate' ? 'Please enter a topic' : 'Please write some content first');
             return;
         }
 
         setGeneratingAI(true);
         try {
             const { data, error } = await supabase.functions.invoke('generate-post', {
-                body: { topic: aiTopic, tone: 'casual', length: 'medium' }
+                body: { 
+                    topic: content, 
+                    tone: 'casual', 
+                    length: 'medium',
+                    mode: mode
+                }
             });
 
-            if (error) throw error;
+            if (error) {
+                if (error.message?.includes('requiresPremium')) {
+                    toast.error('Premium subscription required');
+                    navigate('/premium');
+                    return;
+                }
+                throw error;
+            }
             
-            // Ensure we have a valid post string
             if (!data || typeof data.post !== 'string') {
                 throw new Error('Invalid response from AI service');
             }
@@ -219,10 +234,22 @@ const NewPostModal: React.FC<NewPostModalProps> = ({ isOpen, onClose }) => {
             setNewPost(data.post);
             setShowAIDialog(false);
             setAiTopic('');
-            toast.success('AI post generated! ✨');
-        } catch (error) {
+            
+            const successMessages = {
+                generate: 'AI post generated! ✨',
+                improve: 'Post improved! ✨',
+                complete: 'Post completed! ✨'
+            };
+            toast.success(successMessages[mode]);
+        } catch (error: any) {
             console.error('AI generation error:', error);
-            toast.error('Failed to generate post');
+            if (error.status === 429) {
+                toast.error('Rate limit exceeded, try again later');
+            } else if (error.status === 402) {
+                toast.error('AI service unavailable, try again later');
+            } else {
+                toast.error('Failed to generate post');
+            }
         } finally {
             setGeneratingAI(false);
         }
@@ -414,30 +441,60 @@ const NewPostModal: React.FC<NewPostModalProps> = ({ isOpen, onClose }) => {
                                         >
                                             <ImageIcon className="h-5 w-5" />
                                         </Button>
-                                        {/* AI Generation disabled for users */}
-                                        {/* <Button
-                                            variant="ghost"
-                                            size="icon"
-                                            onClick={() => {
-                                                if (AI_COMING_SOON) {
-                                                    toast.info('AI features are coming soon! 🚀');
-                                                } else {
-                                                    setShowAIDialog(true);
-                                                }
-                                            }}
-                                            className="h-9 w-9 rounded-full text-primary hover:bg-primary/10 relative"
-                                            title={AI_COMING_SOON ? "Coming Soon" : "Generate with AI"}
-                                        >
-                                            <Sparkles className="h-5 w-5" />
-                                            {AI_COMING_SOON && (
+                                        
+                                        {/* AI Features - Premium Only */}
+                                        {isPremium && (
+                                            <>
+                                                <Button
+                                                    variant="ghost"
+                                                    size="icon"
+                                                    onClick={() => setShowAIDialog(true)}
+                                                    className="h-9 w-9 rounded-full text-primary hover:bg-primary/10"
+                                                    title="Generate with AI"
+                                                >
+                                                    <Sparkles className="h-5 w-5" />
+                                                </Button>
+                                                {newPost.trim().length > 10 && (
+                                                    <Button
+                                                        variant="ghost"
+                                                        size="icon"
+                                                        onClick={() => handleAIGenerate('improve')}
+                                                        disabled={generatingAI}
+                                                        className="h-9 w-9 rounded-full text-primary hover:bg-primary/10"
+                                                        title="Improve with AI"
+                                                    >
+                                                        {generatingAI ? (
+                                                            <RefreshCw className="h-5 w-5 animate-spin" />
+                                                        ) : (
+                                                            <Wand2 className="h-5 w-5" />
+                                                        )}
+                                                    </Button>
+                                                )}
+                                            </>
+                                        )}
+                                        
+                                        {/* Premium Upgrade Hint */}
+                                        {!isPremium && (
+                                            <Button
+                                                variant="ghost"
+                                                size="icon"
+                                                onClick={() => {
+                                                    toast.info('Upgrade to Premium for AI writing assistance');
+                                                    navigate('/premium');
+                                                }}
+                                                className="h-9 w-9 rounded-full text-muted-foreground hover:text-primary hover:bg-primary/10 relative"
+                                                title="AI Features (Premium)"
+                                            >
+                                                <Sparkles className="h-5 w-5" />
                                                 <Badge 
                                                     variant="secondary" 
-                                                    className="absolute -top-1 -right-1 text-[8px] px-1 py-0 h-4"
+                                                    className="absolute -top-1 -right-1 text-[8px] px-1 py-0 h-4 bg-primary/20"
                                                 >
-                                                    Soon
+                                                    PRO
                                                 </Badge>
-                                            )}
-                                        </Button> */}
+                                            </Button>
+                                        )}
+                                        
                                         <Button
                                             variant="ghost"
                                             size="icon"
@@ -501,39 +558,75 @@ const NewPostModal: React.FC<NewPostModalProps> = ({ isOpen, onClose }) => {
 
             {/* AI Sheet */}
             <Sheet open={showAIDialog} onOpenChange={setShowAIDialog}>
-                <SheetContent side="bottom" className="max-w-md mx-auto" onOpenChange={setShowAIDialog}>
+                <SheetContent 
+                    side="bottom" 
+                    className="max-h-[85vh] max-w-md mx-auto rounded-t-3xl bg-background/95 backdrop-blur-xl border-t border-border/50 p-6" 
+                    onOpenChange={setShowAIDialog}
+                >
                     <div className="space-y-4">
                         <div>
-                            <h3 className="text-lg font-semibold mb-2">AI Post Generator</h3>
+                            <h3 className="text-2xl font-bold mb-2">AI Post Generator</h3>
                             <p className="text-sm text-muted-foreground">
-                                Tell AI what you want to post about
+                                Tell AI what you want to post about and it will learn from your style
                             </p>
                         </div>
+                        
+                        {/* Mode Selection */}
+                        <div className="flex gap-2">
+                            <Button
+                                variant={aiMode === 'generate' ? 'default' : 'outline'}
+                                size="sm"
+                                onClick={() => setAiMode('generate')}
+                                className="flex-1 rounded-xl h-10 font-semibold"
+                            >
+                                <Sparkles className="mr-1.5 h-4 w-4" />
+                                Generate
+                            </Button>
+                            <Button
+                                variant={aiMode === 'complete' ? 'default' : 'outline'}
+                                size="sm"
+                                onClick={() => setAiMode('complete')}
+                                className="flex-1 rounded-xl h-10 font-semibold"
+                                disabled={newPost.trim().length < 5}
+                            >
+                                <CheckCircle className="mr-1.5 h-4 w-4" />
+                                Complete
+                            </Button>
+                        </div>
+                        
                         <Textarea
                             value={aiTopic}
                             onChange={(e) => setAiTopic(e.target.value)}
-                            placeholder="E.g., my thoughts on climate change..."
-                            className="min-h-[100px]"
+                            placeholder={aiMode === 'generate' 
+                                ? "E.g., my thoughts on climate change..." 
+                                : "Enter additional context for completion..."
+                            }
+                            className="min-h-[100px] rounded-xl"
                         />
+                        
+                        <p className="text-xs text-muted-foreground">
+                            ✨ AI learns from your previous posts and engagement to match your style
+                        </p>
+                        
                         <div className="flex gap-2">
                             <Button
-                                onClick={handleAIGenerate}
+                                onClick={() => handleAIGenerate(aiMode)}
                                 disabled={generatingAI || !aiTopic.trim()}
-                                className="flex-1"
+                                className="flex-1 rounded-xl h-12 font-semibold"
                             >
                                 {generatingAI ? (
                                     <>
-                                        <Sparkles className="mr-2 h-4 w-4" />
-                                        Generating
+                                        <RefreshCw className="mr-2 h-4 w-4 animate-spin" />
+                                        {aiMode === 'generate' ? 'Generating...' : 'Completing...'}
                                     </>
                                 ) : (
                                     <>
                                         <Sparkles className="mr-2 h-4 w-4" />
-                                        Generate
+                                        {aiMode === 'generate' ? 'Generate Post' : 'Complete Post'}
                                     </>
                                 )}
                             </Button>
-                            <Button variant="outline" onClick={() => setShowAIDialog(false)}>
+                            <Button variant="outline" onClick={() => setShowAIDialog(false)} className="rounded-xl h-12 font-semibold">
                                 Cancel
                             </Button>
                         </div>
