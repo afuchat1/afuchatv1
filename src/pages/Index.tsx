@@ -10,8 +10,12 @@ const Index = () => {
   useEffect(() => {
     if (loading) return;
     
-    // Redirect all users to /home - content is public, interactions require auth
-    navigate('/home', { replace: true });
+    // Authenticated users go to home, others see landing/welcome page
+    if (user) {
+      navigate('/home', { replace: true });
+    } else {
+      navigate('/welcome', { replace: true });
+    }
   }, [user, loading, navigate]);
 
   // Show loader while redirecting
