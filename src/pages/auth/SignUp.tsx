@@ -184,8 +184,25 @@ const SignUp = () => {
     }
   };
 
+  // Store signup data in sessionStorage for OAuth flows
+  const storeSignupDataForOAuth = () => {
+    const signupData = {
+      country,
+      handle: username.toLowerCase(),
+      display_name: username,
+      is_business_mode: accountType === 'business',
+      referral_code: referralCode,
+    };
+    sessionStorage.setItem('pendingSignupData', JSON.stringify(signupData));
+  };
+
   const handleGoogleSignUp = async () => {
+    if (!username || usernameError || !usernameAvailable) {
+      toast.error('Please enter a valid username first');
+      return;
+    }
     setGoogleLoading(true);
+    storeSignupDataForOAuth();
     try {
       const { error } = await supabase.auth.signInWithOAuth({
         provider: 'google',
@@ -201,7 +218,12 @@ const SignUp = () => {
   };
 
   const handleGithubSignUp = async () => {
+    if (!username || usernameError || !usernameAvailable) {
+      toast.error('Please enter a valid username first');
+      return;
+    }
     setGithubLoading(true);
+    storeSignupDataForOAuth();
     try {
       const { error } = await supabase.auth.signInWithOAuth({
         provider: 'github',

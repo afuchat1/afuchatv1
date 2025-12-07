@@ -77,8 +77,35 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         if ((event === 'SIGNED_IN' || event === 'TOKEN_REFRESHED') && session) {
           setTimeout(() => recordUserSession(session), 100);
           
-          // Check profile completion and redirect accordingly
+          // Check for pending signup data from OAuth flow
           if (event === 'SIGNED_IN' && session) {
+            const pendingSignupData = sessionStorage.getItem('pendingSignupData');
+            
+            if (pendingSignupData) {
+              try {
+                const signupData = JSON.parse(pendingSignupData);
+                sessionStorage.removeItem('pendingSignupData');
+                
+                // Update profile with signup data
+                supabase
+                  .from('profiles')
+                  .update({
+                    handle: signupData.handle,
+                    display_name: signupData.display_name,
+                    country: signupData.country,
+                    is_business_mode: signupData.is_business_mode,
+                  })
+                  .eq('id', session.user.id)
+                  .then(({ error }) => {
+                    if (error) {
+                      console.error('Error updating profile with signup data:', error);
+                    }
+                  });
+              } catch (e) {
+                console.error('Error parsing pending signup data:', e);
+              }
+            }
+            
             const currentPath = window.location.pathname;
             
             // Check if essential profile fields are complete
