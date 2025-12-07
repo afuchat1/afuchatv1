@@ -10,8 +10,6 @@ import { ChatStoriesHeader } from '@/components/chat/ChatStoriesHeader';
 import { StoryAvatar } from '@/components/moments/StoryAvatar';
 import { CreateGroupDialog } from '@/components/chat/CreateGroupDialog';
 import { toast } from 'sonner';
-import { NativeAdCard } from '@/components/ads/NativeAdCard';
-import { AdsterraBannerAd } from '@/components/ads/AdsterraBannerAd';
 
 interface Chat {
   id: string;
@@ -480,8 +478,6 @@ const Chats = () => {
         onSearch={setSearchQuery}
       />
 
-        {/* Adsterra Banner Ad */}
-        <AdsterraBannerAd />
 
       {/* Chat List Container - Main scrollable area */}
       <div 
@@ -604,10 +600,6 @@ const Chats = () => {
                 )}
               </div>
             </div>
-            {/* Show native ad after every 6th chat */}
-            {(index + 1) % 6 === 0 && (
-              <NativeAdCard slot={`chat-list-${Math.floor(index / 6)}`} />
-            )}
             </div>
           );
         })}
