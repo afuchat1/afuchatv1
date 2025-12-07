@@ -2,14 +2,38 @@ import { useState, useEffect } from 'react';
 import { useAuth } from '@/contexts/AuthContext';
 import { supabase } from '@/integrations/supabase/client';
 
+// Cache key for premium status
+const PREMIUM_CACHE_KEY = 'afuchat_premium_status';
+
+// Get cached premium status synchronously to prevent ad flash
+const getCachedPremiumStatus = (userId?: string): boolean => {
+  if (typeof window === 'undefined' || !userId) return false;
+  try {
+    const cached = sessionStorage.getItem(`${PREMIUM_CACHE_KEY}_${userId}`);
+    if (cached) {
+      const { isPremium, expiresAt } = JSON.parse(cached);
+      // Check if cached data is still valid
+      if (expiresAt && new Date(expiresAt) > new Date()) {
+        return isPremium;
+      }
+    }
+  } catch {
+    // Ignore cache errors
+  }
+  return false;
+};
+
 export const usePremiumStatus = (targetUserId?: string) => {
   const { user } = useAuth();
-  const [isPremium, setIsPremium] = useState(false);
-  const [loading, setLoading] = useState(true);
-  const [expiresAt, setExpiresAt] = useState<string | null>(null);
-
+  
   // Use targetUserId if provided, otherwise fallback to current user
   const checkUserId = targetUserId || user?.id;
+  
+  // Initialize with cached value to prevent flash
+  const [isPremium, setIsPremium] = useState(() => getCachedPremiumStatus(checkUserId));
+  const [loading, setLoading] = useState(!getCachedPremiumStatus(checkUserId));
+  const [expiresAt, setExpiresAt] = useState<string | null>(null);
+
 
   useEffect(() => {
     const checkPremiumStatus = async () => {
@@ -33,9 +57,16 @@ export const usePremiumStatus = (targetUserId?: string) => {
         if (data) {
           setIsPremium(true);
           setExpiresAt(data.expires_at);
+          // Cache the premium status
+          sessionStorage.setItem(`${PREMIUM_CACHE_KEY}_${checkUserId}`, JSON.stringify({
+            isPremium: true,
+            expiresAt: data.expires_at
+          }));
         } else {
           setIsPremium(false);
           setExpiresAt(null);
+          // Clear cache if not premium
+          sessionStorage.removeItem(`${PREMIUM_CACHE_KEY}_${checkUserId}`);
         }
       } catch (error) {
         console.error('Error checking premium status:', error);
