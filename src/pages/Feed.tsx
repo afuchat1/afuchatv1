@@ -4,10 +4,11 @@ import { useNavigate, Link } from 'react-router-dom';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/contexts/AuthContext';
 import { toast } from 'sonner';
-import { MessageSquare, Heart, Send, Ellipsis, Gift, Eye, TrendingUp, Crown } from 'lucide-react';
+import { MessageSquare, Heart, Send, Ellipsis, Gift, Eye, TrendingUp, Crown, RefreshCw } from 'lucide-react';
 import platformLogo from '@/assets/platform-logo.png';
 import aiSparkIcon from '@/assets/ai-spark-icon.png';
 import { usePremiumStatus } from '@/hooks/usePremiumStatus';
+import { PullToRefreshIndicator } from '@/components/PullToRefreshIndicator';
 import { CustomLoader, InlineLoader } from '@/components/ui/CustomLoader';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -1116,6 +1117,10 @@ const Feed = ({ defaultTab = 'foryou', guestMode = false }: FeedProps = {}) => {
   const { t } = useTranslation();
   const { awardNexa } = useNexa();
   const { user } = useAuth();
+  const navigate = useNavigate();
+  const feedRef = useRef<HTMLDivElement>(null);
+  
+  // All useState hooks first
   const [posts, setPosts] = useState<Post[]>([]);
   const [followingPosts, setFollowingPosts] = useState<Post[]>([]);
   const [loading, setLoading] = useState(true);
@@ -1126,16 +1131,80 @@ const Feed = ({ defaultTab = 'foryou', guestMode = false }: FeedProps = {}) => {
   const [newPostsCount, setNewPostsCount] = useState(0);
   const [userProfile, setUserProfile] = useState<{ display_name: string; avatar_url: string | null } | null>(null);
   const [expandedPosts, setExpandedPosts] = useState<Set<string>>(new Set());
-  const navigate = useNavigate();
-  const feedRef = useRef<HTMLDivElement>(null);
-  
   const [deletePostId, setDeletePostId] = useState<string | null>(null);
   const [reportPostId, setReportPostId] = useState<string | null>(null);
   const [editPost, setEditPost] = useState<Post | null>(null);
   const [isDeleting, setIsDeleting] = useState(false);
   
+  // Pull to refresh state
+  const [isRefreshing, setIsRefreshing] = useState(false);
+  const [pullDistance, setPullDistance] = useState(0);
+  const pullStartY = useRef(0);
+  const isPulling = useRef(false);
+  
   // Track which posts have had view attempts to prevent duplicates
   const viewedPostsRef = useRef<Set<string>>(new Set());
+  
+  // Pull to refresh touch handlers
+  useEffect(() => {
+    const threshold = 80;
+    const maxPull = 120;
+    
+    const handleTouchStart = (e: TouchEvent) => {
+      if (window.scrollY <= 0 && !isRefreshing) {
+        pullStartY.current = e.touches[0].pageY;
+        isPulling.current = true;
+      }
+    };
+    
+    const handleTouchMove = (e: TouchEvent) => {
+      if (!isPulling.current || isRefreshing) return;
+      
+      const currentY = e.touches[0].pageY;
+      const distance = Math.min(Math.max(0, currentY - pullStartY.current), maxPull);
+      
+      if (distance > 0 && window.scrollY <= 0) {
+        e.preventDefault();
+        setPullDistance(distance);
+      }
+    };
+    
+    const handleTouchEnd = async () => {
+      if (!isPulling.current) return;
+      
+      const currentDistance = pullDistance;
+      isPulling.current = false;
+      
+      if (currentDistance >= threshold && !isRefreshing) {
+        setIsRefreshing(true);
+        try {
+          sessionStorage.removeItem('feedShuffleSeed');
+          setCurrentPage(0);
+          setHasMore(true);
+          // Trigger refresh - fetchPosts will be called by the effect
+          window.dispatchEvent(new CustomEvent('feed-refresh'));
+        } finally {
+          setTimeout(() => {
+            setIsRefreshing(false);
+          }, 500);
+        }
+      }
+      
+      setPullDistance(0);
+      pullStartY.current = 0;
+    };
+    
+    const options: AddEventListenerOptions = { passive: false };
+    document.addEventListener('touchstart', handleTouchStart, options);
+    document.addEventListener('touchmove', handleTouchMove, options);
+    document.addEventListener('touchend', handleTouchEnd, options);
+    
+    return () => {
+      document.removeEventListener('touchstart', handleTouchStart);
+      document.removeEventListener('touchmove', handleTouchMove);
+      document.removeEventListener('touchend', handleTouchEnd);
+    };
+  }, [isRefreshing, pullDistance]);
   
   // Load previously viewed posts from session storage
   useEffect(() => {
@@ -2197,8 +2266,24 @@ const Feed = ({ defaultTab = 'foryou', guestMode = false }: FeedProps = {}) => {
   };
 
 
+  // Listen for feed refresh event
+  useEffect(() => {
+    const handleRefresh = () => {
+      fetchPosts(0, true);
+      toast.success('Feed refreshed!');
+    };
+    window.addEventListener('feed-refresh', handleRefresh);
+    return () => window.removeEventListener('feed-refresh', handleRefresh);
+  }, [fetchPosts]);
+
   return (
     <div className="h-full flex flex-col max-w-4xl mx-auto">
+      {/* Pull to refresh indicator */}
+      <PullToRefreshIndicator 
+        pullDistance={pullDistance} 
+        isRefreshing={isRefreshing} 
+        progress={Math.min(pullDistance / 80, 1)} 
+      />
       <SEO
         title="Feed — Latest Posts, Updates & Trending Topics | AfuChat"
         description="Discover the latest posts, trending topics, viral content, and updates from your network on AfuChat's social feed. Share your thoughts, like posts, comment, and connect with friends and creators. Join conversations happening now on social media."
