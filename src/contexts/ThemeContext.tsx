@@ -10,17 +10,37 @@ interface ThemeContextType {
 
 const ThemeContext = createContext<ThemeContextType | undefined>(undefined);
 
-export function ThemeProvider({ children }: { children: React.ReactNode }) {
-  const [theme, setThemeState] = useState<Theme>(() => {
-    if (typeof window === 'undefined') return 'system';
-    const stored = localStorage.getItem('theme') as Theme;
-    return stored || 'system';
-  });
+// Apply theme immediately to prevent flash
+const getInitialTheme = (): { theme: Theme; resolved: 'light' | 'dark' } => {
+  if (typeof window === 'undefined') {
+    return { theme: 'system', resolved: 'light' };
+  }
+  
+  const stored = localStorage.getItem('theme') as Theme;
+  const currentTheme = stored || 'system';
+  const mediaQuery = window.matchMedia('(prefers-color-scheme: dark)');
+  
+  let resolved: 'light' | 'dark';
+  if (currentTheme === 'system') {
+    resolved = mediaQuery.matches ? 'dark' : 'light';
+  } else {
+    resolved = currentTheme;
+  }
+  
+  // Apply immediately before React renders
+  const root = document.documentElement;
+  root.classList.remove('light', 'dark');
+  root.classList.add(resolved);
+  
+  return { theme: currentTheme, resolved };
+};
 
-  const [resolvedTheme, setResolvedTheme] = useState<'light' | 'dark'>(() => {
-    if (typeof window === 'undefined') return 'light';
-    return window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
-  });
+// Run once on module load to prevent flash
+const initialValues = typeof window !== 'undefined' ? getInitialTheme() : { theme: 'system' as Theme, resolved: 'light' as const };
+
+export function ThemeProvider({ children }: { children: React.ReactNode }) {
+  const [theme, setThemeState] = useState<Theme>(initialValues.theme);
+  const [resolvedTheme, setResolvedTheme] = useState<'light' | 'dark'>(initialValues.resolved);
 
   const updateTheme = useCallback((currentTheme: Theme) => {
     const root = document.documentElement;
