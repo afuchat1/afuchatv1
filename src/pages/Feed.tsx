@@ -2233,11 +2233,18 @@ const Feed = ({ defaultTab = 'foryou', guestMode = false }: FeedProps = {}) => {
 
   // Premium button component
   const PremiumButton = () => {
-    const { isPremium, expiresAt } = usePremiumStatus();
+    const { isPremium, loading, expiresAt } = usePremiumStatus();
     
-    if (isPremium) {
+    // Show stable placeholder during loading to prevent flashing
+    if (loading) {
+      return (
+        <div className="flex-shrink-0 w-8 h-8 rounded-full bg-muted animate-pulse" />
+      );
+    }
+    
+    if (isPremium && expiresAt) {
       // For subscribers: show subtle verified/premium indicator
-      const daysLeft = expiresAt ? Math.ceil((new Date(expiresAt).getTime() - Date.now()) / (1000 * 60 * 60 * 24)) : 0;
+      const daysLeft = Math.max(0, Math.ceil((new Date(expiresAt).getTime() - Date.now()) / (1000 * 60 * 60 * 24)));
       return (
         <Link to="/premium" className="flex-shrink-0 flex items-center gap-1.5 px-2 py-1 rounded-full bg-primary/10">
           <Crown className="h-4 w-4 text-primary" />
@@ -2250,7 +2257,7 @@ const Feed = ({ defaultTab = 'foryou', guestMode = false }: FeedProps = {}) => {
     return (
       <Link 
         to="/premium" 
-        className="flex-shrink-0 flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-gradient-to-r from-primary to-primary/80 text-primary-foreground hover:opacity-90 transition-opacity animate-pulse"
+        className="flex-shrink-0 flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-gradient-to-r from-primary to-primary/80 text-primary-foreground hover:opacity-90 transition-opacity"
       >
         <Crown className="h-4 w-4" />
         <span className="text-xs font-semibold">Get Premium</span>
