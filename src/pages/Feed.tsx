@@ -35,6 +35,7 @@ import { SEO } from '@/components/SEO';
 import { NativeAdCard } from '@/components/ads/NativeAdCard';
 import { AdsterraBannerAd } from '@/components/ads/AdsterraBannerAd';
 import { AdsterraNativeAdCard } from '@/components/ads/AdsterraNativeAdCard';
+import { cn } from '@/lib/utils';
 
 // --- INTERFACES ---
 
@@ -2245,6 +2246,27 @@ const Feed = ({ defaultTab = 'foryou', guestMode = false }: FeedProps = {}) => {
     }
   };
 
+  // Scroll-based header visibility (synced with bottom nav)
+  const [isScrollingDown, setIsScrollingDown] = useState(false);
+  const [lastScrollY, setLastScrollY] = useState(0);
+
+  useEffect(() => {
+    const handleScroll = () => {
+      const currentScrollY = window.scrollY;
+      
+      if (currentScrollY > lastScrollY && currentScrollY > 60) {
+        setIsScrollingDown(true);
+      } else {
+        setIsScrollingDown(false);
+      }
+      
+      setLastScrollY(currentScrollY);
+    };
+
+    window.addEventListener('scroll', handleScroll, { passive: true });
+    return () => window.removeEventListener('scroll', handleScroll);
+  }, [lastScrollY]);
+
   return (
     <div className="h-full flex flex-col max-w-4xl mx-auto">
       <SEO 
@@ -2252,22 +2274,32 @@ const Feed = ({ defaultTab = 'foryou', guestMode = false }: FeedProps = {}) => {
         description="Discover the latest posts, trending topics, viral content, and updates from your network on AfuChat's social feed. Share your thoughts, like posts, comment, and connect with friends and creators. Join conversations happening now on social media."
         keywords="social feed, latest posts, trending topics, social media feed, viral content, user posts, trending hashtags, social updates, share posts, like and comment, follow friends, online feed, social stream, community posts, news feed"
       />
-      <Tabs value={activeTab} onValueChange={(v) => setActiveTab(v as 'foryou' | 'following')} className="w-full">
+      
+      {/* Fixed Header - hides on scroll like X */}
+      <div className={cn(
+        "fixed top-0 left-0 right-0 z-30 bg-background/95 backdrop-blur-md border-b border-border transition-transform duration-300 max-w-4xl mx-auto",
+        isScrollingDown ? "-translate-y-full" : "translate-y-0"
+      )}>
+        <div className="flex items-center justify-between px-4 py-3">
+          <Link to={user ? `/${user.id}` : '/auth'} className="flex-shrink-0">
+            <Avatar className="h-8 w-8">
+              <AvatarImage src={userProfile?.avatar_url || undefined} />
+              <AvatarFallback className="bg-primary text-primary-foreground text-xs">
+                {userProfile?.display_name?.charAt(0)?.toUpperCase() || 'U'}
+              </AvatarFallback>
+            </Avatar>
+          </Link>
+          <img src={platformLogo} alt="AfuChat" className="h-8 w-8" />
+          <PremiumButton />
+        </div>
+      </div>
+
+      {/* Spacer for fixed header */}
+      <div className="h-14" />
+
+      <Tabs value={activeTab} onValueChange={(v) => setActiveTab(v as 'foryou' | 'following')} className="w-full flex-1">
+        {/* Sticky Tabs - part of scrollable content */}
         <div className="sticky top-0 z-20 bg-background/95 backdrop-blur-md border-b border-border">
-          {/* Header with profile pic, logo, and premium */}
-          <div className="flex items-center justify-between px-4 py-3">
-            <Link to={user ? `/${user.id}` : '/auth'} className="flex-shrink-0">
-              <Avatar className="h-8 w-8">
-                <AvatarImage src={userProfile?.avatar_url || undefined} />
-                <AvatarFallback className="bg-primary text-primary-foreground text-xs">
-                  {userProfile?.display_name?.charAt(0)?.toUpperCase() || 'U'}
-                </AvatarFallback>
-              </Avatar>
-            </Link>
-            <img src={platformLogo} alt="AfuChat" className="h-8 w-8" />
-            <PremiumButton />
-          </div>
-          
           {newPostsCount > 0 && (
             <button
               onClick={handleLoadNewPosts}
@@ -2292,7 +2324,7 @@ const Feed = ({ defaultTab = 'foryou', guestMode = false }: FeedProps = {}) => {
           </TabsList>
         </div>
 
-        <TabsContent value={activeTab} className="flex-1 overflow-y-auto m-0" ref={feedRef}>
+        <TabsContent value={activeTab} className="flex-1 m-0" ref={feedRef}>
           {/* Adsterra Banner Ad */}
           <AdsterraBannerAd />
           
