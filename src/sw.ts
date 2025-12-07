@@ -183,7 +183,10 @@ self.addEventListener('install', (event) => {
         '/index.html',
         '/favicon.png',
         '/logo.jpg'
-      ]);
+      ]).catch(() => {
+        // Fail silently if some assets aren't available yet
+        console.log('Some critical assets could not be cached');
+      });
     })
   );
 });
