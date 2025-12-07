@@ -2222,17 +2222,6 @@ const Feed = ({ defaultTab = 'foryou', guestMode = false }: FeedProps = {}) => {
 
   // Premium button - memoized to prevent re-renders on scroll (must be before conditional returns)
   const { isPremium, loading: premiumLoading, expiresAt } = usePremiumStatus();
-
-  if (loading && posts.length === 0 && followingPosts.length === 0) {
-    return (
-      <div className="flex items-center justify-center min-h-screen">
-        <CustomLoader size="lg" text={t('common.loading') || 'Loading...'} />
-      </div>
-    );
-  }
-
-  const currentPosts = activeTab === 'foryou' ? posts : followingPosts;
-  const adNativeIndex = currentPosts.length > 0 ? Math.min(9, currentPosts.length - 1) : -1;
   
   const premiumButton = useMemo(() => {
     // Show stable placeholder during loading to prevent flashing
@@ -2264,6 +2253,17 @@ const Feed = ({ defaultTab = 'foryou', guestMode = false }: FeedProps = {}) => {
       </Link>
     );
   }, [isPremium, premiumLoading, expiresAt]);
+
+  if (loading && posts.length === 0 && followingPosts.length === 0) {
+    return (
+      <div className="flex items-center justify-center min-h-screen">
+        <CustomLoader size="lg" text={t('common.loading') || 'Loading...'} />
+      </div>
+    );
+  }
+
+  const currentPosts = activeTab === 'foryou' ? posts : followingPosts;
+  const adNativeIndex = currentPosts.length > 0 ? Math.min(9, currentPosts.length - 1) : -1;
 
   const handleLoadNewPosts = () => {
     setCurrentPage(0);
