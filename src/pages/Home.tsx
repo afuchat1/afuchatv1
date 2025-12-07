@@ -11,7 +11,7 @@ import { ProfileCompletionBanner } from '@/components/ProfileCompletionBanner';
 import { GuestAuthBanner } from '@/components/GuestAuthBanner';
 
 const Home = () => {
-  const { user } = useAuth();
+  const { user, loading } = useAuth();
   const navigate = useNavigate();
   const [searchParams, setSearchParams] = useSearchParams();
   const [isPostModalOpen, setIsPostModalOpen] = useState(false);
@@ -69,8 +69,8 @@ const Home = () => {
     }
   };
 
-  // Only show loading for authenticated users checking follows
-  if (user && checkingFollows) {
+  // Show loading while checking auth or follows
+  if (loading || (user && checkingFollows)) {
     return (
       <div className="flex items-center justify-center min-h-screen bg-background">
         <CustomLoader size="lg" />
