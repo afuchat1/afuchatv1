@@ -1846,38 +1846,6 @@ const Feed = ({ defaultTab = 'foryou', guestMode = false }: FeedProps = {}) => {
     };
   }, [handleLoadMore]);
 
-  // Listen for optimistic post events
-  useEffect(() => {
-    const handleOptimisticPostAdd = (event: CustomEvent) => {
-      const optimisticPost = event.detail;
-      setPosts(prev => [optimisticPost, ...prev]);
-      setFollowingPosts(prev => [optimisticPost, ...prev]);
-    };
-
-    const handleOptimisticPostSuccess = (event: CustomEvent) => {
-      const { tempId } = event.detail;
-      // Remove optimistic post - real-time subscription will add the real one
-      setPosts(prev => prev.filter(p => p.id !== tempId));
-      setFollowingPosts(prev => prev.filter(p => p.id !== tempId));
-    };
-
-    const handleOptimisticPostError = (event: CustomEvent) => {
-      const tempId = event.detail;
-      // Remove failed optimistic post
-      setPosts(prev => prev.filter(p => p.id !== tempId));
-      setFollowingPosts(prev => prev.filter(p => p.id !== tempId));
-    };
-
-    window.addEventListener('optimistic-post-add', handleOptimisticPostAdd as EventListener);
-    window.addEventListener('optimistic-post-success', handleOptimisticPostSuccess as EventListener);
-    window.addEventListener('optimistic-post-error', handleOptimisticPostError as EventListener);
-
-    return () => {
-      window.removeEventListener('optimistic-post-add', handleOptimisticPostAdd as EventListener);
-      window.removeEventListener('optimistic-post-success', handleOptimisticPostSuccess as EventListener);
-      window.removeEventListener('optimistic-post-error', handleOptimisticPostError as EventListener);
-    };
-  }, []);
 
   useEffect(() => {
     const postsChannel = supabase
