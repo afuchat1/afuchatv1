@@ -2220,6 +2220,9 @@ const Feed = ({ defaultTab = 'foryou', guestMode = false }: FeedProps = {}) => {
     return () => window.removeEventListener('scroll', handleScroll);
   }, [lastScrollY]);
 
+  // Premium button - memoized to prevent re-renders on scroll (must be before conditional returns)
+  const { isPremium, loading: premiumLoading, expiresAt } = usePremiumStatus();
+
   if (loading && posts.length === 0 && followingPosts.length === 0) {
     return (
       <div className="flex items-center justify-center min-h-screen">
@@ -2230,9 +2233,6 @@ const Feed = ({ defaultTab = 'foryou', guestMode = false }: FeedProps = {}) => {
 
   const currentPosts = activeTab === 'foryou' ? posts : followingPosts;
   const adNativeIndex = currentPosts.length > 0 ? Math.min(9, currentPosts.length - 1) : -1;
-
-  // Premium button - memoized to prevent re-renders on scroll
-  const { isPremium, loading: premiumLoading, expiresAt } = usePremiumStatus();
   
   const premiumButton = useMemo(() => {
     // Show stable placeholder during loading to prevent flashing
