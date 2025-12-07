@@ -3,7 +3,9 @@ import { useNavigate, Link } from 'react-router-dom';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/contexts/AuthContext';
 import { toast } from 'sonner';
-import { MessageSquare, Heart, Send, Ellipsis, Gift, Eye, TrendingUp } from 'lucide-react';
+import { MessageSquare, Heart, Send, Ellipsis, Gift, Eye, TrendingUp, Crown } from 'lucide-react';
+import platformLogo from '@/assets/platform-logo.png';
+import { usePremiumStatus } from '@/hooks/usePremiumStatus';
 import { CustomLoader, InlineLoader } from '@/components/ui/CustomLoader';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -2206,6 +2208,25 @@ const Feed = ({ defaultTab = 'foryou', guestMode = false }: FeedProps = {}) => {
   const currentPosts = activeTab === 'foryou' ? posts : followingPosts;
   const adNativeIndex = currentPosts.length > 0 ? Math.min(9, currentPosts.length - 1) : -1;
 
+  // Premium button component
+  const PremiumButton = () => {
+    const { isPremium } = usePremiumStatus();
+    
+    if (isPremium) {
+      return (
+        <Link to="/premium" className="flex-shrink-0">
+          <Crown className="h-6 w-6 text-primary" />
+        </Link>
+      );
+    }
+    
+    return (
+      <Link to="/premium" className="flex-shrink-0">
+        <Crown className="h-6 w-6 text-muted-foreground hover:text-primary transition-colors" />
+      </Link>
+    );
+  };
+
   const handleLoadNewPosts = () => {
     setCurrentPage(0);
     setHasMore(true);
@@ -2225,7 +2246,7 @@ const Feed = ({ defaultTab = 'foryou', guestMode = false }: FeedProps = {}) => {
       />
       <Tabs value={activeTab} onValueChange={(v) => setActiveTab(v as 'foryou' | 'following')} className="w-full">
         <div className="sticky top-0 z-20 bg-background/95 backdrop-blur-md border-b border-border">
-          {/* Header with profile pic */}
+          {/* Header with profile pic, logo, and premium */}
           <div className="flex items-center justify-between px-4 py-3">
             <Link to={user ? `/${user.id}` : '/auth'} className="flex-shrink-0">
               <Avatar className="h-8 w-8">
@@ -2235,8 +2256,8 @@ const Feed = ({ defaultTab = 'foryou', guestMode = false }: FeedProps = {}) => {
                 </AvatarFallback>
               </Avatar>
             </Link>
-            <span className="text-lg font-bold">Home</span>
-            <div className="w-8" /> {/* Spacer for balance */}
+            <img src={platformLogo} alt="AfuChat" className="h-8 w-8" />
+            <PremiumButton />
           </div>
           
           {newPostsCount > 0 && (
@@ -2276,7 +2297,7 @@ const Feed = ({ defaultTab = 'foryou', guestMode = false }: FeedProps = {}) => {
           ) : (
             <>
               {currentPosts.map((post, index) => (
-                <div key={post.id}>
+                <div key={post.id} className="border-t border-border">
                   <PostCard
                     post={post}
                     addReply={addReply}
