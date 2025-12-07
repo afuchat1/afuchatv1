@@ -166,11 +166,24 @@
     -webkit-touch-callout: none;
   }
   
-  body {
-    @apply bg-background text-foreground smooth-scroll;
+  html, body {
+    @apply bg-background text-foreground;
     font-family: 'Inter', sans-serif;
     -webkit-font-smoothing: antialiased;
     -moz-osx-font-smoothing: grayscale;
+    overflow-x: hidden;
+    overscroll-behavior: none;
+  }
+  
+  /* App-like fixed viewport */
+  html {
+    height: 100%;
+    height: -webkit-fill-available;
+  }
+  
+  body {
+    min-height: 100%;
+    min-height: -webkit-fill-available;
   }
   
   /* Remove all click/tap markers and outlines */

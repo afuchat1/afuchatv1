@@ -1,4 +1,4 @@
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, Link } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import Logo from '@/components/Logo';
 
@@ -6,7 +6,7 @@ const Welcome = () => {
   const navigate = useNavigate();
 
   return (
-    <div className="min-h-screen flex flex-col md:flex-row animate-fade-in">
+    <div className="min-h-screen flex flex-col md:flex-row bg-background overflow-hidden">
       {/* Left side - Branding */}
       <div className="hidden md:flex md:w-1/2 bg-gradient-to-br from-primary/10 via-secondary/10 to-background items-center justify-center p-8">
         <div className="max-w-md">
@@ -71,13 +71,13 @@ const Welcome = () => {
 
           <p className="text-xs text-center text-muted-foreground mt-8">
             By signing up, you agree to our{' '}
-            <a href="/terms" className="text-primary hover:underline">
+            <Link to="/terms" className="text-primary hover:underline">
               Terms of Service
-            </a>{' '}
+            </Link>{' '}
             and{' '}
-            <a href="/privacy" className="text-primary hover:underline">
+            <Link to="/privacy" className="text-primary hover:underline">
               Privacy Policy
-            </a>
+            </Link>
             .
           </p>
         </div>
