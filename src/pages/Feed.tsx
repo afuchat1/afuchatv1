@@ -2224,7 +2224,21 @@ const Feed = ({ defaultTab = 'foryou', guestMode = false }: FeedProps = {}) => {
         keywords="social feed, latest posts, trending topics, social media feed, viral content, user posts, trending hashtags, social updates, share posts, like and comment, follow friends, online feed, social stream, community posts, news feed"
       />
       <Tabs value={activeTab} onValueChange={(v) => setActiveTab(v as 'foryou' | 'following')} className="w-full">
-        <div>
+        <div className="sticky top-0 z-20 bg-background/95 backdrop-blur-md border-b border-border">
+          {/* Header with profile pic */}
+          <div className="flex items-center justify-between px-4 py-3">
+            <Link to={user ? `/${user.id}` : '/auth'} className="flex-shrink-0">
+              <Avatar className="h-8 w-8">
+                <AvatarImage src={userProfile?.avatar_url || undefined} />
+                <AvatarFallback className="bg-primary text-primary-foreground text-xs">
+                  {userProfile?.display_name?.charAt(0)?.toUpperCase() || 'U'}
+                </AvatarFallback>
+              </Avatar>
+            </Link>
+            <span className="text-lg font-bold">Home</span>
+            <div className="w-8" /> {/* Spacer for balance */}
+          </div>
+          
           {newPostsCount > 0 && (
             <button
               onClick={handleLoadNewPosts}
@@ -2233,7 +2247,7 @@ const Feed = ({ defaultTab = 'foryou', guestMode = false }: FeedProps = {}) => {
               <span>Show {newPostsCount} new {newPostsCount === 1 ? 'post' : 'posts'}</span>
             </button>
           )}
-          <TabsList className="grid grid-cols-2 w-full h-14 rounded-none bg-transparent">
+          <TabsList className="grid grid-cols-2 w-full h-12 rounded-none bg-transparent">
             <TabsTrigger
               value="foryou"
               className="data-[state=active]:bg-transparent data-[state=active]:text-foreground data-[state=inactive]:text-muted-foreground rounded-none font-bold h-full flex items-center gap-1.5 hover:bg-muted/50 transition-colors"
