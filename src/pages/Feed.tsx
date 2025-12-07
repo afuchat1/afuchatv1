@@ -6,6 +6,7 @@ import { useAuth } from '@/contexts/AuthContext';
 import { toast } from 'sonner';
 import { MessageSquare, Heart, Send, Ellipsis, Gift, Eye, TrendingUp, Crown } from 'lucide-react';
 import platformLogo from '@/assets/platform-logo.png';
+import aiSparkIcon from '@/assets/ai-spark-icon.png';
 import { usePremiumStatus } from '@/hooks/usePremiumStatus';
 import { CustomLoader, InlineLoader } from '@/components/ui/CustomLoader';
 import { Button } from '@/components/ui/button';
@@ -991,6 +992,15 @@ const PostCard = ({ post, addReply, user, navigate, onAcknowledge, onDeletePost,
           >
             <TrendingUp className="h-3.5 w-3.5 sm:h-4 sm:w-4 text-muted-foreground group-hover:text-primary transition-colors" />
             <span className="text-[10px] sm:text-xs group-hover:text-primary transition-colors">{post.view_count > 0 ? post.view_count : ''}</span>
+          </Button>
+          <Button 
+            variant="ghost" 
+            size="sm" 
+            className="flex items-center gap-0.5 sm:gap-1 group h-7 sm:h-8 px-2 sm:px-3"
+            onClick={handleAiTransfer}
+            title={t('feed.analyzePost')}
+          >
+            <img src={aiSparkIcon} alt="AI" className="h-3.5 w-3.5 sm:h-4 sm:w-4 opacity-70 group-hover:opacity-100 transition-opacity" />
           </Button>
           <Button variant="ghost" size="sm" className="flex items-center gap-0.5 sm:gap-1 group h-7 sm:h-8 px-2 sm:px-3" onClick={handleShare}>
             <Send className="h-3.5 w-3.5 sm:h-4 sm:w-4 group-hover:text-primary transition-colors" />
