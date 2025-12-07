@@ -1,6 +1,7 @@
 import { Badge } from '@/components/ui/badge';
 import { ExternalLink } from 'lucide-react';
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useRef } from 'react';
+import { usePremiumStatus } from '@/hooks/usePremiumStatus';
 
 interface NativeAdCardProps {
   slot: string;
@@ -8,8 +9,12 @@ interface NativeAdCardProps {
 
 export const NativeAdCard = ({ slot }: NativeAdCardProps) => {
   const adRef = useRef<HTMLDivElement>(null);
+  const { isPremium, loading } = usePremiumStatus();
 
   useEffect(() => {
+    // Don't load ads for premium users
+    if (isPremium || loading) return;
+
     try {
       console.log('[NativeAdCard] Initializing AdSense for slot:', slot);
       // @ts-ignore
@@ -18,7 +23,12 @@ export const NativeAdCard = ({ slot }: NativeAdCardProps) => {
     } catch (err) {
       console.error('[NativeAdCard] AdSense error:', err);
     }
-  }, [slot]);
+  }, [slot, isPremium, loading]);
+
+  // Don't render ads for premium users
+  if (loading || isPremium) {
+    return null;
+  }
 
   return (
     <div className="border-b border-border p-4 bg-background/50 backdrop-blur-sm">

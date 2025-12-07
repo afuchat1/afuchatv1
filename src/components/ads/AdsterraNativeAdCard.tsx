@@ -1,13 +1,18 @@
 import { Badge } from '@/components/ui/badge';
 import { ExternalLink } from 'lucide-react';
 import { useEffect, useRef } from 'react';
+import { usePremiumStatus } from '@/hooks/usePremiumStatus';
 
 // Adsterra native ad card using official container ID snippet
 // This component assumes Adsterra will fill the container when the script runs.
 export const AdsterraNativeAdCard = () => {
   const adRef = useRef<HTMLDivElement>(null);
+  const { isPremium, loading } = usePremiumStatus();
 
   useEffect(() => {
+    // Don't load ads for premium users
+    if (isPremium || loading) return;
+
     // Load the script only once globally
     const globalKey = '__adsterra_native_loaded__';
     const w = window as any;
@@ -34,7 +39,12 @@ export const AdsterraNativeAdCard = () => {
         console.error('[AdsterraNativeAdCard] Error injecting script', err);
       }
     }
-  }, []);
+  }, [isPremium, loading]);
+
+  // Don't render ads for premium users
+  if (loading || isPremium) {
+    return null;
+  }
 
   return (
     <div className="border-b border-border p-4 bg-background/50 backdrop-blur-sm">

@@ -1,11 +1,16 @@
 import { Badge } from '@/components/ui/badge';
 import { ExternalLink } from 'lucide-react';
 import { useEffect, useRef } from 'react';
+import { usePremiumStatus } from '@/hooks/usePremiumStatus';
 
 export const AdsterraBannerAd = () => {
   const adRef = useRef<HTMLDivElement>(null);
+  const { isPremium, loading } = usePremiumStatus();
 
   useEffect(() => {
+    // Don't load ads for premium users
+    if (isPremium || loading) return;
+
     console.log('[AdsterraBannerAd] Loading Adsterra banner ad script');
     
     // Set up atOptions configuration
@@ -40,7 +45,12 @@ export const AdsterraBannerAd = () => {
         adRef.current.removeChild(script);
       }
     };
-  }, []);
+  }, [isPremium, loading]);
+
+  // Don't render ads for premium users
+  if (loading || isPremium) {
+    return null;
+  }
 
   return (
     <div className="border-b border-border p-4 bg-accent/5 backdrop-blur-sm">
