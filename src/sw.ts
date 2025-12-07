@@ -181,8 +181,7 @@ self.addEventListener('install', (event) => {
       return cache.addAll([
         '/',
         '/index.html',
-        '/favicon.png',
-        '/logo.jpg'
+        '/favicon.png'
       ]).catch(() => {
         // Fail silently if some assets aren't available yet
         console.log('Some critical assets could not be cached');

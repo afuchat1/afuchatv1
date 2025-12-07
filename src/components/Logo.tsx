@@ -1,4 +1,4 @@
-import logo from '@/assets/logo.png';
+import platformIcon from '@/assets/platform-icon.png';
 
 interface LogoProps {
   size?: 'sm' | 'md' | 'lg';
@@ -14,9 +14,9 @@ const Logo = ({ size = 'md', className = '' }: LogoProps) => {
 
   return (
     <img
-      src={logo}
-      alt="AfuChat Logo"
-      className={`${sizeClasses[size]} ${className} rounded-full object-cover`}
+      src={platformIcon}
+      alt="AfuChat"
+      className={`${sizeClasses[size]} ${className} object-contain`}
     />
   );
 };
