@@ -1120,6 +1120,9 @@ const Feed = ({ defaultTab = 'foryou', guestMode = false }: FeedProps = {}) => {
   const navigate = useNavigate();
   const feedRef = useRef<HTMLDivElement>(null);
   
+  // Premium status - must be at top level with other hooks
+  const { isPremium, loading: premiumLoading, expiresAt } = usePremiumStatus();
+  
   // All useState hooks first
   const [posts, setPosts] = useState<Post[]>([]);
   const [followingPosts, setFollowingPosts] = useState<Post[]>([]);
@@ -2210,9 +2213,7 @@ const Feed = ({ defaultTab = 'foryou', guestMode = false }: FeedProps = {}) => {
     return () => window.removeEventListener('scroll', handleScroll);
   }, [lastScrollY]);
 
-  // Premium button - memoized to prevent re-renders on scroll (must be before conditional returns)
-  const { isPremium, loading: premiumLoading, expiresAt } = usePremiumStatus();
-  
+  // Premium button - memoized to prevent re-renders on scroll
   const premiumButton = useMemo(() => {
     // Show stable placeholder during loading to prevent flashing
     if (premiumLoading) {
