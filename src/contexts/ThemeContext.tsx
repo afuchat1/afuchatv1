@@ -38,6 +38,13 @@ export function ThemeProvider({ children }: { children: React.ReactNode }) {
     // Remove both classes first to ensure clean state
     root.classList.remove('light', 'dark');
     root.classList.add(resolved);
+
+    // Update meta theme-color for status bar
+    const themeColor = resolved === 'dark' ? '#0F1114' : '#F6F6F6';
+    const metaThemeColor = document.querySelector('meta[name="theme-color"]:not([media])');
+    if (metaThemeColor) {
+      metaThemeColor.setAttribute('content', themeColor);
+    }
   }, []);
 
   useEffect(() => {
