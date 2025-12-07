@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import { useAuth } from '@/contexts/AuthContext';
 import { supabase } from '@/integrations/supabase/client';
-import { X, AlertCircle } from 'lucide-react';
+import { X, AlertCircle, Sparkles } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { useNavigate } from 'react-router-dom';
 
@@ -13,18 +13,27 @@ export const ProfileCompletionBanner = () => {
   const [userHandle, setUserHandle] = useState<string>('');
 
   useEffect(() => {
+    // Check if previously dismissed in this session
+    const wasDismissed = sessionStorage.getItem('profileCompletionDismissed');
+    if (wasDismissed) {
+      setDismissed(true);
+      return;
+    }
+
     const checkProfile = async () => {
       if (!user || dismissed) return;
 
       const { data: profile } = await supabase
         .from('profiles')
-        .select('phone_number, country, avatar_url, bio, handle')
+        .select('phone_number, country, avatar_url, bio, handle, profile_completion_rewarded')
         .eq('id', user.id)
         .single();
 
       if (profile) {
         setUserHandle(profile.handle);
-        if (!profile.phone_number || !profile.country || !profile.avatar_url || !profile.bio) {
+        // Show banner if any profile field is incomplete AND not already rewarded
+        const isIncomplete = !profile.phone_number || !profile.country || !profile.avatar_url || !profile.bio;
+        if (isIncomplete && !profile.profile_completion_rewarded) {
           setShow(true);
         }
       }
@@ -36,7 +45,8 @@ export const ProfileCompletionBanner = () => {
   const handleDismiss = () => {
     setDismissed(true);
     setShow(false);
-    localStorage.setItem('profileCompletionDismissed', 'true');
+    // Use session storage so it reappears on next visit
+    sessionStorage.setItem('profileCompletionDismissed', 'true');
   };
 
   const handleComplete = () => {
@@ -48,20 +58,21 @@ export const ProfileCompletionBanner = () => {
   if (!show) return null;
 
   return (
-    <div className="bg-primary/10 border-b border-primary/20 px-4 py-3">
-      <div className="flex items-center justify-between max-w-7xl mx-auto">
-        <div className="flex items-center gap-3 flex-1">
-          <AlertCircle className="h-5 w-5 text-primary flex-shrink-0" />
-          <p className="text-sm text-foreground">
-            Complete your profile (picture, bio, phone, country) to earn 100 Nexa rewards!
+    <div className="fixed top-0 left-0 right-0 z-[100] bg-gradient-to-r from-primary/15 via-primary/10 to-primary/15 border-b border-primary/30 backdrop-blur-sm">
+      <div className="flex items-center justify-between px-4 py-2.5 max-w-7xl mx-auto">
+        <div className="flex items-center gap-2.5 flex-1 min-w-0">
+          <div className="flex items-center justify-center w-7 h-7 rounded-full bg-primary/20 flex-shrink-0">
+            <Sparkles className="h-4 w-4 text-primary" />
+          </div>
+          <p className="text-xs sm:text-sm text-foreground truncate">
+            Complete your profile to earn <span className="font-semibold text-primary">100 Nexa</span>!
           </p>
         </div>
-        <div className="flex items-center gap-2">
+        <div className="flex items-center gap-1.5 flex-shrink-0">
           <Button
             size="sm"
-            variant="ghost"
             onClick={handleComplete}
-            className="text-primary hover:text-primary"
+            className="h-7 px-3 text-xs font-medium bg-primary hover:bg-primary/90"
           >
             Complete
           </Button>
@@ -69,6 +80,7 @@ export const ProfileCompletionBanner = () => {
             size="sm"
             variant="ghost"
             onClick={handleDismiss}
+            className="h-7 w-7 p-0"
           >
             <X className="h-4 w-4" />
           </Button>

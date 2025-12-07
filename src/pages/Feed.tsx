@@ -1807,84 +1807,8 @@ const Feed = ({ defaultTab = 'foryou', guestMode = false }: FeedProps = {}) => {
   useEffect(() => {
     const postsChannel = supabase
       .channel('feed-updates')
-      .on(
-        'postgres_changes',
-        { event: 'INSERT', schema: 'public', table: 'posts' },
-        async (payload) => {
-          // Fetch complete post data with profile info
-          const { data: newPost, error } = await supabase
-            .from('posts')
-            .select(`
-              *,
-              profiles(display_name, handle, is_verified, is_organization_verified, is_affiliate, is_business_mode, avatar_url, affiliated_business_id, last_seen, show_online_status),
-              post_images(image_url, display_order, alt_text),
-              post_link_previews(url, title, description, image_url, site_name)
-            `)
-            .eq('id', payload.new.id)
-            .single();
-
-          if (!error && newPost) {
-            // Fetch affiliated business data if needed
-            let affiliated_business = null;
-            if (newPost.profiles?.affiliated_business_id) {
-              const { data: businessData } = await supabase
-                .from('profiles')
-                .select('avatar_url, display_name')
-                .eq('id', newPost.profiles.affiliated_business_id)
-                .single();
-              affiliated_business = businessData || null;
-            }
-
-            const formattedPost: Post = {
-              ...newPost,
-              profiles: newPost.profiles 
-                ? { ...newPost.profiles, affiliated_business }
-                : { 
-                    display_name: 'Unknown', 
-                    handle: 'unknown', 
-                    is_verified: false, 
-                    is_organization_verified: false,
-                    is_affiliate: false,
-                    is_business_mode: false,
-                    avatar_url: null,
-                    affiliated_business_id: null,
-                    affiliated_business: null,
-                    last_seen: null,
-                    show_online_status: false
-                  },
-              replies: [],
-              reply_count: 0,
-              like_count: 0,
-              has_liked: false,
-            };
-
-            // Add to both feeds (check for duplicates first)
-            setPosts(prev => {
-              if (prev.some(p => p.id === formattedPost.id)) return prev;
-              return [formattedPost, ...prev];
-            });
-            
-            // Check if post is from someone user follows for "Following" feed
-            if (user) {
-              const { data: isFollowing } = await supabase
-                .from('follows')
-                .select('id')
-                .eq('follower_id', user.id)
-                .eq('following_id', newPost.author_id)
-                .single();
-              
-              if (isFollowing) {
-                setFollowingPosts(prev => {
-                  if (prev.some(p => p.id === formattedPost.id)) return prev;
-                  return [formattedPost, ...prev];
-                });
-              }
-            }
-            
-            setNewPostsCount(prev => prev + 1);
-          }
-        }
-      )
+      // NOTE: Removed real-time auto-append for new posts - feed now only updates on refresh
+      // This provides a more controlled experience where users refresh to see new content
       .on(
         'postgres_changes',
         { event: 'UPDATE', schema: 'public', table: 'posts' },
