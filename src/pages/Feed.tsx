@@ -851,16 +851,14 @@ const PostCard = ({ post, addReply, user, navigate, onAcknowledge, onDeletePost,
             </span>
           </div>
 
-          <div className="flex items-center gap-0.5">
-            <Button 
-                variant="ghost" 
-                size="icon" 
-                className="h-8 w-8 rounded-full flex-shrink-0 opacity-70 hover:opacity-100 transition-opacity" 
+          <div className="flex items-center gap-1">
+            <button 
+                className="p-1 opacity-60 hover:opacity-100 transition-opacity" 
                 title={t('feed.analyzePost')}
                 onClick={handleAiTransfer}
             >
                 <img src={aiSparkIcon} alt="AI" className="h-4 w-4" />
-            </Button>
+            </button>
             
             <PostActionsSheet
                 post={post}

@@ -345,9 +345,9 @@ const PostActionsSheet: React.FC<PostActionsSheetProps> = ({ post, user, navigat
     return (
         <Sheet>
             <SheetTrigger asChild>
-                <Button variant="ghost" size="icon" className="h-8 w-8 rounded-full flex-shrink-0">
+                <button className="p-1 opacity-60 hover:opacity-100 transition-opacity">
                     <Ellipsis className="h-4 w-4 text-muted-foreground" />
-                </Button>
+                </button>
             </SheetTrigger>
             
             <SheetContent 
