@@ -6,12 +6,51 @@ const corsHeaders = {
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
 };
 
+// Simple in-memory rate limiter (resets on cold start)
+const rateLimitMap = new Map<string, { count: number; timestamp: number }>();
+const RATE_LIMIT_WINDOW = 60 * 1000; // 1 minute
+const RATE_LIMIT_MAX = 10; // Max 10 requests per minute
+
+function checkRateLimit(identifier: string): boolean {
+  const now = Date.now();
+  const entry = rateLimitMap.get(identifier);
+  
+  if (!entry || now - entry.timestamp > RATE_LIMIT_WINDOW) {
+    rateLimitMap.set(identifier, { count: 1, timestamp: now });
+    return true;
+  }
+  
+  if (entry.count >= RATE_LIMIT_MAX) {
+    return false;
+  }
+  
+  entry.count++;
+  return true;
+}
+
 serve(async (req) => {
   if (req.method === 'OPTIONS') {
     return new Response(null, { headers: corsHeaders });
   }
 
   try {
+    // Get client IP for rate limiting (fallback to a default)
+    const clientIp = req.headers.get('x-forwarded-for')?.split(',')[0]?.trim() || 
+                     req.headers.get('x-real-ip') || 
+                     'unknown';
+    
+    // Apply rate limiting
+    if (!checkRateLimit(clientIp)) {
+      console.log('Rate limit exceeded for:', clientIp);
+      return new Response(
+        JSON.stringify({ error: 'Too many requests. Please try again later.' }),
+        { 
+          status: 429,
+          headers: { ...corsHeaders, 'Content-Type': 'application/json' }
+        }
+      );
+    }
+
     const { giftId, giftName, emoji, rarity } = await req.json();
     
     if (!giftId || !giftName || !emoji) {
@@ -23,7 +62,7 @@ serve(async (req) => {
     const supabaseKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!;
     const supabase = createClient(supabaseUrl, supabaseKey);
 
-    // Check if gift already has a generated image
+    // Check if gift already has a generated image - ALWAYS return cached if exists
     const { data: existingGift } = await supabase
       .from('gifts')
       .select('image_url')
@@ -36,6 +75,24 @@ serve(async (req) => {
         JSON.stringify({ imageUrl: existingGift.image_url }),
         { 
           status: 200,
+          headers: { ...corsHeaders, 'Content-Type': 'application/json' }
+        }
+      );
+    }
+
+    // Verify the gift exists in database before generating (prevents arbitrary gift creation)
+    const { data: giftExists, error: giftError } = await supabase
+      .from('gifts')
+      .select('id, name')
+      .eq('id', giftId)
+      .single();
+
+    if (giftError || !giftExists) {
+      console.log('Gift not found in database:', giftId);
+      return new Response(
+        JSON.stringify({ error: 'Gift not found' }),
+        { 
+          status: 404,
           headers: { ...corsHeaders, 'Content-Type': 'application/json' }
         }
       );
@@ -78,7 +135,7 @@ Object Requirements:
 
 VERIFY: After generation, only the gift object should be visible. All surrounding pixels must be fully transparent (alpha channel = 0).`;
 
-    console.log('Generating image with Runware:', prompt);
+    console.log('Generating image with Runware for gift:', giftId);
 
     const response = await fetch("https://api.runware.ai/v1", {
       method: "POST",
@@ -119,7 +176,7 @@ VERIFY: After generation, only the gift object should be visible. All surroundin
       throw new Error('No image data in response');
     }
 
-    console.log('Image generated successfully');
+    console.log('Image generated successfully for gift:', giftId);
 
     // Save the image URL to the database
     await supabase
@@ -127,7 +184,7 @@ VERIFY: After generation, only the gift object should be visible. All surroundin
       .update({ image_url: imageUrl })
       .eq('id', giftId);
 
-    console.log('Image URL saved to database');
+    console.log('Image URL saved to database for gift:', giftId);
 
     return new Response(
       JSON.stringify({ imageUrl }),

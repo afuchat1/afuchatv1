@@ -6,15 +6,71 @@ const corsHeaders = {
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
 };
 
+// Simple in-memory rate limiter (resets on cold start)
+const rateLimitMap = new Map<string, { count: number; timestamp: number; failures: number }>();
+const RATE_LIMIT_WINDOW = 60 * 1000; // 1 minute
+const RATE_LIMIT_MAX = 5; // Max 5 requests per minute per IP
+const FAILURE_BLOCK_THRESHOLD = 10; // Block after 10 failures
+
+function checkRateLimit(identifier: string, isFailure: boolean = false): { allowed: boolean; retryAfter?: number } {
+  const now = Date.now();
+  const entry = rateLimitMap.get(identifier);
+  
+  if (!entry || now - entry.timestamp > RATE_LIMIT_WINDOW) {
+    rateLimitMap.set(identifier, { count: 1, timestamp: now, failures: isFailure ? 1 : 0 });
+    return { allowed: true };
+  }
+  
+  // Check if blocked due to too many failures (potential enumeration attack)
+  if (entry.failures >= FAILURE_BLOCK_THRESHOLD) {
+    const retryAfter = Math.ceil((RATE_LIMIT_WINDOW - (now - entry.timestamp)) / 1000);
+    return { allowed: false, retryAfter };
+  }
+  
+  if (entry.count >= RATE_LIMIT_MAX) {
+    const retryAfter = Math.ceil((RATE_LIMIT_WINDOW - (now - entry.timestamp)) / 1000);
+    return { allowed: false, retryAfter };
+  }
+  
+  entry.count++;
+  if (isFailure) entry.failures++;
+  return { allowed: true };
+}
+
 serve(async (req) => {
   if (req.method === 'OPTIONS') {
     return new Response(null, { headers: corsHeaders });
   }
 
+  // Get client IP for rate limiting
+  const clientIp = req.headers.get('x-forwarded-for')?.split(',')[0]?.trim() || 
+                   req.headers.get('x-real-ip') || 
+                   'unknown';
+
   try {
+    // Apply rate limiting before processing
+    const rateLimitResult = checkRateLimit(clientIp);
+    if (!rateLimitResult.allowed) {
+      console.log('Rate limit exceeded for:', clientIp);
+      return new Response(
+        JSON.stringify({ 
+          error: 'Too many authentication attempts. Please try again later.',
+          retryAfter: rateLimitResult.retryAfter
+        }),
+        { 
+          status: 429,
+          headers: { 
+            ...corsHeaders, 
+            'Content-Type': 'application/json',
+            'Retry-After': String(rateLimitResult.retryAfter || 60)
+          }
+        }
+      );
+    }
+
     const { telegramIdentifier, mode } = await req.json();
     
-    console.log('Telegram web auth request:', { telegramIdentifier, mode });
+    console.log('Telegram web auth request:', { telegramIdentifier: telegramIdentifier ? '[REDACTED]' : null, mode });
 
     if (!telegramIdentifier) {
       return new Response(
@@ -32,7 +88,7 @@ serve(async (req) => {
     const cleanIdentifier = telegramIdentifier.replace('@', '').trim();
     const isPhoneNumber = /^\+?\d+$/.test(cleanIdentifier);
     
-    console.log('Looking up telegram user:', { cleanIdentifier, isPhoneNumber });
+    console.log('Looking up telegram user (type):', isPhoneNumber ? 'phone' : 'username');
 
     let telegramUser: any = null;
     let profile: any = null;
@@ -75,6 +131,9 @@ serve(async (req) => {
     }
 
     if (!telegramUser || !telegramUser.user_id) {
+      // Track this as a failure for rate limiting (potential enumeration)
+      checkRateLimit(clientIp, true);
+      
       console.log('Telegram user not found or not linked');
       return new Response(
         JSON.stringify({ 
@@ -87,13 +146,13 @@ serve(async (req) => {
       );
     }
 
-    console.log('Found linked telegram user:', telegramUser.telegram_id, 'user_id:', telegramUser.user_id);
+    console.log('Found linked telegram user, user_id:', telegramUser.user_id);
 
     // Get the existing auth user
     const { data: authUser, error: authError } = await supabase.auth.admin.getUserById(telegramUser.user_id);
     
     if (authError || !authUser?.user) {
-      console.error('Auth user not found:', authError);
+      console.error('Auth user not found');
       return new Response(
         JSON.stringify({ error: 'User account not found. Please contact support.' }),
         { headers: { ...corsHeaders, 'Content-Type': 'application/json' }, status: 400 }
@@ -110,16 +169,19 @@ serve(async (req) => {
     });
 
     if (linkError) {
-      console.error('Error generating magic link:', linkError);
+      console.error('Error generating magic link');
       throw linkError;
     }
 
-    console.log('Generated magic link for user:', telegramUser.user_id);
+    console.log('Generated magic link for user');
 
     // Extract the token from the magic link
     const magicLinkUrl = new URL(linkData.properties.action_link);
     const token = magicLinkUrl.searchParams.get('token');
     const type = magicLinkUrl.searchParams.get('type');
+
+    // Log successful auth for audit purposes (without sensitive data)
+    console.log('Telegram auth success:', { userId: telegramUser.user_id, telegramId: telegramUser.telegram_id });
 
     return new Response(
       JSON.stringify({
@@ -136,7 +198,7 @@ serve(async (req) => {
     );
 
   } catch (error: unknown) {
-    console.error('Telegram web auth error:', error);
+    console.error('Telegram web auth error');
     const errorMessage = error instanceof Error ? error.message : 'Authentication failed';
     return new Response(
       JSON.stringify({ error: errorMessage }),

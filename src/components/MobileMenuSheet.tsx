@@ -79,19 +79,25 @@ export function MobileMenuSheet({ trigger }: MobileMenuSheetProps) {
   const checkUserStatus = async () => {
     if (!user) return;
     
-    const { data } = await supabase
+    // Check admin status via secure user_roles table using has_role RPC
+    const { data: hasAdminRole } = await supabase
+      .rpc('has_role', { _user_id: user.id, _role: 'admin' });
+    
+    setIsAdmin(hasAdminRole === true);
+    
+    // Get other profile fields (non-sensitive)
+    const { data: profileData } = await supabase
       .from('profiles')
-      .select('is_admin, is_business_mode, is_affiliate')
+      .select('is_business_mode, is_affiliate')
       .eq('id', user.id)
       .single();
 
-    if (data) {
-      setIsAdmin(data.is_admin || false);
-      setIsBusinessMode(data.is_business_mode || false);
-      setIsAffiliate(data.is_affiliate || false);
+    if (profileData) {
+      setIsBusinessMode(profileData.is_business_mode || false);
+      setIsAffiliate(profileData.is_affiliate || false);
       
       // Check if user has pending affiliate request
-      if (!data.is_affiliate) {
+      if (!profileData.is_affiliate) {
         const { data: requestData } = await supabase
           .from('affiliate_requests')
           .select('id')

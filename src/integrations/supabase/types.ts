@@ -2642,6 +2642,7 @@ export type Database = {
         Args: { _chat_id: string; _user_id: string }
         Returns: boolean
       }
+      is_own_profile: { Args: { profile_id: string }; Returns: boolean }
       is_user_blocked: {
         Args: { p_blocked_id: string; p_blocker_id: string }
         Returns: boolean
