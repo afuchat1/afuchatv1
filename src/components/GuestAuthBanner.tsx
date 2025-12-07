@@ -2,8 +2,10 @@ import { useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { X } from 'lucide-react';
 import { useState } from 'react';
+import { useAuth } from '@/contexts/AuthContext';
 
 export const GuestAuthBanner = () => {
+  const { user } = useAuth();
   const navigate = useNavigate();
   const [dismissed, setDismissed] = useState(() => {
     return sessionStorage.getItem('guestAuthDismissed') === 'true';
@@ -14,7 +16,8 @@ export const GuestAuthBanner = () => {
     sessionStorage.setItem('guestAuthDismissed', 'true');
   };
 
-  if (dismissed) return null;
+  // Never show for logged-in users
+  if (user || dismissed) return null;
 
   return (
     <div className="fixed top-0 left-0 right-0 z-[100] bg-gradient-to-r from-primary/15 via-primary/10 to-primary/15 border-b border-primary/30 backdrop-blur-sm">
