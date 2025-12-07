@@ -1139,6 +1139,13 @@ const Feed = ({ defaultTab = 'foryou', guestMode = false }: FeedProps = {}) => {
   // Track which posts have had view attempts to prevent duplicates
   const viewedPostsRef = useRef<Set<string>>(new Set());
   
+  // Pull to refresh ref - will be populated later
+  const pullRefreshRef = useRef<() => Promise<void>>(() => Promise.resolve());
+  
+  const { pullDistance, isRefreshing, progress } = usePullToRefresh({
+    onRefresh: () => pullRefreshRef.current(),
+  });
+  
   // Load previously viewed posts from session storage
   useEffect(() => {
     const savedViews = sessionStorage.getItem('viewedPosts');
@@ -2198,18 +2205,16 @@ const Feed = ({ defaultTab = 'foryou', guestMode = false }: FeedProps = {}) => {
     }
   };
 
-  // Pull to refresh
-  const handlePullRefresh = useCallback(async () => {
-    sessionStorage.removeItem('feedShuffleSeed');
-    setCurrentPage(0);
-    setHasMore(true);
-    await fetchPosts(0, true);
-    toast.success('Feed refreshed!');
+  // Pull to refresh handler - assign to ref
+  useEffect(() => {
+    pullRefreshRef.current = async () => {
+      sessionStorage.removeItem('feedShuffleSeed');
+      setCurrentPage(0);
+      setHasMore(true);
+      await fetchPosts(0, true);
+      toast.success('Feed refreshed!');
+    };
   }, [fetchPosts]);
-
-  const { pullDistance, isRefreshing, progress } = usePullToRefresh({
-    onRefresh: handlePullRefresh,
-  });
 
   return (
     <div className="h-full flex flex-col max-w-4xl mx-auto">
