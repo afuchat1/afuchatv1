@@ -14,6 +14,7 @@ serve(async (req) => {
   try {
     const supabaseUrl = Deno.env.get('SUPABASE_URL');
     const supabaseAnonKey = Deno.env.get('SUPABASE_ANON_KEY');
+    const supabaseServiceKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY');
     const authHeader = req.headers.get('Authorization');
     
     if (!authHeader) {
@@ -23,7 +24,6 @@ serve(async (req) => {
       );
     }
     
-    // Extract JWT token from Authorization header
     const jwt = authHeader.replace('Bearer ', '');
     
     const supabaseClient = createClient(supabaseUrl!, supabaseAnonKey!, {
@@ -31,7 +31,6 @@ serve(async (req) => {
       auth: { persistSession: false }
     });
     
-    // Verify JWT by passing it explicitly to getUser
     const { data: { user }, error: authError } = await supabaseClient.auth.getUser(jwt);
     
     if (authError || !user) {
@@ -43,6 +42,26 @@ serve(async (req) => {
     }
     
     const userId = user.id;
+
+    // Check premium subscription
+    const supabaseAdmin = createClient(supabaseUrl!, supabaseServiceKey!, {
+      auth: { persistSession: false }
+    });
+
+    const { data: subscription } = await supabaseAdmin
+      .from('user_subscriptions')
+      .select('is_active, expires_at')
+      .eq('user_id', userId)
+      .eq('is_active', true)
+      .gt('expires_at', new Date().toISOString())
+      .single();
+
+    if (!subscription) {
+      return new Response(
+        JSON.stringify({ error: 'Premium subscription required', requiresPremium: true }),
+        { status: 403, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      );
+    }
 
     const { message, history } = await req.json();
     
@@ -105,13 +124,13 @@ serve(async (req) => {
       }
     }
     
-    const AIMLAPI_KEY = Deno.env.get('AIMLAPI_KEY');
+    const LOVABLE_API_KEY = Deno.env.get('LOVABLE_API_KEY');
     
-    if (!AIMLAPI_KEY) {
-      throw new Error('AIMLAPI_KEY not configured');
+    if (!LOVABLE_API_KEY) {
+      throw new Error('LOVABLE_API_KEY not configured');
     }
 
-    // Build messages for AIMLAPI
+    // Build messages for Lovable AI
     const messages = [
       {
         role: 'system',
@@ -128,7 +147,10 @@ Keep responses under 300 characters when possible.`
 
     // Add conversation history
     if (history && Array.isArray(history)) {
-      messages.push(...history);
+      messages.push(...history.map((msg: any) => ({
+        role: msg.role,
+        content: msg.content
+      })));
     }
 
     // Add current message
@@ -137,23 +159,21 @@ Keep responses under 300 characters when possible.`
       content: message
     });
 
-    const response = await fetch('https://api.aimlapi.com/chat/completions', {
+    const response = await fetch('https://ai.gateway.lovable.dev/v1/chat/completions', {
       method: 'POST',
       headers: {
-        'Authorization': `Bearer ${AIMLAPI_KEY}`,
+        'Authorization': `Bearer ${LOVABLE_API_KEY}`,
         'Content-Type': 'application/json',
       },
       body: JSON.stringify({
-        model: 'gpt-4o',
+        model: 'google/gemini-2.5-flash',
         messages: messages,
-        temperature: 0.7,
-        max_tokens: 1024,
       }),
     });
 
     if (!response.ok) {
       const errorText = await response.text();
-      console.error('AIMLAPI error:', {
+      console.error('Lovable AI error:', {
         status: response.status,
         statusText: response.statusText,
         body: errorText
@@ -165,21 +185,19 @@ Keep responses under 300 characters when possible.`
           headers: { ...corsHeaders, 'Content-Type': 'application/json' },
         });
       }
-      if (response.status === 401) {
-        return new Response(JSON.stringify({ 
-          error: 'Invalid AIMLAPI key. Please check your API key configuration.' 
-        }), {
+      if (response.status === 402) {
+        return new Response(JSON.stringify({ error: 'AI service payment required. Please try again later.' }), {
           status: 402,
           headers: { ...corsHeaders, 'Content-Type': 'application/json' },
         });
       }
-      throw new Error(`AIMLAPI error: ${response.status} ${errorText}`);
+      throw new Error(`Lovable AI error: ${response.status} ${errorText}`);
     }
 
     const data = await response.json();
     
     if (!data.choices || !data.choices[0]?.message?.content) {
-      throw new Error('Invalid response from AIMLAPI');
+      throw new Error('Invalid response from Lovable AI');
     }
     
     const reply = data.choices[0].message.content;

@@ -33,8 +33,8 @@ const AIChat: React.FC = () => {
   const navigate = useNavigate();
   const location = useLocation();
   
-  // AI Features under development - temporarily disabled
-  const AI_COMING_SOON = true;
+  // AI Features are now live for premium subscribers
+  const AI_COMING_SOON = false;
   
   useEffect(() => {
     if (!user) {
