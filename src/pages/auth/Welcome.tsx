@@ -1,86 +1,232 @@
-import { useNavigate, Link } from 'react-router-dom';
+import { useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
+import { ChevronLeft, ChevronRight } from 'lucide-react';
+import { motion, AnimatePresence } from 'framer-motion';
 import Logo from '@/components/Logo';
+
+// Import onboarding images
+import welcomeHero from '@/assets/onboarding/welcome-hero.jpg';
+import featureFeed from '@/assets/onboarding/feature-feed.jpg';
+import featureChat from '@/assets/onboarding/feature-chat.jpg';
+import featureGifts from '@/assets/onboarding/feature-gifts.jpg';
+import featurePremium from '@/assets/onboarding/feature-premium.jpg';
+
+interface Slide {
+  id: number;
+  image: string;
+  title: string;
+  subtitle: string;
+  description: string;
+}
+
+const slides: Slide[] = [
+  {
+    id: 0,
+    image: welcomeHero,
+    title: 'Welcome to',
+    subtitle: 'AfuChat',
+    description: 'Connect with friends, share moments, and join the conversation',
+  },
+  {
+    id: 1,
+    image: featureFeed,
+    title: 'Discover',
+    subtitle: 'Your Feed',
+    description: 'See posts from friends and creators you follow. Like, comment, and share your thoughts',
+  },
+  {
+    id: 2,
+    image: featureChat,
+    title: 'Chat',
+    subtitle: 'Instantly',
+    description: 'Send messages, voice notes, and media to friends with real-time delivery',
+  },
+  {
+    id: 3,
+    image: featureGifts,
+    title: 'Send & Receive',
+    subtitle: 'Gifts',
+    description: 'Share the joy with red envelopes, rare gifts, and Nexa rewards',
+  },
+  {
+    id: 4,
+    image: featurePremium,
+    title: 'Go',
+    subtitle: 'Premium',
+    description: 'Get verified, unlock AI features, ad-free experience, and exclusive benefits',
+  },
+];
 
 const Welcome = () => {
   const navigate = useNavigate();
+  const [currentSlide, setCurrentSlide] = useState(0);
+  const [direction, setDirection] = useState(0);
+
+  const goToNextSlide = () => {
+    if (currentSlide < slides.length - 1) {
+      setDirection(1);
+      setCurrentSlide(currentSlide + 1);
+    }
+  };
+
+  const goToPrevSlide = () => {
+    if (currentSlide > 0) {
+      setDirection(-1);
+      setCurrentSlide(currentSlide - 1);
+    }
+  };
+
+  const goToSlide = (index: number) => {
+    setDirection(index > currentSlide ? 1 : -1);
+    setCurrentSlide(index);
+  };
+
+  const isLastSlide = currentSlide === slides.length - 1;
+  const isFirstSlide = currentSlide === 0;
+
+  const slideVariants = {
+    enter: (direction: number) => ({
+      x: direction > 0 ? '100%' : '-100%',
+      opacity: 0,
+    }),
+    center: {
+      x: 0,
+      opacity: 1,
+    },
+    exit: (direction: number) => ({
+      x: direction < 0 ? '100%' : '-100%',
+      opacity: 0,
+    }),
+  };
 
   return (
-    <div className="min-h-screen flex flex-col md:flex-row bg-background overflow-hidden">
-      {/* Left side - Branding */}
-      <div className="hidden md:flex md:w-1/2 bg-gradient-to-br from-primary/10 via-secondary/10 to-background items-center justify-center p-8">
-        <div className="max-w-md">
-          <Logo size="lg" className="mb-8" />
-          <h1 className="text-4xl font-bold mb-4 text-foreground">
-            Welcome to AfuChat
-          </h1>
-          <p className="text-lg text-muted-foreground">
-            Connect with friends, share your thoughts, and join the conversation.
-          </p>
-        </div>
+    <div className="fixed inset-0 bg-background flex flex-col overflow-hidden">
+      {/* Header with Logo */}
+      <div className="absolute top-0 left-0 right-0 z-20 p-4 flex items-center justify-between">
+        <Logo size="sm" />
+        <Button
+          variant="ghost"
+          size="sm"
+          onClick={() => navigate('/home')}
+          className="text-foreground/70 hover:text-foreground"
+        >
+          Skip
+        </Button>
       </div>
 
-      {/* Right side - Auth actions */}
-      <div className="flex-1 flex items-center justify-center p-4">
-        <div className="w-full max-w-md space-y-8">
-          <div className="text-center md:hidden mb-8">
-            <Logo size="md" className="mx-auto mb-4" />
-            <h1 className="text-3xl font-bold text-foreground">
-              Welcome to AfuChat
-            </h1>
-          </div>
+      {/* Main Carousel Area */}
+      <div className="flex-1 relative overflow-hidden">
+        <AnimatePresence initial={false} custom={direction} mode="wait">
+          <motion.div
+            key={currentSlide}
+            custom={direction}
+            variants={slideVariants}
+            initial="enter"
+            animate="center"
+            exit="exit"
+            transition={{
+              x: { type: 'spring', stiffness: 300, damping: 30 },
+              opacity: { duration: 0.2 },
+            }}
+            className="absolute inset-0 flex flex-col"
+          >
+            {/* Image Section */}
+            <div className="relative h-[55%] overflow-hidden">
+              <img
+                src={slides[currentSlide].image}
+                alt={slides[currentSlide].subtitle}
+                className="w-full h-full object-cover"
+              />
+              {/* Gradient overlay */}
+              <div className="absolute inset-0 bg-gradient-to-b from-background/30 via-transparent to-background" />
+            </div>
 
-          <div className="space-y-4">
-            <h2 className="text-2xl font-bold text-center mb-6">
-              Join today
-            </h2>
+            {/* Content Section */}
+            <div className="flex-1 flex flex-col items-center justify-start px-6 pt-6 pb-4 text-center">
+              <motion.div
+                initial={{ y: 20, opacity: 0 }}
+                animate={{ y: 0, opacity: 1 }}
+                transition={{ delay: 0.2 }}
+              >
+                <h2 className="text-lg font-medium text-muted-foreground">
+                  {slides[currentSlide].title}
+                </h2>
+                <h1 className="text-4xl font-bold text-primary mt-1">
+                  {slides[currentSlide].subtitle}
+                </h1>
+                <p className="text-muted-foreground mt-4 max-w-xs mx-auto leading-relaxed">
+                  {slides[currentSlide].description}
+                </p>
+              </motion.div>
+            </div>
+          </motion.div>
+        </AnimatePresence>
 
+        {/* Navigation Arrows */}
+        {!isFirstSlide && (
+          <button
+            onClick={goToPrevSlide}
+            className="absolute left-4 top-1/2 -translate-y-1/2 z-10 w-10 h-10 rounded-full bg-background/80 backdrop-blur-sm border border-border flex items-center justify-center text-foreground hover:bg-background transition-colors"
+          >
+            <ChevronLeft className="w-5 h-5" />
+          </button>
+        )}
+        {!isLastSlide && (
+          <button
+            onClick={goToNextSlide}
+            className="absolute right-4 top-1/2 -translate-y-1/2 z-10 w-10 h-10 rounded-full bg-background/80 backdrop-blur-sm border border-border flex items-center justify-center text-foreground hover:bg-background transition-colors"
+          >
+            <ChevronRight className="w-5 h-5" />
+          </button>
+        )}
+      </div>
+
+      {/* Bottom Section */}
+      <div className="p-6 pb-8 space-y-6">
+        {/* Pagination Dots */}
+        <div className="flex items-center justify-center gap-2">
+          {slides.map((_, index) => (
+            <button
+              key={index}
+              onClick={() => goToSlide(index)}
+              className={`transition-all duration-300 rounded-full ${
+                index === currentSlide
+                  ? 'w-8 h-2 bg-primary'
+                  : 'w-2 h-2 bg-muted-foreground/30 hover:bg-muted-foreground/50'
+              }`}
+            />
+          ))}
+        </div>
+
+        {/* Action Buttons */}
+        {isLastSlide ? (
+          <div className="space-y-3">
             <Button
               onClick={() => navigate('/auth/signup')}
-              className="w-full h-12 text-base font-semibold"
+              className="w-full h-12 text-base font-semibold rounded-xl"
               size="lg"
             >
-              Create account
+              Get Started
             </Button>
-
-            <div className="relative my-6">
-              <div className="absolute inset-0 flex items-center">
-                <span className="w-full border-t border-border" />
-              </div>
-              <div className="relative flex justify-center text-xs uppercase">
-                <span className="bg-background px-2 text-muted-foreground">
-                  Or
-                </span>
-              </div>
-            </div>
-
-            <div className="space-y-4">
-              <p className="text-sm text-center text-muted-foreground">
-                Already have an account?
-              </p>
-              <Button
-                onClick={() => navigate('/auth/signin')}
-                variant="outline"
-                className="w-full h-12 text-base font-semibold"
-                size="lg"
-              >
-                Sign in
-              </Button>
-            </div>
+            <Button
+              onClick={() => navigate('/auth/signin')}
+              variant="outline"
+              className="w-full h-12 text-base font-semibold rounded-xl"
+              size="lg"
+            >
+              Sign In
+            </Button>
           </div>
-
-          <p className="text-xs text-center text-muted-foreground mt-8">
-            By signing up, you agree to our{' '}
-            <Link to="/terms" className="text-primary hover:underline">
-              Terms of Service
-            </Link>{' '}
-            and{' '}
-            <Link to="/privacy" className="text-primary hover:underline">
-              Privacy Policy
-            </Link>
-            .
-          </p>
-        </div>
+        ) : (
+          <Button
+            onClick={goToNextSlide}
+            className="w-full h-12 text-base font-semibold rounded-xl"
+            size="lg"
+          >
+            Next
+          </Button>
+        )}
       </div>
     </div>
   );
