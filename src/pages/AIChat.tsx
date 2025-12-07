@@ -5,11 +5,12 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Card } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
-import { Bot, Send, ArrowLeft } from 'lucide-react';
+import { Bot, Send, ArrowLeft, Copy, Check } from 'lucide-react';
 import { Skeleton } from '@/components/ui/skeleton';
 import { toast } from 'sonner';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { PremiumGate } from '@/components/PremiumGate';
+import { parseRichText } from '@/lib/richTextUtils';
 
 interface Message {
   role: 'user' | 'assistant';
@@ -46,15 +47,27 @@ const AIChat: React.FC = () => {
   const [messages, setMessages] = useState<Message[]>([
     {
       role: 'assistant',
-      content: "Hi! I'm AfuAI, your personal assistant. I can help you create posts, answer questions about AfuChat, or just chat! How can I help you today?",
+      content: "Hi! I'm AfuAI, your personal assistant. I can help you create posts, answer questions about AfuChat, or just chat! How can I help you today?\n\n*Tip:* Use formatting like *bold*, _italic_, ~strikethrough~, or `code` in your messages!",
       timestamp: new Date(),
     }
   ]);
   const [input, setInput] = useState('');
   const [loading, setLoading] = useState(false);
+  const [copiedId, setCopiedId] = useState<number | null>(null);
   const messagesEndRef = useRef<HTMLDivElement>(null);
 
   const isAIVerified = true;
+
+  const handleCopy = async (content: string, messageIndex: number) => {
+    try {
+      await navigator.clipboard.writeText(content);
+      setCopiedId(messageIndex);
+      toast.success('Copied to clipboard!');
+      setTimeout(() => setCopiedId(null), 2000);
+    } catch (error) {
+      toast.error('Failed to copy');
+    }
+  };
 
   const handleInitialSend = async (initialPrompt: string, currentMessages: Message[]) => {
     setLoading(true);
@@ -299,16 +312,34 @@ const AIChat: React.FC = () => {
             className={`flex ${msg.role === 'user' ? 'justify-end' : 'justify-start'}`}
           >
             <Card
-              className={`max-w-[80%] p-3 ${
+              className={`max-w-[80%] p-3 relative group ${
                 msg.role === 'user'
                   ? 'bg-primary text-primary-foreground'
                   : 'bg-card border-border'
               }`}
             >
-              <p className="text-sm whitespace-pre-wrap">{msg.content}</p>
-              <p className="text-xs opacity-70 mt-1">
-                {msg.timestamp.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
-              </p>
+              <div className="text-sm whitespace-pre-wrap select-text">
+                {parseRichText(msg.content)}
+              </div>
+              <div className="flex items-center justify-between mt-1">
+                <p className="text-xs opacity-70">
+                  {msg.timestamp.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                </p>
+                {msg.role === 'assistant' && (
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    className="h-6 w-6 opacity-0 group-hover:opacity-100 transition-opacity"
+                    onClick={() => handleCopy(msg.content, idx)}
+                  >
+                    {copiedId === idx ? (
+                      <Check className="h-3 w-3 text-green-500" />
+                    ) : (
+                      <Copy className="h-3 w-3" />
+                    )}
+                  </Button>
+                )}
+              </div>
             </Card>
           </div>
         ))}
@@ -341,6 +372,9 @@ const AIChat: React.FC = () => {
             {loading ? <Send className="h-4 w-4 opacity-50" /> : <Send className="h-4 w-4" />}
           </Button>
         </div>
+        <p className="text-xs text-muted-foreground mt-2 text-center">
+          Use *bold*, _italic_, ~strikethrough~, or `code` for formatting
+        </p>
       </div>
     </div>
     </PremiumGate>
