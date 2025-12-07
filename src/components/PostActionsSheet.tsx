@@ -1,4 +1,4 @@
-import React, { useRef, useState } from 'react';
+import React from 'react';
 import { 
   Ellipsis, Trash2, Flag, Maximize2, Share, LogIn, EyeOff, UserPlus, List, Volume2, UserX, AlertTriangle, MessageCircle, Pencil 
 } from 'lucide-react';
@@ -53,127 +53,10 @@ interface PostActionsSheetProps {
 const PostActionsSheet: React.FC<PostActionsSheetProps> = ({ post, user, navigate, onDelete, onReport, onEdit }) => {
     const { t } = useTranslation();
     const isAuthor = user?.id === post.author_id;
-    const closeRef = useRef<HTMLButtonElement>(null);
-    const dragRef = useRef<HTMLDivElement>(null);
-    const [translateY, setTranslateY] = useState(0);
-    const [startY, setStartY] = useState(0);
-    const [isDragging, setIsDragging] = useState(false);
-
-    const handleTouchStart = (e: React.TouchEvent) => {
-        setIsDragging(true);
-        setStartY(e.touches[0].clientY);
-        setTranslateY(0);
-    };
-
-    const handleTouchMove = (e: React.TouchEvent) => {
-        if (!isDragging) return;
-        e.preventDefault();
-        const currentY = e.touches[0].clientY;
-        const delta = currentY - startY;
-        if (delta > 0) {
-            setTranslateY(Math.min(delta, 100)); // Cap the drag distance
-        }
-    };
-
-    const handleTouchEnd = () => {
-        setIsDragging(false);
-        if (translateY > 80) { // Threshold for dismiss
-            closeRef.current?.click();
-        } else {
-            setTranslateY(0);
-        }
-    };
-
-    const handleMouseDown = (e: React.MouseEvent) => {
-        setIsDragging(true);
-        setStartY(e.clientY);
-        setTranslateY(0);
-    };
-
-    const handleMouseMove = (e: React.MouseEvent) => {
-        if (!isDragging) return;
-        e.preventDefault();
-        const currentY = e.clientY;
-        const delta = currentY - startY;
-        if (delta > 0) {
-            setTranslateY(Math.min(delta, 100));
-        }
-    };
-
-    const handleMouseUp = () => {
-        setIsDragging(false);
-        if (translateY > 80) {
-            closeRef.current?.click();
-        } else {
-            setTranslateY(0);
-        }
-    };
-
-    const handleMouseLeave = () => {
-        if (isDragging) {
-            handleMouseUp();
-        }
-    };
-
-    const handleGlobalMouseMove = (e: MouseEvent) => {
-        if (!isDragging) return;
-        handleMouseMove(e as any);
-    };
-
-    const handleGlobalMouseUp = () => {
-        if (isDragging) {
-            handleMouseUp();
-        }
-        document.removeEventListener('mousemove', handleGlobalMouseMove);
-        document.removeEventListener('mouseup', handleGlobalMouseUp);
-    };
-
-    const handleDragMouseDown = (e: React.MouseEvent) => {
-        handleMouseDown(e);
-        document.addEventListener('mousemove', handleGlobalMouseMove);
-        document.addEventListener('mouseup', handleGlobalMouseUp);
-    };
-
-    const handleDragMouseLeave = (e: React.MouseEvent) => {
-        if (isDragging) {
-            handleMouseLeave();
-        }
-    };
-
-    const handleTouchCancel = () => {
-        setIsDragging(false);
-        setTranslateY(0);
-    };
-
-    const handleMouseCancel = () => {
-        setIsDragging(false);
-        setTranslateY(0);
-    };
-
-    const handleDragMouseUp = (e: React.MouseEvent) => {
-        handleMouseUp();
-        document.removeEventListener('mousemove', handleGlobalMouseMove);
-        document.removeEventListener('mouseup', handleGlobalMouseUp);
-    };
-
-    const handleDragStart = (e: React.DragEvent) => {
-        e.preventDefault();
-    };
 
     const renderDragHandle = () => (
-        <div
-            ref={dragRef}
-            className="flex justify-center py-2 cursor-grab active:cursor-grabbing"
-            onTouchStart={handleTouchStart}
-            onTouchMove={handleTouchMove}
-            onTouchEnd={handleTouchEnd}
-            onTouchCancel={handleTouchCancel}
-            onMouseDown={handleDragMouseDown}
-            onMouseUp={handleDragMouseUp}
-            onMouseLeave={handleDragMouseLeave}
-            onDragStart={handleDragStart}
-        >
-            <div className={`w-8 h-1 bg-muted rounded-full transition-transform duration-200 ease-out ${translateY > 0 ? 'scale-x-75' : ''}`} />
+        <div className="flex justify-center py-3">
+            <div className="w-10 h-1 bg-muted-foreground/30 rounded-full" />
         </div>
     );
 
@@ -225,7 +108,7 @@ const PostActionsSheet: React.FC<PostActionsSheetProps> = ({ post, user, navigat
 
         // Actions for authenticated users - styled to match Twitter UI
         return (
-            <div className="transition-transform duration-200 ease-out bg-background" style={{ transform: `translateY(${translateY}px)` }}>
+            <div className="bg-background">
                 <div className="px-4">
                     {/* Not interested - mapped to View Details for now */}
                     <SheetClose asChild>
@@ -352,12 +235,8 @@ const PostActionsSheet: React.FC<PostActionsSheetProps> = ({ post, user, navigat
             
             <SheetContent 
                 side="bottom" 
-                className="h-auto max-h-[80vh] rounded-t-xl p-0 overflow-hidden transition-transform duration-200 ease-out bg-background"
-                style={{ transform: `translateY(${translateY}px)` }}
+                className="h-auto max-h-[80vh] rounded-t-xl p-0 overflow-y-auto bg-background"
             >
-                {/* Hidden close button for programmatic dismiss */}
-                <SheetClose ref={closeRef} className="sr-only" />
-                
                 {renderDragHandle()}
                 
                 {renderActions()}
