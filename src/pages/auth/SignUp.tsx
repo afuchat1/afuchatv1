@@ -16,11 +16,15 @@ import TelegramLoginButton from '@/components/auth/TelegramLoginButton';
 const SignUp = () => {
   const navigate = useNavigate();
   const [loading, setLoading] = useState(false);
-  const [step, setStep] = useState(1); // 1: Country, 2: Account Type, 3: Email/Password, 4: Registration Method
+  const [step, setStep] = useState(1); // 1: Country, 2: Account Type, 3: Username, 4: Email/Password, 5: Registration Method
   const [country, setCountry] = useState('');
   const [countrySearch, setCountrySearch] = useState('');
   const [accountType, setAccountType] = useState<'personal' | 'business' | null>(null);
   const [showBusinessSheet, setShowBusinessSheet] = useState(false);
+  const [username, setUsername] = useState('');
+  const [usernameError, setUsernameError] = useState('');
+  const [usernameAvailable, setUsernameAvailable] = useState<boolean | null>(null);
+  const [checkingUsername, setCheckingUsername] = useState(false);
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
@@ -32,6 +36,54 @@ const SignUp = () => {
   const hasLetter = /[a-zA-Z]/.test(password);
   const hasNumber = /\d/.test(password);
   const hasMinLength = password.length >= 8;
+
+  // Username validation
+  const validateUsername = useCallback(async (value: string) => {
+    if (!value) {
+      setUsernameError('');
+      setUsernameAvailable(null);
+      return;
+    }
+
+    try {
+      handleSchema.parse(value);
+      setUsernameError('');
+    } catch (error: any) {
+      setUsernameError(error.errors?.[0]?.message || 'Invalid username');
+      setUsernameAvailable(null);
+      return;
+    }
+
+    // Check availability
+    setCheckingUsername(true);
+    try {
+      const { data, error } = await supabase
+        .from('profiles')
+        .select('handle')
+        .eq('handle', value.toLowerCase())
+        .maybeSingle();
+
+      if (error) throw error;
+      setUsernameAvailable(!data);
+      if (data) {
+        setUsernameError('Username is already taken');
+      }
+    } catch (error) {
+      console.error('Error checking username:', error);
+    } finally {
+      setCheckingUsername(false);
+    }
+  }, []);
+
+  // Debounced username check
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      if (username) {
+        validateUsername(username);
+      }
+    }, 500);
+    return () => clearTimeout(timer);
+  }, [username, validateUsername]);
 
   // Capture referral code from URL
   const urlParams = new URLSearchParams(window.location.search);
@@ -51,14 +103,22 @@ const SignUp = () => {
       setShowBusinessSheet(true);
     } else {
       setAccountType(type);
-      setStep(4); // Skip to registration method for personal
+      setStep(3); // Go to username step
     }
   };
 
   const handleBusinessContinue = () => {
     setAccountType('business');
     setShowBusinessSheet(false);
-    setStep(4); // Go to registration method
+    setStep(3); // Go to username step
+  };
+
+  const handleUsernameNext = () => {
+    if (!username || usernameError || !usernameAvailable) {
+      toast.error('Please enter a valid available username');
+      return;
+    }
+    setStep(5); // Go to registration method
   };
 
   const handleEmailPasswordNext = () => {
@@ -66,6 +126,10 @@ const SignUp = () => {
       emailSchema.parse(email);
       if (!hasSpecialChar || !hasLetter || !hasNumber || !hasMinLength) {
         toast.error('Password does not meet requirements');
+        return;
+      }
+      if (!username || usernameError || !usernameAvailable) {
+        toast.error('Please go back and enter a valid username');
         return;
       }
       // Store credentials and go to complete profile after signup
@@ -80,6 +144,8 @@ const SignUp = () => {
     try {
       const signupData: any = {
         country,
+        handle: username.toLowerCase(),
+        display_name: username,
         is_business_mode: accountType === 'business',
       };
 
@@ -87,7 +153,7 @@ const SignUp = () => {
         signupData.referral_code = referralCode;
       }
 
-      const { error } = await supabase.auth.signUp({
+      const { data: authData, error } = await supabase.auth.signUp({
         email,
         password,
         options: {
@@ -104,7 +170,12 @@ const SignUp = () => {
         }
       } else {
         toast.success('Account created! Check your email for verification.');
-        navigate('/auth/signin');
+        // Redirect based on account type
+        if (accountType === 'business') {
+          navigate('/auth/signin');
+        } else {
+          navigate('/auth/signin');
+        }
       }
     } catch (error: any) {
       toast.error(error.message || 'An error occurred.');
@@ -148,14 +219,14 @@ const SignUp = () => {
   const handleBack = () => {
     if (step === 1) {
       navigate('/');
-    } else if (step === 3) {
-      setStep(4); // Go back to registration method from email/password
+    } else if (step === 4) {
+      setStep(5); // Go back to registration method from email/password
     } else {
       setStep(step - 1);
     }
   };
 
-  const progressWidth = `${(step / 4) * 100}%`;
+  const progressWidth = `${(step / 5) * 100}%`;
 
   return (
     <div className="min-h-screen flex flex-col bg-background">
@@ -252,8 +323,67 @@ const SignUp = () => {
         </div>
       )}
 
-      {/* Step 3: Email and Password */}
+      {/* Step 3: Username */}
       {step === 3 && (
+        <div className="flex-1 flex flex-col p-6">
+          <h1 className="text-2xl font-bold text-foreground mb-2">
+            Choose your username
+          </h1>
+          <p className="text-muted-foreground mb-6">
+            This will be your unique identifier on the platform
+          </p>
+
+          <div className="space-y-4 flex-1">
+            <div className="space-y-2">
+              <Label className="text-muted-foreground">Username</Label>
+              <div className="relative">
+                <Input
+                  type="text"
+                  placeholder="Enter username"
+                  value={username}
+                  onChange={(e) => setUsername(e.target.value.replace(/[^a-zA-Z0-9_]/g, ''))}
+                  className={`h-14 text-base bg-muted/50 rounded-xl px-4 pr-12 ${
+                    usernameError ? 'border-destructive' : 
+                    usernameAvailable ? 'border-green-500' : ''
+                  }`}
+                />
+                <div className="absolute right-4 top-1/2 -translate-y-1/2">
+                  {checkingUsername ? (
+                    <div className="h-5 w-5 border-2 border-primary border-t-transparent rounded-full animate-spin" />
+                  ) : usernameAvailable ? (
+                    <CheckCircle2 className="h-5 w-5 text-green-500" />
+                  ) : usernameError ? (
+                    <XCircle className="h-5 w-5 text-destructive" />
+                  ) : null}
+                </div>
+              </div>
+              {usernameError && (
+                <p className="text-xs text-destructive">{usernameError}</p>
+              )}
+              {usernameAvailable && !usernameError && (
+                <p className="text-xs text-green-500">Username is available!</p>
+              )}
+              <p className="text-xs text-muted-foreground">
+                4-20 characters, letters, numbers, and underscores only
+              </p>
+            </div>
+          </div>
+
+          {/* Next Button */}
+          <div className="pt-4">
+            <Button
+              onClick={handleUsernameNext}
+              disabled={!username || !!usernameError || !usernameAvailable || checkingUsername}
+              className="w-full h-14 text-base font-semibold rounded-xl"
+            >
+              Next
+            </Button>
+          </div>
+        </div>
+      )}
+
+      {/* Step 4: Email and Password */}
+      {step === 4 && (
         <div className="flex-1 flex flex-col p-6">
           {/* Security Warning */}
           <div className="bg-amber-900/30 rounded-xl p-4 mb-6">
@@ -325,14 +455,14 @@ const SignUp = () => {
               disabled={loading || !email || !password}
               className="w-full h-14 text-base font-semibold rounded-xl"
             >
-              {loading ? 'Creating account...' : 'Next'}
+              {loading ? 'Creating account...' : 'Create Account'}
             </Button>
           </div>
         </div>
       )}
 
-      {/* Step 4: Registration Method */}
-      {step === 4 && (
+      {/* Step 5: Registration Method */}
+      {step === 5 && (
         <div className="flex-1 flex flex-col p-6">
           <h1 className="text-2xl font-bold text-foreground mb-8">
             Select how you prefer to register your account
@@ -387,7 +517,7 @@ const SignUp = () => {
             </div>
 
             <Button
-              onClick={() => setStep(3)}
+              onClick={() => setStep(4)}
               className="w-full h-14 text-base font-semibold rounded-xl"
             >
               Sign up with my email
