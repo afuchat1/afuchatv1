@@ -116,8 +116,8 @@ All colors MUST be HSL.
     --accent: 183 100% 48%;
     --accent-foreground: 0 0% 100%;
     
-    /* Dark backgrounds */
-    --background: 0 0% 7%;
+    /* Dark backgrounds - #0F1114 */
+    --background: 216 14% 7%;
     --foreground: 0 0% 95%;
     
     /* Dark gray message bubbles */
