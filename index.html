@@ -78,6 +78,23 @@
 </head>
 
   <body>
+    <!-- Inline script to prevent theme flash - runs before React -->
+    <script>
+      (function() {
+        var theme = localStorage.getItem('theme') || 'system';
+        var resolved;
+        if (theme === 'system') {
+          resolved = window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
+        } else {
+          resolved = theme;
+        }
+        document.documentElement.classList.add(resolved);
+        // Update theme-color meta tag
+        var themeColor = resolved === 'dark' ? '#0F1114' : '#F6F6F6';
+        var meta = document.querySelector('meta[name="theme-color"]:not([media])');
+        if (meta) meta.setAttribute('content', themeColor);
+      })();
+    </script>
     <div id="root"></div>
     <script type="module" src="/src/main.tsx"></script>
   </body>
