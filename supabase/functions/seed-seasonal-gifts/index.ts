@@ -2,7 +2,7 @@ import { createClient } from 'https://esm.sh/@supabase/supabase-js@2.39.3';
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
-  'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
+  'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type, x-admin-secret',
 };
 
 interface SeasonalGift {
@@ -22,6 +22,18 @@ Deno.serve(async (req) => {
   }
 
   try {
+    // Security: Verify admin secret token
+    const adminSecret = Deno.env.get('ADMIN_SECRET_TOKEN');
+    const providedSecret = req.headers.get('x-admin-secret');
+    
+    if (!adminSecret || providedSecret !== adminSecret) {
+      console.log('Unauthorized access attempt to seed-seasonal-gifts');
+      return new Response(
+        JSON.stringify({ error: 'Unauthorized' }),
+        { status: 401, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      );
+    }
+
     const supabaseClient = createClient(
       Deno.env.get('SUPABASE_URL') ?? '',
       Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? ''
@@ -150,6 +162,8 @@ Deno.serve(async (req) => {
       throw statsError;
     }
 
+    console.log('Seasonal gifts seeded successfully:', insertedGifts.length);
+    
     return new Response(
       JSON.stringify({ 
         success: true, 
