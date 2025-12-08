@@ -1,9 +1,12 @@
-import { useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useState, useEffect } from 'react';
+import { useNavigate, Navigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { ChevronLeft, ChevronRight } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import Logo from '@/components/Logo';
+import { useAuth } from '@/contexts/AuthContext';
+import { CustomLoader } from '@/components/ui/CustomLoader';
+import { supabase } from '@/integrations/supabase/client';
 
 // Import onboarding images
 import welcomeHero from '@/assets/onboarding/welcome-hero.jpg';
@@ -60,8 +63,60 @@ const slides: Slide[] = [
 
 const Welcome = () => {
   const navigate = useNavigate();
+  const { user, loading } = useAuth();
   const [currentSlide, setCurrentSlide] = useState(0);
   const [direction, setDirection] = useState(0);
+  const [checkingProfile, setCheckingProfile] = useState(true);
+  const [shouldRedirect, setShouldRedirect] = useState<string | null>(null);
+
+  // Check if logged-in user should be redirected
+  useEffect(() => {
+    const checkUserAndRedirect = async () => {
+      if (loading) return;
+      
+      if (!user) {
+        setCheckingProfile(false);
+        return;
+      }
+
+      try {
+        const { data: profile } = await supabase
+          .from('profiles')
+          .select('display_name, handle')
+          .eq('id', user.id)
+          .maybeSingle();
+
+        const hasEssentialFields = profile?.display_name && profile?.handle;
+        
+        if (!hasEssentialFields) {
+          setShouldRedirect('/complete-profile');
+        } else {
+          setShouldRedirect('/home');
+        }
+      } catch (error) {
+        console.error('Error checking profile:', error);
+        setShouldRedirect('/home');
+      } finally {
+        setCheckingProfile(false);
+      }
+    };
+
+    checkUserAndRedirect();
+  }, [user, loading]);
+
+  // Show loader while checking auth state
+  if (loading || checkingProfile) {
+    return (
+      <div className="flex items-center justify-center min-h-screen bg-background">
+        <CustomLoader size="lg" />
+      </div>
+    );
+  }
+
+  // Redirect logged-in users
+  if (shouldRedirect) {
+    return <Navigate to={shouldRedirect} replace />;
+  }
 
   const goToNextSlide = () => {
     if (currentSlide < slides.length - 1) {

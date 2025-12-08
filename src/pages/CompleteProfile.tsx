@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, Navigate } from 'react-router-dom';
 import { useAuth } from '@/contexts/AuthContext';
 import { supabase } from '@/integrations/supabase/client';
 import { Button } from '@/components/ui/button';
@@ -14,9 +14,32 @@ import { countries } from '@/lib/countries';
 import { Progress } from '@/components/ui/progress';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from '@/components/ui/dialog';
 import { getCountryFlag } from '@/lib/countryFlags';
+import { CustomLoader } from '@/components/ui/CustomLoader';
 
 const CompleteProfile = () => {
-  const { user } = useAuth();
+  const { user, loading: authLoading } = useAuth();
+
+  // Redirect non-authenticated users
+  if (authLoading) {
+    return (
+      <div className="flex items-center justify-center min-h-screen bg-background">
+        <CustomLoader size="lg" />
+      </div>
+    );
+  }
+
+  if (!user) {
+    return <Navigate to="/auth/signup" replace />;
+  }
+
+  return <CompleteProfileContent user={user} />;
+};
+
+interface CompleteProfileContentProps {
+  user: { id: string };
+}
+
+const CompleteProfileContent = ({ user }: CompleteProfileContentProps) => {
   const navigate = useNavigate();
   const [loading, setLoading] = useState(false);
   const [initialLoading, setInitialLoading] = useState(true);

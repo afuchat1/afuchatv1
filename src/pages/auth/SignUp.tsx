@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { useNavigate, Link } from 'react-router-dom';
+import { useNavigate, Link, Navigate } from 'react-router-dom';
 import { supabase } from '@/integrations/supabase/client';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -12,8 +12,30 @@ import { countries } from '@/lib/countries';
 import { getCountryFlag } from '@/lib/countryFlags';
 import { Sheet, SheetContent, SheetHeader, SheetTitle } from '@/components/ui/sheet';
 import TelegramLoginButton from '@/components/auth/TelegramLoginButton';
+import { useAuth } from '@/contexts/AuthContext';
+import { CustomLoader } from '@/components/ui/CustomLoader';
 
 const SignUp = () => {
+  const navigate = useNavigate();
+  const { user, loading: authLoading } = useAuth();
+
+  // Redirect logged-in users immediately
+  if (authLoading) {
+    return (
+      <div className="flex items-center justify-center min-h-screen bg-background">
+        <CustomLoader size="lg" />
+      </div>
+    );
+  }
+
+  if (user) {
+    return <Navigate to="/home" replace />;
+  }
+
+  return <SignUpContent />;
+};
+
+const SignUpContent = () => {
   const navigate = useNavigate();
   const [loading, setLoading] = useState(false);
   const [step, setStep] = useState(1); // 1: Country, 2: Account Type, 3: Registration Method, 4: Email/Password
