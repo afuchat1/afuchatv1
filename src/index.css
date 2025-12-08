@@ -4,6 +4,28 @@
 @tailwind components;
 @tailwind utilities;
 
+/* Force portrait orientation - block landscape completely */
+@media screen and (orientation: landscape) and (max-device-width: 1024px) and (hover: none) {
+  html::before {
+    content: "Please rotate your device to portrait mode";
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    position: fixed;
+    inset: 0;
+    z-index: 99999;
+    background: hsl(222 20% 7%);
+    color: white;
+    font-size: 1.25rem;
+    text-align: center;
+    padding: 2rem;
+  }
+  
+  html > body {
+    display: none !important;
+  }
+}
+
 @layer utilities {
   .animate-spin-slow {
     animation: spin 3s linear infinite;
