@@ -8,7 +8,7 @@ import { useAuth } from '@/contexts/AuthContext';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
 import { z } from 'zod';
-import { getCountryFlag, getCountryCode } from '@/lib/countryFlags';
+import { getCountryFlag, getCountryCode, getPhonePlaceholder } from '@/lib/countryFlags';
 
 // Phone number validation schema - international format with country code
 const phoneSchema = z.string()
@@ -205,7 +205,7 @@ export const PhoneNumberInput = () => {
                 <Input
                   id="phone"
                   type="tel"
-                  placeholder="1234567890"
+                  placeholder={getPhonePlaceholder(profile?.country || '')}
                   value={phoneNumber}
                   onChange={(e) => handlePhoneChange(e.target.value)}
                   className={error ? 'border-red-500' : ''}
