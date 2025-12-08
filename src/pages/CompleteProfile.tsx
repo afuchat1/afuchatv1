@@ -19,6 +19,7 @@ const CompleteProfile = () => {
   const { user } = useAuth();
   const navigate = useNavigate();
   const [loading, setLoading] = useState(false);
+  const [initialLoading, setInitialLoading] = useState(true);
   const [showRewardModal, setShowRewardModal] = useState(false);
   const [progress, setProgress] = useState(0);
   
@@ -31,10 +32,49 @@ const CompleteProfile = () => {
   
   const [avatarFile, setAvatarFile] = useState<File | null>(null);
   const [avatarPreview, setAvatarPreview] = useState<string>('');
+  const [existingAvatarUrl, setExistingAvatarUrl] = useState<string>('');
+
+  // Load existing profile data on mount
+  useEffect(() => {
+    const loadExistingProfile = async () => {
+      if (!user) {
+        setInitialLoading(false);
+        return;
+      }
+
+      try {
+        const { data: profile } = await supabase
+          .from('profiles')
+          .select('display_name, handle, phone_number, country, avatar_url')
+          .eq('id', user.id)
+          .single();
+
+        if (profile) {
+          setFormData({
+            display_name: profile.display_name || '',
+            handle: profile.handle || '',
+            phone_number: profile.phone_number || '',
+            country: profile.country || '',
+          });
+          
+          if (profile.avatar_url) {
+            setExistingAvatarUrl(profile.avatar_url);
+            setAvatarPreview(profile.avatar_url);
+          }
+        }
+      } catch (error) {
+        console.error('Error loading profile:', error);
+      } finally {
+        setInitialLoading(false);
+      }
+    };
+
+    loadExistingProfile();
+  }, [user]);
 
   useEffect(() => {
     calculateProgress();
-  }, [formData, avatarFile]);
+  }, [formData, avatarFile, existingAvatarUrl, avatarPreview]);
 
   const calculateProgress = () => {
     let completed = 0;
@@ -42,7 +82,7 @@ const CompleteProfile = () => {
     
     if (formData.display_name) completed++;
     if (formData.handle) completed++;
-    if (avatarFile) completed++;
+    if (avatarFile || existingAvatarUrl) completed++;
     if (formData.phone_number) completed++;
     if (formData.country) completed++;
     
@@ -52,7 +92,7 @@ const CompleteProfile = () => {
   const getStepStatus = (fieldName: string) => {
     switch (fieldName) {
       case 'avatar':
-        return avatarFile ? 'complete' : 'pending';
+        return (avatarFile || existingAvatarUrl) ? 'complete' : 'pending';
       case 'display_name':
         return formData.display_name ? 'complete' : 'pending';
       case 'handle':
@@ -109,7 +149,9 @@ const CompleteProfile = () => {
       return;
     }
     
-    if (!avatarFile) {
+    // Check if we have an avatar (either new file or existing)
+    const hasAvatar = avatarFile || existingAvatarUrl;
+    if (!hasAvatar) {
       toast.error('Profile picture is required');
       return;
     }
@@ -117,13 +159,16 @@ const CompleteProfile = () => {
     setLoading(true);
 
     try {
-      // Upload avatar
-      const avatarUrl = await uploadAvatar();
-      
-      if (!avatarUrl) {
-        toast.error('Failed to upload profile picture');
-        setLoading(false);
-        return;
+      // Upload avatar only if new file selected
+      let avatarUrl = existingAvatarUrl;
+      if (avatarFile) {
+        const uploadedUrl = await uploadAvatar();
+        if (!uploadedUrl) {
+          toast.error('Failed to upload profile picture');
+          setLoading(false);
+          return;
+        }
+        avatarUrl = uploadedUrl;
       }
 
       // Check if user has already been rewarded
@@ -176,6 +221,14 @@ const CompleteProfile = () => {
       setLoading(false);
     }
   };
+
+  if (initialLoading) {
+    return (
+      <div className="min-h-screen bg-background flex items-center justify-center">
+        <Loader2 className="h-8 w-8 animate-spin text-primary" />
+      </div>
+    );
+  }
 
   return (
     <>
