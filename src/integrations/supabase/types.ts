@@ -2955,6 +2955,7 @@ export type Database = {
         Returns: undefined
       }
       calculate_grade: { Args: { xp_amount: number }; Returns: string }
+      can_claim_red_envelope: { Args: { p_user_id: string }; Returns: boolean }
       check_and_unlock_accessories: {
         Args: { p_user_id: string }
         Returns: Json
@@ -3067,6 +3068,7 @@ export type Database = {
         Returns: boolean
       }
       is_own_profile: { Args: { profile_id: string }; Returns: boolean }
+      is_premium_user: { Args: { p_user_id: string }; Returns: boolean }
       is_user_blocked: {
         Args: { p_blocked_id: string; p_blocker_id: string }
         Returns: boolean
