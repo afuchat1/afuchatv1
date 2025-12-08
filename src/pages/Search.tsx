@@ -12,6 +12,12 @@ import { toast } from 'sonner';
 import { useTranslation } from 'react-i18next';
 import { searchSchema } from '@/lib/validation';
 
+interface PostImage {
+  id: string;
+  image_url: string;
+  display_order: number;
+}
+
 interface SearchResult {
   type: 'user' | 'post' | 'group';
   id: string;
@@ -26,6 +32,7 @@ interface SearchResult {
   created_at?: string;
   author_id?: string;
   image_url?: string;
+  post_images?: PostImage[];
   author_profiles?: {
     display_name: string;
     handle: string;
@@ -216,7 +223,8 @@ const Search = () => {
         .from('posts')
         .select(`
           id, content, created_at, author_id, image_url,
-          profiles!author_id(display_name, handle, is_verified, is_organization_verified, avatar_url)
+          profiles!author_id(display_name, handle, is_verified, is_organization_verified, avatar_url),
+          post_images(id, image_url, display_order)
         `)
         .textSearch('content', searchTsQuery, { type: 'plain', config: searchConfig })
         .limit(10);
@@ -284,6 +292,7 @@ const Search = () => {
           created_at: p.created_at,
           author_id: p.author_id,
           image_url: p.image_url,
+          post_images: p.post_images?.sort((a: any, b: any) => a.display_order - b.display_order) || [],
           author_profiles: p.profiles,
         })),
       ];
@@ -572,7 +581,25 @@ const Search = () => {
                           <p className="text-foreground text-sm mt-2 leading-relaxed line-clamp-3 whitespace-pre-wrap">
                             {result.content}
                           </p>
-                          {result.image_url && (
+                          {/* Show post images - prioritize post_images table, fallback to image_url */}
+                          {(result.post_images && result.post_images.length > 0) ? (
+                            <div className={`mt-3 grid gap-2 ${result.post_images.length === 1 ? 'grid-cols-1' : 'grid-cols-2'}`}>
+                              {result.post_images.slice(0, 4).map((img, idx) => (
+                                <div key={img.id} className="relative rounded-xl overflow-hidden">
+                                  <img 
+                                    src={img.image_url} 
+                                    alt={`Post image ${idx + 1}`} 
+                                    className="w-full h-24 object-cover"
+                                  />
+                                  {result.post_images && result.post_images.length > 4 && idx === 3 && (
+                                    <div className="absolute inset-0 bg-black/50 flex items-center justify-center">
+                                      <span className="text-white font-bold">+{result.post_images.length - 4}</span>
+                                    </div>
+                                  )}
+                                </div>
+                              ))}
+                            </div>
+                          ) : result.image_url ? (
                             <div className="mt-3 rounded-xl overflow-hidden">
                               <img 
                                 src={result.image_url} 
@@ -580,7 +607,7 @@ const Search = () => {
                                 className="w-full h-auto max-h-48 object-cover rounded-xl"
                               />
                             </div>
-                          )}
+                          ) : null}
                         </div>
                       </div>
                     </Card>
