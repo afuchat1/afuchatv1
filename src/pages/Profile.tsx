@@ -256,6 +256,7 @@ const Profile = ({ mustExist = false }: ProfileProps) => {
 	const [posts, setPosts] = useState<Post[]>([]);
 	const [isFollowing, setIsFollowing] = useState(false);
 	const [followCount, setFollowCount] = useState({ followers: 0, following: 0 });
+	const [totalLikes, setTotalLikes] = useState(0);
 	const [loading, setLoading] = useState(true);
 	const [selectedAffiliate, setSelectedAffiliate] = useState<{
 		userName: string;
@@ -368,6 +369,29 @@ const Profile = ({ mustExist = false }: ProfileProps) => {
 			followers: followerCount || 0,
 			following: followingCount || 0
 		});
+	}, []);
+
+	const fetchTotalLikes = useCallback(async (id: string) => {
+		if (!id) return;
+
+		// Get all posts by the user and count their acknowledgments
+		const { data: userPosts } = await supabase
+			.from('posts')
+			.select('id')
+			.eq('author_id', id);
+
+		if (!userPosts || userPosts.length === 0) {
+			setTotalLikes(0);
+			return;
+		}
+
+		const postIds = userPosts.map(p => p.id);
+		const { count } = await supabase
+			.from('post_acknowledgments')
+			.select('id', { count: 'exact', head: true })
+			.in('post_id', postIds);
+
+		setTotalLikes(count || 0);
 	}, []);
 
 	const fetchAdminStatus = useCallback(async (userId: string) => {
@@ -595,6 +619,7 @@ const Profile = ({ mustExist = false }: ProfileProps) => {
 	useEffect(() => {
 		if (profileId) {
 			fetchFollowCounts(profileId);
+			fetchTotalLikes(profileId);
 			fetchUserPosts(profileId);
 			if (user && user.id !== profileId) {
 				checkFollowStatus(profileId);
@@ -1089,6 +1114,10 @@ const Profile = ({ mustExist = false }: ProfileProps) => {
 						>
 							<span className="font-bold text-sm">{formatCount(followCount.followers)}</span>
 							<span className="text-muted-foreground text-sm ml-1">{t('profile.followers')}</span>
+						</div>
+						<div className="flex items-center">
+							<span className="font-bold text-sm">{formatCount(totalLikes)}</span>
+							<span className="text-muted-foreground text-sm ml-1">{t('profile.likes', 'Likes')}</span>
 						</div>
 					</div>
 				</div>
