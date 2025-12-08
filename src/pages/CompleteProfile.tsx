@@ -166,9 +166,14 @@ const CompleteProfileContent = ({ user }: CompleteProfileContentProps) => {
     
     if (!user) return;
     
-    // Validation - only require essential fields
+    // Validation - require essential fields including country
     if (!formData.display_name || !formData.handle) {
       toast.error('Display name and username are required');
+      return;
+    }
+    
+    if (!formData.country) {
+      toast.error('Country selection is required');
       return;
     }
     
@@ -375,9 +380,9 @@ const CompleteProfileContent = ({ user }: CompleteProfileContentProps) => {
               />
             </div>
 
-            {/* Country */}
+            {/* Country - Required and cannot be changed after signup */}
             <div className="space-y-2">
-              <Label htmlFor="country">Country (Optional)</Label>
+              <Label htmlFor="country">Country *</Label>
               <Select
                 value={formData.country}
                 onValueChange={(value) => setFormData({ ...formData, country: value })}
@@ -409,6 +414,9 @@ const CompleteProfileContent = ({ user }: CompleteProfileContentProps) => {
                   </div>
                 </SelectContent>
               </Select>
+              <p className="text-xs text-muted-foreground">
+                ⚠️ Country cannot be changed after signup
+              </p>
             </div>
 
             <Button type="submit" className="w-full" disabled={loading}>
