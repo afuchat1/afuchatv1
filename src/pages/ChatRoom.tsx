@@ -155,13 +155,30 @@ const ChatRoom = () => {
   const [isJoining, setIsJoining] = useState(false);
   const [prevMessageCount, setPrevMessageCount] = useState(0);
 
-  // Improved scroll behavior - only scroll on new messages
+  // Improved scroll behavior - scroll to bottom on new messages
+  const scrollToBottom = (smooth = true) => {
+    if (messagesEndRef.current) {
+      messagesEndRef.current.scrollIntoView({ 
+        behavior: smooth ? 'smooth' : 'instant',
+        block: 'end'
+      });
+    }
+  };
+
   useEffect(() => {
     if (messages.length > prevMessageCount) {
-      messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
+      // Only smooth scroll for new messages, instant for initial load
+      scrollToBottom(prevMessageCount > 0);
       setPrevMessageCount(messages.length);
     }
   }, [messages.length, prevMessageCount]);
+
+  // Scroll to bottom on initial load
+  useEffect(() => {
+    if (!loading && messages.length > 0) {
+      scrollToBottom(false);
+    }
+  }, [loading]);
 
   // Load theme and wallpaper data
   useEffect(() => {
@@ -1098,9 +1115,8 @@ const ChatRoom = () => {
 
         {/* Messages with customizable background */}
         <div 
-          className="flex-1 overflow-y-auto overflow-x-hidden px-3 py-2 scrollbar-hide" 
+          className="flex-1 overflow-y-auto overflow-x-hidden px-3 py-4" 
           style={{ 
-            paddingBottom: '120px',
             fontSize: `${chatPreferences.fontSize}px`,
             ...(currentWallpaper?.image_url 
               ? currentWallpaper.image_url.startsWith('http')
@@ -1221,27 +1237,26 @@ const ChatRoom = () => {
               )}
             </>
           )}
-          <div ref={messagesEndRef} />
+          <div ref={messagesEndRef} className="h-32" />
         </div>
 
-
-        {/* Reply Preview */}
+        {/* Reply Preview - positioned above input */}
         {isMember && replyToMessage && !selectedFile && (
-          <div className="fixed bottom-[60px] left-0 right-0 z-20 bg-card border-t border-border px-4 py-2">
+          <div className="bg-card/95 backdrop-blur-sm border-t border-border px-4 py-2">
             <div className="flex items-center gap-3">
-              <div className="w-1 h-10 bg-primary rounded-full" />
+              <div className="w-1 h-10 bg-primary rounded-full flex-shrink-0" />
               <div className="flex-1 min-w-0">
-                <p className="text-xs font-semibold text-primary">
-                  {replyToMessage.profiles?.display_name || 'User'}
+                <p className="text-xs font-semibold text-primary truncate">
+                  Replying to {replyToMessage.profiles?.display_name || 'User'}
                 </p>
-                <p className="text-sm text-foreground truncate mt-0.5">
+                <p className="text-sm text-foreground/80 truncate mt-0.5">
                   {replyToMessage.audio_url ? '🎤 Voice message' : replyToMessage.encrypted_content}
                 </p>
               </div>
               <Button
                 variant="ghost"
                 size="icon"
-                className="h-8 w-8"
+                className="h-8 w-8 rounded-full hover:bg-muted flex-shrink-0"
                 onClick={() => setReplyToMessage(null)}
               >
                 <X className="h-4 w-4" />
@@ -1260,7 +1275,7 @@ const ChatRoom = () => {
 
         {/* Join Group Button for Non-Members */}
         {chatInfo?.is_group && !isMember && (
-          <div className="fixed bottom-0 left-0 right-0 z-20 bg-card border-t border-border px-4 py-4">
+          <div className="bg-card border-t border-border px-4 py-4 pb-[env(safe-area-inset-bottom)]">
             <Button
               onClick={handleJoinGroup}
               disabled={isJoining}
@@ -1273,7 +1288,7 @@ const ChatRoom = () => {
 
         {/* Input: WhatsApp style */}
         {isMember && (
-          <div className="fixed bottom-0 left-0 right-0 z-20 bg-card border-t border-border px-2 py-2 pb-[env(safe-area-inset-bottom)]">
+          <div className="bg-card border-t border-border px-2 py-2 pb-[env(safe-area-inset-bottom)]">
             <input
             ref={fileInputRef}
             type="file"
@@ -1393,10 +1408,6 @@ const ChatRoom = () => {
             )}
           </form>
         </div>
-        )}
-
-        {typingUsers.length > 0 && (
-          <TypingIndicator userName={typingUsers[0]} />
         )}
       </div>
 

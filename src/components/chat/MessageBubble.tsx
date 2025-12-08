@@ -6,6 +6,7 @@ import { Button } from '@/components/ui/button';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { AttachmentPreview } from './AttachmentPreview';
 import { useState } from 'react';
+import { createPortal } from 'react-dom';
 import { ImageLightbox } from '@/components/ui/ImageLightbox';
 import { VerifiedBadge } from '@/components/VerifiedBadge';
 import { toast } from 'sonner';
@@ -259,23 +260,28 @@ export const MessageBubble = ({
             <div
               className={`${
                 isOwn
-                  ? 'text-primary-foreground shadow-sm'
+                  ? 'text-primary-foreground shadow-md'
                   : 'bg-muted text-foreground shadow-sm'
-              } ${getBubbleRadius()}`}
+              } ${getBubbleRadius()} min-w-[60px]`}
               style={isOwn ? { backgroundColor: getThemeColor() } : {}}
             >
               {/* --- Reply Preview --- */}
               {repliedMessage && (
-                <div className={`px-3 py-2 mb-1 border-l-2 ${
-                  isOwn ? 'border-primary-foreground/40 bg-primary-foreground/10' : 'border-primary bg-muted/50'
+                <div className={`px-3 py-2 border-l-2 rounded-t-lg ${
+                  isOwn 
+                    ? 'border-primary-foreground/50 bg-primary-foreground/15' 
+                    : 'border-primary/70 bg-primary/10'
                 }`}>
-                  <div className="flex flex-col min-w-0">
-                     <span className={`text-xs truncate ${
-                      isOwn ? 'text-primary-foreground/80' : 'text-muted-foreground'
-                    }`} style={{ fontSize: `${Math.max(fontSize - 4, 10)}px` }}>
-                      {repliedMessage.audio_url ? '🎤 Voice message' : repliedMessage.encrypted_content}
-                    </span>
-                  </div>
+                  <p className={`text-xs font-medium mb-0.5 ${
+                    isOwn ? 'text-primary-foreground/90' : 'text-primary'
+                  }`}>
+                    {repliedMessage.profiles?.display_name || 'User'}
+                  </p>
+                  <p className={`text-xs truncate ${
+                    isOwn ? 'text-primary-foreground/70' : 'text-muted-foreground'
+                  }`} style={{ fontSize: `${Math.max(fontSize - 4, 10)}px` }}>
+                    {repliedMessage.audio_url ? '🎤 Voice message' : repliedMessage.encrypted_content}
+                  </p>
                 </div>
               )}
               
@@ -370,15 +376,19 @@ export const MessageBubble = ({
         </div>
       </div>
       
-      {/* Image Lightbox */}
-      {lightboxOpen && hasAttachment && message.attachment_type?.startsWith('image/') && (
+      {/* Image Lightbox - rendered via portal for proper isolation */}
+      {lightboxOpen && hasAttachment && message.attachment_type?.startsWith('image/') && createPortal(
         <ImageLightbox
           images={[{ url: message.attachment_url!, alt: message.attachment_name || 'Image' }]}
           initialIndex={0}
-          onClose={() => setLightboxOpen(false)}
+          onClose={(e) => {
+            e?.stopPropagation();
+            setLightboxOpen(false);
+          }}
           senderName={message.profiles?.display_name}
           timestamp={message.sent_at}
-        />
+        />,
+        document.body
       )}
     </motion.div>
   );

@@ -276,8 +276,9 @@ export const ImageLightbox = ({
         animate={{ opacity: 1 }}
         exit={{ opacity: 0 }}
         transition={{ duration: 0.2 }}
-        className="fixed inset-0 z-50 bg-black flex flex-col select-none"
+        className="fixed inset-0 z-[100] bg-black flex flex-col select-none"
         onClick={handleBackgroundClick}
+        onTouchStart={(e) => e.stopPropagation()}
       >
         {/* Header */}
         <motion.div 
