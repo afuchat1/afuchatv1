@@ -86,24 +86,55 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
                 const signupData = JSON.parse(pendingSignupData);
                 sessionStorage.removeItem('pendingSignupData');
                 
-                // Update profile with signup data
-                supabase
-                  .from('profiles')
-                  .update({
-                    handle: signupData.handle,
-                    display_name: signupData.display_name,
-                    country: signupData.country,
-                    is_business_mode: signupData.is_business_mode,
-                  })
-                  .eq('id', session.user.id)
-                  .then(({ error }) => {
+                // Build update object with only non-empty values
+                const updateData: Record<string, any> = {};
+                if (signupData.country) updateData.country = signupData.country;
+                if (signupData.is_business_mode !== undefined) updateData.is_business_mode = signupData.is_business_mode;
+                
+                // Only update if there's data to update
+                if (Object.keys(updateData).length > 0) {
+                  // Wait a moment for profile to be created by trigger
+                  setTimeout(async () => {
+                    const { error } = await supabase
+                      .from('profiles')
+                      .update(updateData)
+                      .eq('id', session.user.id);
+                    
                     if (error) {
                       console.error('Error updating profile with signup data:', error);
                     }
-                  });
+                  }, 500);
+                }
               } catch (e) {
                 console.error('Error parsing pending signup data:', e);
               }
+            }
+            
+            // Also check user metadata for country (email signup flow)
+            const userMetadata = session.user.user_metadata;
+            if (userMetadata?.country && !pendingSignupData) {
+              setTimeout(async () => {
+                // Check if country is already set
+                const { data: profile } = await supabase
+                  .from('profiles')
+                  .select('country')
+                  .eq('id', session.user.id)
+                  .single();
+                
+                if (profile && !profile.country) {
+                  const updateData: Record<string, any> = {
+                    country: userMetadata.country,
+                  };
+                  if (userMetadata.is_business_mode !== undefined) {
+                    updateData.is_business_mode = userMetadata.is_business_mode;
+                  }
+                  
+                  await supabase
+                    .from('profiles')
+                    .update(updateData)
+                    .eq('id', session.user.id);
+                }
+              }, 500);
             }
             
             const currentPath = window.location.pathname;
