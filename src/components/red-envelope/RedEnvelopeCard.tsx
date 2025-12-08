@@ -4,9 +4,11 @@ import { useAuth } from '@/contexts/AuthContext';
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
-import { Gift, Sparkles } from 'lucide-react';
+import { Gift, Sparkles, Crown } from 'lucide-react';
 import { toast } from 'sonner';
 import { useQuery } from '@tanstack/react-query';
+import { usePremiumStatus } from '@/hooks/usePremiumStatus';
+import { useNavigate } from 'react-router-dom';
 
 interface RedEnvelopeCardProps {
   envelope: any;
@@ -16,8 +18,10 @@ interface RedEnvelopeCardProps {
 export const RedEnvelopeCard = ({ envelope, onClaim }: RedEnvelopeCardProps) => {
   const { user } = useAuth();
   const [claiming, setClaiming] = useState(false);
+  const { isPremium } = usePremiumStatus();
+  const navigate = useNavigate();
 
-  // Check if user has claimed
+  // Check if user has claimed this envelope
   const { data: hasClaimed } = useQuery({
     queryKey: ['red_envelope_claim', envelope.id, user?.id],
     queryFn: async () => {
@@ -33,9 +37,49 @@ export const RedEnvelopeCard = ({ envelope, onClaim }: RedEnvelopeCardProps) => 
     enabled: !!user?.id
   });
 
+  // Check if non-premium user has already claimed today
+  const { data: todayClaimCount } = useQuery({
+    queryKey: ['daily_red_envelope_claims', user?.id],
+    queryFn: async () => {
+      const today = new Date();
+      today.setHours(0, 0, 0, 0);
+      
+      const { count, error } = await supabase
+        .from('red_envelope_claims')
+        .select('*', { count: 'exact', head: true })
+        .eq('claimer_id', user?.id)
+        .gte('claimed_at', today.toISOString());
+      
+      return count || 0;
+    },
+    enabled: !!user?.id && !isPremium
+  });
+
+  const hasReachedDailyLimit = !isPremium && (todayClaimCount || 0) >= 1;
+
   const handleClaim = async () => {
     if (!user) {
       toast.error('Please sign in to claim');
+      return;
+    }
+
+    // Check daily limit for non-premium users
+    if (hasReachedDailyLimit) {
+      toast.error(
+        <div className="space-y-2">
+          <p className="font-semibold">Daily limit reached!</p>
+          <p className="text-sm">Non-premium users can only claim 1 red envelope per day.</p>
+          <Button 
+            size="sm" 
+            className="w-full mt-2 bg-primary"
+            onClick={() => navigate('/premium')}
+          >
+            <Crown className="mr-2 h-4 w-4" />
+            Upgrade to Premium
+          </Button>
+        </div>,
+        { duration: 6000 }
+      );
       return;
     }
 
@@ -46,7 +90,28 @@ export const RedEnvelopeCard = ({ envelope, onClaim }: RedEnvelopeCardProps) => 
         p_envelope_id: envelope.id
       });
 
-      if (error) throw error;
+      if (error) {
+        // Check if error is due to daily limit (RLS policy rejection)
+        if (error.message.includes('row-level security') || error.code === '42501') {
+          toast.error(
+            <div className="space-y-2">
+              <p className="font-semibold">Daily limit reached!</p>
+              <p className="text-sm">Upgrade to Premium for unlimited claims.</p>
+              <Button 
+                size="sm" 
+                className="w-full mt-2 bg-primary"
+                onClick={() => navigate('/premium')}
+              >
+                <Crown className="mr-2 h-4 w-4" />
+                Get Premium
+              </Button>
+            </div>,
+            { duration: 6000 }
+          );
+          return;
+        }
+        throw error;
+      }
 
       const result = data as { success: boolean; message: string; amount?: number; is_last?: boolean };
 
@@ -126,6 +191,19 @@ export const RedEnvelopeCard = ({ envelope, onClaim }: RedEnvelopeCardProps) => 
                 <Button className="w-full" variant="outline" disabled>
                   All Claimed
                 </Button>
+              ) : hasReachedDailyLimit ? (
+                <div className="space-y-2">
+                  <Button 
+                    className="w-full bg-muted text-muted-foreground"
+                    onClick={handleClaim}
+                  >
+                    <Crown className="mr-2 h-4 w-4 text-amber-500" />
+                    Daily Limit Reached
+                  </Button>
+                  <p className="text-xs text-center text-muted-foreground">
+                    Upgrade to Premium for unlimited claims
+                  </p>
+                </div>
               ) : (
                 <Button 
                   className="w-full bg-red-500 hover:bg-red-600 group"
