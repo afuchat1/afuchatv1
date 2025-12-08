@@ -18,7 +18,7 @@ import { useNexa } from '@/hooks/useNexa';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { CircularImageCrop } from '@/components/profile/CircularImageCrop';
 import { countries } from '@/lib/countries';
-import { getCountryFlag } from '@/lib/countryFlags';
+import { getCountryFlag, getCountryCode, getPhonePlaceholder } from '@/lib/countryFlags';
 
 // Import Supabase types
 import type { Database } from '@/integrations/supabase/types';
@@ -450,18 +450,28 @@ const EditProfile: React.FC = () => {
 
               <div className="space-y-2">
                 <Label htmlFor="phone_number" className="text-sm font-medium">Phone Number</Label>
-                <Input
-                  id="phone_number"
-                  name="phone_number"
-                  type="tel"
-                  value={profile.phone_number}
-                  onChange={handleInputChange}
-                  placeholder="+1234567890"
-                  disabled={saving}
-                  className="h-11"
-                />
+                <div className="flex gap-2">
+                  <div className="min-w-24 h-11 flex items-center justify-center gap-1.5 bg-muted rounded-md px-3 text-sm font-medium border border-input">
+                    <span className="text-xl">{getCountryFlag(profile.country)}</span>
+                    <span>{getCountryCode(profile.country)}</span>
+                  </div>
+                  <Input
+                    id="phone_number"
+                    name="phone_number"
+                    type="tel"
+                    value={profile.phone_number.replace(getCountryCode(profile.country), '')}
+                    onChange={(e) => {
+                      const cleaned = e.target.value.replace(/\D/g, '');
+                      const countryCode = getCountryCode(profile.country);
+                      setProfile(prev => ({ ...prev, phone_number: countryCode + cleaned }));
+                    }}
+                    placeholder={getPhonePlaceholder(profile.country)}
+                    disabled={saving}
+                    className="h-11 flex-1"
+                  />
+                </div>
                 <p className="text-xs text-muted-foreground">
-                  Include country code for international numbers
+                  Country code is set based on your profile country
                 </p>
               </div>
 
