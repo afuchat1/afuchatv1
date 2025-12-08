@@ -4,8 +4,9 @@ import { useAuth } from '@/contexts/AuthContext';
 import { Card } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
-import { Search as SearchIcon, User, MessageSquare, TrendingUp } from 'lucide-react';
+import { Search as SearchIcon, User, MessageSquare, TrendingUp, Users } from 'lucide-react';
 import { useNavigate, useLocation } from 'react-router-dom';
+import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { CustomLoader } from '@/components/ui/CustomLoader';
 import { toast } from 'sonner';
 import { useTranslation } from 'react-i18next';
@@ -20,19 +21,21 @@ interface SearchResult {
   is_verified?: boolean;
   is_organization_verified?: boolean;
   is_private?: boolean;
+  avatar_url?: string;
   content?: string;
   created_at?: string;
   author_id?: string;
+  image_url?: string;
   author_profiles?: {
     display_name: string;
     handle: string;
     is_verified?: boolean;
     is_organization_verified?: boolean;
+    avatar_url?: string;
   };
   // Group-specific fields
   name?: string;
   description?: string;
-  avatar_url?: string;
   member_count?: number;
   is_member?: boolean;
 }
@@ -204,7 +207,7 @@ const Search = () => {
       // Local search for users
       const { data: userData } = await supabase
         .from('profiles')
-        .select('id, display_name, handle, bio, is_verified, is_organization_verified, is_private')
+        .select('id, display_name, handle, bio, is_verified, is_organization_verified, is_private, avatar_url')
         .or(`display_name.ilike.%${trimmedQuery}%,handle.ilike.%${trimmedQuery}%`)
         .limit(5);
 
@@ -212,8 +215,8 @@ const Search = () => {
       const { data: postData } = await supabase
         .from('posts')
         .select(`
-          id, content, created_at, author_id,
-          profiles!author_id(display_name, handle, is_verified, is_organization_verified)
+          id, content, created_at, author_id, image_url,
+          profiles!author_id(display_name, handle, is_verified, is_organization_verified, avatar_url)
         `)
         .textSearch('content', searchTsQuery, { type: 'plain', config: searchConfig })
         .limit(10);
@@ -280,6 +283,7 @@ const Search = () => {
           content: p.content,
           created_at: p.created_at,
           author_id: p.author_id,
+          image_url: p.image_url,
           author_profiles: p.profiles,
         })),
       ];
@@ -422,12 +426,13 @@ const Search = () => {
                         onClick={() => handleViewProfile(result.id)}
                     >
                       <div className="flex items-center justify-between">
-                        <div
-                          className="flex items-center space-x-3 flex-1"
-                        >
-                          <div className="h-10 w-10 rounded-full bg-primary flex items-center justify-center text-primary-foreground shadow-md flex-shrink-0">
-                            <User className="h-5 w-5" />
-                          </div>
+                        <div className="flex items-center space-x-3 flex-1">
+                          <Avatar className="h-12 w-12 flex-shrink-0">
+                            <AvatarImage src={result.avatar_url || ''} alt={result.display_name} />
+                            <AvatarFallback className="bg-primary text-primary-foreground">
+                              {result.display_name?.charAt(0).toUpperCase() || <User className="h-5 w-5" />}
+                            </AvatarFallback>
+                          </Avatar>
                           <div className="flex-1 min-w-0">
                             <div className="flex items-center gap-1">
                               <h3 className="font-semibold text-foreground truncate text-sm">
@@ -478,9 +483,12 @@ const Search = () => {
                     >
                       <div className="flex items-center justify-between">
                         <div className="flex items-center space-x-3 flex-1">
-                          <div className="h-10 w-10 rounded-full bg-secondary flex items-center justify-center text-muted-foreground shadow-md flex-shrink-0">
-                            <MessageSquare className="h-5 w-5" />
-                          </div>
+                          <Avatar className="h-12 w-12 flex-shrink-0">
+                            <AvatarImage src={result.avatar_url || ''} alt={result.name} />
+                            <AvatarFallback className="bg-secondary text-muted-foreground">
+                              <Users className="h-5 w-5" />
+                            </AvatarFallback>
+                          </Avatar>
                           <div className="flex-1 min-w-0">
                             <h3 className="font-semibold text-foreground truncate text-sm">
                               {result.name || 'Unnamed Group'}
@@ -537,12 +545,15 @@ const Search = () => {
                       className="p-4 hover:shadow-xl transition-shadow cursor-pointer"
                       onClick={() => handleViewPost(result.id)}
                     >
-                      <div className="flex items-start space-x-3 mb-2">
-                        <div className="h-8 w-8 rounded-full bg-secondary flex items-center justify-center text-muted-foreground flex-shrink-0">
-                          <User className="h-4 w-4" />
-                        </div>
+                      <div className="flex items-start space-x-3">
+                        <Avatar className="h-10 w-10 flex-shrink-0">
+                          <AvatarImage src={result.author_profiles?.avatar_url || ''} alt={result.author_profiles?.display_name} />
+                          <AvatarFallback className="bg-secondary text-muted-foreground">
+                            {result.author_profiles?.display_name?.charAt(0).toUpperCase() || <User className="h-4 w-4" />}
+                          </AvatarFallback>
+                        </Avatar>
                         <div className="flex-1 min-w-0">
-                          <div className="flex items-center gap-1">
+                          <div className="flex items-center gap-1 flex-wrap">
                             <h4 className="font-semibold text-foreground truncate text-sm">
                               {result.author_profiles?.display_name}
                             </h4>
@@ -558,9 +569,18 @@ const Search = () => {
                               {result.created_at ? new Date(result.created_at).toLocaleDateString() : 'Unknown'}
                             </p>
                           </div>
-                          <p className="text-foreground text-sm mt-1 leading-relaxed line-clamp-3 whitespace-pre-wrap">
+                          <p className="text-foreground text-sm mt-2 leading-relaxed line-clamp-3 whitespace-pre-wrap">
                             {result.content}
                           </p>
+                          {result.image_url && (
+                            <div className="mt-3 rounded-xl overflow-hidden">
+                              <img 
+                                src={result.image_url} 
+                                alt="Post image" 
+                                className="w-full h-auto max-h-48 object-cover rounded-xl"
+                              />
+                            </div>
+                          )}
                         </div>
                       </div>
                     </Card>
