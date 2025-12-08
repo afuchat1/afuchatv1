@@ -29,8 +29,7 @@ import {
   ArrowLeft,
   Volume2,
   VolumeX,
-  RefreshCw,
-  Maximize2
+  RefreshCw
 } from 'lucide-react';
 
 type GameStatus = 'waiting' | 'playing' | 'finished';
@@ -141,10 +140,6 @@ const AfuArena = () => {
   const [singlePlayerState, setSinglePlayerState] = useState<GameState | null>(null);
   const [singlePlayerStatus, setSinglePlayerStatus] = useState<'idle' | 'playing' | 'finished'>('idle');
   const [singlePlayerWon, setSinglePlayerWon] = useState(false);
-  const [isFullscreen, setIsFullscreen] = useState(false);
-  
-  // Game playing state for fullscreen
-  const isPlaying = singlePlayerStatus === 'playing' || gameRoom?.status === 'playing';
   
   // Mobile touch controls state
   const [joystickPos, setJoystickPos] = useState({ x: 0, y: 0 });
@@ -159,22 +154,6 @@ const AfuArena = () => {
   const lastUpdateRef = useRef<number>(0);
   const localGameStateRef = useRef<GameState | null>(null);
   const joystickOriginRef = useRef({ x: 0, y: 0 });
-
-  // Toggle fullscreen
-  const toggleFullscreen = useCallback(async () => {
-    try {
-      if (!document.fullscreenElement) {
-        await document.documentElement.requestFullscreen();
-        setIsFullscreen(true);
-      } else {
-        await document.exitFullscreen();
-        setIsFullscreen(false);
-      }
-    } catch (error) {
-      // Fullscreen not supported
-      setIsFullscreen(!isFullscreen);
-    }
-  }, [isFullscreen]);
 
   useEffect(() => {
     audioContextRef.current = new (window.AudioContext || (window as any).webkitAudioContext)();
@@ -1195,14 +1174,6 @@ const AfuArena = () => {
             </div>
           </div>
           <div className="flex items-center gap-1">
-            <Button 
-              variant="ghost" 
-              size="icon"
-              onClick={toggleFullscreen}
-              title="Toggle Fullscreen"
-            >
-              <Maximize2 className={`h-5 w-5 ${isFullscreen ? 'text-primary' : ''}`} />
-            </Button>
             <Button 
               variant="ghost" 
               size="icon"
