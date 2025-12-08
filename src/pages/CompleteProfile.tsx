@@ -145,12 +145,13 @@ const CompleteProfileContent = ({ user }: CompleteProfileContentProps) => {
     if (!avatarFile || !user) return null;
 
     const fileExt = avatarFile.name.split('.').pop();
-    const fileName = `${user.id}-${Date.now()}.${fileExt}`;
-    const filePath = `avatars/${fileName}`;
+    const fileName = `${Date.now()}.${fileExt}`;
+    // Use user.id as folder name to match RLS policy: (auth.uid())::text = (storage.foldername(name))[1]
+    const filePath = `${user.id}/${fileName}`;
 
     const { error: uploadError } = await supabase.storage
       .from('avatars')
-      .upload(filePath, avatarFile);
+      .upload(filePath, avatarFile, { upsert: true });
 
     if (uploadError) {
       console.error('Avatar upload error:', uploadError);
