@@ -8,7 +8,7 @@ import { useAuth } from '@/contexts/AuthContext';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
 import { motion, AnimatePresence } from 'framer-motion';
-import { useLandscapeMode } from '@/hooks/useLandscapeMode';
+// Landscape mode removed - using standard responsive design
 import { 
   Swords, 
   Trophy, 
@@ -143,9 +143,8 @@ const AfuArena = () => {
   const [singlePlayerWon, setSinglePlayerWon] = useState(false);
   const [isFullscreen, setIsFullscreen] = useState(false);
   
-  // Enable landscape mode when playing
+  // Game playing state for fullscreen
   const isPlaying = singlePlayerStatus === 'playing' || gameRoom?.status === 'playing';
-  useLandscapeMode(isPlaying && isFullscreen);
   
   // Mobile touch controls state
   const [joystickPos, setJoystickPos] = useState({ x: 0, y: 0 });

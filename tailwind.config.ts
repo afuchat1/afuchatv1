@@ -14,8 +14,8 @@ export default {
     },
     extend: {
       fontFamily: {
-        'outfit': ['Outfit', 'sans-serif'],
-        'inter': ['Inter', 'sans-serif'],
+        'outfit': ['Outfit', 'Inter', 'system-ui', 'sans-serif'],
+        'inter': ['Inter', 'system-ui', 'sans-serif'],
       },
       colors: {
         border: "hsl(var(--border))",
@@ -34,6 +34,14 @@ export default {
         destructive: {
           DEFAULT: "hsl(var(--destructive))",
           foreground: "hsl(var(--destructive-foreground))",
+        },
+        success: {
+          DEFAULT: "hsl(var(--success))",
+          foreground: "hsl(var(--success-foreground))",
+        },
+        warning: {
+          DEFAULT: "hsl(var(--warning))",
+          foreground: "hsl(var(--warning-foreground))",
         },
         muted: {
           DEFAULT: "hsl(var(--muted))",
@@ -66,61 +74,106 @@ export default {
         lg: "var(--radius)",
         md: "calc(var(--radius) - 2px)",
         sm: "calc(var(--radius) - 4px)",
+        xl: "calc(var(--radius) + 4px)",
+        "2xl": "calc(var(--radius) + 8px)",
+        "3xl": "calc(var(--radius) + 16px)",
+      },
+      boxShadow: {
+        'soft': '0 2px 8px -2px hsl(var(--foreground) / 0.08)',
+        'soft-lg': '0 4px 16px -4px hsl(var(--foreground) / 0.1)',
+        'soft-xl': '0 8px 32px -8px hsl(var(--foreground) / 0.12)',
+        'glow': '0 0 20px hsl(var(--primary) / 0.3)',
+        'glow-sm': '0 0 10px hsl(var(--primary) / 0.2)',
+        'inner-soft': 'inset 0 1px 2px hsl(var(--foreground) / 0.05)',
       },
       keyframes: {
         "accordion-down": {
-          from: {
-            height: "0",
-          },
-          to: {
-            height: "var(--radix-accordion-content-height)",
-          },
+          from: { height: "0", opacity: "0" },
+          to: { height: "var(--radix-accordion-content-height)", opacity: "1" },
         },
         "accordion-up": {
-          from: {
-            height: "var(--radix-accordion-content-height)",
-          },
-          to: {
-            height: "0",
-          },
+          from: { height: "var(--radix-accordion-content-height)", opacity: "1" },
+          to: { height: "0", opacity: "0" },
         },
         "fade-in": {
-          "0%": {
-            opacity: "0",
-            transform: "translateY(10px)",
-          },
-          "100%": {
-            opacity: "1",
-            transform: "translateY(0)",
-          },
+          "0%": { opacity: "0", transform: "translateY(8px)" },
+          "100%": { opacity: "1", transform: "translateY(0)" },
+        },
+        "fade-out": {
+          "0%": { opacity: "1", transform: "translateY(0)" },
+          "100%": { opacity: "0", transform: "translateY(8px)" },
         },
         "scale-in": {
-          "0%": {
-            transform: "scale(0.95)",
-            opacity: "0",
-          },
-          "100%": {
-            transform: "scale(1)",
-            opacity: "1",
-          },
+          "0%": { transform: "scale(0.96)", opacity: "0" },
+          "100%": { transform: "scale(1)", opacity: "1" },
+        },
+        "scale-out": {
+          "0%": { transform: "scale(1)", opacity: "1" },
+          "100%": { transform: "scale(0.96)", opacity: "0" },
+        },
+        "slide-in-right": {
+          "0%": { transform: "translateX(100%)", opacity: "0" },
+          "100%": { transform: "translateX(0)", opacity: "1" },
+        },
+        "slide-out-right": {
+          "0%": { transform: "translateX(0)", opacity: "1" },
+          "100%": { transform: "translateX(100%)", opacity: "0" },
+        },
+        "slide-up": {
+          "0%": { transform: "translateY(100%)", opacity: "0" },
+          "100%": { transform: "translateY(0)", opacity: "1" },
+        },
+        "slide-down": {
+          "0%": { transform: "translateY(0)", opacity: "1" },
+          "100%": { transform: "translateY(100%)", opacity: "0" },
         },
         "float": {
-          "0%, 100%": {
-            transform: "translateY(0px) scale(1)",
-            opacity: "0.3",
-          },
-          "50%": {
-            transform: "translateY(-20px) scale(1.2)",
-            opacity: "0.8",
-          },
+          "0%, 100%": { transform: "translateY(0)" },
+          "50%": { transform: "translateY(-8px)" },
+        },
+        "pulse-soft": {
+          "0%, 100%": { opacity: "1" },
+          "50%": { opacity: "0.7" },
+        },
+        "shimmer": {
+          "0%": { backgroundPosition: "-200% 0" },
+          "100%": { backgroundPosition: "200% 0" },
+        },
+        "spin-slow": {
+          "0%": { transform: "rotate(0deg)" },
+          "100%": { transform: "rotate(360deg)" },
+        },
+        "bounce-soft": {
+          "0%, 100%": { transform: "translateY(0)" },
+          "50%": { transform: "translateY(-4px)" },
         },
       },
       animation: {
-        "accordion-down": "accordion-down 0.2s ease-out",
-        "accordion-up": "accordion-up 0.2s ease-out",
+        "accordion-down": "accordion-down 0.25s ease-out",
+        "accordion-up": "accordion-up 0.25s ease-out",
         "fade-in": "fade-in 0.3s ease-out",
+        "fade-out": "fade-out 0.3s ease-out",
         "scale-in": "scale-in 0.2s ease-out",
+        "scale-out": "scale-out 0.2s ease-out",
+        "slide-in-right": "slide-in-right 0.3s ease-out",
+        "slide-out-right": "slide-out-right 0.3s ease-out",
+        "slide-up": "slide-up 0.4s ease-out",
+        "slide-down": "slide-down 0.3s ease-out",
         "float": "float 3s ease-in-out infinite",
+        "pulse-soft": "pulse-soft 2s ease-in-out infinite",
+        "shimmer": "shimmer 2s linear infinite",
+        "spin-slow": "spin-slow 8s linear infinite",
+        "bounce-soft": "bounce-soft 1s ease-in-out infinite",
+        "enter": "fade-in 0.3s ease-out, scale-in 0.2s ease-out",
+        "exit": "fade-out 0.2s ease-in, scale-out 0.15s ease-in",
+      },
+      transitionTimingFunction: {
+        'bounce-in': 'cubic-bezier(0.68, -0.55, 0.265, 1.55)',
+        'smooth': 'cubic-bezier(0.4, 0, 0.2, 1)',
+        'premium': 'cubic-bezier(0.22, 1, 0.36, 1)',
+      },
+      backdropBlur: {
+        xs: '2px',
       },
     },
   },

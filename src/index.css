@@ -49,9 +49,60 @@
       linear-gradient(to bottom, hsl(var(--border) / 0.1) 1px, transparent 1px);
     background-size: 64px 64px;
   }
+
+  /* Premium glass effect */
+  .glass {
+    @apply bg-card/80 backdrop-blur-xl border border-border/50;
+  }
+
+  /* Premium gradient text */
+  .gradient-text {
+    @apply bg-gradient-to-r from-primary via-accent to-primary bg-clip-text text-transparent;
+  }
+
+  /* Premium shimmer effect */
+  .shimmer {
+    background: linear-gradient(
+      90deg,
+      hsl(var(--muted)) 0%,
+      hsl(var(--card)) 50%,
+      hsl(var(--muted)) 100%
+    );
+    background-size: 200% 100%;
+    animation: shimmer 1.5s infinite;
+  }
+
+  @keyframes shimmer {
+    0% { background-position: -200% 0; }
+    100% { background-position: 200% 0; }
+  }
+
+  /* Premium glow effect */
+  .glow {
+    box-shadow: 0 0 20px hsl(var(--primary) / 0.3), 0 0 40px hsl(var(--primary) / 0.1);
+  }
+
+  .glow-sm {
+    box-shadow: 0 0 10px hsl(var(--primary) / 0.2);
+  }
+
+  /* Premium hover lift */
+  .hover-lift {
+    @apply transition-all duration-300 ease-out;
+  }
+
+  .hover-lift:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 8px 25px -5px hsl(var(--foreground) / 0.1), 0 4px 10px -5px hsl(var(--foreground) / 0.05);
+  }
+
+  /* Premium button press */
+  .press-effect:active {
+    transform: scale(0.98);
+  }
 }
 
-/* AfuChat Design System - Complete Theme Specification */
+/* AfuChat Premium Design System */
 
 @layer base {
   :root {
@@ -59,120 +110,137 @@
     --primary: 183 100% 40%;
     --primary-foreground: 0 0% 100%;
     
-    /* Lighter cyan accent */
-    --accent: 183 100% 48%;
+    /* Accent - slightly lighter cyan */
+    --accent: 183 80% 50%;
     --accent-foreground: 0 0% 100%;
     
-    /* App Background #F6F6F6 */
-    --background: 0 0% 96.5%;
+    /* App Background - Premium warm white */
+    --background: 0 0% 98%;
     
     /* Text Colors */
-    --foreground: 0 0% 10%; /* #1A1A1A */
+    --foreground: 220 20% 10%;
     
-    /* Card/Post Background #FFFFFF */
+    /* Card/Post Background - Pure white with subtle warmth */
     --card: 0 0% 100%;
-    --card-foreground: 0 0% 10%;
+    --card-foreground: 220 20% 10%;
     
-    /* Popover (same as card) */
+    /* Popover */
     --popover: 0 0% 100%;
-    --popover-foreground: 0 0% 10%;
+    --popover-foreground: 220 20% 10%;
     
-    /* Muted - Surface/Navigation #FAFAFA */
-    --muted: 0 0% 98%;
-    --muted-foreground: 0 0% 48%; /* #7A7A7A */
+    /* Muted - Soft surfaces */
+    --muted: 220 14% 96%;
+    --muted-foreground: 220 10% 46%;
     
-    /* Secondary text color for descriptions */
-    --secondary: 0 0% 98%;
-    --secondary-foreground: 0 0% 29%; /* #4A4A4A */
+    /* Secondary */
+    --secondary: 220 14% 96%;
+    --secondary-foreground: 220 15% 25%;
     
-    /* Borders/Dividers #E6E6E6 */
-    --border: 0 0% 90%;
-    --input: 0 0% 90%;
-    --ring: 183 100% 40%;
-    
-    /* Destructive red */
-    --destructive: 0 84% 60%;
-    --destructive-foreground: 0 0% 100%;
-    
-    --radius: 0.5rem;
-    
-    /* Sidebar - Surface/Navigation #FAFAFA */
-    --sidebar-background: 0 0% 98%;
-    --sidebar-foreground: 0 0% 10%;
-    --sidebar-primary: 183 100% 40%;
-    --sidebar-primary-foreground: 0 0% 100%;
-    --sidebar-accent: 183 100% 48%;
-    --sidebar-accent-foreground: 0 0% 100%;
-    --sidebar-border: 0 0% 90%;
-    --sidebar-ring: 183 100% 40%;
-  }
-
-  .dark {
-    /* Brand Cyan #00C2CB - Dark mode */
-    --primary: 183 100% 40%;
-    --primary-foreground: 0 0% 100%;
-    
-    /* Lighter cyan accent */
-    --accent: 183 100% 48%;
-    --accent-foreground: 0 0% 100%;
-    
-    /* App Background #0F1114 */
-    --background: 216 14% 7%;
-    
-    /* Text Colors */
-    --foreground: 0 0% 100%; /* #FFFFFF */
-    
-    /* Card/Post Background #181A1D */
-    --card: 216 9% 10%;
-    --card-foreground: 0 0% 100%;
-    
-    /* Popover (same as card) */
-    --popover: 216 9% 10%;
-    --popover-foreground: 0 0% 100%;
-    
-    /* Muted - Surface/Navigation #1E2024 */
-    --muted: 220 9% 13%;
-    --muted-foreground: 220 4% 44%; /* #6C6F75 */
-    
-    /* Secondary text color */
-    --secondary: 220 9% 13%;
-    --secondary-foreground: 216 6% 65%; /* #A1A5AB */
-    
-    /* Borders/Dividers #2A2D31 */
-    --border: 214 8% 18%;
-    --input: 214 8% 18%;
+    /* Borders - Soft and refined */
+    --border: 220 13% 91%;
+    --input: 220 13% 91%;
     --ring: 183 100% 40%;
     
     /* Destructive */
     --destructive: 0 84% 60%;
     --destructive-foreground: 0 0% 100%;
+
+    /* Success */
+    --success: 142 76% 36%;
+    --success-foreground: 0 0% 100%;
+
+    /* Warning */
+    --warning: 38 92% 50%;
+    --warning-foreground: 0 0% 100%;
     
-    /* Sidebar - Surface/Navigation #1E2024 */
-    --sidebar-background: 220 9% 13%;
-    --sidebar-foreground: 0 0% 100%;
+    --radius: 0.75rem;
+    
+    /* Sidebar */
+    --sidebar-background: 0 0% 100%;
+    --sidebar-foreground: 220 20% 10%;
     --sidebar-primary: 183 100% 40%;
     --sidebar-primary-foreground: 0 0% 100%;
-    --sidebar-accent: 183 100% 48%;
+    --sidebar-accent: 183 80% 50%;
     --sidebar-accent-foreground: 0 0% 100%;
-    --sidebar-border: 214 8% 18%;
+    --sidebar-border: 220 13% 91%;
+    --sidebar-ring: 183 100% 40%;
+  }
+
+  .dark {
+    /* Brand Cyan #00C2CB */
+    --primary: 183 100% 40%;
+    --primary-foreground: 0 0% 100%;
+    
+    /* Accent */
+    --accent: 183 80% 50%;
+    --accent-foreground: 0 0% 100%;
+    
+    /* App Background - Deep premium dark */
+    --background: 222 20% 7%;
+    
+    /* Text Colors */
+    --foreground: 0 0% 98%;
+    
+    /* Card/Post Background - Elevated dark */
+    --card: 222 17% 10%;
+    --card-foreground: 0 0% 98%;
+    
+    /* Popover */
+    --popover: 222 17% 10%;
+    --popover-foreground: 0 0% 98%;
+    
+    /* Muted */
+    --muted: 222 15% 14%;
+    --muted-foreground: 220 10% 54%;
+    
+    /* Secondary */
+    --secondary: 222 15% 14%;
+    --secondary-foreground: 220 10% 78%;
+    
+    /* Borders - Subtle dark */
+    --border: 222 12% 18%;
+    --input: 222 12% 18%;
+    --ring: 183 100% 40%;
+    
+    /* Destructive */
+    --destructive: 0 72% 51%;
+    --destructive-foreground: 0 0% 100%;
+
+    /* Success */
+    --success: 142 76% 36%;
+    --success-foreground: 0 0% 100%;
+
+    /* Warning */
+    --warning: 38 92% 50%;
+    --warning-foreground: 0 0% 100%;
+    
+    /* Sidebar */
+    --sidebar-background: 222 17% 10%;
+    --sidebar-foreground: 0 0% 98%;
+    --sidebar-primary: 183 100% 40%;
+    --sidebar-primary-foreground: 0 0% 100%;
+    --sidebar-accent: 183 80% 50%;
+    --sidebar-accent-foreground: 0 0% 100%;
+    --sidebar-border: 222 12% 18%;
     --sidebar-ring: 183 100% 40%;
   }
 }
 
 @layer base {
   * {
-    @apply border-0;
+    @apply border-border;
     -webkit-tap-highlight-color: transparent;
     -webkit-touch-callout: none;
   }
   
   html, body {
-    @apply bg-background text-foreground;
-    font-family: 'Inter', sans-serif;
+    @apply bg-background text-foreground antialiased;
+    font-family: 'Outfit', 'Inter', system-ui, -apple-system, sans-serif;
     -webkit-font-smoothing: antialiased;
     -moz-osx-font-smoothing: grayscale;
     overflow-x: hidden;
     overscroll-behavior: none;
+    letter-spacing: -0.01em;
   }
   
   /* App-like fixed viewport */
@@ -185,6 +253,23 @@
     min-height: 100%;
     min-height: -webkit-fill-available;
   }
+
+  /* Typography refinements */
+  h1, h2, h3, h4, h5, h6 {
+    @apply font-outfit tracking-tight;
+  }
+
+  h1 {
+    @apply text-4xl font-bold;
+  }
+
+  h2 {
+    @apply text-2xl font-semibold;
+  }
+
+  h3 {
+    @apply text-xl font-semibold;
+  }
   
   /* Remove all click/tap markers and outlines */
   button, a, input, textarea, select {
@@ -194,7 +279,6 @@
   
   button:focus, a:focus, input:focus, textarea:focus, select:focus {
     outline: none !important;
-    box-shadow: none !important;
   }
   
   button:active, a:active {
@@ -219,7 +303,9 @@
   }
 }
 
-/* Utility classes for data efficiency indicators */
+/* Premium UI Components */
+
+/* Status indicators */
 .status-indicator {
   @apply inline-block w-2 h-2 rounded-full;
 }
@@ -236,38 +322,58 @@
   @apply bg-accent;
 }
 
-/* Telegram-style chat background pattern */
+/* Premium chat background */
 .telegram-bg {
   background-color: hsl(var(--background));
   background-image: 
-    radial-gradient(circle at 20% 30%, hsla(210, 20%, 25%, 0.1) 0%, transparent 50%),
-    radial-gradient(circle at 80% 70%, hsla(210, 20%, 25%, 0.1) 0%, transparent 50%),
-    radial-gradient(circle at 40% 80%, hsla(210, 20%, 25%, 0.08) 0%, transparent 50%);
+    radial-gradient(ellipse at 20% 20%, hsl(var(--primary) / 0.03) 0%, transparent 50%),
+    radial-gradient(ellipse at 80% 80%, hsl(var(--accent) / 0.03) 0%, transparent 50%);
 }
 
-/* Game fullscreen mode - forces landscape on mobile */
-.game-fullscreen {
-  @media screen and (max-width: 768px) and (orientation: portrait) {
-    transform: rotate(90deg);
-    transform-origin: left top;
-    width: 100vh;
-    height: 100vw;
-    position: fixed;
-    top: 0;
-    left: 100vw;
-    overflow: hidden;
-  }
+/* Premium card shadow system */
+.card-shadow {
+  box-shadow: 
+    0 1px 3px hsl(var(--foreground) / 0.04),
+    0 4px 12px hsl(var(--foreground) / 0.03);
 }
 
-/* Fullscreen game wrapper */
+.card-shadow-lg {
+  box-shadow: 
+    0 2px 8px hsl(var(--foreground) / 0.04),
+    0 8px 32px hsl(var(--foreground) / 0.06);
+}
+
+/* Premium divider */
+.divider {
+  @apply h-px w-full bg-gradient-to-r from-transparent via-border to-transparent;
+}
+
+/* Fullscreen support */
 :fullscreen {
   background-color: hsl(var(--background));
 }
 
-:fullscreen .game-fullscreen {
-  transform: none;
-  width: 100%;
-  height: 100%;
-  position: relative;
-  left: 0;
+/* Selection color */
+::selection {
+  background-color: hsl(var(--primary) / 0.2);
+  color: inherit;
+}
+
+/* Scrollbar styling for webkit browsers */
+::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+::-webkit-scrollbar-thumb {
+  background: hsl(var(--border));
+  border-radius: 3px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: hsl(var(--muted-foreground) / 0.5);
 }
