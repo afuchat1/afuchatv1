@@ -88,6 +88,22 @@ export const PhoneNumberInput = () => {
     setError('');
 
     try {
+      // Check if phone number is already used by another account
+      const { data: existingUser, error: checkError } = await supabase
+        .from('profiles')
+        .select('id')
+        .eq('phone_number', fullPhoneNumber)
+        .neq('id', user.id)
+        .maybeSingle();
+
+      if (checkError) throw checkError;
+
+      if (existingUser) {
+        setError('This phone number is already registered to another account');
+        setIsSaving(false);
+        return;
+      }
+
       const { error: updateError } = await supabase
         .from('profiles')
         .update({ phone_number: fullPhoneNumber })
@@ -100,7 +116,9 @@ export const PhoneNumberInput = () => {
       toast.success('Phone number updated successfully');
     } catch (error: any) {
       console.error('Error updating phone number:', error);
-      if (error.message.includes('check_phone_number_format')) {
+      if (error.message.includes('profiles_phone_number_unique') || error.code === '23505') {
+        setError('This phone number is already registered to another account');
+      } else if (error.message.includes('check_phone_number_format')) {
         setError('Invalid phone number format. Use international format: +1234567890');
       } else {
         toast.error('Failed to update phone number');
