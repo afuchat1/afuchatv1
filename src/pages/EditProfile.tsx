@@ -195,7 +195,7 @@ const EditProfile: React.FC = () => {
         show_online_status: profile.show_online_status,
         show_read_receipts: profile.show_read_receipts,
         show_balance: profile.show_balance,
-        country: profile.country || null,
+        // Note: country is intentionally excluded - set only during signup
         phone_number: profile.phone_number.trim() || null,
         business_category: isBusiness ? (profile.business_category.trim() || null) : null,
         updated_at: new Date().toISOString(),
@@ -465,38 +465,23 @@ const EditProfile: React.FC = () => {
                 </p>
               </div>
 
+              {/* Country - Read-only after signup */}
               <div className="space-y-2">
                 <Label htmlFor="country" className="text-sm font-medium">Country</Label>
-                <Select value={profile.country} onValueChange={(value) => setProfile((prev) => ({ ...prev, country: value }))}>
-                  <SelectTrigger className="h-12 bg-background">
-                    <SelectValue placeholder="Select your country">
-                      {profile.country && (
-                        <div className="flex items-center gap-2.5">
-                          <span className="text-2xl">{getCountryFlag(profile.country)}</span>
-                          <span className="font-medium">{profile.country}</span>
-                        </div>
-                      )}
-                    </SelectValue>
-                  </SelectTrigger>
-                  <SelectContent className="max-h-[400px] bg-background/98 backdrop-blur-xl border border-border/50 z-50">
-                    <div className="p-2">
-                      {countries.map((c) => (
-                        <SelectItem 
-                          key={c} 
-                          value={c}
-                          className="h-11 cursor-pointer rounded-lg hover:bg-accent/80 focus:bg-accent/80 transition-all duration-200"
-                        >
-                          <div className="flex items-center gap-3">
-                            <span className="text-2xl">{getCountryFlag(c)}</span>
-                            <span className="font-medium">{c}</span>
-                          </div>
-                        </SelectItem>
-                      ))}
-                    </div>
-                  </SelectContent>
-                </Select>
+                {profile.country ? (
+                  <div className="h-12 px-3 flex items-center gap-2.5 bg-muted/50 rounded-md border border-border/50">
+                    <span className="text-2xl">{getCountryFlag(profile.country)}</span>
+                    <span className="font-medium">{profile.country}</span>
+                    <Lock className="h-4 w-4 ml-auto text-muted-foreground" />
+                  </div>
+                ) : (
+                  <div className="h-12 px-3 flex items-center gap-2 bg-muted/50 rounded-md border border-border/50">
+                    <span className="text-muted-foreground">Not set during signup</span>
+                    <Lock className="h-4 w-4 ml-auto text-muted-foreground" />
+                  </div>
+                )}
                 <p className="text-xs text-muted-foreground">
-                  Your location helps connect you with local content
+                  Country is set during signup and cannot be changed
                 </p>
               </div>
 
