@@ -1146,6 +1146,10 @@ const Feed = ({ defaultTab = 'foryou', guestMode = false }: FeedProps = {}) => {
   const pullStartY = useRef(0);
   const isPullingRef = useRef(false);
   
+  // Scroll hide state for header
+  const [isScrollingDown, setIsScrollingDown] = useState(false);
+  const [lastScrollY, setLastScrollY] = useState(0);
+  
   // Track which posts have had view attempts to prevent duplicates
   const viewedPostsRef = useRef<Set<string>>(new Set());
   // Load previously viewed posts from session storage
@@ -1165,6 +1169,27 @@ const Feed = ({ defaultTab = 'foryou', guestMode = false }: FeedProps = {}) => {
   useEffect(() => {
     setActiveTab(defaultTab);
   }, [defaultTab]);
+
+  // Scroll hide effect for header
+  useEffect(() => {
+    const handleScroll = () => {
+      const currentScrollY = window.scrollY;
+      
+      if (currentScrollY > lastScrollY && currentScrollY > 100) {
+        setIsScrollingDown(true);
+      } else {
+        setIsScrollingDown(false);
+      }
+      
+      setLastScrollY(currentScrollY);
+    };
+
+    window.addEventListener('scroll', handleScroll, { passive: true });
+    
+    return () => {
+      window.removeEventListener('scroll', handleScroll);
+    };
+  }, [lastScrollY]);
 
   // Load cached data immediately on mount
   useEffect(() => {
@@ -2276,8 +2301,11 @@ const Feed = ({ defaultTab = 'foryou', guestMode = false }: FeedProps = {}) => {
         keywords="social feed, latest posts, trending topics, social media feed, viral content, user posts, trending hashtags, social updates, share posts, like and comment, follow friends, online feed, social stream, community posts, news feed"
       />
       
-      {/* Fixed Header */}
-      <div className="fixed top-0 left-0 right-0 z-30 bg-background/95 backdrop-blur-md max-w-4xl mx-auto">
+      {/* Fixed Header - hides on scroll down */}
+      <div className={cn(
+        "fixed top-0 left-0 right-0 z-30 bg-background/95 backdrop-blur-md max-w-4xl mx-auto transition-all duration-300",
+        isScrollingDown ? "-translate-y-full opacity-0" : "translate-y-0 opacity-100"
+      )}>
         <div className="flex items-center justify-between px-4 py-3">
           <Link to={user ? `/${user.id}` : '/auth'} className="flex-shrink-0">
             <Avatar className="h-8 w-8">
