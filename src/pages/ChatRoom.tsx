@@ -1014,9 +1014,9 @@ const ChatRoom = () => {
 
   return (
     <TooltipProvider delayDuration={200}>
-      <div className="fixed inset-0 flex flex-col bg-background overflow-hidden">
-        {/* WhatsApp-style Header - Fixed */}
-        <div className="flex-shrink-0 flex items-center gap-3 px-2 py-2 bg-card/95 backdrop-blur-xl border-b border-border shadow-sm z-10">
+      <div className="fixed inset-0 flex flex-col bg-background" style={{ overflow: 'hidden' }}>
+        {/* WhatsApp-style Header - Fixed at top */}
+        <header className="flex-shrink-0 flex items-center gap-3 px-2 py-2 bg-card/95 backdrop-blur-xl border-b border-border shadow-sm z-10 pt-[env(safe-area-inset-top)]">
           <Button
             variant="ghost"
             size="icon"
@@ -1111,7 +1111,7 @@ const ChatRoom = () => {
               </Button>
             )}
           </div>
-        </div>
+        </header>
 
         {/* Messages container - only this scrolls */}
         <div 
