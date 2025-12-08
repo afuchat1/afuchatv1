@@ -213,8 +213,8 @@ const Gifts = () => {
                         </Badge>
                       </div>
 
-                      <div className="text-center">
-                        <h3 className="font-semibold text-xs truncate">{gift.name}</h3>
+                      <div className="text-center max-w-full overflow-hidden">
+                        <h3 className="font-semibold text-xs truncate max-w-[80px] mx-auto" title={gift.name}>{gift.name}</h3>
                         <p className="text-xs text-muted-foreground font-medium">
                           Base: {gift.base_xp_cost} Nexa
                         </p>
@@ -297,8 +297,8 @@ const Gifts = () => {
                           </Badge>
                         </div>
 
-                        <div className="text-center">
-                          <h3 className="font-semibold text-xs truncate">{gift.name}</h3>
+                        <div className="text-center max-w-full overflow-hidden">
+                          <h3 className="font-semibold text-xs truncate max-w-[80px] mx-auto" title={gift.name}>{gift.name}</h3>
                           <div className="space-y-0.5">
                             <p className="text-xs text-muted-foreground font-medium">
                               Base: {gift.base_xp_cost} Nexa

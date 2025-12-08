@@ -244,7 +244,7 @@ export default function Shop() {
                             rarity={listing.gift.rarity}
                             size="md"
                           />
-                          <p className="text-xs font-medium text-center line-clamp-1 w-full">
+                          <p className="text-xs font-medium text-center truncate max-w-[80px] mx-auto" title={listing.gift.name}>
                             {listing.gift.name}
                           </p>
                           <div className="flex flex-col items-center gap-0.5">

@@ -319,8 +319,8 @@ export const ReceivedGifts = ({ userId }: ReceivedGiftsProps) => {
                 )}
               </div>
 
-              <div className="text-center">
-                <h3 className="font-semibold text-xs truncate">{gift.gift.name}</h3>
+              <div className="text-center max-w-full overflow-hidden">
+                <h3 className="font-semibold text-xs truncate max-w-[80px] mx-auto" title={gift.gift.name}>{gift.gift.name}</h3>
                 <p className="text-xs text-muted-foreground font-medium">
                   Base: {gift.gift.base_xp_cost || gift.xp_cost} Nexa
                 </p>
