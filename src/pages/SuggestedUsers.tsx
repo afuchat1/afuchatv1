@@ -56,7 +56,7 @@ export default function SuggestedUsers() {
 
       // If user already follows someone, redirect to home
       if (data && data.length > 0) {
-        navigate('/');
+        navigate('/home', { replace: true });
       }
     } catch (error) {
       console.error('Error checking follows:', error);
@@ -170,7 +170,7 @@ export default function SuggestedUsers() {
       toast.error('Please follow at least one user to continue');
       return;
     }
-    navigate('/');
+    navigate('/home', { replace: true });
   };
 
   const isPinned = (handle: string) => {

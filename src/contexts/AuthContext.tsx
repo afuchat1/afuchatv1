@@ -139,6 +139,11 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
             
             const currentPath = window.location.pathname;
             
+            // Skip profile check if already on complete-profile or suggested-users pages
+            if (currentPath === '/complete-profile' || currentPath === '/suggested-users') {
+              return;
+            }
+            
             // Check if essential profile fields are complete (including country)
             supabase
               .from('profiles')
@@ -165,9 +170,6 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
                   } else {
                     window.location.href = '/home';
                   }
-                } else if (currentPath !== '/complete-profile' && !hasEssentialFields) {
-                  // Block access to other pages if essential fields incomplete
-                  window.location.href = '/complete-profile';
                 }
               });
           }
