@@ -1,3 +1,4 @@
+import { memo, useCallback } from 'react';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { useUserStories } from '@/hooks/useUserStories';
 import { cn } from '@/lib/utils';
@@ -27,7 +28,7 @@ const ringMap = {
   xl: 'p-[2.5px]'
 };
 
-export const StoryAvatar = ({
+export const StoryAvatar = memo(({
   userId,
   avatarUrl,
   name,
@@ -39,7 +40,7 @@ export const StoryAvatar = ({
   const { hasActiveStories } = useUserStories(userId);
   const navigate = useNavigate();
 
-  const handleClick = (e: React.MouseEvent) => {
+  const handleClick = useCallback((e: React.MouseEvent) => {
     if (onClick) {
       onClick();
       return;
@@ -49,13 +50,19 @@ export const StoryAvatar = ({
       e.stopPropagation();
       navigate(`/moments?user=${userId}`);
     }
-  };
+  }, [onClick, hasActiveStories, showStoryRing, navigate, userId]);
+
+  const initials = name?.substring(0, 2).toUpperCase() || '';
 
   const avatarContent = (
     <Avatar className={cn(sizeMap[size], 'flex-shrink-0')}>
-      <AvatarImage src={avatarUrl || undefined} alt={name} />
+      <AvatarImage 
+        src={avatarUrl || undefined} 
+        alt={name}
+        loading="lazy"
+      />
       <AvatarFallback className={size === 'sm' ? 'text-xs' : size === 'md' ? 'text-sm' : 'text-base'}>
-        {name?.substring(0, 2).toUpperCase()}
+        {initials}
       </AvatarFallback>
     </Avatar>
   );
@@ -80,4 +87,4 @@ export const StoryAvatar = ({
       {avatarContent}
     </div>
   );
-};
+});

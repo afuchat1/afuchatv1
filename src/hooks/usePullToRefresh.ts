@@ -17,9 +17,11 @@ export const usePullToRefresh = ({
   const [pullDistance, setPullDistance] = useState(0);
   
   const startY = useRef(0);
+  const currentPullDistance = useRef(0);
   const isPullingRef = useRef(false);
   const isRefreshingRef = useRef(false);
   const onRefreshRef = useRef(onRefresh);
+  const rafId = useRef<number>();
 
   // Keep ref updated
   useEffect(() => {
@@ -48,17 +50,26 @@ export const usePullToRefresh = ({
 
       if (distance > 0 && window.scrollY <= 0) {
         e.preventDefault();
-        setPullDistance(distance);
+        currentPullDistance.current = distance;
+        
+        // Use RAF for smooth updates
+        if (rafId.current) {
+          cancelAnimationFrame(rafId.current);
+        }
+        rafId.current = requestAnimationFrame(() => {
+          setPullDistance(currentPullDistance.current);
+        });
       }
     };
 
     const handleTouchEnd = async () => {
       if (!isPullingRef.current) return;
 
-      const currentDistance = pullDistance;
+      const distance = currentPullDistance.current;
       isPullingRef.current = false;
+      currentPullDistance.current = 0;
 
-      if (currentDistance >= threshold && !isRefreshingRef.current) {
+      if (distance >= threshold && !isRefreshingRef.current) {
         setIsRefreshing(true);
         isRefreshingRef.current = true;
         
@@ -78,16 +89,19 @@ export const usePullToRefresh = ({
 
     const options: AddEventListenerOptions = { passive: false };
     
-    document.addEventListener('touchstart', handleTouchStart, options);
+    document.addEventListener('touchstart', handleTouchStart, { passive: true });
     document.addEventListener('touchmove', handleTouchMove, options);
-    document.addEventListener('touchend', handleTouchEnd, options);
+    document.addEventListener('touchend', handleTouchEnd, { passive: true });
 
     return () => {
       document.removeEventListener('touchstart', handleTouchStart);
       document.removeEventListener('touchmove', handleTouchMove);
       document.removeEventListener('touchend', handleTouchEnd);
+      if (rafId.current) {
+        cancelAnimationFrame(rafId.current);
+      }
     };
-  }, [disabled, maxPull, threshold, pullDistance]);
+  }, [disabled, maxPull, threshold]);
 
   const progress = Math.min(pullDistance / threshold, 1);
 

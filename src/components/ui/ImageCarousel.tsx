@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, memo } from 'react';
 import { ChevronLeft, ChevronRight } from 'lucide-react';
 import { Button } from './button';
 import { cn } from '@/lib/utils';
@@ -9,7 +9,7 @@ interface ImageCarouselProps {
   className?: string;
 }
 
-export const ImageCarousel = ({ images, className }: ImageCarouselProps) => {
+export const ImageCarousel = memo(({ images, className }: ImageCarouselProps) => {
   const [currentIndex, setCurrentIndex] = useState(0);
   const [lightboxOpen, setLightboxOpen] = useState(false);
   const [lightboxIndex, setLightboxIndex] = useState(0);
@@ -57,6 +57,8 @@ export const ImageCarousel = ({ images, className }: ImageCarouselProps) => {
             <img
               src={imageUrls[0]}
               alt={imageAlts[0]}
+              loading="lazy"
+              decoding="async"
               className="w-full max-h-[500px] object-cover hover:opacity-95 transition-opacity"
             />
           </div>
@@ -74,6 +76,8 @@ export const ImageCarousel = ({ images, className }: ImageCarouselProps) => {
                 <img
                   src={image}
                   alt={imageAlts[index]}
+                  loading="lazy"
+                  decoding="async"
                   className="w-full h-full object-cover hover:scale-105 transition-transform duration-300"
                 />
               {imageUrls.length > 4 && index === 3 && (
@@ -139,4 +143,4 @@ export const ImageCarousel = ({ images, className }: ImageCarouselProps) => {
       )}
     </>
   );
-};
+});

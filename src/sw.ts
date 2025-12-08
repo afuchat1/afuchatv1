@@ -79,12 +79,13 @@ registerRoute(
 );
 
 // --- API Data Cache (Supabase REST) ---
-// Cache Supabase API requests for offline data access
+// Cache Supabase API requests for offline data access with shorter TTL
 registerRoute(
   ({ url }) => 
     url.origin === 'https://rhnsjqqtdzlkvqazfcbg.supabase.co' &&
     !url.pathname.includes('/realtime/') &&
-    !url.pathname.includes('/auth/'),
+    !url.pathname.includes('/auth/') &&
+    !url.pathname.includes('/functions/'),
   new StaleWhileRevalidate({
     cacheName: 'api-cache',
     plugins: [
@@ -92,8 +93,8 @@ registerRoute(
         statuses: [0, 200],
       }),
       new ExpirationPlugin({
-        maxEntries: 100,
-        maxAgeSeconds: 60 * 60 * 24 // 24 hours
+        maxEntries: 50, // Reduced for better memory usage
+        maxAgeSeconds: 60 * 5 // 5 minutes - fresher data
       })
     ]
   })
