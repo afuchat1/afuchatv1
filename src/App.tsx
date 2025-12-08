@@ -13,9 +13,11 @@ import { TelegramWebAppProvider } from "./components/TelegramWebAppProvider";
 import { useDailyLogin } from "./hooks/useDailyLogin";
 import { useLanguageSync } from "./hooks/useLanguageSync";
 import { useScrollRestoration } from "./hooks/useScrollRestoration";
+import { preloadAllGiftImages } from "./hooks/useGiftImageCache";
 import { CustomLoader } from '@/components/ui/CustomLoader';
 import { LoadingBar } from '@/components/LoadingBar';
 import { motion, AnimatePresence } from 'framer-motion';
+import { useEffect } from 'react';
 
 // Eager load critical pages
 import Home from "./pages/Home";
@@ -104,6 +106,11 @@ const AppRoutes = () => {
   useLanguageSync();
   // Restore scroll positions on navigation
   useScrollRestoration();
+  
+  // Preload gift images in background on app start
+  useEffect(() => {
+    preloadAllGiftImages();
+  }, []);
 
   return (
     <>

@@ -1,6 +1,5 @@
-import { useState } from 'react';
-import { useGiftImage } from '@/hooks/useGiftImage';
-import { Skeleton } from '@/components/ui/skeleton';
+import { useState, useEffect } from 'react';
+import { useGiftImageFromCache } from '@/hooks/useGiftImageCache';
 import { motion } from 'framer-motion';
 
 interface GiftImageProps {
@@ -20,8 +19,9 @@ export const GiftImage = ({
   size = 'md',
   className = '' 
 }: GiftImageProps) => {
-  const { imageUrl, isLoading, error } = useGiftImage(giftId, giftName, emoji, rarity);
+  const { imageUrl } = useGiftImageFromCache(giftId, giftName, emoji, rarity);
   const [imgError, setImgError] = useState(false);
+  const [imgLoaded, setImgLoaded] = useState(false);
 
   const sizeClasses = {
     xs: 'w-8 h-8',
@@ -42,15 +42,8 @@ export const GiftImage = ({
   const sizeClass = sizeClasses[size];
   const emojiSize = emojiSizes[size];
 
-  if (isLoading) {
-    return (
-      <div className={`${sizeClass} ${className} flex items-center justify-center`}>
-        <Skeleton className={`${sizeClass} rounded-full`} />
-      </div>
-    );
-  }
-
-  if (error || !imageUrl || imgError) {
+  // No loading state - show emoji as placeholder until image loads
+  if (!imageUrl || imgError) {
     return (
       <div className={`${sizeClass} ${className} flex items-center justify-center`}>
         <span className={`drop-shadow-lg ${emojiSize}`}>{emoji}</span>
@@ -60,31 +53,32 @@ export const GiftImage = ({
 
   return (
     <motion.div 
-      className={`${sizeClass} ${className} flex items-center justify-center`}
+      className={`${sizeClass} ${className} flex items-center justify-center relative`}
       style={{ perspective: '1000px' }}
-      initial={{ scale: 0, opacity: 0 }}
-      animate={{ 
-        scale: 1, 
-        opacity: 1,
-        y: [0, -5, 0]
-      }}
-      transition={{ 
-        scale: { type: 'spring', stiffness: 300, damping: 20 },
-        opacity: { duration: 0.3 },
-        y: {
-          duration: 2,
-          repeat: Infinity,
-          repeatType: 'reverse',
-          ease: 'easeInOut'
-        }
-      }}
     >
+      {/* Show emoji while image loads */}
+      {!imgLoaded && (
+        <span className={`drop-shadow-lg ${emojiSize} absolute`}>{emoji}</span>
+      )}
       <motion.img 
         src={imageUrl} 
         alt={giftName}
-        className={`${sizeClass} object-contain drop-shadow-lg`}
+        className={`${sizeClass} object-contain drop-shadow-lg ${imgLoaded ? 'opacity-100' : 'opacity-0'}`}
         style={{ transformStyle: 'preserve-3d' }}
+        onLoad={() => setImgLoaded(true)}
         onError={() => setImgError(true)}
+        initial={false}
+        animate={{ 
+          y: imgLoaded ? [0, -5, 0] : 0 
+        }}
+        transition={{ 
+          y: {
+            duration: 2,
+            repeat: Infinity,
+            repeatType: 'reverse',
+            ease: 'easeInOut'
+          }
+        }}
         whileHover={{ 
           scale: 1.2,
           rotateX: 15,
