@@ -79,16 +79,26 @@ export const DesktopHybridLayout = ({ children }: DesktopHybridLayoutProps) => {
   const checkUserStatus = async () => {
     if (!user) return;
     
-    const { data, error } = await supabase
+    // Check admin status from secure user_roles table, not profiles
+    const { data: roleData } = await supabase
+      .from('user_roles')
+      .select('role')
+      .eq('user_id', user.id)
+      .eq('role', 'admin')
+      .maybeSingle();
+    
+    setIsAdmin(!!roleData);
+    
+    // Get business mode and affiliate status from profiles (non-sensitive)
+    const { data: profileData } = await supabase
       .from('profiles')
-      .select('is_admin, is_business_mode, is_affiliate')
+      .select('is_business_mode, is_affiliate')
       .eq('id', user.id)
       .single();
 
-    if (!error && data) {
-      setIsAdmin(data.is_admin || false);
-      setIsBusinessMode(data.is_business_mode || false);
-      setIsAffiliate(data.is_affiliate || false);
+    if (profileData) {
+      setIsBusinessMode(profileData.is_business_mode || false);
+      setIsAffiliate(profileData.is_affiliate || false);
     }
   };
 

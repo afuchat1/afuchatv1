@@ -134,13 +134,12 @@ serve(async (req) => {
       // Track this as a failure for rate limiting (potential enumeration)
       checkRateLimit(clientIp, true);
       
-      console.log('Telegram user not found or not linked');
+      console.log('Authentication attempt - user lookup completed');
+      // Return generic error to prevent account enumeration
+      // Attackers cannot determine if an account exists based on response
       return new Response(
         JSON.stringify({ 
-          notFound: true,
-          error: mode === 'signin' 
-            ? 'No account linked to this Telegram. Please link your account first via @AfuChatBot'
-            : 'Please complete signup via @AfuChatBot first'
+          error: 'Authentication failed. Please check your credentials or sign up via @AfuChatBot'
         }),
         { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
       );

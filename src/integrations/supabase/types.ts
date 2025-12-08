@@ -2615,6 +2615,24 @@ export type Database = {
           is_verified: boolean
         }[]
       }
+      get_public_profile: {
+        Args: { p_profile_id: string }
+        Returns: {
+          avatar_url: string
+          banner_url: string
+          bio: string
+          country: string
+          current_grade: string
+          display_name: string
+          handle: string
+          id: string
+          is_business_mode: boolean
+          is_organization_verified: boolean
+          is_verified: boolean
+          website_url: string
+          xp: number
+        }[]
+      }
       get_requesting_user: { Args: never; Returns: string }
       get_trending_topics: {
         Args: { hours_ago?: number; num_topics?: number }
