@@ -20,7 +20,6 @@ import { motion, AnimatePresence } from 'framer-motion';
 // Eager load critical pages
 import Home from "./pages/Home";
 import Index from "./pages/Index";
-import Welcome from "./pages/auth/Welcome";
 import SignIn from "./pages/auth/SignIn";
 import SignUp from "./pages/auth/SignUp";
 import UserNotFound from "./pages/UserNotFound";
@@ -120,10 +119,9 @@ const AppRoutes = () => {
       }>
         <Routes>
       <Route path="/" element={<Index />} />
-      <Route path="/welcome" element={<Welcome />} />
       <Route path="/complete-profile" element={<CompleteProfile />} />
       <Route path="/home" element={<Home />} />
-      <Route path="/auth" element={<Welcome />} />
+      <Route path="/auth" element={<SignUp />} />
       <Route path="/auth/signin" element={<SignIn />} />
       <Route path="/auth/signup" element={<SignUp />} />
       <Route path="/auth/forgot-password" element={<ForgotPassword />} />
