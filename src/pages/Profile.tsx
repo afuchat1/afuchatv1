@@ -895,21 +895,25 @@ const Profile = ({ mustExist = false }: ProfileProps) => {
 						<div className="flex flex-col gap-2">
 							</div>
 						) : (
-							<div className="flex gap-2">
-								<Button onClick={handleStartChat} variant="outline" size="icon" className="rounded-full">
-									<MessageSquare className="h-5 w-5" />
-								</Button>
-								<TipButton
-									receiverId={profileId}
-									receiverName={profile.display_name}
-									variant="outline"
-									size="default"
-									showLabel={true}
-								/>
+							<div className="flex gap-2 flex-1 justify-end">
+								{isFollowing && (
+									<Button onClick={handleStartChat} variant="outline" size="icon" className="rounded-full">
+										<MessageSquare className="h-5 w-5" />
+									</Button>
+								)}
+								{isFollowing && (
+									<TipButton
+										receiverId={profileId}
+										receiverName={profile.display_name}
+										variant="outline"
+										size="default"
+										showLabel={true}
+									/>
+								)}
 								<Button
 									onClick={handleFollow}
 									variant={isFollowing ? "outline" : "default"}
-									className="rounded-full px-4 font-bold transition-colors"
+									className={`rounded-full font-bold transition-colors ${isFollowing ? 'px-4' : 'flex-1 px-8'}`}
 									onMouseEnter={e => isFollowing && (e.currentTarget.textContent = t('profile.unfollow'))}
 									onMouseLeave={e => isFollowing && (e.currentTarget.textContent = t('profile.following'))}
 								>
