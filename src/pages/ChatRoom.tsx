@@ -63,13 +63,16 @@ interface Message {
   reply_to_message?: {
     audio_url?: string;
     encrypted_content: string;
+    sender_id: string;
     profiles: {
       display_name: string;
+      avatar_url?: string | null;
     };
   };
   profiles: {
     display_name: string;
     handle: string;
+    avatar_url?: string | null;
     is_verified: boolean | null;
     is_organization_verified: boolean | null;
     is_affiliate: boolean | null;
@@ -550,13 +553,14 @@ const ChatRoom = () => {
       .from('messages')
       .select(`
         *,
-        profiles(display_name, handle, is_verified, is_organization_verified, is_affiliate, affiliated_business_id),
+        profiles(display_name, handle, avatar_url, is_verified, is_organization_verified, is_affiliate, affiliated_business_id),
         message_reactions(reaction, user_id),
         message_status(read_at, delivered_at, user_id),
         reply_to_message:messages!reply_to_message_id(
           encrypted_content,
           audio_url,
-          profiles(display_name)
+          sender_id,
+          profiles(display_name, avatar_url)
         )
       `)
       .eq('chat_id', chatId)

@@ -31,13 +31,16 @@ export interface Message {
   reply_to_message?: {
     audio_url?: string;
     encrypted_content: string;
+    sender_id?: string;
     profiles: {
       display_name: string;
+      avatar_url?: string | null;
     };
   };
   profiles: {
     display_name: string;
     handle: string;
+    avatar_url?: string | null;
     is_verified: boolean | null;
     is_organization_verified: boolean | null;
     is_affiliate: boolean | null;
@@ -272,11 +275,26 @@ export const MessageBubble = ({
                     ? 'border-primary-foreground/50 bg-primary-foreground/15' 
                     : 'border-primary/70 bg-primary/10'
                 }`}>
-                  <p className={`text-xs font-medium mb-0.5 ${
-                    isOwn ? 'text-primary-foreground/90' : 'text-primary'
-                  }`}>
-                    {repliedMessage.profiles?.display_name || 'User'}
-                  </p>
+                  <div className="flex items-center gap-2 mb-0.5">
+                    {repliedMessage.profiles?.avatar_url ? (
+                      <img 
+                        src={repliedMessage.profiles.avatar_url} 
+                        alt={repliedMessage.profiles?.display_name || 'User'}
+                        className="w-4 h-4 rounded-full object-cover flex-shrink-0"
+                      />
+                    ) : (
+                      <div className="w-4 h-4 rounded-full bg-muted flex items-center justify-center flex-shrink-0">
+                        <span className="text-[8px] font-medium text-muted-foreground">
+                          {(repliedMessage.profiles?.display_name || 'U').charAt(0).toUpperCase()}
+                        </span>
+                      </div>
+                    )}
+                    <p className={`text-xs font-medium ${
+                      isOwn ? 'text-primary-foreground/90' : 'text-primary'
+                    }`}>
+                      {repliedMessage.profiles?.display_name || 'User'}
+                    </p>
+                  </div>
                   <p className={`text-xs truncate ${
                     isOwn ? 'text-primary-foreground/70' : 'text-muted-foreground'
                   }`} style={{ fontSize: `${Math.max(fontSize - 4, 10)}px` }}>
