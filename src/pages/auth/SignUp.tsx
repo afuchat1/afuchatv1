@@ -1,13 +1,13 @@
-import { useState, useEffect, useCallback } from 'react';
+import { useState } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import { supabase } from '@/integrations/supabase/client';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { toast } from 'sonner';
-import { Eye, EyeOff, ArrowLeft, ChevronRight, Search, User, Briefcase, AlertTriangle, CheckCircle2, XCircle } from 'lucide-react';
+import { Eye, EyeOff, ArrowLeft, ChevronRight, Search, User, Briefcase, AlertTriangle } from 'lucide-react';
 import Logo from '@/components/Logo';
-import { emailSchema, passwordSchema, handleSchema, displayNameSchema } from '@/lib/validation';
+import { emailSchema } from '@/lib/validation';
 import { countries } from '@/lib/countries';
 import { getCountryFlag } from '@/lib/countryFlags';
 import { Sheet, SheetContent, SheetHeader, SheetTitle } from '@/components/ui/sheet';
@@ -16,15 +16,11 @@ import TelegramLoginButton from '@/components/auth/TelegramLoginButton';
 const SignUp = () => {
   const navigate = useNavigate();
   const [loading, setLoading] = useState(false);
-  const [step, setStep] = useState(1); // 1: Country, 2: Account Type, 3: Username, 4: Email/Password, 5: Registration Method
+  const [step, setStep] = useState(1); // 1: Country, 2: Account Type, 3: Registration Method, 4: Email/Password
   const [country, setCountry] = useState('');
   const [countrySearch, setCountrySearch] = useState('');
   const [accountType, setAccountType] = useState<'personal' | 'business' | null>(null);
   const [showBusinessSheet, setShowBusinessSheet] = useState(false);
-  const [username, setUsername] = useState('');
-  const [usernameError, setUsernameError] = useState('');
-  const [usernameAvailable, setUsernameAvailable] = useState<boolean | null>(null);
-  const [checkingUsername, setCheckingUsername] = useState(false);
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
@@ -36,54 +32,6 @@ const SignUp = () => {
   const hasLetter = /[a-zA-Z]/.test(password);
   const hasNumber = /\d/.test(password);
   const hasMinLength = password.length >= 8;
-
-  // Username validation
-  const validateUsername = useCallback(async (value: string) => {
-    if (!value) {
-      setUsernameError('');
-      setUsernameAvailable(null);
-      return;
-    }
-
-    try {
-      handleSchema.parse(value);
-      setUsernameError('');
-    } catch (error: any) {
-      setUsernameError(error.errors?.[0]?.message || 'Invalid username');
-      setUsernameAvailable(null);
-      return;
-    }
-
-    // Check availability
-    setCheckingUsername(true);
-    try {
-      const { data, error } = await supabase
-        .from('profiles')
-        .select('handle')
-        .eq('handle', value.toLowerCase())
-        .maybeSingle();
-
-      if (error) throw error;
-      setUsernameAvailable(!data);
-      if (data) {
-        setUsernameError('Username is already taken');
-      }
-    } catch (error) {
-      console.error('Error checking username:', error);
-    } finally {
-      setCheckingUsername(false);
-    }
-  }, []);
-
-  // Debounced username check
-  useEffect(() => {
-    const timer = setTimeout(() => {
-      if (username) {
-        validateUsername(username);
-      }
-    }, 500);
-    return () => clearTimeout(timer);
-  }, [username, validateUsername]);
 
   // Capture referral code from URL
   const urlParams = new URLSearchParams(window.location.search);
@@ -103,36 +51,23 @@ const SignUp = () => {
       setShowBusinessSheet(true);
     } else {
       setAccountType(type);
-      setStep(3); // Go to username step
+      setStep(3); // Go to registration method
     }
   };
 
   const handleBusinessContinue = () => {
     setAccountType('business');
     setShowBusinessSheet(false);
-    setStep(3); // Go to username step
+    setStep(3); // Go to registration method
   };
 
-  const handleUsernameNext = () => {
-    if (!username || usernameError || !usernameAvailable) {
-      toast.error('Please enter a valid available username');
-      return;
-    }
-    setStep(5); // Go to registration method
-  };
-
-  const handleEmailPasswordNext = () => {
+  const handleEmailPasswordSubmit = async () => {
     try {
       emailSchema.parse(email);
       if (!hasSpecialChar || !hasLetter || !hasNumber || !hasMinLength) {
         toast.error('Password does not meet requirements');
         return;
       }
-      if (!username || usernameError || !usernameAvailable) {
-        toast.error('Please go back and enter a valid username');
-        return;
-      }
-      // Store credentials and go to complete profile after signup
       handleEmailSignUp();
     } catch (error: any) {
       toast.error(error.errors?.[0]?.message || 'Please enter a valid email');
@@ -144,8 +79,6 @@ const SignUp = () => {
     try {
       const signupData: any = {
         country,
-        handle: username.toLowerCase(),
-        display_name: username,
         is_business_mode: accountType === 'business',
       };
 
@@ -153,7 +86,7 @@ const SignUp = () => {
         signupData.referral_code = referralCode;
       }
 
-      const { data: authData, error } = await supabase.auth.signUp({
+      const { error } = await supabase.auth.signUp({
         email,
         password,
         options: {
@@ -170,12 +103,7 @@ const SignUp = () => {
         }
       } else {
         toast.success('Account created! Check your email for verification.');
-        // Redirect based on account type
-        if (accountType === 'business') {
-          navigate('/auth/signin');
-        } else {
-          navigate('/auth/signin');
-        }
+        navigate('/auth/signin');
       }
     } catch (error: any) {
       toast.error(error.message || 'An error occurred.');
@@ -188,8 +116,6 @@ const SignUp = () => {
   const storeSignupDataForOAuth = () => {
     const signupData = {
       country,
-      handle: username.toLowerCase(),
-      display_name: username,
       is_business_mode: accountType === 'business',
       referral_code: referralCode,
     };
@@ -197,10 +123,6 @@ const SignUp = () => {
   };
 
   const handleGoogleSignUp = async () => {
-    if (!username || usernameError || !usernameAvailable) {
-      toast.error('Please enter a valid username first');
-      return;
-    }
     setGoogleLoading(true);
     storeSignupDataForOAuth();
     try {
@@ -218,10 +140,6 @@ const SignUp = () => {
   };
 
   const handleGithubSignUp = async () => {
-    if (!username || usernameError || !usernameAvailable) {
-      toast.error('Please enter a valid username first');
-      return;
-    }
     setGithubLoading(true);
     storeSignupDataForOAuth();
     try {
@@ -242,13 +160,13 @@ const SignUp = () => {
     if (step === 1) {
       navigate('/');
     } else if (step === 4) {
-      setStep(5); // Go back to registration method from email/password
+      setStep(3); // Go back to registration method from email/password
     } else {
       setStep(step - 1);
     }
   };
 
-  const progressWidth = `${(step / 5) * 100}%`;
+  const progressWidth = `${(step / 4) * 100}%`;
 
   return (
     <div className="min-h-screen flex flex-col bg-background">
@@ -345,146 +263,8 @@ const SignUp = () => {
         </div>
       )}
 
-      {/* Step 3: Username */}
+      {/* Step 3: Registration Method */}
       {step === 3 && (
-        <div className="flex-1 flex flex-col p-6">
-          <h1 className="text-2xl font-bold text-foreground mb-2">
-            Choose your username
-          </h1>
-          <p className="text-muted-foreground mb-6">
-            This will be your unique identifier on the platform
-          </p>
-
-          <div className="space-y-4 flex-1">
-            <div className="space-y-2">
-              <Label className="text-muted-foreground">Username</Label>
-              <div className="relative">
-                <Input
-                  type="text"
-                  placeholder="Enter username"
-                  value={username}
-                  onChange={(e) => setUsername(e.target.value.replace(/[^a-zA-Z0-9_]/g, ''))}
-                  className={`h-14 text-base bg-muted/50 rounded-xl px-4 pr-12 ${
-                    usernameError ? 'border-destructive' : 
-                    usernameAvailable ? 'border-green-500' : ''
-                  }`}
-                />
-                <div className="absolute right-4 top-1/2 -translate-y-1/2">
-                  {checkingUsername ? (
-                    <div className="h-5 w-5 border-2 border-primary border-t-transparent rounded-full animate-spin" />
-                  ) : usernameAvailable ? (
-                    <CheckCircle2 className="h-5 w-5 text-green-500" />
-                  ) : usernameError ? (
-                    <XCircle className="h-5 w-5 text-destructive" />
-                  ) : null}
-                </div>
-              </div>
-              {usernameError && (
-                <p className="text-xs text-destructive">{usernameError}</p>
-              )}
-              {usernameAvailable && !usernameError && (
-                <p className="text-xs text-green-500">Username is available!</p>
-              )}
-              <p className="text-xs text-muted-foreground">
-                4-20 characters, letters, numbers, and underscores only
-              </p>
-            </div>
-          </div>
-
-          {/* Next Button */}
-          <div className="pt-4">
-            <Button
-              onClick={handleUsernameNext}
-              disabled={!username || !!usernameError || !usernameAvailable || checkingUsername}
-              className="w-full h-14 text-base font-semibold rounded-xl"
-            >
-              Next
-            </Button>
-          </div>
-        </div>
-      )}
-
-      {/* Step 4: Email and Password */}
-      {step === 4 && (
-        <div className="flex-1 flex flex-col p-6">
-          {/* Security Warning */}
-          <div className="bg-amber-900/30 rounded-xl p-4 mb-6">
-            <div className="flex items-start gap-3">
-              <AlertTriangle className="h-5 w-5 text-amber-400 mt-0.5" />
-              <div>
-                <p className="font-medium text-amber-400">Protect your account</p>
-                <p className="text-sm text-amber-400/80">
-                  Never use a password previously used or a password you use on another service
-                </p>
-              </div>
-            </div>
-          </div>
-
-          <div className="space-y-6 flex-1">
-            <div className="space-y-2">
-              <Label className="text-muted-foreground">Email</Label>
-              <Input
-                type="email"
-                placeholder="example@gmail.com"
-                value={email}
-                onChange={(e) => setEmail(e.target.value)}
-                className="h-14 text-base bg-muted/50 rounded-xl px-4"
-              />
-              <p className="text-xs text-muted-foreground">This field is mandatory.</p>
-            </div>
-
-            <div className="space-y-2">
-              <Label className="text-muted-foreground">Password</Label>
-              <div className="relative">
-                <Input
-                  type={showPassword ? 'text' : 'password'}
-                  placeholder="Create your password"
-                  value={password}
-                  onChange={(e) => setPassword(e.target.value)}
-                  className="h-14 text-base bg-muted/50 rounded-xl px-4 pr-12"
-                />
-                <button
-                  type="button"
-                  onClick={() => setShowPassword(!showPassword)}
-                  className="absolute right-4 top-1/2 -translate-y-1/2 text-muted-foreground"
-                >
-                  {showPassword ? <EyeOff className="h-5 w-5" /> : <Eye className="h-5 w-5" />}
-                </button>
-              </div>
-
-              <div className="space-y-1 mt-3">
-                <p className="text-sm text-muted-foreground">Password must contain the following:</p>
-                <p className={`text-sm ${hasSpecialChar ? 'text-green-500' : 'text-muted-foreground'}`}>
-                  1 special character (@!#$%^&*-=+)
-                </p>
-                <p className={`text-sm ${hasLetter ? 'text-green-500' : 'text-muted-foreground'}`}>
-                  1 letter
-                </p>
-                <p className={`text-sm ${hasNumber ? 'text-green-500' : 'text-muted-foreground'}`}>
-                  1 number
-                </p>
-                <p className={`text-sm ${hasMinLength ? 'text-green-500' : 'text-muted-foreground'}`}>
-                  8 characters
-                </p>
-              </div>
-            </div>
-          </div>
-
-          {/* Next Button */}
-          <div className="pt-4">
-            <Button
-              onClick={handleEmailPasswordNext}
-              disabled={loading || !email || !password}
-              className="w-full h-14 text-base font-semibold rounded-xl"
-            >
-              {loading ? 'Creating account...' : 'Create Account'}
-            </Button>
-          </div>
-        </div>
-      )}
-
-      {/* Step 5: Registration Method */}
-      {step === 5 && (
         <div className="flex-1 flex flex-col p-6">
           <h1 className="text-2xl font-bold text-foreground mb-8">
             Select how you prefer to register your account
@@ -557,6 +337,85 @@ const SignUp = () => {
             Already have an account?{' '}
             <Link to="/auth/signin" className="text-primary font-semibold">Sign in</Link>
           </p>
+        </div>
+      )}
+
+      {/* Step 4: Email and Password */}
+      {step === 4 && (
+        <div className="flex-1 flex flex-col p-6">
+          {/* Security Warning */}
+          <div className="bg-amber-900/30 rounded-xl p-4 mb-6">
+            <div className="flex items-start gap-3">
+              <AlertTriangle className="h-5 w-5 text-amber-400 mt-0.5" />
+              <div>
+                <p className="font-medium text-amber-400">Protect your account</p>
+                <p className="text-sm text-amber-400/80">
+                  Never use a password previously used or a password you use on another service
+                </p>
+              </div>
+            </div>
+          </div>
+
+          <div className="space-y-6 flex-1">
+            <div className="space-y-2">
+              <Label className="text-muted-foreground">Email</Label>
+              <Input
+                type="email"
+                placeholder="example@gmail.com"
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
+                className="h-14 text-base bg-muted/50 rounded-xl px-4"
+              />
+              <p className="text-xs text-muted-foreground">This field is mandatory.</p>
+            </div>
+
+            <div className="space-y-2">
+              <Label className="text-muted-foreground">Password</Label>
+              <div className="relative">
+                <Input
+                  type={showPassword ? 'text' : 'password'}
+                  placeholder="Create your password"
+                  value={password}
+                  onChange={(e) => setPassword(e.target.value)}
+                  className="h-14 text-base bg-muted/50 rounded-xl px-4 pr-12"
+                />
+                <button
+                  type="button"
+                  onClick={() => setShowPassword(!showPassword)}
+                  className="absolute right-4 top-1/2 -translate-y-1/2 text-muted-foreground"
+                >
+                  {showPassword ? <EyeOff className="h-5 w-5" /> : <Eye className="h-5 w-5" />}
+                </button>
+              </div>
+
+              <div className="space-y-1 mt-3">
+                <p className="text-sm text-muted-foreground">Password must contain the following:</p>
+                <p className={`text-sm ${hasSpecialChar ? 'text-green-500' : 'text-muted-foreground'}`}>
+                  1 special character (@!#$%^&*-=+)
+                </p>
+                <p className={`text-sm ${hasLetter ? 'text-green-500' : 'text-muted-foreground'}`}>
+                  1 letter
+                </p>
+                <p className={`text-sm ${hasNumber ? 'text-green-500' : 'text-muted-foreground'}`}>
+                  1 number
+                </p>
+                <p className={`text-sm ${hasMinLength ? 'text-green-500' : 'text-muted-foreground'}`}>
+                  8 characters
+                </p>
+              </div>
+            </div>
+          </div>
+
+          {/* Submit Button */}
+          <div className="pt-4">
+            <Button
+              onClick={handleEmailPasswordSubmit}
+              disabled={loading || !email || !password}
+              className="w-full h-14 text-base font-semibold rounded-xl"
+            >
+              {loading ? 'Creating account...' : 'Create Account'}
+            </Button>
+          </div>
         </div>
       )}
 
