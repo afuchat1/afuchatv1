@@ -451,7 +451,7 @@ const Search = () => {
                             </div>
                             <p className="text-xs text-muted-foreground truncate">@{result.handle}</p>
                             {result.bio && (
-                              <p className="text-xs text-muted-foreground truncate mt-1">{result.bio}</p>
+                              <p className="text-xs text-muted-foreground line-clamp-2 mt-1">{result.bio}</p>
                             )}
                           </div>
                         </div>
@@ -503,7 +503,7 @@ const Search = () => {
                               {result.name || 'Unnamed Group'}
                             </h3>
                             {result.description && (
-                              <p className="text-xs text-muted-foreground truncate mt-1">{result.description}</p>
+                              <p className="text-xs text-muted-foreground line-clamp-2 mt-1">{result.description}</p>
                             )}
                             <p className="text-xs text-muted-foreground mt-1">
                               {result.member_count} {result.member_count === 1 ? 'member' : 'members'}
