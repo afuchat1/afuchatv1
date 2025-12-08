@@ -10,7 +10,7 @@ export const useGiftImage = (
   const [imageUrl, setImageUrl] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState(false);
-  const AI_FEATURES_COMING_SOON = true;
+  const AI_FEATURES_COMING_SOON = false;
 
   useEffect(() => {
     let mounted = true;

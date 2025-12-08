@@ -24,19 +24,28 @@ export const GiftImage = ({
   const [imgError, setImgError] = useState(false);
 
   const sizeClasses = {
-    xs: 'w-4 h-4 sm:w-6 sm:h-6',
+    xs: 'w-8 h-8',
     sm: 'w-12 h-12',
     md: 'w-20 h-20',
     lg: 'w-32 h-32',
     xl: 'w-48 h-48'
   };
 
+  const emojiSizes = {
+    xs: 'text-xl',
+    sm: 'text-3xl',
+    md: 'text-5xl',
+    lg: 'text-7xl',
+    xl: 'text-9xl'
+  };
+
   const sizeClass = sizeClasses[size];
+  const emojiSize = emojiSizes[size];
 
   if (isLoading) {
     return (
       <div className={`${sizeClass} ${className} flex items-center justify-center`}>
-        <Skeleton className={`${sizeClass} rounded-lg`} />
+        <Skeleton className={`${sizeClass} rounded-full`} />
       </div>
     );
   }
@@ -44,7 +53,7 @@ export const GiftImage = ({
   if (error || !imageUrl || imgError) {
     return (
       <div className={`${sizeClass} ${className} flex items-center justify-center`}>
-        <span className="drop-shadow-lg text-5xl">{emoji}</span>
+        <span className={`drop-shadow-lg ${emojiSize}`}>{emoji}</span>
       </div>
     );
   }
