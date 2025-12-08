@@ -32,7 +32,7 @@ export default defineConfig(({ mode }) => ({
         theme_color: '#00C2CB',
         background_color: '#000000',
         display: 'standalone',
-        orientation: 'any',
+        orientation: 'portrait',
         start_url: '/',
         scope: '/',
         categories: ['social', 'communication'],
