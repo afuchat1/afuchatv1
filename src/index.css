@@ -4,8 +4,8 @@
 @tailwind components;
 @tailwind utilities;
 
-/* Force portrait orientation - block landscape completely */
-@media screen and (orientation: landscape) and (max-device-width: 1024px) and (hover: none) {
+/* Force portrait orientation - mobile touch devices only */
+@media screen and (orientation: landscape) and (max-height: 500px) and (hover: none) and (pointer: coarse) {
   html::before {
     content: "Please rotate your device to portrait mode";
     display: flex;
