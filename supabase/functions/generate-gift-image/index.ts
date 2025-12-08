@@ -103,37 +103,35 @@ serve(async (req) => {
       throw new Error('RUNWARE_API_KEY is not configured');
     }
 
-    // Create a detailed prompt based on rarity with animated effects
+    // Create TikTok-style 3D emoji gift icons - small, glossy, realistic
     const rarityStyles = {
-      common: 'clean design, soft colors, gentle ambient glow, subtle floating particles',
-      uncommon: 'polished 3D render, vibrant colors, animated particle effects, refined shimmering details',
-      rare: 'stunning 3D artwork, rich metallic colors, dynamic animated lighting, floating sparkles and animated light rays, glowing edges',
-      epic: 'epic cinematic quality, dramatic pulsing lights, glowing animated magical auras, swirling energy particles, holographic animated effects',
-      legendary: 'legendary masterpiece, radiant animated golden light beams, intense pulsing magical energy, ethereal animated glow, divine animated sparkles, premium luxury animated effects'
+      common: 'simple 3D emoji style, clean glossy finish, soft pastel colors, minimal design',
+      uncommon: 'polished 3D emoji icon, vibrant glossy colors, smooth shading, slightly enhanced details',
+      rare: 'premium 3D rendered icon, rich saturated colors, metallic sheen, crystal-clear glossy finish, subtle glow effect, highly detailed',
+      epic: 'ultra-premium 3D masterpiece icon, brilliant glowing colors, glass-like reflections, golden accents, diamond-like sparkle, luxury feel',
+      legendary: 'legendary hyper-detailed 3D icon, radiant golden glow, crystalline reflections, premium luxury materials, jewel-encrusted appearance, divine ethereal shine'
     };
 
     const style = rarityStyles[rarity as keyof typeof rarityStyles] || rarityStyles.common;
     
-    const prompt = `Create a 3D rendered ${giftName} gift object ONLY. Style: ${style}. 
+    const prompt = `A single small ${giftName} ${emoji} 3D emoji icon. TikTok gift style.
 
-CRITICAL TRANSPARENCY REQUIREMENTS - READ CAREFULLY:
-- ABSOLUTE ZERO BACKGROUND - Pure 100% transparent PNG with full alpha channel
-- NO background elements whatsoever - no floors, no surfaces, no environments, no gradients
-- NO shadows on background - only object self-shadows
-- NO backdrop - the gift object must float in complete void/transparency
-- The ONLY thing visible should be the gift object itself
-- PNG with full alpha transparency - everything except the gift object must be completely transparent (alpha = 0)
+STYLE: ${style}
 
-Object Requirements:
-- Single centered 3D gift object floating in transparent space
-- Professional product photography lighting on the object only
-- ${style} applied to the gift object itself
-- High detail and premium appearance
-- The ${emoji} should inspire the object design
-- Size: 512x512px
-- The gift should be the ONLY visible element - everything else must be transparent
+CRITICAL REQUIREMENTS:
+- Small compact 3D emoji icon, NOT a realistic object
+- Glossy, smooth, cartoon-3D style like TikTok/iOS emoji
+- Cute, rounded, adorable design aesthetic
+- Transparent PNG background - ONLY the icon visible
+- NO background, NO floor, NO shadows, NO environment
+- Centered, floating in transparent void
+- Bright, vibrant, eye-catching colors
+- Professional app icon quality
+- 512x512px size
 
-VERIFY: After generation, only the gift object should be visible. All surrounding pixels must be fully transparent (alpha channel = 0).`;
+The icon should look like a premium mobile app gift sticker - small, cute, 3D glossy emoji style with ${rarity === 'rare' || rarity === 'epic' || rarity === 'legendary' ? 'premium shine, glow effects, and luxury details' : 'clean simple design'}.
+
+IMPORTANT: Pure transparent background. Only the small 3D emoji icon should be visible.`;
 
     console.log('Generating image with Runware for gift:', giftId);
 
