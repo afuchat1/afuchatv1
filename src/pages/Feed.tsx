@@ -194,16 +194,16 @@ const parsePostContent = (content: string, postId: string, navigate: ReturnType<
     } else if (matchText.startsWith('#')) {
       const hashtag = matchText.substring(1);
       parts.push(
-        <a
+        <Link
           key={`hashtag-${idx}`}
-          href={`/search?q=${encodeURIComponent(hashtag)}`}
+          to={`/search?q=${encodeURIComponent(hashtag)}`}
           className="text-primary hover:underline font-medium"
           onClick={(e) => {
             e.stopPropagation();
           }}
         >
           {matchText}
-        </a>
+        </Link>
       );
     } else {
       // It's a URL (either with http/https or a plain domain)
