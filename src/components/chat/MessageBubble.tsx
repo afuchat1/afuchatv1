@@ -376,6 +376,8 @@ export const MessageBubble = ({
           images={[{ url: message.attachment_url!, alt: message.attachment_name || 'Image' }]}
           initialIndex={0}
           onClose={() => setLightboxOpen(false)}
+          senderName={message.profiles?.display_name}
+          timestamp={message.sent_at}
         />
       )}
     </motion.div>
