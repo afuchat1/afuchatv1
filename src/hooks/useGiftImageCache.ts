@@ -1,4 +1,4 @@
-import { useEffect, useCallback, useRef } from 'react';
+import { useEffect, useState } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 
 // Global cache for gift images
@@ -110,13 +110,11 @@ export const getCachedGiftImage = (giftId: string): string | null | undefined =>
 };
 
 export const useGiftImageCache = () => {
-  const forceUpdate = useCallback(() => {}, []);
-  const updateRef = useRef(0);
+  const [, setUpdateCounter] = useState(0);
 
   useEffect(() => {
     const callback = () => {
-      updateRef.current++;
-      forceUpdate();
+      setUpdateCounter(c => c + 1);
     };
     
     subscribers.add(callback);
@@ -127,7 +125,7 @@ export const useGiftImageCache = () => {
     return () => {
       subscribers.delete(callback);
     };
-  }, [forceUpdate]);
+  }, []);
 
   return {
     getCachedImage: getCachedGiftImage,

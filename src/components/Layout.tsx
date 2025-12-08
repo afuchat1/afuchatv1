@@ -39,9 +39,28 @@ const Layout = ({ children }: LayoutProps) => {
   const [chatScrollHide, setChatScrollHide] = useState(false);
   const [unreadNotifications, setUnreadNotifications] = useState(0);
 
+  // Cache key for user data
+  const userCacheKey = user?.id ? `layout_user_data_${user.id}` : null;
+
   // Define functions before useEffect hooks
   const checkAdminStatus = async () => {
     if (!user) return;
+    
+    // Check memory cache first
+    if (userCacheKey) {
+      const cached = sessionStorage.getItem(userCacheKey);
+      if (cached) {
+        try {
+          const data = JSON.parse(cached);
+          if (Date.now() - data.timestamp < 60000) { // 1 minute cache
+            setIsAdmin(data.isAdmin);
+            setIsBusinessMode(data.isBusinessMode);
+            setIsAffiliate(data.isAffiliate);
+            return;
+          }
+        } catch {}
+      }
+    }
     
     // Check admin status from secure user_roles table, not profiles
     const { data: roleData } = await supabase
@@ -51,7 +70,8 @@ const Layout = ({ children }: LayoutProps) => {
       .eq('role', 'admin')
       .maybeSingle();
     
-    setIsAdmin(!!roleData);
+    const adminStatus = !!roleData;
+    setIsAdmin(adminStatus);
     
     // Get business mode and affiliate status from profiles (non-sensitive)
     const { data: profileData } = await supabase
@@ -60,23 +80,20 @@ const Layout = ({ children }: LayoutProps) => {
       .eq('id', user.id)
       .single();
 
-    if (profileData) {
-      setIsBusinessMode(profileData.is_business_mode || false);
-      setIsAffiliate(profileData.is_affiliate || false);
-    }
-  };
-
-  const checkBusinessMode = async () => {
-    if (!user) return;
+    const businessMode = profileData?.is_business_mode || false;
+    const affiliateStatus = profileData?.is_affiliate || false;
     
-    const { data, error } = await supabase
-      .from('profiles')
-      .select('is_business_mode')
-      .eq('id', user.id)
-      .single();
-
-    if (!error && data) {
-      setIsBusinessMode(data.is_business_mode || false);
+    setIsBusinessMode(businessMode);
+    setIsAffiliate(affiliateStatus);
+    
+    // Cache the results
+    if (userCacheKey) {
+      sessionStorage.setItem(userCacheKey, JSON.stringify({
+        isAdmin: adminStatus,
+        isBusinessMode: businessMode,
+        isAffiliate: affiliateStatus,
+        timestamp: Date.now()
+      }));
     }
   };
 

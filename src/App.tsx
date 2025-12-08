@@ -92,7 +92,17 @@ const FlightDetail = lazy(() => import("./pages/FlightDetail"));
 const HotelDetail = lazy(() => import("./pages/HotelDetail"));
 import Layout from "./components/Layout";
 
-const queryClient = new QueryClient();
+const queryClient = new QueryClient({
+  defaultOptions: {
+    queries: {
+      staleTime: 1000 * 60 * 5, // 5 minutes - data stays fresh
+      gcTime: 1000 * 60 * 30, // 30 minutes - keep in cache
+      retry: 1, // Only retry once on failure
+      refetchOnWindowFocus: false, // Don't refetch when tab regains focus
+      refetchOnMount: false, // Don't refetch on every mount
+    },
+  },
+});
 
 const ProfileRedirect = () => {
   const { userId } = useParams();
