@@ -37,7 +37,6 @@ import {
   Briefcase,
   MoreVertical,
   Check,
-  Plus,
   UserPlus,
   LogOut,
   Unlink,
@@ -393,7 +392,7 @@ export function ProfileDrawer({ trigger }: ProfileDrawerProps) {
                       onClick={() => setAccountsDrawerOpen(true)}
                       className="h-7 w-7 rounded-full border border-dashed border-muted-foreground/40 flex items-center justify-center hover:bg-muted/50 transition-colors"
                     >
-                      <Plus className="h-3 w-3 text-muted-foreground" />
+                      <UserPlus className="h-3 w-3 text-muted-foreground" />
                     </button>
                   )}
 
@@ -589,38 +588,6 @@ export function ProfileDrawer({ trigger }: ProfileDrawerProps) {
               ))}
 
               {linkedAccounts.length > 0 && <Separator className="my-2" />}
-
-              {/* Create new account - disabled if already has linked account */}
-              <Button
-                variant="outline"
-                className="w-full justify-center py-6 text-base"
-                disabled={hasLinkedAccount}
-                onClick={async () => {
-                  // Store current user ID to auto-link after signup
-                  if (user) {
-                    localStorage.setItem('afuchat_link_to_user', user.id);
-                    
-                    // Store current session before signing out
-                    const { data: currentSession } = await supabase.auth.getSession();
-                    if (currentSession?.session) {
-                      const storedSessions = JSON.parse(localStorage.getItem('afuchat_linked_sessions') || '{}');
-                      storedSessions[user.id] = {
-                        access_token: currentSession.session.access_token,
-                        refresh_token: currentSession.session.refresh_token,
-                      };
-                      localStorage.setItem('afuchat_linked_sessions', JSON.stringify(storedSessions));
-                    }
-                  }
-                  setAccountsDrawerOpen(false);
-                  setOpen(false);
-                  // Sign out current user first so they can create new account
-                  await supabase.auth.signOut();
-                  navigate('/auth/signup', { state: { linkingAccount: true } });
-                }}
-              >
-                <Plus className="h-5 w-5 mr-2" />
-                Create a new account
-              </Button>
 
               {/* Add existing account - disabled if already has linked account */}
               <Button
