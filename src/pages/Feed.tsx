@@ -1607,6 +1607,7 @@ const Feed = ({ defaultTab = 'foryou', guestMode = false }: FeedProps = {}) => {
           author_id,
           view_count,
           image_url,
+          quoted_post_id,
           profiles!inner(display_name, handle, is_verified, is_organization_verified, is_affiliate, is_business_mode, avatar_url, affiliated_business_id, last_seen, show_online_status),
           post_images(image_url, display_order, alt_text),
           post_link_previews(url, title, description, image_url, site_name)
@@ -1640,6 +1641,7 @@ const Feed = ({ defaultTab = 'foryou', guestMode = false }: FeedProps = {}) => {
               author_id,
               view_count,
               image_url,
+              quoted_post_id,
               profiles!inner(display_name, handle, is_verified, is_organization_verified, is_affiliate, is_business_mode, avatar_url, affiliated_business_id, last_seen, show_online_status),
               post_images(image_url, display_order, alt_text),
               post_link_previews(url, title, description, image_url, site_name)
@@ -1654,7 +1656,7 @@ const Feed = ({ defaultTab = 'foryou', guestMode = false }: FeedProps = {}) => {
       const postIds = postData.map((p) => p.id);
 
       // Batch fetch all data in parallel
-      const [businessData, affiliationData, repliesData, ackData] = await Promise.all([
+      const [businessData, affiliationData, repliesData, ackData, quotedPostsData] = await Promise.all([
         // Business profiles
         (async () => {
           const businessIds = Array.from(new Set([
@@ -1705,7 +1707,34 @@ const Feed = ({ defaultTab = 'foryou', guestMode = false }: FeedProps = {}) => {
         supabase
           .from('post_acknowledgments')
           .select('post_id, user_id')
-          .in('post_id', postIds)
+          .in('post_id', postIds),
+        
+        // Quoted posts
+        (async () => {
+          const quotedPostIds = Array.from(new Set([
+            ...postData.map(p => p.quoted_post_id),
+            ...followingPostData.map(p => p.quoted_post_id)
+          ].filter(Boolean))) as string[];
+          
+          if (quotedPostIds.length === 0) return new Map();
+          
+          const { data } = await supabase
+            .from('posts')
+            .select(`
+              id,
+              content,
+              created_at,
+              author_id,
+              image_url,
+              post_images(image_url, display_order, alt_text),
+              profiles(display_name, handle, is_verified, is_organization_verified, avatar_url)
+            `)
+            .in('id', quotedPostIds);
+          
+          const map = new Map();
+          (data || []).forEach((qp: any) => map.set(qp.id, qp));
+          return map;
+        })()
       ]);
 
       // Process replies
@@ -1740,9 +1769,13 @@ const Feed = ({ defaultTab = 'foryou', guestMode = false }: FeedProps = {}) => {
           post.profiles.affiliated_business = businessData.get(post.profiles.affiliated_business_id) || null;
         }
 
+        // Get quoted post data if exists
+        const quotedPost = post.quoted_post_id ? quotedPostsData.get(post.quoted_post_id) : null;
+
         return {
           ...post,
           profiles: post.profiles || { display_name: 'Unknown', handle: 'unknown', is_verified: false, is_organization_verified: false },
+          quoted_post: quotedPost,
           replies,
           reply_count: replies.length,
           like_count: acks.length,
