@@ -18,6 +18,7 @@ import { useTranslation } from 'react-i18next';
 import { motion } from 'framer-motion';
 import { DesktopHybridLayout } from '@/components/DesktopHybridLayout';
 import { useIsMobile } from '@/hooks/use-mobile';
+import { usePushNotifications } from '@/hooks/usePushNotifications';
 
 interface LayoutProps {
   children: ReactNode;
@@ -38,6 +39,9 @@ const Layout = ({ children }: LayoutProps) => {
   const [lastScrollY, setLastScrollY] = useState(0);
   const [chatScrollHide, setChatScrollHide] = useState(false);
   const [unreadNotifications, setUnreadNotifications] = useState(0);
+  
+  // Initialize push notifications listener
+  usePushNotifications();
 
   // Cache key for user data
   const userCacheKey = user?.id ? `layout_user_data_${user.id}` : null;

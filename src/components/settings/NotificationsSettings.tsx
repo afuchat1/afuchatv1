@@ -1,15 +1,18 @@
 import { useState, useEffect } from 'react';
 import { Card } from '@/components/ui/card';
 import { Switch } from '@/components/ui/switch';
+import { Button } from '@/components/ui/button';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Label } from '@/components/ui/label';
-import { MessageSquare, Heart, UserPlus, Gift, AtSign, Mail, Moon, Clock } from 'lucide-react';
+import { MessageSquare, Heart, UserPlus, Gift, AtSign, Mail, Moon, Clock, Bell, BellRing, CheckCircle, XCircle } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/contexts/AuthContext';
+import { usePushNotifications } from '@/hooks/usePushNotifications';
 import { toast } from 'sonner';
 
 export const NotificationsSettings = () => {
   const { user } = useAuth();
+  const { isSupported, permission, requestPermission } = usePushNotifications();
   const [loading, setLoading] = useState(true);
   
   // Email preferences
@@ -26,6 +29,15 @@ export const NotificationsSettings = () => {
   const [quietHoursEnabled, setQuietHoursEnabled] = useState(false);
   const [quietHoursStart, setQuietHoursStart] = useState('22:00');
   const [quietHoursEnd, setQuietHoursEnd] = useState('08:00');
+
+  const handleEnablePushNotifications = async () => {
+    const granted = await requestPermission();
+    if (granted) {
+      toast.success('Push notifications enabled!');
+    } else {
+      toast.error('Permission denied. Please enable notifications in your browser settings.');
+    }
+  };
 
   useEffect(() => {
     if (user) {
@@ -97,6 +109,56 @@ export const NotificationsSettings = () => {
 
   return (
     <div className="space-y-6">
+      {/* Push Notifications */}
+      <Card className="p-6">
+        <div className="flex items-center gap-3 mb-4">
+          <div className="p-2 bg-primary/10 rounded-lg">
+            <BellRing className="h-5 w-5 text-primary" />
+          </div>
+          <div className="flex-1">
+            <h3 className="text-xl font-semibold">Push Notifications</h3>
+            <p className="text-sm text-muted-foreground mt-1">
+              Receive notifications on your device
+            </p>
+          </div>
+        </div>
+
+        {!isSupported ? (
+          <div className="flex items-center gap-2 p-4 rounded-lg bg-muted/30">
+            <XCircle className="h-5 w-5 text-muted-foreground" />
+            <p className="text-sm text-muted-foreground">
+              Push notifications are not supported in this browser
+            </p>
+          </div>
+        ) : permission === 'granted' ? (
+          <div className="flex items-center gap-2 p-4 rounded-lg bg-green-500/10">
+            <CheckCircle className="h-5 w-5 text-green-500" />
+            <p className="text-sm text-green-600 dark:text-green-400">
+              Push notifications are enabled. You'll receive alerts for new messages, likes, follows, and more.
+            </p>
+          </div>
+        ) : permission === 'denied' ? (
+          <div className="flex items-center gap-2 p-4 rounded-lg bg-destructive/10">
+            <XCircle className="h-5 w-5 text-destructive" />
+            <div>
+              <p className="text-sm text-destructive">
+                Push notifications are blocked. Please enable them in your browser settings.
+              </p>
+            </div>
+          </div>
+        ) : (
+          <div className="space-y-4">
+            <p className="text-sm text-muted-foreground">
+              Enable push notifications to get instant alerts for new messages, likes, follows, gifts, and mentions directly on your device.
+            </p>
+            <Button onClick={handleEnablePushNotifications} className="w-full gap-2">
+              <Bell className="h-4 w-4" />
+              Enable Push Notifications
+            </Button>
+          </div>
+        )}
+      </Card>
+
       {/* Email Notifications */}
       <Card className="p-6">
         <div className="flex items-center gap-3 mb-6">
