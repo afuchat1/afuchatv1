@@ -753,16 +753,16 @@ const Profile = ({ mustExist = false }: ProfileProps) => {
 			return;
 		}
 		
-		setIsRequestingFollow(true);
-		
-		try {
-			// Delete any existing rejected request first to allow re-requesting
-			await supabase
-				.from('follow_requests')
-				.delete()
-				.eq('requester_id', user.id)
-				.eq('target_id', profileId)
-				.eq('status', 'rejected');
+	setIsRequestingFollow(true);
+	
+	try {
+		// Delete any existing rejected or stale approved requests (when no longer following)
+		await supabase
+			.from('follow_requests')
+			.delete()
+			.eq('requester_id', user.id)
+			.eq('target_id', profileId)
+			.in('status', ['rejected', 'approved']);
 
 			const { error } = await supabase
 				.from('follow_requests')
