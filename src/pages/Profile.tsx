@@ -5,7 +5,7 @@ import { useAuth } from '@/contexts/AuthContext';
 import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { toast } from 'sonner';
-import { ArrowLeft, MessageSquare, UserPlus, Pencil, Calendar, Lock, LogOut, Camera, Building2, UserX, Clock } from 'lucide-react';
+import { ArrowLeft, MessageSquare, UserPlus, Pencil, Calendar, Lock, LogOut, Camera, Building2, UserX, Clock, Users } from 'lucide-react';
 import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/ui/tabs';
 import { Separator } from '@/components/ui/separator';
 import { CustomLoader } from '@/components/ui/CustomLoader';
@@ -292,6 +292,7 @@ const Profile = ({ mustExist = false }: ProfileProps) => {
 	const [isRequestingFollow, setIsRequestingFollow] = useState(false);
 	const [isFollowRequestsOpen, setIsFollowRequestsOpen] = useState(false);
 	const [pendingRequestsCount, setPendingRequestsCount] = useState(0);
+	const [isFollowedByProfile, setIsFollowedByProfile] = useState(false); // Does profile user follow current user?
 
 
 	const handleBannerUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -551,6 +552,7 @@ const Profile = ({ mustExist = false }: ProfileProps) => {
 	const checkFollowStatus = useCallback(async (id: string) => {
 		if (!user || !id) return;
 
+		// Check if current user follows profile user
 		const { data } = await supabase
 			.from('follows')
 			.select('id')
@@ -560,6 +562,17 @@ const Profile = ({ mustExist = false }: ProfileProps) => {
 			.maybeSingle();
 
 		setIsFollowing(!!data);
+
+		// Check if profile user follows current user (for mutual/friends status)
+		const { data: reverseFollow } = await supabase
+			.from('follows')
+			.select('id')
+			.eq('follower_id', id)
+			.eq('following_id', user.id)
+			.limit(1)
+			.maybeSingle();
+
+		setIsFollowedByProfile(!!reverseFollow);
 
 		// Check for pending follow request if target is private
 		const { data: requestData } = await supabase
@@ -590,7 +603,8 @@ const Profile = ({ mustExist = false }: ProfileProps) => {
 			}
 		}
 
-		if (profile?.is_private && user?.id !== id) {
+		// Private accounts: only show posts if current user follows them
+		if (profile?.is_private && user?.id !== id && !isFollowing) {
 			setPosts([]);
 			return;
 		}
@@ -930,8 +944,11 @@ const Profile = ({ mustExist = false }: ProfileProps) => {
 		return count;
 	};
 
-	// Check if this is a private account and current user is not the owner
-	const isPrivateAccount = profile?.is_private && user?.id !== profileId;
+	// Check if this is a private account and current user is not the owner AND not following them
+	const isPrivateAccount = profile?.is_private && user?.id !== profileId && !isFollowing;
+	
+	// Check if users are mutual friends (both follow each other)
+	const areFriends = isFollowing && isFollowedByProfile;
 
 	return (
 		<div className="h-full flex flex-col">
@@ -1068,15 +1085,22 @@ const Profile = ({ mustExist = false }: ProfileProps) => {
 										onClick={handleFollow}
 										variant={isFollowing ? "outline" : "default"}
 										className={`rounded-full font-bold transition-colors ${isFollowing ? 'px-4' : 'flex-1 px-8'}`}
-										onMouseEnter={e => isFollowing && (e.currentTarget.textContent = t('profile.unfollow'))}
-										onMouseLeave={e => isFollowing && (e.currentTarget.textContent = t('profile.following'))}
+										onMouseEnter={e => isFollowing && !areFriends && (e.currentTarget.textContent = t('profile.unfollow'))}
+										onMouseLeave={e => isFollowing && !areFriends && (e.currentTarget.textContent = areFriends ? 'Friends' : t('profile.following'))}
 									>
-										{isFollowing ? t('profile.following') :
+										{isFollowing ? (
+											areFriends ? (
+												<span className="flex items-center gap-1.5">
+													<Users className="h-4 w-4" />
+													Friends
+												</span>
+											) : t('profile.following')
+										) : (
 											<>
 												<UserPlus className="h-4 w-4 mr-2" />
 												{t('profile.follow')}
 											</>
-										}
+										)}
 									</Button>
 								)}
 							</div>
