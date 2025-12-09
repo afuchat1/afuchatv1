@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
+import { Lock } from "lucide-react";
 import { ArrowLeft } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
@@ -30,10 +31,12 @@ export default function Following() {
   const [loading, setLoading] = useState(true);
   const [followingIds, setFollowingIds] = useState<Set<string>>(new Set());
   const [profileId, setProfileId] = useState<string | null>(null);
+  const [isPrivate, setIsPrivate] = useState(false);
+  const [isOwnProfile, setIsOwnProfile] = useState(false);
 
   useEffect(() => {
     resolveProfile();
-  }, [handleOrId]);
+  }, [handleOrId, user]);
 
   useEffect(() => {
     if (profileId) {
@@ -51,8 +54,10 @@ export default function Following() {
       // Check if it's a UUID or handle
       const isUUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(handleOrId);
       
+      let resolvedId: string;
+      
       if (isUUID) {
-        setProfileId(handleOrId);
+        resolvedId = handleOrId;
       } else {
         // Resolve handle to ID
         const { data, error } = await supabase
@@ -62,7 +67,21 @@ export default function Following() {
           .single();
 
         if (error) throw error;
-        setProfileId(data.id);
+        resolvedId = data.id;
+      }
+      
+      setProfileId(resolvedId);
+      setIsOwnProfile(user?.id === resolvedId);
+      
+      // Check if profile has hidden following list
+      const { data: profileData } = await supabase
+        .from("profiles")
+        .select("hide_following_list")
+        .eq("id", resolvedId)
+        .single();
+      
+      if (profileData?.hide_following_list && user?.id !== resolvedId) {
+        setIsPrivate(true);
       }
     } catch (error) {
       console.error("Error resolving profile:", error);
@@ -194,7 +213,17 @@ export default function Following() {
   return (
     <div className="min-h-screen bg-background pb-20">
       <div className="max-w-2xl mx-auto">
-        {loading ? (
+        {isPrivate && !isOwnProfile ? (
+          <div className="flex flex-col items-center justify-center py-16 px-6 text-center">
+            <div className="p-4 bg-muted/50 rounded-full mb-4">
+              <Lock className="h-8 w-8 text-muted-foreground" />
+            </div>
+            <h3 className="text-lg font-semibold mb-2">Following List is Private</h3>
+            <p className="text-sm text-muted-foreground max-w-xs">
+              This user has chosen to keep their following list private
+            </p>
+          </div>
+        ) : loading ? (
           <div className="space-y-1">
             {[1, 2, 3].map((i) => (
               <div key={i} className="flex items-center gap-3 p-4">

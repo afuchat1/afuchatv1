@@ -1962,6 +1962,7 @@ export type Database = {
           current_grade: string | null
           display_name: string
           handle: string
+          hide_following_list: boolean | null
           id: string
           is_admin: boolean | null
           is_affiliate: boolean | null
@@ -1996,6 +1997,7 @@ export type Database = {
           current_grade?: string | null
           display_name: string
           handle: string
+          hide_following_list?: boolean | null
           id: string
           is_admin?: boolean | null
           is_affiliate?: boolean | null
@@ -2030,6 +2032,7 @@ export type Database = {
           current_grade?: string | null
           display_name?: string
           handle?: string
+          hide_following_list?: boolean | null
           id?: string
           is_admin?: boolean | null
           is_affiliate?: boolean | null

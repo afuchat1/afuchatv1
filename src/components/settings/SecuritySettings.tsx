@@ -4,7 +4,7 @@ import { useAuth } from '@/contexts/AuthContext';
 import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Switch } from '@/components/ui/switch';
-import { Lock, Shield, Eye, EyeOff, UserX, Clock } from 'lucide-react';
+import { Lock, Shield, Eye, EyeOff, UserX, Clock, Users } from 'lucide-react';
 import { toast } from 'sonner';
 import { supabase } from '@/integrations/supabase/client';
 
@@ -14,6 +14,7 @@ export const SecuritySettings = () => {
   const [privateAccount, setPrivateAccount] = useState(false);
   const [showOnlineStatus, setShowOnlineStatus] = useState(true);
   const [showReadReceipts, setShowReadReceipts] = useState(true);
+  const [hideFollowingList, setHideFollowingList] = useState(false);
 
   useEffect(() => {
     if (user) {
@@ -26,7 +27,7 @@ export const SecuritySettings = () => {
 
     const { data } = await supabase
       .from('profiles')
-      .select('is_private, show_online_status, show_read_receipts')
+      .select('is_private, show_online_status, show_read_receipts, hide_following_list')
       .eq('id', user.id)
       .single();
 
@@ -34,6 +35,7 @@ export const SecuritySettings = () => {
       setPrivateAccount(data.is_private || false);
       setShowOnlineStatus(data.show_online_status ?? true);
       setShowReadReceipts(data.show_read_receipts ?? true);
+      setHideFollowingList(data.hide_following_list || false);
     }
   };
 
@@ -143,6 +145,23 @@ export const SecuritySettings = () => {
               onCheckedChange={(checked) => {
                 setShowReadReceipts(checked);
                 handlePrivacyToggle('show_read_receipts', checked);
+              }}
+            />
+          </div>
+          
+          <div className="flex items-start justify-between gap-4 p-4 rounded-lg bg-muted/30 hover:bg-muted/50 transition-colors">
+            <div className="flex-1">
+              <div className="flex items-center gap-2 mb-1">
+                <Users className="h-4 w-4 text-muted-foreground" />
+                <p className="font-semibold">Hide Following List</p>
+              </div>
+              <p className="text-sm text-muted-foreground">Hide who you follow from other users</p>
+            </div>
+            <Switch
+              checked={hideFollowingList}
+              onCheckedChange={(checked) => {
+                setHideFollowingList(checked);
+                handlePrivacyToggle('hide_following_list', checked);
               }}
             />
           </div>
