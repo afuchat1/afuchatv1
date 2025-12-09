@@ -52,10 +52,11 @@ interface SheetContentProps
   extends React.ComponentPropsWithoutRef<typeof SheetPrimitive.Content>,
     VariantProps<typeof sheetVariants> {
   onOpenChange?: (open: boolean) => void;
+  hideCloseButton?: boolean;
 }
 
 const SheetContent = React.forwardRef<React.ElementRef<typeof SheetPrimitive.Content>, SheetContentProps>(
-  ({ side = "right", className, children, onOpenChange, ...props }, ref) => {
+  ({ side = "right", className, children, onOpenChange, hideCloseButton = false, ...props }, ref) => {
     const [isDragging, setIsDragging] = React.useState(false);
     const isBottom = side === "bottom";
 
@@ -109,7 +110,7 @@ const SheetContent = React.forwardRef<React.ElementRef<typeof SheetPrimitive.Con
         <SheetOverlay />
         <SheetPrimitive.Content ref={ref} className={cn(sheetVariants({ side }), className)} {...props}>
           {content}
-          {!isBottom && (
+          {!isBottom && !hideCloseButton && (
             <SheetPrimitive.Close className="absolute right-4 top-4 h-8 w-8 rounded-full bg-muted flex items-center justify-center opacity-70 transition-all hover:opacity-100 hover:bg-muted/80 focus:outline-none">
               <X className="h-4 w-4" />
               <span className="sr-only">Close</span>

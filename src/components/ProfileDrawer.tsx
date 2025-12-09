@@ -214,8 +214,8 @@ export function ProfileDrawer({ trigger }: ProfileDrawerProps) {
       </SheetTrigger>
       <SheetContent 
         side="left" 
-        className="w-[85vw] max-w-[320px] p-0 overflow-hidden"
-        onPointerDownOutside={(e) => e.preventDefault()}
+        className="w-[85vw] max-w-[320px] p-0 overflow-hidden rounded-none border-r-0"
+        hideCloseButton
       >
         <div 
           className="overflow-y-auto h-full px-4 py-6 overscroll-contain"
