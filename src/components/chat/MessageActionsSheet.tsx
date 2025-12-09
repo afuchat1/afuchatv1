@@ -3,10 +3,11 @@ import { Sheet, SheetContent, SheetHeader, SheetTitle } from '@/components/ui/sh
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
-import { Smile, Reply, Pencil, Trash2, Copy, Crown, X } from 'lucide-react';
+import { Smile, Reply, Pencil, Trash2, Copy, Crown, Flag } from 'lucide-react';
 import { toast } from 'sonner';
 import { usePremiumStatus } from '@/hooks/usePremiumStatus';
 import { useNavigate } from 'react-router-dom';
+import ReportMessageSheet from './ReportMessageSheet';
 import {
   AlertDialog,
   AlertDialogAction,
@@ -55,6 +56,7 @@ export const MessageActionsSheet = ({
   const [isEditing, setIsEditing] = useState(false);
   const [editContent, setEditContent] = useState('');
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
+  const [showReportSheet, setShowReportSheet] = useState(false);
 
   if (!message) return null;
 
@@ -220,6 +222,20 @@ export const MessageActionsSheet = ({
                       Delete Message
                     </Button>
                   )}
+
+                  {!isOwn && (
+                    <Button
+                      variant="outline"
+                      className="h-12 justify-start gap-3 rounded-xl text-destructive hover:text-destructive hover:bg-destructive/10 border-destructive/30"
+                      onClick={() => {
+                        onOpenChange(false);
+                        setShowReportSheet(true);
+                      }}
+                    >
+                      <Flag className="h-5 w-5" />
+                      Report Message
+                    </Button>
+                  )}
                 </div>
               </div>
             </div>
@@ -246,6 +262,15 @@ export const MessageActionsSheet = ({
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
+
+      {message && (
+        <ReportMessageSheet
+          isOpen={showReportSheet}
+          onClose={() => setShowReportSheet(false)}
+          messageId={message.id}
+          messageContent={message.encrypted_content}
+        />
+      )}
     </>
   );
 };

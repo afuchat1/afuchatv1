@@ -5,7 +5,7 @@ import { useAuth } from '@/contexts/AuthContext';
 import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { toast } from 'sonner';
-import { ArrowLeft, MessageSquare, UserPlus, Pencil, Calendar, Lock, LogOut, Camera, Building2, UserX, Clock, Users } from 'lucide-react';
+import { MessageSquare, UserPlus, Calendar, Lock, Camera, Building2, UserX, Clock, Users, MoreVertical } from 'lucide-react';
 import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/ui/tabs';
 import { Separator } from '@/components/ui/separator';
 import { CustomLoader } from '@/components/ui/CustomLoader';
@@ -37,6 +37,7 @@ import { BusinessBenefitsSheet } from '@/components/BusinessBenefitsSheet';
 import { getCountryFlag } from '@/lib/countryFlags';
 import { PrivateProfileOverlay } from '@/components/PrivateProfileOverlay';
 import { FollowRequestsSheet } from '@/components/FollowRequestsSheet';
+import UserActionsSheet from '@/components/UserActionsSheet';
 
 interface Profile {
 	id: string;
@@ -293,6 +294,8 @@ const Profile = ({ mustExist = false }: ProfileProps) => {
 	const [isFollowRequestsOpen, setIsFollowRequestsOpen] = useState(false);
 	const [pendingRequestsCount, setPendingRequestsCount] = useState(0);
 	const [isFollowedByProfile, setIsFollowedByProfile] = useState(false); // Does profile user follow current user?
+	const [isUserActionsSheetOpen, setIsUserActionsSheetOpen] = useState(false);
+	const [isBlocked, setIsBlocked] = useState(false);
 
 
 	const handleBannerUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -581,6 +584,16 @@ const Profile = ({ mustExist = false }: ProfileProps) => {
 			.maybeSingle();
 
 		setIsFollowedByProfile(!!reverseFollow);
+
+		// Check if user is blocked
+		const { data: blockedData } = await supabase
+			.from('blocked_users')
+			.select('id')
+			.eq('blocker_id', user.id)
+			.eq('blocked_id', id)
+			.maybeSingle();
+
+		setIsBlocked(!!blockedData);
 
 		// Check for pending follow request if target is private
 		const { data: requestData } = await supabase
@@ -1166,6 +1179,15 @@ const Profile = ({ mustExist = false }: ProfileProps) => {
 										)}
 									</Button>
 								)}
+								{/* More options button for block/report */}
+								<Button 
+									variant="outline" 
+									size="icon" 
+									className="rounded-full"
+									onClick={() => setIsUserActionsSheetOpen(true)}
+								>
+									<MoreVertical className="h-5 w-5" />
+								</Button>
 							</div>
 						)}
 					</div>
@@ -1603,6 +1625,19 @@ const Profile = ({ mustExist = false }: ProfileProps) => {
 				open={isFollowRequestsOpen}
 				onOpenChange={setIsFollowRequestsOpen}
 			/>
+
+			{/* User Actions Sheet for block/report */}
+			{profile && user && user.id !== profileId && (
+				<UserActionsSheet
+					isOpen={isUserActionsSheetOpen}
+					onClose={() => setIsUserActionsSheetOpen(false)}
+					userId={profileId || ''}
+					userName={profile.display_name}
+					userHandle={profile.handle}
+					isBlocked={isBlocked}
+					onBlockChange={setIsBlocked}
+				/>
+			)}
 		</div>
 	);
 };
