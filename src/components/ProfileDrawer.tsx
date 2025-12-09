@@ -4,10 +4,10 @@ import { useAuth } from '@/contexts/AuthContext';
 import { useTheme } from 'next-themes';
 import { supabase } from '@/integrations/supabase/client';
 import {
-  Drawer,
-  DrawerContent,
-  DrawerTrigger,
-} from '@/components/ui/drawer';
+  Sheet,
+  SheetContent,
+  SheetTrigger,
+} from '@/components/ui/sheet';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Separator } from '@/components/ui/separator';
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible';
@@ -208,12 +208,12 @@ export function ProfileDrawer({ trigger }: ProfileDrawerProps) {
   };
 
   return (
-    <Drawer open={open} onOpenChange={setOpen}>
-      <DrawerTrigger asChild>
+    <Sheet open={open} onOpenChange={setOpen}>
+      <SheetTrigger asChild>
         {trigger}
-      </DrawerTrigger>
-      <DrawerContent className="h-[85vh] max-h-[85vh] px-4 pb-8">
-        <div className="overflow-y-auto h-full">
+      </SheetTrigger>
+      <SheetContent side="left" className="w-[85vw] max-w-[320px] p-0 overflow-hidden">
+        <div className="overflow-y-auto h-full px-4 py-6">
           {/* Profile Header */}
           {user && profile && (
             <div className="py-4">
@@ -335,7 +335,7 @@ export function ProfileDrawer({ trigger }: ProfileDrawerProps) {
             </>
           )}
         </div>
-      </DrawerContent>
-    </Drawer>
+      </SheetContent>
+    </Sheet>
   );
 }
