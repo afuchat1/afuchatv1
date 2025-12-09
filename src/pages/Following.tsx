@@ -2,8 +2,7 @@ import { useEffect, useState } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
-import { Lock } from "lucide-react";
-import { ArrowLeft } from "lucide-react";
+import { Lock, ArrowLeft, Users } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -30,6 +29,7 @@ export default function Following() {
   const [users, setUsers] = useState<UserProfile[]>([]);
   const [loading, setLoading] = useState(true);
   const [followingIds, setFollowingIds] = useState<Set<string>>(new Set());
+  const [followerIds, setFollowerIds] = useState<Set<string>>(new Set()); // Who follows the current user
   const [profileId, setProfileId] = useState<string | null>(null);
   const [isPrivate, setIsPrivate] = useState(false);
   const [isOwnProfile, setIsOwnProfile] = useState(false);
@@ -136,6 +136,7 @@ export default function Following() {
     if (!user) return;
 
     try {
+      // Get who the current user is following
       const { data, error } = await supabase
         .from("follows")
         .select("following_id")
@@ -145,6 +146,17 @@ export default function Following() {
 
       const ids = new Set(data?.map((f) => f.following_id) || []);
       setFollowingIds(ids);
+
+      // Get who is following the current user (to determine mutual/friends)
+      const { data: followerData, error: followerError } = await supabase
+        .from("follows")
+        .select("follower_id")
+        .eq("following_id", user.id);
+
+      if (followerError) throw followerError;
+
+      const followerIdsSet = new Set(followerData?.map((f) => f.follower_id) || []);
+      setFollowerIds(followerIdsSet);
     } catch (error) {
       console.error("Error fetching following status:", error);
     }
@@ -284,7 +296,13 @@ export default function Following() {
                     variant={followingIds.has(profile.id) ? "outline" : "default"}
                     onClick={() => handleFollowToggle(profile.id)}
                   >
-                    {followingIds.has(profile.id) ? "Following" : "Follow"}
+                    {followingIds.has(profile.id) 
+                      ? (followerIds.has(profile.id) 
+                          ? <span className="flex items-center gap-1"><Users className="h-3.5 w-3.5" />Friends</span>
+                          : "Following")
+                      : followerIds.has(profile.id) 
+                        ? "Follow Back"
+                        : "Follow"}
                   </Button>
                 )}
               </div>

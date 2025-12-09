@@ -2,7 +2,7 @@ import { useEffect, useState } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
-import { ArrowLeft, Lock } from "lucide-react";
+import { ArrowLeft, Lock, Users } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -307,7 +307,9 @@ export default function Followers() {
                     onClick={() => handleFollowToggle(profile.id)}
                   >
                     {followingIds.has(profile.id) 
-                      ? "Following" 
+                      ? (followerIds.has(profile.id) 
+                          ? <span className="flex items-center gap-1"><Users className="h-3.5 w-3.5" />Friends</span>
+                          : "Following")
                       : followerIds.has(profile.id) 
                         ? "Follow Back"
                         : "Follow"}
