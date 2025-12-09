@@ -299,7 +299,10 @@ export function ProfileDrawer({ trigger }: ProfileDrawerProps) {
 
           {/* Theme Toggle */}
           <button
-            onClick={toggleTheme}
+            onClick={(e) => {
+              e.stopPropagation();
+              toggleTheme();
+            }}
             className="flex items-center gap-4 w-full px-4 py-3 hover:bg-muted/50 transition-colors rounded-lg mt-2"
           >
             {theme === 'dark' ? (
