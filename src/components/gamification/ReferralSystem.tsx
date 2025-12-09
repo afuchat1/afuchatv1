@@ -5,8 +5,9 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
-import { Copy, Users, Gift, CheckCircle, Crown } from 'lucide-react';
+import { Copy, Users, Gift, CheckCircle, Crown, AlertTriangle, Share2 } from 'lucide-react';
 import { toast } from 'sonner';
+import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '@/components/ui/accordion';
 
 export const ReferralSystem = () => {
   const { user } = useAuth();
@@ -23,8 +24,8 @@ export const ReferralSystem = () => {
 
   const generateReferralCode = () => {
     if (user) {
-      // Generate a unique referral code based on user ID
-      const code = `AFU-${user.id.substring(0, 8).toUpperCase()}`;
+      // Generate a unique referral code based on full user ID for uniqueness
+      const code = `${user.id.replace(/-/g, '').substring(0, 12).toUpperCase()}`;
       setReferralCode(code);
     }
   };
@@ -50,11 +51,28 @@ export const ReferralSystem = () => {
   };
 
   const copyReferralLink = () => {
-    const link = `${window.location.origin}/?ref=${referralCode}`;
+    const link = `${window.location.origin}/auth/signup?ref=${referralCode}`;
     navigator.clipboard.writeText(link);
     toast.success('Referral link copied!', {
       description: 'Your friend gets 1 week free Premium and you earn 500 Nexa!',
     });
+  };
+
+  const shareReferralLink = async () => {
+    const link = `${window.location.origin}/auth/signup?ref=${referralCode}`;
+    if (navigator.share) {
+      try {
+        await navigator.share({
+          title: 'Join AfuChat!',
+          text: 'Join AfuChat using my referral link and get 1 week free Premium!',
+          url: link,
+        });
+      } catch (error) {
+        copyReferralLink();
+      }
+    } else {
+      copyReferralLink();
+    }
   };
 
   return (
@@ -69,15 +87,24 @@ export const ReferralSystem = () => {
         </CardDescription>
       </CardHeader>
       <CardContent className="space-y-4">
-        {/* Referral Code Section */}
+        {/* Unique Referral Code Display */}
+        <div className="p-3 bg-muted/50 rounded-lg">
+          <div className="text-xs text-muted-foreground mb-1">Your Unique Referral Code</div>
+          <div className="text-lg font-mono font-bold text-primary">{referralCode}</div>
+        </div>
+
+        {/* Referral Link Section */}
         <div className="flex gap-2">
           <Input
-            value={`${window.location.origin}/?ref=${referralCode}`}
+            value={`${window.location.origin}/auth/signup?ref=${referralCode}`}
             readOnly
-            className="flex-1"
+            className="flex-1 text-xs"
           />
-          <Button onClick={copyReferralLink} size="icon">
+          <Button onClick={copyReferralLink} size="icon" variant="outline">
             <Copy className="h-4 w-4" />
+          </Button>
+          <Button onClick={shareReferralLink} size="icon">
+            <Share2 className="h-4 w-4" />
           </Button>
         </div>
 
@@ -96,42 +123,71 @@ export const ReferralSystem = () => {
         {/* Referral List */}
         {referrals.length > 0 && (
           <div className="space-y-2">
-            <h4 className="text-sm font-semibold">Your Referrals</h4>
-            {referrals.map((referral) => (
-              <div
-                key={referral.id}
-                className="flex items-center justify-between p-2 rounded-lg bg-muted/50"
-              >
-                <div className="flex items-center gap-2">
-                  <div className="w-8 h-8 rounded-full bg-primary/10 flex items-center justify-center">
-                    <Users className="h-4 w-4 text-primary" />
-                  </div>
-                  <div>
-                    <div className="text-sm font-medium">
-                      @{referral.profiles?.handle || 'User'}
+            <h4 className="text-sm font-semibold">Your Referrals ({referrals.length})</h4>
+            <div className="max-h-48 overflow-y-auto space-y-2">
+              {referrals.map((referral) => (
+                <div
+                  key={referral.id}
+                  className="flex items-center justify-between p-2 rounded-lg bg-muted/50"
+                >
+                  <div className="flex items-center gap-2">
+                    <div className="w-8 h-8 rounded-full bg-primary/10 flex items-center justify-center">
+                      <Users className="h-4 w-4 text-primary" />
                     </div>
-                    <div className="text-xs text-muted-foreground">
-                      {new Date(referral.created_at).toLocaleDateString()}
+                    <div>
+                      <div className="text-sm font-medium">
+                        @{referral.profiles?.handle || 'User'}
+                      </div>
+                      <div className="text-xs text-muted-foreground">
+                        {new Date(referral.created_at).toLocaleDateString()}
+                      </div>
                     </div>
                   </div>
+                  {referral.rewarded ? (
+                    <Badge variant="outline" className="gap-1 text-green-600 border-green-600">
+                      <CheckCircle className="h-3 w-3" />
+                      +500 Nexa
+                    </Badge>
+                  ) : (
+                    <Badge variant="secondary" className="gap-1">
+                      Pending
+                    </Badge>
+                  )}
                 </div>
-                {referral.rewarded && (
-                  <Badge variant="outline" className="gap-1">
-                    <CheckCircle className="h-3 w-3" />
-                    +500 Nexa
-                  </Badge>
-                )}
-              </div>
-            ))}
+              ))}
+            </div>
           </div>
         )}
 
+        {/* Rewards Info */}
         <div className="flex items-start gap-2 p-3 bg-gradient-to-r from-amber-50 to-orange-50 dark:from-amber-950/20 dark:to-orange-950/20 rounded-lg border border-amber-200 dark:border-amber-800">
           <Crown className="h-5 w-5 text-amber-600 dark:text-amber-400 flex-shrink-0 mt-0.5" />
           <div className="text-xs text-amber-700 dark:text-amber-300">
             <strong>Rewards:</strong> When a friend signs up with your link, they get 1 week free Premium and you earn 500 Nexa! Premium includes verified badge, ad-free experience, and exclusive features.
           </div>
         </div>
+
+        {/* Terms & Conditions */}
+        <Accordion type="single" collapsible className="w-full">
+          <AccordionItem value="terms" className="border-none">
+            <AccordionTrigger className="text-xs text-muted-foreground py-2 hover:no-underline">
+              <div className="flex items-center gap-1">
+                <AlertTriangle className="h-3 w-3" />
+                Referral Terms & Conditions
+              </div>
+            </AccordionTrigger>
+            <AccordionContent>
+              <div className="text-xs text-muted-foreground space-y-2 p-3 bg-muted/30 rounded-lg">
+                <p><strong>1. Eligibility:</strong> Rewards are only given for genuine new user sign-ups who complete their profile.</p>
+                <p><strong>2. No Fake Referrals:</strong> We do not pay rewards for fake accounts, self-referrals, bot sign-ups, or any fraudulent activity. Violators will be banned.</p>
+                <p><strong>3. Verification:</strong> All referrals are verified before rewards are distributed. We reserve the right to reject suspicious referrals.</p>
+                <p><strong>4. Changes:</strong> AfuChat reserves the right to modify, suspend, or terminate the referral program and its rewards at any time without prior notice.</p>
+                <p><strong>5. Limits:</strong> There is no limit to how many friends you can refer, but rewards are only given once per unique user.</p>
+                <p><strong>6. Non-Transferable:</strong> Referral rewards are non-transferable and cannot be exchanged for cash.</p>
+              </div>
+            </AccordionContent>
+          </AccordionItem>
+        </Accordion>
       </CardContent>
     </Card>
   );

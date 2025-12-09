@@ -15,6 +15,7 @@ import { Progress } from '@/components/ui/progress';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from '@/components/ui/dialog';
 import { getCountryFlag } from '@/lib/countryFlags';
 import { CustomLoader } from '@/components/ui/CustomLoader';
+import { ReferralWelcomeBanner } from '@/components/gamification/ReferralWelcomeBanner';
 
 const CompleteProfile = () => {
   const { user, loading: authLoading } = useAuth();
@@ -44,6 +45,9 @@ const CompleteProfileContent = ({ user }: CompleteProfileContentProps) => {
   const [loading, setLoading] = useState(false);
   const [initialLoading, setInitialLoading] = useState(true);
   const [showRewardModal, setShowRewardModal] = useState(false);
+  const [showReferralWelcome, setShowReferralWelcome] = useState(false);
+  const [referrerName, setReferrerName] = useState<string | undefined>();
+  const [referralCode, setReferralCode] = useState<string | null>(null);
   const [progress, setProgress] = useState(0);
   
   const [formData, setFormData] = useState({
@@ -56,6 +60,33 @@ const CompleteProfileContent = ({ user }: CompleteProfileContentProps) => {
   const [avatarFile, setAvatarFile] = useState<File | null>(null);
   const [avatarPreview, setAvatarPreview] = useState<string>('');
   const [existingAvatarUrl, setExistingAvatarUrl] = useState<string>('');
+
+  // Check for referral code on mount
+  useEffect(() => {
+    const checkReferralCode = () => {
+      // Check session storage first (from OAuth flow)
+      const pendingData = sessionStorage.getItem('pendingSignupData');
+      if (pendingData) {
+        try {
+          const parsed = JSON.parse(pendingData);
+          if (parsed.referral_code) {
+            setReferralCode(parsed.referral_code);
+          }
+        } catch (e) {
+          console.error('Error parsing pending signup data:', e);
+        }
+      }
+      
+      // Also check URL params
+      const urlParams = new URLSearchParams(window.location.search);
+      const refFromUrl = urlParams.get('ref');
+      if (refFromUrl) {
+        setReferralCode(refFromUrl);
+      }
+    };
+    
+    checkReferralCode();
+  }, []);
 
   // Load existing profile data on mount
   useEffect(() => {
@@ -94,6 +125,46 @@ const CompleteProfileContent = ({ user }: CompleteProfileContentProps) => {
 
     loadExistingProfile();
   }, [user]);
+
+  // Process referral reward
+  const processReferral = async () => {
+    if (!referralCode || !user) return;
+    
+    try {
+      // Call the process_referral_reward function
+      const { data, error } = await supabase.rpc('process_referral_reward', {
+        referral_code_input: referralCode,
+        new_user_id: user.id
+      });
+      
+      if (error) {
+        console.error('Referral processing error:', error);
+        return;
+      }
+      
+      if (data) {
+        // Try to get referrer name
+        // The referral code is the first 12 chars of user ID without hyphens
+        // We need to find the user with that ID pattern
+        const { data: referrerData } = await supabase
+          .from('profiles')
+          .select('display_name')
+          .ilike('id', `${referralCode.toLowerCase().substring(0, 8)}%`)
+          .maybeSingle();
+        
+        if (referrerData?.display_name) {
+          setReferrerName(referrerData.display_name);
+        }
+        
+        setShowReferralWelcome(true);
+        
+        // Clear the referral code from session storage
+        sessionStorage.removeItem('pendingSignupData');
+      }
+    } catch (error) {
+      console.error('Error processing referral:', error);
+    }
+  };
 
   useEffect(() => {
     calculateProgress();
@@ -265,7 +336,15 @@ const CompleteProfileContent = ({ user }: CompleteProfileContentProps) => {
 
       if (error) throw error;
 
-      if (shouldReward) {
+      // Process referral if user came via referral link
+      if (referralCode) {
+        await processReferral();
+      }
+
+      if (showReferralWelcome) {
+        // Let the referral welcome banner show, then redirect
+        return;
+      } else if (shouldReward) {
         setShowRewardModal(true);
         setTimeout(() => {
           setShowRewardModal(false);
@@ -507,6 +586,17 @@ const CompleteProfileContent = ({ user }: CompleteProfileContentProps) => {
         </div>
       </DialogContent>
     </Dialog>
+
+    {/* Referral Welcome Banner */}
+    {showReferralWelcome && (
+      <ReferralWelcomeBanner 
+        referrerName={referrerName}
+        onClose={() => {
+          setShowReferralWelcome(false);
+          window.location.href = '/home';
+        }}
+      />
+    )}
     </>
   );
 };
