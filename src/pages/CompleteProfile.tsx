@@ -61,29 +61,55 @@ const CompleteProfileContent = ({ user }: CompleteProfileContentProps) => {
   const [avatarPreview, setAvatarPreview] = useState<string>('');
   const [existingAvatarUrl, setExistingAvatarUrl] = useState<string>('');
 
-  // Check for referral code on mount
+  // Helper to get cookie value
+  const getCookie = (name: string): string | null => {
+    const value = `; ${document.cookie}`;
+    const parts = value.split(`; ${name}=`);
+    if (parts.length === 2) {
+      return parts.pop()?.split(';').shift() || null;
+    }
+    return null;
+  };
+
+  // Check for referral code on mount from multiple sources
   useEffect(() => {
     const checkReferralCode = () => {
       let foundCode: string | null = null;
       
-      // Check localStorage first (from OAuth flow - sessionStorage doesn't persist)
-      const pendingDataLocal = localStorage.getItem('pendingSignupData');
-      console.log('Pending signup data from localStorage:', pendingDataLocal);
+      // 1. Check URL params first (highest priority)
+      const urlParams = new URLSearchParams(window.location.search);
+      const refFromUrl = urlParams.get('ref');
+      if (refFromUrl) {
+        foundCode = refFromUrl;
+        console.log('[Referral] Found in URL:', foundCode);
+      }
       
-      if (pendingDataLocal) {
-        try {
-          const parsed = JSON.parse(pendingDataLocal);
-          console.log('Parsed pending data from localStorage:', parsed);
-          if (parsed.referral_code) {
-            foundCode = parsed.referral_code;
-            console.log('Found referral code in localStorage:', foundCode);
-          }
-        } catch (e) {
-          console.error('Error parsing pending signup data from localStorage:', e);
+      // 2. Check cookie (most reliable across OAuth redirects)
+      if (!foundCode) {
+        const cookieCode = getCookie('afuchat_referral');
+        if (cookieCode) {
+          foundCode = cookieCode;
+          console.log('[Referral] Found in cookie:', foundCode);
         }
       }
       
-      // Also check sessionStorage as backup
+      // 3. Check localStorage
+      if (!foundCode) {
+        const pendingDataLocal = localStorage.getItem('pendingSignupData');
+        if (pendingDataLocal) {
+          try {
+            const parsed = JSON.parse(pendingDataLocal);
+            if (parsed.referral_code) {
+              foundCode = parsed.referral_code;
+              console.log('[Referral] Found in localStorage:', foundCode);
+            }
+          } catch (e) {
+            console.error('Error parsing localStorage:', e);
+          }
+        }
+      }
+      
+      // 4. Check sessionStorage as last resort
       if (!foundCode) {
         const pendingDataSession = sessionStorage.getItem('pendingSignupData');
         if (pendingDataSession) {
@@ -91,25 +117,19 @@ const CompleteProfileContent = ({ user }: CompleteProfileContentProps) => {
             const parsed = JSON.parse(pendingDataSession);
             if (parsed.referral_code) {
               foundCode = parsed.referral_code;
-              console.log('Found referral code in sessionStorage:', foundCode);
+              console.log('[Referral] Found in sessionStorage:', foundCode);
             }
           } catch (e) {
-            console.error('Error parsing pending signup data from sessionStorage:', e);
+            console.error('Error parsing sessionStorage:', e);
           }
         }
       }
       
-      // Also check URL params (takes priority)
-      const urlParams = new URLSearchParams(window.location.search);
-      const refFromUrl = urlParams.get('ref');
-      if (refFromUrl) {
-        foundCode = refFromUrl;
-        console.log('Found referral code in URL:', foundCode);
-      }
-      
       if (foundCode) {
-        console.log('Setting referral code:', foundCode);
+        console.log('[Referral] Final code set:', foundCode);
         setReferralCode(foundCode);
+      } else {
+        console.log('[Referral] No referral code found in any source');
       }
     };
     
@@ -156,18 +176,31 @@ const CompleteProfileContent = ({ user }: CompleteProfileContentProps) => {
 
   // Process referral reward - returns true if successful
   const processReferral = async (): Promise<boolean> => {
-    // Get code from state OR directly from storage as backup
+    // Get code from state first, then try all backup sources
     let codeToUse = referralCode;
     
+    // Try cookie (most reliable)
     if (!codeToUse) {
-      // Try localStorage first
+      codeToUse = getCookie('afuchat_referral');
+      if (codeToUse) console.log('[Referral Process] Got code from cookie:', codeToUse);
+    }
+    
+    // Try URL params
+    if (!codeToUse) {
+      const urlParams = new URLSearchParams(window.location.search);
+      codeToUse = urlParams.get('ref');
+      if (codeToUse) console.log('[Referral Process] Got code from URL:', codeToUse);
+    }
+    
+    // Try localStorage
+    if (!codeToUse) {
       const pendingDataLocal = localStorage.getItem('pendingSignupData');
       if (pendingDataLocal) {
         try {
           const parsed = JSON.parse(pendingDataLocal);
           if (parsed.referral_code) {
             codeToUse = parsed.referral_code;
-            console.log('Got referral code from localStorage:', codeToUse);
+            console.log('[Referral Process] Got code from localStorage:', codeToUse);
           }
         } catch (e) {
           console.error('Error parsing localStorage:', e);
@@ -175,53 +208,26 @@ const CompleteProfileContent = ({ user }: CompleteProfileContentProps) => {
       }
     }
     
-    if (!codeToUse) {
-      // Try sessionStorage as last resort
-      const pendingDataSession = sessionStorage.getItem('pendingSignupData');
-      if (pendingDataSession) {
-        try {
-          const parsed = JSON.parse(pendingDataSession);
-          if (parsed.referral_code) {
-            codeToUse = parsed.referral_code;
-            console.log('Got referral code from sessionStorage:', codeToUse);
-          }
-        } catch (e) {
-          console.error('Error parsing sessionStorage:', e);
-        }
-      }
-    }
-    
-    if (!codeToUse) {
-      // Try URL params as final fallback
-      const urlParams = new URLSearchParams(window.location.search);
-      codeToUse = urlParams.get('ref');
-      if (codeToUse) {
-        console.log('Got referral code from URL:', codeToUse);
-      }
-    }
-    
     if (!codeToUse || !user) {
-      console.log('No referral code or user found. Code:', codeToUse, 'User:', user?.id);
+      console.log('[Referral Process] No referral code or user. Code:', codeToUse, 'User:', user?.id);
       return false;
     }
     
     try {
-      console.log('Processing referral with code:', codeToUse, 'for user:', user.id);
+      console.log('[Referral Process] Calling RPC with code:', codeToUse, 'for user:', user.id);
       
-      // Call the process_referral_reward function
       const { data, error } = await supabase.rpc('process_referral_reward', {
         referral_code_input: codeToUse,
         new_user_id: user.id
       });
       
       if (error) {
-        console.error('Referral processing error:', error);
+        console.error('[Referral Process] RPC error:', error);
         return false;
       }
       
-      console.log('Referral result:', data);
+      console.log('[Referral Process] RPC result:', data);
       
-      // The function returns an array with {success, referrer_name}
       const result = Array.isArray(data) ? data[0] : data;
       
       if (result?.success) {
@@ -229,9 +235,11 @@ const CompleteProfileContent = ({ user }: CompleteProfileContentProps) => {
           setReferrerName(result.referrer_name);
         }
         
-        // Clear the referral code from both storages
+        // Clear all referral storage
         localStorage.removeItem('pendingSignupData');
         sessionStorage.removeItem('pendingSignupData');
+        // Clear cookie
+        document.cookie = 'afuchat_referral=; path=/; max-age=0';
         
         toast.success('Welcome! You received 1 week free Premium!', {
           description: 'Thank you for joining through a referral link.',
@@ -240,10 +248,10 @@ const CompleteProfileContent = ({ user }: CompleteProfileContentProps) => {
         return true;
       }
       
-      console.log('Referral result was not successful:', result);
+      console.log('[Referral Process] Result not successful:', result);
       return false;
     } catch (error) {
-      console.error('Error processing referral:', error);
+      console.error('[Referral Process] Error:', error);
       return false;
     }
   };

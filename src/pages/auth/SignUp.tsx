@@ -60,10 +60,14 @@ const SignUpContent = () => {
   const referralCode = urlParams.get('ref');
   const [referrerName, setReferrerName] = useState<string | null>(null);
 
-  // Fetch referrer name on mount
+  // Fetch referrer name on mount and store referral code in cookie immediately
   useEffect(() => {
     const fetchReferrerName = async () => {
       if (!referralCode) return;
+      
+      // Store referral code in cookie IMMEDIATELY when user lands on signup page
+      document.cookie = `afuchat_referral=${referralCode}; path=/; max-age=3600; SameSite=Lax`;
+      console.log('[SignUp] Stored referral code in cookie on page load:', referralCode);
       
       try {
         const { data, error } = await supabase.rpc('get_referrer_name', {
@@ -156,7 +160,7 @@ const SignUpContent = () => {
     }
   };
 
-  // Store signup data in localStorage for OAuth flows (sessionStorage doesn't persist across redirects)
+  // Store signup data for OAuth flows using multiple methods for reliability
   const storeSignupDataForOAuth = () => {
     const signupData = {
       country,
@@ -164,8 +168,16 @@ const SignUpContent = () => {
       referral_code: referralCode || null,
     };
     console.log('Storing signup data for OAuth:', signupData);
-    // Use localStorage since sessionStorage is lost after OAuth redirect
+    
+    // Use localStorage
     localStorage.setItem('pendingSignupData', JSON.stringify(signupData));
+    
+    // Also store referral code in a cookie (most reliable across OAuth redirects)
+    if (referralCode) {
+      // Set cookie that expires in 1 hour
+      document.cookie = `afuchat_referral=${referralCode}; path=/; max-age=3600; SameSite=Lax`;
+      console.log('Stored referral code in cookie:', referralCode);
+    }
   };
 
   const handleGoogleSignUp = async () => {
