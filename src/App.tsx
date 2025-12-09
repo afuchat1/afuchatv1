@@ -216,6 +216,7 @@ const AppRoutes = () => {
       <Route path="/:userId/following" element={<Layout><Following /></Layout>} />
 
       <Route path="/user-not-found" element={<UserNotFound />} />
+      <Route path="/page-not-found" element={<NotFound />} />
       <Route path="*" element={<NotFound />} />
     </Routes>
       </Suspense>

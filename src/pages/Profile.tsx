@@ -467,6 +467,14 @@ const Profile = ({ mustExist = false }: ProfileProps) => {
 			return;
 		}
 
+		// Validate urlParam - reject invalid patterns like *, special characters
+		const isValidUsername = /^[a-zA-Z0-9_-]+$/.test(urlParam) || isUUID(urlParam);
+		if (!isValidUsername) {
+			// Invalid username pattern - redirect to not found
+			navigate('/page-not-found', { replace: true, state: { path: `/${urlParam}` } });
+			return;
+		}
+
 		const isParamUUID = isUUID(urlParam);
 
 		let query = supabase
@@ -495,8 +503,8 @@ const Profile = ({ mustExist = false }: ProfileProps) => {
 				// For /@user routes, show user not found page
 				navigate('/user-not-found', { replace: true, state: { username: urlParam } });
 			} else {
-				// For /user routes, treat as 404 page not found
-				navigate('/*', { replace: true });
+				// For /user routes, treat as user not found
+				navigate('/user-not-found', { replace: true, state: { username: urlParam } });
 			}
 			return;
 		}
