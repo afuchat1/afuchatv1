@@ -5,7 +5,7 @@ import { useAuth } from '@/contexts/AuthContext';
 import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { toast } from 'sonner';
-import { ArrowLeft, MessageSquare, UserPlus, Pencil, Calendar, Lock, LogOut, Camera, Building2, UserX } from 'lucide-react';
+import { ArrowLeft, MessageSquare, UserPlus, Pencil, Calendar, Lock, LogOut, Camera, Building2, UserX, Clock } from 'lucide-react';
 import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/ui/tabs';
 import { Separator } from '@/components/ui/separator';
 import { CustomLoader } from '@/components/ui/CustomLoader';
@@ -36,6 +36,7 @@ import { UserPremiumBadge } from '@/components/UserPremiumBadge';
 import { BusinessBenefitsSheet } from '@/components/BusinessBenefitsSheet';
 import { getCountryFlag } from '@/lib/countryFlags';
 import { PrivateProfileOverlay } from '@/components/PrivateProfileOverlay';
+import { FollowRequestsSheet } from '@/components/FollowRequestsSheet';
 
 interface Profile {
 	id: string;
@@ -287,6 +288,10 @@ const Profile = ({ mustExist = false }: ProfileProps) => {
 	const [isUploadingBanner, setIsUploadingBanner] = useState(false);
 	const [currentUserIsVerified, setCurrentUserIsVerified] = useState(false);
 	const [isBusinessBenefitsOpen, setIsBusinessBenefitsOpen] = useState(false);
+	const [followRequestStatus, setFollowRequestStatus] = useState<'none' | 'pending' | 'approved' | 'rejected'>('none');
+	const [isRequestingFollow, setIsRequestingFollow] = useState(false);
+	const [isFollowRequestsOpen, setIsFollowRequestsOpen] = useState(false);
+	const [pendingRequestsCount, setPendingRequestsCount] = useState(0);
 
 
 	const handleBannerUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -555,6 +560,20 @@ const Profile = ({ mustExist = false }: ProfileProps) => {
 			.maybeSingle();
 
 		setIsFollowing(!!data);
+
+		// Check for pending follow request if target is private
+		const { data: requestData } = await supabase
+			.from('follow_requests')
+			.select('status')
+			.eq('requester_id', user.id)
+			.eq('target_id', id)
+			.maybeSingle();
+
+		if (requestData) {
+			setFollowRequestStatus(requestData.status as 'pending' | 'approved' | 'rejected');
+		} else {
+			setFollowRequestStatus('none');
+		}
 	}, [user]);
 
 	const fetchUserPosts = useCallback(async (id: string) => {
@@ -693,12 +712,68 @@ const Profile = ({ mustExist = false }: ProfileProps) => {
 		};
 	}, [user, profileId]);
 
+	// Fetch pending follow requests count for own profile
+	useEffect(() => {
+		const fetchPendingRequestsCount = async () => {
+			if (!user || profileId !== user.id) {
+				setPendingRequestsCount(0);
+				return;
+			}
+
+			const { count } = await supabase
+				.from('follow_requests')
+				.select('id', { count: 'exact', head: true })
+				.eq('target_id', user.id)
+				.eq('status', 'pending');
+
+			setPendingRequestsCount(count || 0);
+		};
+
+		fetchPendingRequestsCount();
+	}, [user, profileId]);
+
+
+	const handleFollowRequest = async () => {
+		if (!user || !profileId) {
+			navigate('/auth');
+			return;
+		}
+		
+		setIsRequestingFollow(true);
+		
+		try {
+			const { error } = await supabase
+				.from('follow_requests')
+				.upsert({ 
+					requester_id: user.id, 
+					target_id: profileId,
+					status: 'pending'
+				}, { onConflict: 'requester_id,target_id' });
+
+			if (error) throw error;
+			
+			setFollowRequestStatus('pending');
+			toast.success('Follow request sent');
+		} catch (error: any) {
+			console.error('Error sending follow request:', error);
+			toast.error('Failed to send follow request');
+		} finally {
+			setIsRequestingFollow(false);
+		}
+	};
 
 	const handleFollow = async () => {
 		if (!user || !profileId) {
 			navigate('/auth');
 			return;
 		}
+
+		// For private accounts, use follow request system
+		if (profile?.is_private && !isFollowing) {
+			handleFollowRequest();
+			return;
+		}
+
 		const currentIsFollowing = isFollowing;
 
 		setIsFollowing(!currentIsFollowing);
@@ -892,6 +967,20 @@ const Profile = ({ mustExist = false }: ProfileProps) => {
 				{/* Edit Profile Button - Right side, overlapping banner/content */}
 				{user && user.id === profileId && (
 					<div className="absolute top-4 right-4 z-10 flex gap-2">
+						{/* Follow Requests Button for private accounts */}
+						{profile?.is_private && pendingRequestsCount > 0 && (
+							<Button 
+								variant="outline" 
+								className="rounded-full px-4 py-2 font-bold bg-background hover:bg-muted border-2 h-auto relative"
+								onClick={() => setIsFollowRequestsOpen(true)}
+							>
+								<UserPlus className="h-4 w-4 mr-1" />
+								Requests
+								<span className="absolute -top-1 -right-1 bg-primary text-primary-foreground text-xs rounded-full h-5 w-5 flex items-center justify-center font-bold">
+									{pendingRequestsCount > 9 ? '9+' : pendingRequestsCount}
+								</span>
+							</Button>
+						)}
 						<Button 
 							variant="outline" 
 							className="rounded-full px-6 py-2 font-bold bg-background hover:bg-muted border-2 h-auto"
@@ -943,20 +1032,43 @@ const Profile = ({ mustExist = false }: ProfileProps) => {
 										showLabel={true}
 									/>
 								)}
-								<Button
-									onClick={handleFollow}
-									variant={isFollowing ? "outline" : "default"}
-									className={`rounded-full font-bold transition-colors ${isFollowing ? 'px-4' : 'flex-1 px-8'}`}
-									onMouseEnter={e => isFollowing && (e.currentTarget.textContent = t('profile.unfollow'))}
-									onMouseLeave={e => isFollowing && (e.currentTarget.textContent = t('profile.following'))}
-								>
-									{isFollowing ? t('profile.following') :
-										<>
+								{/* Show appropriate button based on follow state and private status */}
+								{profile?.is_private && !isFollowing ? (
+									followRequestStatus === 'pending' ? (
+										<Button
+											variant="outline"
+											className="rounded-full font-bold px-4"
+											disabled
+										>
+											<Clock className="h-4 w-4 mr-2" />
+											Requested
+										</Button>
+									) : (
+										<Button
+											onClick={handleFollowRequest}
+											className="rounded-full font-bold flex-1 px-8"
+											disabled={isRequestingFollow}
+										>
 											<UserPlus className="h-4 w-4 mr-2" />
-											{t('profile.follow')}
-										</>
-									}
-								</Button>
+											{isRequestingFollow ? 'Sending...' : 'Request to Follow'}
+										</Button>
+									)
+								) : (
+									<Button
+										onClick={handleFollow}
+										variant={isFollowing ? "outline" : "default"}
+										className={`rounded-full font-bold transition-colors ${isFollowing ? 'px-4' : 'flex-1 px-8'}`}
+										onMouseEnter={e => isFollowing && (e.currentTarget.textContent = t('profile.unfollow'))}
+										onMouseLeave={e => isFollowing && (e.currentTarget.textContent = t('profile.following'))}
+									>
+										{isFollowing ? t('profile.following') :
+											<>
+												<UserPlus className="h-4 w-4 mr-2" />
+												{t('profile.follow')}
+											</>
+										}
+									</Button>
+								)}
 							</div>
 						)}
 					</div>
@@ -1196,8 +1308,9 @@ const Profile = ({ mustExist = false }: ProfileProps) => {
 					<div className="p-6">
 						<PrivateProfileOverlay 
 							handle={profile.handle} 
-							isFollowing={isFollowing}
-							onFollowRequest={handleFollow}
+							requestStatus={followRequestStatus}
+							onFollowRequest={handleFollowRequest}
+							isLoading={isRequestingFollow}
 						/>
 					</div>
 				) : (
@@ -1383,6 +1496,12 @@ const Profile = ({ mustExist = false }: ProfileProps) => {
 					onOpenChange={setIsBusinessBenefitsOpen}
 				/>
 			)}
+
+			{/* Follow Requests Sheet for own profile */}
+			<FollowRequestsSheet
+				open={isFollowRequestsOpen}
+				onOpenChange={setIsFollowRequestsOpen}
+			/>
 		</div>
 	);
 };

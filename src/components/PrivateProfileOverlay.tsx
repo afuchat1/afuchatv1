@@ -1,4 +1,4 @@
-import { Lock, UserX } from 'lucide-react';
+import { Lock, UserX, Clock, Check } from 'lucide-react';
 import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { useAuth } from '@/contexts/AuthContext';
@@ -7,18 +7,83 @@ import { useTranslation } from 'react-i18next';
 
 interface PrivateProfileOverlayProps {
   handle: string;
-  isFollowing?: boolean;
+  requestStatus?: 'none' | 'pending' | 'approved' | 'rejected';
   onFollowRequest?: () => void;
+  isLoading?: boolean;
 }
 
 export const PrivateProfileOverlay = ({ 
   handle, 
-  isFollowing = false,
-  onFollowRequest 
+  requestStatus = 'none',
+  onFollowRequest,
+  isLoading = false
 }: PrivateProfileOverlayProps) => {
   const { user } = useAuth();
   const navigate = useNavigate();
   const { t } = useTranslation();
+
+  const renderActionButton = () => {
+    if (!user) {
+      return (
+        <Button 
+          onClick={() => navigate('/auth')}
+          className="mt-2 rounded-full px-6"
+        >
+          Sign in to Follow
+        </Button>
+      );
+    }
+
+    switch (requestStatus) {
+      case 'pending':
+        return (
+          <div className="mt-2 flex flex-col items-center gap-2">
+            <div className="flex items-center gap-2 text-muted-foreground">
+              <Clock className="h-4 w-4" />
+              <span className="text-sm font-medium">Request Pending</span>
+            </div>
+            <p className="text-xs text-muted-foreground/70">
+              Waiting for @{handle} to approve your request
+            </p>
+          </div>
+        );
+      case 'approved':
+        return (
+          <div className="mt-2 flex items-center gap-2 text-green-500">
+            <Check className="h-4 w-4" />
+            <span className="text-sm font-medium">Request Approved</span>
+          </div>
+        );
+      case 'rejected':
+        return (
+          <div className="mt-2 text-center">
+            <p className="text-sm text-muted-foreground mb-2">
+              Your follow request was declined
+            </p>
+            {onFollowRequest && (
+              <Button 
+                onClick={onFollowRequest}
+                variant="outline"
+                className="rounded-full px-6"
+                disabled={isLoading}
+              >
+                Request Again
+              </Button>
+            )}
+          </div>
+        );
+      default:
+        return onFollowRequest && (
+          <Button 
+            onClick={onFollowRequest}
+            className="mt-2 rounded-full px-6"
+            disabled={isLoading}
+          >
+            {isLoading ? 'Sending...' : 'Request to Follow'}
+          </Button>
+        );
+    }
+  };
 
   return (
     <Card className="p-8 text-center bg-muted/30 border-dashed border-2 border-muted-foreground/20">
@@ -32,28 +97,7 @@ export const PrivateProfileOverlay = ({
             Follow @{handle} to see their posts, photos, and other content.
           </p>
         </div>
-        {user ? (
-          !isFollowing && onFollowRequest && (
-            <Button 
-              onClick={onFollowRequest}
-              className="mt-2 rounded-full px-6"
-            >
-              Request to Follow
-            </Button>
-          )
-        ) : (
-          <Button 
-            onClick={() => navigate('/auth')}
-            className="mt-2 rounded-full px-6"
-          >
-            Sign in to Follow
-          </Button>
-        )}
-        {isFollowing && (
-          <p className="text-sm text-muted-foreground italic">
-            Your follow request is pending approval
-          </p>
-        )}
+        {renderActionButton()}
       </div>
     </Card>
   );
