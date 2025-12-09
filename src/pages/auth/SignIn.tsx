@@ -8,7 +8,7 @@ import { toast } from 'sonner';
 import { Eye, EyeOff } from 'lucide-react';
 import Logo from '@/components/Logo';
 import { emailSchema, passwordSchema } from '@/lib/validation';
-import TelegramLoginButton from '@/components/auth/TelegramLoginButton';
+
 import { useAuth } from '@/contexts/AuthContext';
 import { CustomLoader } from '@/components/ui/CustomLoader';
 
@@ -193,12 +193,6 @@ const SignIn = () => {
             </Button>
           </div>
 
-          <div className="mt-4">
-            <TelegramLoginButton 
-              disabled={googleLoading || githubLoading || loading} 
-              mode="signin"
-            />
-          </div>
         </div>
 
         {/* Bottom links */}

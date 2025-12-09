@@ -11,7 +11,7 @@ import { emailSchema } from '@/lib/validation';
 import { countries } from '@/lib/countries';
 import { getCountryFlag } from '@/lib/countryFlags';
 import { Sheet, SheetContent, SheetHeader, SheetTitle } from '@/components/ui/sheet';
-import TelegramLoginButton from '@/components/auth/TelegramLoginButton';
+
 import { useAuth } from '@/contexts/AuthContext';
 import { CustomLoader } from '@/components/ui/CustomLoader';
 
@@ -443,12 +443,6 @@ const SignUpContent = () => {
               Sign up with my email
             </Button>
 
-            <div className="mt-4">
-              <TelegramLoginButton 
-                disabled={googleLoading || githubLoading || loading} 
-                mode="signup"
-              />
-            </div>
           </div>
 
           <p className="text-center text-muted-foreground mt-6">
