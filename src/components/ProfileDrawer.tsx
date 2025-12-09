@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '@/contexts/AuthContext';
-import { useTheme } from 'next-themes';
+import { useTheme } from '@/contexts/ThemeContext';
 import { supabase } from '@/integrations/supabase/client';
 import {
   Sheet,
@@ -56,7 +56,7 @@ interface MenuItem {
 export function ProfileDrawer({ trigger }: ProfileDrawerProps) {
   const { user } = useAuth();
   const navigate = useNavigate();
-  const { theme, setTheme } = useTheme();
+  const { resolvedTheme, setTheme } = useTheme();
   const { isPremium } = usePremiumStatus();
   const [open, setOpen] = useState(false);
   const [settingsOpen, setSettingsOpen] = useState(false);
@@ -128,7 +128,7 @@ export function ProfileDrawer({ trigger }: ProfileDrawerProps) {
   };
 
   const toggleTheme = () => {
-    setTheme(theme === 'dark' ? 'light' : 'dark');
+    setTheme(resolvedTheme === 'dark' ? 'light' : 'dark');
   };
 
   const mainMenuItems: MenuItem[] = [
@@ -305,13 +305,13 @@ export function ProfileDrawer({ trigger }: ProfileDrawerProps) {
             }}
             className="flex items-center gap-4 w-full px-4 py-3 hover:bg-muted/50 transition-colors rounded-lg mt-2"
           >
-            {theme === 'dark' ? (
+            {resolvedTheme === 'dark' ? (
               <Sun className="h-6 w-6" />
             ) : (
               <Moon className="h-6 w-6" />
             )}
             <span className="text-lg font-medium">
-              {theme === 'dark' ? 'Light Mode' : 'Dark Mode'}
+              {resolvedTheme === 'dark' ? 'Light Mode' : 'Dark Mode'}
             </span>
           </button>
 
