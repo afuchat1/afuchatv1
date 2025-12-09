@@ -1126,6 +1126,15 @@ const Profile = ({ mustExist = false }: ProfileProps) => {
 											{isRequestingFollow ? 'Sending...' : 'Request to Follow'}
 										</Button>
 									)
+								) : !isFollowing && isFollowedByProfile ? (
+									// Non-private user follows us but we don't follow them - show Follow Back
+									<Button
+										onClick={handleFollow}
+										className="rounded-full font-bold flex-1 px-8"
+									>
+										<UserPlus className="h-4 w-4 mr-2" />
+										Follow Back
+									</Button>
 								) : (
 									<Button
 										onClick={handleFollow}
@@ -1316,17 +1325,19 @@ const Profile = ({ mustExist = false }: ProfileProps) => {
 						</div>
 					)}
 
-					{/* Website URL - Hide for private accounts */}
-					{!isPrivateAccount && profile.is_business_mode && profile.website_url && (
-						<a
-							href={profile.website_url}
-							target="_blank"
-							rel="noopener noreferrer"
-							className="text-sm text-primary hover:underline flex items-center gap-1 mt-2"
-						>
-							🌐 {profile.website_url}
-						</a>
-					)}
+				{/* Website URL - Hide for private accounts */}
+				{!isPrivateAccount && profile.is_business_mode && profile.website_url && (
+					<a
+						href={profile.website_url.startsWith('http://') || profile.website_url.startsWith('https://') 
+							? profile.website_url 
+							: `https://${profile.website_url}`}
+						target="_blank"
+						rel="noopener noreferrer"
+						className="text-sm text-primary hover:underline flex items-center gap-1 mt-2"
+					>
+						🌐 {profile.website_url}
+					</a>
+				)}
 
 				{/* Nexa Progress Bar - hide for private accounts */}
 				{!isPrivateAccount && (profile.show_balance || user?.id === profileId) && (

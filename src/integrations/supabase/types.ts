@@ -2998,6 +2998,7 @@ export type Database = {
     }
     Functions: {
       approve_affiliate_by_business:
+        | { Args: { p_request_id: string }; Returns: Json }
         | {
             Args: {
               p_commission_rate?: number
@@ -3006,7 +3007,6 @@ export type Database = {
             }
             Returns: Json
           }
-        | { Args: { p_request_id: string }; Returns: Json }
       award_xp: {
         Args: {
           p_action_type: string
