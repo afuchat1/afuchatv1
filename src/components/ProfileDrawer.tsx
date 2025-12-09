@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '@/contexts/AuthContext';
 import { useTheme } from '@/contexts/ThemeContext';
@@ -44,6 +44,17 @@ import {
 import { VerifiedBadge } from './VerifiedBadge';
 import { usePremiumStatus } from '@/hooks/usePremiumStatus';
 import { AddAccountSheet } from './AddAccountSheet';
+import { toast } from 'sonner';
+
+interface LinkedAccount {
+  id: string;
+  linked_user_id: string;
+  profile: {
+    display_name: string;
+    handle: string;
+    avatar_url: string | null;
+  } | null;
+}
 
 interface ProfileDrawerProps {
   trigger: React.ReactNode;
@@ -81,14 +92,48 @@ export function ProfileDrawer({ trigger }: ProfileDrawerProps) {
   const [followCounts, setFollowCounts] = useState({ followers: 0, following: 0 });
   const [isAdmin, setIsAdmin] = useState(false);
   const [hasAffiliateRequest, setHasAffiliateRequest] = useState(false);
+  const [linkedAccounts, setLinkedAccounts] = useState<LinkedAccount[]>([]);
+
+  const fetchLinkedAccounts = useCallback(async () => {
+    if (!user) return;
+    
+    const { data, error } = await supabase
+      .from('linked_accounts')
+      .select('id, linked_user_id')
+      .eq('primary_user_id', user.id);
+    
+    if (error) {
+      console.error('Error fetching linked accounts:', error);
+      return;
+    }
+
+    if (data && data.length > 0) {
+      // Fetch profiles for linked accounts
+      const linkedUserIds = data.map(d => d.linked_user_id);
+      const { data: profiles } = await supabase
+        .from('profiles')
+        .select('id, display_name, handle, avatar_url')
+        .in('id', linkedUserIds);
+
+      const accountsWithProfiles = data.map(account => ({
+        ...account,
+        profile: profiles?.find(p => p.id === account.linked_user_id) || null
+      }));
+
+      setLinkedAccounts(accountsWithProfiles);
+    } else {
+      setLinkedAccounts([]);
+    }
+  }, [user]);
 
   useEffect(() => {
     if (user && open) {
       fetchProfile();
       fetchFollowCounts();
       checkUserStatus();
+      fetchLinkedAccounts();
     }
-  }, [user, open]);
+  }, [user, open, fetchLinkedAccounts]);
 
   const fetchProfile = async () => {
     if (!user) return;
@@ -139,6 +184,14 @@ export function ProfileDrawer({ trigger }: ProfileDrawerProps) {
   const toggleTheme = () => {
     setTheme(resolvedTheme === 'dark' ? 'light' : 'dark');
   };
+
+  const handleSwitchAccount = async (linkedUserId: string) => {
+    // For now, show a toast - full session switching would require storing credentials
+    toast.info('Switching accounts requires re-authentication. Use the accounts drawer to manage.');
+    setAccountsDrawerOpen(true);
+  };
+
+  const hasLinkedAccount = linkedAccounts.length > 0;
 
   const mainMenuItems: MenuItem[] = [
     { icon: User, label: 'Profile', path: user ? `/${profile?.handle || user.id}` : '/auth', requiresAuth: true },
@@ -235,17 +288,54 @@ export function ProfileDrawer({ trigger }: ProfileDrawerProps) {
           {user && profile && (
             <div className="py-4">
               <div className="flex items-start justify-between mb-3">
-                <button 
-                  onClick={() => handleNavigate(`/${profile.handle}`)}
-                  className="flex-shrink-0"
-                >
-                  <Avatar className="h-12 w-12">
-                    <AvatarImage src={profile.avatar_url || undefined} />
-                    <AvatarFallback className="bg-primary text-primary-foreground">
-                      {profile.display_name?.charAt(0)?.toUpperCase() || 'U'}
-                    </AvatarFallback>
-                  </Avatar>
-                </button>
+                {/* Main avatar and linked accounts row */}
+                <div className="flex items-center gap-2">
+                  <button 
+                    onClick={() => handleNavigate(`/${profile.handle}`)}
+                    className="flex-shrink-0 relative"
+                  >
+                    <Avatar className="h-12 w-12 ring-2 ring-primary">
+                      <AvatarImage src={profile.avatar_url || undefined} />
+                      <AvatarFallback className="bg-primary text-primary-foreground">
+                        {profile.display_name?.charAt(0)?.toUpperCase() || 'U'}
+                      </AvatarFallback>
+                    </Avatar>
+                  </button>
+                  
+                  {/* Linked accounts avatars */}
+                  {linkedAccounts.map((account, index) => (
+                    <button
+                      key={account.id}
+                      onClick={() => {
+                        // Switch to this account
+                        handleSwitchAccount(account.linked_user_id);
+                      }}
+                      className="relative flex-shrink-0"
+                    >
+                      <Avatar className="h-10 w-10 ring-1 ring-border">
+                        <AvatarImage src={account.profile?.avatar_url || undefined} />
+                        <AvatarFallback className="bg-muted text-muted-foreground text-sm">
+                          {account.profile?.display_name?.charAt(0)?.toUpperCase() || 'U'}
+                        </AvatarFallback>
+                      </Avatar>
+                      {/* Notification badge placeholder */}
+                      <span className="absolute -top-1 -right-1 h-4 w-4 bg-primary text-primary-foreground rounded-full flex items-center justify-center text-[10px] font-bold">
+                        {index + 1}
+                      </span>
+                    </button>
+                  ))}
+
+                  {/* Add account button (only if no linked accounts and premium) */}
+                  {isPremium && linkedAccounts.length === 0 && (
+                    <button
+                      onClick={() => setAccountsDrawerOpen(true)}
+                      className="h-10 w-10 rounded-full border-2 border-dashed border-muted-foreground/30 flex items-center justify-center hover:bg-muted/50 transition-colors"
+                    >
+                      <Plus className="h-4 w-4 text-muted-foreground" />
+                    </button>
+                  )}
+                </div>
+
                 {/* Account switcher button */}
                 <button
                   onClick={(e) => {
@@ -401,10 +491,33 @@ export function ProfileDrawer({ trigger }: ProfileDrawerProps) {
             </div>
           ) : (
             <>
-              {/* Create new account */}
+              {/* Linked accounts list */}
+              {linkedAccounts.map((account) => (
+                <button
+                  key={account.id}
+                  className="flex items-center gap-3 w-full p-3 hover:bg-muted/50 rounded-lg transition-colors"
+                  onClick={() => handleSwitchAccount(account.linked_user_id)}
+                >
+                  <Avatar className="h-10 w-10">
+                    <AvatarImage src={account.profile?.avatar_url || undefined} />
+                    <AvatarFallback className="bg-muted text-muted-foreground">
+                      {account.profile?.display_name?.charAt(0)?.toUpperCase() || 'U'}
+                    </AvatarFallback>
+                  </Avatar>
+                  <div className="flex-1 text-left">
+                    <p className="font-semibold">{account.profile?.display_name || 'Unknown'}</p>
+                    <p className="text-sm text-muted-foreground">@{account.profile?.handle || 'unknown'}</p>
+                  </div>
+                </button>
+              ))}
+
+              {linkedAccounts.length > 0 && <Separator className="my-2" />}
+
+              {/* Create new account - disabled if already has linked account */}
               <Button
                 variant="outline"
                 className="w-full justify-center py-6 text-base"
+                disabled={hasLinkedAccount}
                 onClick={() => {
                   setAccountsDrawerOpen(false);
                   setOpen(false);
@@ -415,10 +528,11 @@ export function ProfileDrawer({ trigger }: ProfileDrawerProps) {
                 Create a new account
               </Button>
 
-              {/* Add existing account */}
+              {/* Add existing account - disabled if already has linked account */}
               <Button
                 variant="outline"
                 className="w-full justify-center py-6 text-base"
+                disabled={hasLinkedAccount}
                 onClick={() => {
                   setAddAccountOpen(true);
                 }}
@@ -426,6 +540,12 @@ export function ProfileDrawer({ trigger }: ProfileDrawerProps) {
                 <UserPlus className="h-5 w-5 mr-2" />
                 Add an existing account
               </Button>
+
+              {hasLinkedAccount && (
+                <p className="text-xs text-muted-foreground text-center mt-2">
+                  You can only link one account at a time
+                </p>
+              )}
             </>
           )}
 
@@ -454,8 +574,8 @@ export function ProfileDrawer({ trigger }: ProfileDrawerProps) {
       open={addAccountOpen} 
       onOpenChange={setAddAccountOpen}
       onSuccess={() => {
-        setAccountsDrawerOpen(false);
-        setOpen(false);
+        fetchLinkedAccounts();
+        setAddAccountOpen(false);
       }}
     />
     </>
