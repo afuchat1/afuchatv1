@@ -287,41 +287,35 @@ export function ProfileDrawer({ trigger }: ProfileDrawerProps) {
           {/* Profile Header */}
           {user && profile && (
             <div className="py-4">
-              <div className="flex items-start justify-between mb-3">
-                {/* Main avatar and linked accounts row */}
-                <div className="flex items-center gap-2">
-                  <button 
-                    onClick={() => handleNavigate(`/${profile.handle}`)}
-                    className="flex-shrink-0 relative"
-                  >
-                    <Avatar className="h-12 w-12 ring-2 ring-primary">
-                      <AvatarImage src={profile.avatar_url || undefined} />
-                      <AvatarFallback className="bg-primary text-primary-foreground">
-                        {profile.display_name?.charAt(0)?.toUpperCase() || 'U'}
-                      </AvatarFallback>
-                    </Avatar>
-                  </button>
-                  
+              <div className="flex items-center justify-between mb-3">
+                {/* Main avatar */}
+                <button 
+                  onClick={() => handleNavigate(`/${profile.handle}`)}
+                  className="flex-shrink-0"
+                >
+                  <Avatar className="h-12 w-12">
+                    <AvatarImage src={profile.avatar_url || undefined} />
+                    <AvatarFallback className="bg-primary text-primary-foreground">
+                      {profile.display_name?.charAt(0)?.toUpperCase() || 'U'}
+                    </AvatarFallback>
+                  </Avatar>
+                </button>
+
+                {/* Right side: linked accounts + more button */}
+                <div className="flex items-center gap-1">
                   {/* Linked accounts avatars */}
-                  {linkedAccounts.map((account, index) => (
+                  {linkedAccounts.map((account) => (
                     <button
                       key={account.id}
-                      onClick={() => {
-                        // Switch to this account
-                        handleSwitchAccount(account.linked_user_id);
-                      }}
+                      onClick={() => handleSwitchAccount(account.linked_user_id)}
                       className="relative flex-shrink-0"
                     >
-                      <Avatar className="h-10 w-10 ring-1 ring-border">
+                      <Avatar className="h-7 w-7">
                         <AvatarImage src={account.profile?.avatar_url || undefined} />
-                        <AvatarFallback className="bg-muted text-muted-foreground text-sm">
+                        <AvatarFallback className="bg-muted text-muted-foreground text-xs">
                           {account.profile?.display_name?.charAt(0)?.toUpperCase() || 'U'}
                         </AvatarFallback>
                       </Avatar>
-                      {/* Notification badge placeholder */}
-                      <span className="absolute -top-1 -right-1 h-4 w-4 bg-primary text-primary-foreground rounded-full flex items-center justify-center text-[10px] font-bold">
-                        {index + 1}
-                      </span>
                     </button>
                   ))}
 
@@ -329,23 +323,23 @@ export function ProfileDrawer({ trigger }: ProfileDrawerProps) {
                   {isPremium && linkedAccounts.length === 0 && (
                     <button
                       onClick={() => setAccountsDrawerOpen(true)}
-                      className="h-10 w-10 rounded-full border-2 border-dashed border-muted-foreground/30 flex items-center justify-center hover:bg-muted/50 transition-colors"
+                      className="h-7 w-7 rounded-full border border-dashed border-muted-foreground/40 flex items-center justify-center hover:bg-muted/50 transition-colors"
                     >
-                      <Plus className="h-4 w-4 text-muted-foreground" />
+                      <Plus className="h-3 w-3 text-muted-foreground" />
                     </button>
                   )}
-                </div>
 
-                {/* Account switcher button */}
-                <button
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    setAccountsDrawerOpen(true);
-                  }}
-                  className="p-2 hover:bg-muted/50 rounded-full transition-colors"
-                >
-                  <MoreVertical className="h-5 w-5" />
-                </button>
+                  {/* Account switcher button */}
+                  <button
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      setAccountsDrawerOpen(true);
+                    }}
+                    className="p-1.5 hover:bg-muted/50 rounded-full transition-colors"
+                  >
+                    <MoreVertical className="h-5 w-5" />
+                  </button>
+                </div>
               </div>
               
               <button 
