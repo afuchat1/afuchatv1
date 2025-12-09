@@ -10,6 +10,78 @@ import { createPortal } from 'react-dom';
 import { ImageLightbox } from '@/components/ui/ImageLightbox';
 import { VerifiedBadge } from '@/components/VerifiedBadge';
 import { toast } from 'sonner';
+import { Link } from 'react-router-dom';
+
+// Helper function to parse message content with clickable links, mentions, and hashtags
+const parseMessageContent = (content: string): React.ReactNode => {
+  if (!content || typeof content !== 'string') return content;
+  
+  const combinedRegex = /(@[a-zA-Z0-9_-]+|#\w+|https?:\/\/[^\s]+|(?:www\.)?[a-zA-Z0-9-]+\.[a-zA-Z]{2,}(?:\/[^\s]*)?)/g;
+  const parts: React.ReactNode[] = [];
+  let lastIndex = 0;
+  
+  const matches = Array.from(content.matchAll(combinedRegex));
+  
+  if (matches.length === 0) return content;
+  
+  matches.forEach((match, idx) => {
+    const matchText = match[0];
+    const index = match.index!;
+    
+    if (index > lastIndex) {
+      parts.push(content.substring(lastIndex, index));
+    }
+    
+    if (matchText.startsWith('@')) {
+      const handle = matchText.substring(1);
+      parts.push(
+        <Link 
+          key={`mention-${idx}`} 
+          to={`/${handle}`} 
+          className="text-blue-300 hover:underline font-medium"
+          onClick={(e) => e.stopPropagation()}
+        >
+          {matchText}
+        </Link>
+      );
+    } else if (matchText.startsWith('#')) {
+      const hashtag = matchText.substring(1);
+      parts.push(
+        <Link
+          key={`hashtag-${idx}`}
+          to={`/search?q=${encodeURIComponent(hashtag)}`}
+          className="text-blue-300 hover:underline font-medium"
+          onClick={(e) => e.stopPropagation()}
+        >
+          {matchText}
+        </Link>
+      );
+    } else {
+      // It's a URL (either with http/https or a plain domain)
+      const url = matchText.startsWith('http') ? matchText : `https://${matchText}`;
+      parts.push(
+        <a
+          key={`url-${idx}`}
+          href={url}
+          target="_blank"
+          rel="noopener noreferrer"
+          className="text-blue-300 hover:underline"
+          onClick={(e) => e.stopPropagation()}
+        >
+          {matchText.length > 40 ? matchText.substring(0, 40) + '...' : matchText}
+        </a>
+      );
+    }
+    
+    lastIndex = index + matchText.length;
+  });
+
+  if (lastIndex < content.length) {
+    parts.push(content.substring(lastIndex));
+  }
+  
+  return <>{parts}</>;
+};
 
 export interface Reaction {
   reaction: string;
@@ -320,7 +392,7 @@ export const MessageBubble = ({
                   {message.encrypted_content && (
                     <div className="px-2 py-2 mt-1">
                       <p className="leading-relaxed whitespace-pre-wrap break-words" style={{ fontSize: `${fontSize}px` }}>
-                        {message.encrypted_content}
+                        {parseMessageContent(message.encrypted_content)}
                       </p>
                     </div>
                   )}
@@ -351,7 +423,7 @@ export const MessageBubble = ({
               ) : (
                 <div className="px-3 py-2">
                   <p className="leading-relaxed whitespace-pre-wrap break-words" style={{ fontSize: `${fontSize}px` }}>
-                    {message.encrypted_content}
+                    {parseMessageContent(message.encrypted_content)}
                   </p>
                 </div>
               )}
