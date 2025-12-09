@@ -26,6 +26,7 @@ import Welcome from "./pages/auth/Welcome";
 import SignIn from "./pages/auth/SignIn";
 import SignUp from "./pages/auth/SignUp";
 import UserNotFound from "./pages/UserNotFound";
+import NotFound from "./pages/NotFound";
 import CompleteProfile from "./pages/CompleteProfile";
 
 // Lazy load other pages
@@ -215,7 +216,7 @@ const AppRoutes = () => {
       <Route path="/:userId/following" element={<Layout><Following /></Layout>} />
 
       <Route path="/user-not-found" element={<UserNotFound />} />
-      <Route path="*" element={<Navigate to="/home" replace />} />
+      <Route path="*" element={<NotFound />} />
     </Routes>
       </Suspense>
     </>
