@@ -144,45 +144,44 @@ export const usePushNotifications = () => {
             }
           }
           
+          const notificationType = notification.type?.toLowerCase() || '';
           let title = '';
           let body = '';
           let url = '/notifications';
 
-          switch (notification.type) {
-            case 'like':
-              title = '❤️ New Like';
-              body = `${actorName} liked your post`;
-              url = notification.post_id ? `/post/${notification.post_id}` : '/notifications';
-              break;
-            case 'follow':
-              title = '👤 New Follower';
-              body = `${actorName} started following you`;
-              url = `/${notification.actor_id}`;
-              break;
-            case 'reply':
-              title = '💬 New Reply';
-              body = `${actorName} replied to your post`;
-              url = notification.post_id ? `/post/${notification.post_id}` : '/notifications';
-              break;
-            case 'mention':
-              title = '📢 You were mentioned';
-              body = `${actorName} mentioned you in a post`;
-              url = notification.post_id ? `/post/${notification.post_id}` : '/notifications';
-              break;
-            case 'gift':
-              title = '🎁 New Gift!';
-              body = `${actorName} sent you a gift`;
-              url = '/gifts';
-              break;
-            case 'follow_request':
-              title = '🔔 Follow Request';
-              body = `${actorName} wants to follow you`;
-              url = '/notifications';
-              break;
-            default:
-              title = '🔔 AfuChat';
-              body = `${actorName} interacted with you`;
-              break;
+          // Match notification types with rich content (types from DB: new_like, new_follower, new_reply, gift, etc.)
+          if (notificationType === 'new_like' || notificationType === 'like') {
+            title = '❤️ New Like';
+            body = `${actorName} liked your post`;
+            url = notification.post_id ? `/post/${notification.post_id}` : '/notifications';
+          } else if (notificationType === 'new_follower' || notificationType === 'follow') {
+            title = '👤 New Follower';
+            body = `${actorName} started following you`;
+            url = `/${notification.actor_id}`;
+          } else if (notificationType === 'new_reply' || notificationType === 'reply' || notificationType === 'comment') {
+            title = '💬 New Reply';
+            body = `${actorName} replied to your post`;
+            url = notification.post_id ? `/post/${notification.post_id}` : '/notifications';
+          } else if (notificationType === 'new_mention' || notificationType === 'mention') {
+            title = '📢 You were mentioned';
+            body = `${actorName} mentioned you in a post`;
+            url = notification.post_id ? `/post/${notification.post_id}` : '/notifications';
+          } else if (notificationType === 'gift' || notificationType === 'new_gift') {
+            title = '🎁 New Gift!';
+            body = `${actorName} sent you a gift`;
+            url = '/gifts';
+          } else if (notificationType === 'follow_request' || notificationType === 'new_follow_request') {
+            title = '🔔 Follow Request';
+            body = `${actorName} wants to follow you`;
+            url = '/notifications';
+          } else if (notificationType === 'tip' || notificationType === 'new_tip') {
+            title = '💰 New Tip!';
+            body = `${actorName} tipped you`;
+            url = '/wallet';
+          } else {
+            title = '🔔 AfuChat';
+            body = `${actorName} interacted with you`;
+            console.log('Unknown notification type:', notification.type);
           }
 
           console.log('Sending notification:', title, body);
