@@ -161,8 +161,9 @@ const SignUpContent = () => {
     const signupData = {
       country,
       is_business_mode: accountType === 'business',
-      referral_code: referralCode,
+      referral_code: referralCode || null,
     };
+    console.log('Storing signup data for OAuth:', signupData);
     sessionStorage.setItem('pendingSignupData', JSON.stringify(signupData));
   };
 

@@ -64,24 +64,36 @@ const CompleteProfileContent = ({ user }: CompleteProfileContentProps) => {
   // Check for referral code on mount
   useEffect(() => {
     const checkReferralCode = () => {
+      let foundCode: string | null = null;
+      
       // Check session storage first (from OAuth flow)
       const pendingData = sessionStorage.getItem('pendingSignupData');
+      console.log('Pending signup data from sessionStorage:', pendingData);
+      
       if (pendingData) {
         try {
           const parsed = JSON.parse(pendingData);
+          console.log('Parsed pending data:', parsed);
           if (parsed.referral_code) {
-            setReferralCode(parsed.referral_code);
+            foundCode = parsed.referral_code;
+            console.log('Found referral code in sessionStorage:', foundCode);
           }
         } catch (e) {
           console.error('Error parsing pending signup data:', e);
         }
       }
       
-      // Also check URL params
+      // Also check URL params (takes priority)
       const urlParams = new URLSearchParams(window.location.search);
       const refFromUrl = urlParams.get('ref');
       if (refFromUrl) {
-        setReferralCode(refFromUrl);
+        foundCode = refFromUrl;
+        console.log('Found referral code in URL:', foundCode);
+      }
+      
+      if (foundCode) {
+        console.log('Setting referral code:', foundCode);
+        setReferralCode(foundCode);
       }
     };
     
@@ -128,14 +140,34 @@ const CompleteProfileContent = ({ user }: CompleteProfileContentProps) => {
 
   // Process referral reward - returns true if successful
   const processReferral = async (): Promise<boolean> => {
-    if (!referralCode || !user) return false;
+    // Get code from state OR directly from sessionStorage as backup
+    let codeToUse = referralCode;
+    
+    if (!codeToUse) {
+      const pendingData = sessionStorage.getItem('pendingSignupData');
+      if (pendingData) {
+        try {
+          const parsed = JSON.parse(pendingData);
+          if (parsed.referral_code) {
+            codeToUse = parsed.referral_code;
+          }
+        } catch (e) {
+          console.error('Error parsing pending signup data in processReferral:', e);
+        }
+      }
+    }
+    
+    if (!codeToUse || !user) {
+      console.log('No referral code or user found. Code:', codeToUse, 'User:', user?.id);
+      return false;
+    }
     
     try {
-      console.log('Processing referral with code:', referralCode, 'for user:', user.id);
+      console.log('Processing referral with code:', codeToUse, 'for user:', user.id);
       
       // Call the process_referral_reward function
       const { data, error } = await supabase.rpc('process_referral_reward', {
-        referral_code_input: referralCode,
+        referral_code_input: codeToUse,
         new_user_id: user.id
       });
       
@@ -164,6 +196,7 @@ const CompleteProfileContent = ({ user }: CompleteProfileContentProps) => {
         return true;
       }
       
+      console.log('Referral result was not successful:', result);
       return false;
     } catch (error) {
       console.error('Error processing referral:', error);
@@ -341,11 +374,8 @@ const CompleteProfileContent = ({ user }: CompleteProfileContentProps) => {
 
       if (error) throw error;
 
-      // Process referral if user came via referral link
-      let referralSuccess = false;
-      if (referralCode) {
-        referralSuccess = await processReferral();
-      }
+      // Process referral - processReferral checks both state and sessionStorage
+      const referralSuccess = await processReferral();
 
       if (referralSuccess) {
         // Show referral welcome banner
