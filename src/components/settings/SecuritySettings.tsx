@@ -106,7 +106,9 @@ export const SecuritySettings = () => {
                 <UserX className="h-4 w-4 text-muted-foreground" />
                 <p className="font-semibold">Private Account</p>
               </div>
-              <p className="text-sm text-muted-foreground">Only approved followers can see your posts</p>
+              <p className="text-sm text-muted-foreground">
+                Hide your profile content from other users. Your avatar, bio, stats, posts, gifts, and all personal data will be hidden. Only your username will be visible.
+              </p>
             </div>
             <Switch
               checked={privateAccount}

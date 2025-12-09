@@ -5,7 +5,7 @@ import { useAuth } from '@/contexts/AuthContext';
 import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { toast } from 'sonner';
-import { ArrowLeft, MessageSquare, UserPlus, Pencil, Calendar, Lock, LogOut, Camera, Building2 } from 'lucide-react';
+import { ArrowLeft, MessageSquare, UserPlus, Pencil, Calendar, Lock, LogOut, Camera, Building2, UserX } from 'lucide-react';
 import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/ui/tabs';
 import { Separator } from '@/components/ui/separator';
 import { CustomLoader } from '@/components/ui/CustomLoader';
@@ -35,6 +35,7 @@ import { SEO } from '@/components/SEO';
 import { UserPremiumBadge } from '@/components/UserPremiumBadge';
 import { BusinessBenefitsSheet } from '@/components/BusinessBenefitsSheet';
 import { getCountryFlag } from '@/lib/countryFlags';
+import { PrivateProfileOverlay } from '@/components/PrivateProfileOverlay';
 
 interface Profile {
 	id: string;
@@ -844,16 +845,24 @@ const Profile = ({ mustExist = false }: ProfileProps) => {
 		return count;
 	};
 
+	// Check if this is a private account and current user is not the owner
+	const isPrivateAccount = profile?.is_private && user?.id !== profileId;
+
 	return (
 		<div className="h-full flex flex-col">
 			<SEO 
-				title={`${profile?.display_name || 'User'} (@${profile?.handle || 'user'}) — Profile | AfuChat`}
-				description={`View ${profile?.display_name}'s profile on AfuChat. ${profile?.bio ? profile.bio.substring(0, 150) : `Follow ${profile?.display_name} to see their posts, updates, and connect with them on the social platform.`} Join AfuChat to discover profiles, connect with people, and stay updated.`}
+				title={`${isPrivateAccount ? 'Private Account' : profile?.display_name || 'User'} (@${profile?.handle || 'user'}) — Profile | AfuChat`}
+				description={isPrivateAccount ? 'This account is private. Follow to see their content.' : `View ${profile?.display_name}'s profile on AfuChat. ${profile?.bio ? profile.bio.substring(0, 150) : `Follow ${profile?.display_name} to see their posts, updates, and connect with them on the social platform.`} Join AfuChat to discover profiles, connect with people, and stay updated.`}
 				keywords={`${profile?.handle} profile, ${profile?.display_name}, user profile, social profile, follow ${profile?.handle}, ${profile?.display_name} posts, connect with ${profile?.display_name}, user page, profile page, social media profile`}
 			/>
 			<div className="flex-1 overflow-y-auto">
 				<div className="relative h-36 bg-gray-300 dark:bg-gray-700 w-full">
-					{profile?.banner_url ? (
+					{/* Show blurred/hidden banner for private accounts */}
+					{isPrivateAccount ? (
+						<div className="w-full h-full bg-muted/50 flex items-center justify-center">
+							<Lock className="h-8 w-8 text-muted-foreground/30" />
+						</div>
+					) : profile?.banner_url ? (
 						<img 
 							src={profile.banner_url} 
 							alt="Profile banner"
@@ -896,15 +905,23 @@ const Profile = ({ mustExist = false }: ProfileProps) => {
 					
 				<div className="flex items-end -mt-20 sm:-mt-16">
 					<div className="relative">
-						<StoryAvatar 
-							userId={profileId}
-							avatarUrl={profile.avatar_url}
-							name={profile.display_name}
-							size="xl"
-							showStoryRing={true}
-						/>
-						<PinnedGiftsDisplay userId={profileId} />
-						<OnlineStatus lastSeen={profile.last_seen} showOnlineStatus={profile.show_online_status} />
+						{isPrivateAccount ? (
+							<div className="w-24 h-24 sm:w-28 sm:h-28 rounded-full bg-muted/70 border-4 border-background flex items-center justify-center">
+								<UserX className="h-10 w-10 text-muted-foreground/50" />
+							</div>
+						) : (
+							<>
+								<StoryAvatar 
+									userId={profileId}
+									avatarUrl={profile.avatar_url}
+									name={profile.display_name}
+									size="xl"
+									showStoryRing={true}
+								/>
+								<PinnedGiftsDisplay userId={profileId} />
+								<OnlineStatus lastSeen={profile.last_seen} showOnlineStatus={profile.show_online_status} />
+							</>
+						)}
 					</div>
 
 					{user && user.id === profileId ? (
@@ -945,8 +962,15 @@ const Profile = ({ mustExist = false }: ProfileProps) => {
 					</div>
 
 					<div className="mt-3">
-
-					{profile.is_affiliate ? (
+						{/* Private account - show masked name with lock */}
+						{isPrivateAccount ? (
+							<div className="flex items-center gap-2">
+								<div className="flex items-center gap-1">
+									<span className="text-xl font-extrabold leading-tight text-muted-foreground/70">Private Account</span>
+									<Lock className="h-4 w-4 text-muted-foreground/50" />
+								</div>
+							</div>
+						) : profile.is_affiliate ? (
 							<div className="flex items-center gap-1">
 								<button 
 									className="text-xl font-extrabold leading-tight hover:underline"
@@ -1058,6 +1082,7 @@ const Profile = ({ mustExist = false }: ProfileProps) => {
 							</div>
 						)}
 
+					{/* Handle - always show for private accounts */}
 					<p 
 						className="text-muted-foreground text-sm select-none cursor-pointer hover:text-primary transition-colors"
 						onClick={() => {
@@ -1070,28 +1095,37 @@ const Profile = ({ mustExist = false }: ProfileProps) => {
 					</p>
 					</div>
 
-					{profile.bio && (
+					{/* Bio - hide for private accounts */}
+					{!isPrivateAccount && profile.bio && (
 						<ContentParser content={profile.bio} isBio={true} />
 					)}
-
-					{/* Business Category & Country - Display publicly */}
-					<div className="flex flex-wrap gap-3 mt-2">
-						{profile.is_business_mode && profile.business_category && (
-							<div className="flex items-center gap-1.5 text-sm text-muted-foreground">
-								<Building2 className="h-4 w-4 text-primary" />
-								<span className="font-medium">{profile.business_category}</span>
-							</div>
-						)}
-					{profile.country && (
-						<div className="flex items-center gap-2 text-sm text-muted-foreground">
-							<span className="text-2xl">{getCountryFlag(profile.country)}</span>
-							<span className="font-medium">{profile.country}</span>
+					{isPrivateAccount && (
+						<div className="mt-3 space-y-2">
+							<div className="h-4 w-full bg-muted/40 rounded animate-pulse" />
+							<div className="h-4 w-3/4 bg-muted/40 rounded animate-pulse" />
 						</div>
 					)}
-					</div>
 
-					{/* Website URL - Display for business profiles */}
-					{profile.is_business_mode && profile.website_url && (
+					{/* Business Category & Country - Hide for private accounts */}
+					{!isPrivateAccount && (
+						<div className="flex flex-wrap gap-3 mt-2">
+							{profile.is_business_mode && profile.business_category && (
+								<div className="flex items-center gap-1.5 text-sm text-muted-foreground">
+									<Building2 className="h-4 w-4 text-primary" />
+									<span className="font-medium">{profile.business_category}</span>
+								</div>
+							)}
+							{profile.country && (
+								<div className="flex items-center gap-2 text-sm text-muted-foreground">
+									<span className="text-2xl">{getCountryFlag(profile.country)}</span>
+									<span className="font-medium">{profile.country}</span>
+								</div>
+							)}
+						</div>
+					)}
+
+					{/* Website URL - Hide for private accounts */}
+					{!isPrivateAccount && profile.is_business_mode && profile.website_url && (
 						<a
 							href={profile.website_url}
 							target="_blank"
@@ -1102,8 +1136,8 @@ const Profile = ({ mustExist = false }: ProfileProps) => {
 						</a>
 					)}
 
-				{/* Nexa Progress Bar - only show if user has show_balance enabled or it's their own profile */}
-				{(profile.show_balance || user?.id === profileId) && (
+				{/* Nexa Progress Bar - hide for private accounts */}
+				{!isPrivateAccount && (profile.show_balance || user?.id === profileId) && (
 					<div className="mt-4">
 						<NexaProgressBar 
 							currentNexa={profile.xp} 
@@ -1113,36 +1147,60 @@ const Profile = ({ mustExist = false }: ProfileProps) => {
 					</div>
 				)}
 
-					<div className="flex items-center space-x-4 mt-3 text-muted-foreground text-sm">
-						<div className="flex items-center gap-1">
-							<Calendar className="h-4 w-4" />
-							<span className="text-xs">Joined {profile.created_at ? new Date(profile.created_at).toLocaleString('en-UG', { month: 'long', year: 'numeric' }) : 'Unknown'}</span>
+					{/* Join date - hide for private accounts */}
+					{!isPrivateAccount && (
+						<div className="flex items-center space-x-4 mt-3 text-muted-foreground text-sm">
+							<div className="flex items-center gap-1">
+								<Calendar className="h-4 w-4" />
+								<span className="text-xs">Joined {profile.created_at ? new Date(profile.created_at).toLocaleString('en-UG', { month: 'long', year: 'numeric' }) : 'Unknown'}</span>
+							</div>
 						</div>
-					</div>
+					)}
 
-					<div className="flex gap-4 mt-3">
-						<div 
-							className="flex items-center cursor-pointer hover:underline"
-							onClick={() => navigate(`/${profile.handle}/following`)}
-						>
-							<span className="font-bold text-sm">{formatCount(followCount.following)}</span>
-							<span className="text-muted-foreground text-sm ml-1">{t('profile.following')}</span>
+					{/* Stats - hide for private accounts or show masked */}
+					{isPrivateAccount ? (
+						<div className="flex gap-4 mt-3">
+							<div className="flex items-center gap-1">
+								<Lock className="h-3 w-3 text-muted-foreground/50" />
+								<span className="text-sm text-muted-foreground/50">Hidden</span>
+							</div>
 						</div>
-						<div 
-							className="flex items-center cursor-pointer hover:underline"
-							onClick={() => navigate(`/${profile.handle}/followers`)}
-						>
-							<span className="font-bold text-sm">{formatCount(followCount.followers)}</span>
-							<span className="text-muted-foreground text-sm ml-1">{t('profile.followers')}</span>
+					) : (
+						<div className="flex gap-4 mt-3">
+							<div 
+								className="flex items-center cursor-pointer hover:underline"
+								onClick={() => navigate(`/${profile.handle}/following`)}
+							>
+								<span className="font-bold text-sm">{formatCount(followCount.following)}</span>
+								<span className="text-muted-foreground text-sm ml-1">{t('profile.following')}</span>
+							</div>
+							<div 
+								className="flex items-center cursor-pointer hover:underline"
+								onClick={() => navigate(`/${profile.handle}/followers`)}
+							>
+								<span className="font-bold text-sm">{formatCount(followCount.followers)}</span>
+								<span className="text-muted-foreground text-sm ml-1">{t('profile.followers')}</span>
+							</div>
+							<div className="flex items-center">
+								<span className="font-bold text-sm">{formatCount(totalLikes)}</span>
+								<span className="text-muted-foreground text-sm ml-1">{t('profile.likes', 'Likes')}</span>
+							</div>
 						</div>
-						<div className="flex items-center">
-							<span className="font-bold text-sm">{formatCount(totalLikes)}</span>
-							<span className="text-muted-foreground text-sm ml-1">{t('profile.likes', 'Likes')}</span>
-						</div>
-					</div>
+					)}
 				</div>
 
 				<Separator className="mt-4" />
+				
+				{/* Show private account overlay for all tabs when private */}
+				{isPrivateAccount ? (
+					<div className="p-6">
+						<PrivateProfileOverlay 
+							handle={profile.handle} 
+							isFollowing={isFollowing}
+							onFollowRequest={handleFollow}
+						/>
+					</div>
+				) : (
 				<Tabs defaultValue="posts" className="w-full">
 					<TabsList className={`grid ${profile.is_business_mode ? 'grid-cols-5' : 'grid-cols-4'} w-full h-12 rounded-none bg-background`}>
 						<TabsTrigger value="posts" className="data-[state=active]:bg-transparent data-[state=active]:text-primary border-b-2 data-[state=active]:border-primary data-[state=inactive]:border-transparent rounded-none font-bold text-muted-foreground text-xs sm:text-sm">
@@ -1167,13 +1225,7 @@ const Profile = ({ mustExist = false }: ProfileProps) => {
 					</TabsList>
 
 					<TabsContent value="posts">
-						{profile.is_private && user?.id !== profileId ? (
-							<div className="text-center text-muted-foreground py-12">
-								<Lock className="h-8 w-8 mx-auto mb-2" />
-								<p className="font-semibold">This profile is private</p>
-								<p className="text-sm">Follow to see their posts and activity.</p>
-							</div>
-						) : posts.length === 0 ? (
+						{posts.length === 0 ? (
 							<div className="text-center text-muted-foreground py-12">
 								No posts yet.
 							</div>
@@ -1288,6 +1340,7 @@ const Profile = ({ mustExist = false }: ProfileProps) => {
 						</TabsContent>
 					)}
 				</Tabs>
+				)}
 			</div>
 			
 			{/* Profile Actions Sheet */}
