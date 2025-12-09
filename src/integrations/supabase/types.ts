@@ -3142,15 +3142,15 @@ export type Database = {
       mark_notifications_as_read: { Args: never; Returns: undefined }
       process_referral_reward:
         | {
-            Args: { p_referral_code: string; p_referred_id: string }
-            Returns: Json
-          }
-        | {
             Args: { p_referral_id: string }
             Returns: {
               message: string
               success: boolean
             }[]
+          }
+        | {
+            Args: { new_user_id: string; referral_code_input: string }
+            Returns: boolean
           }
       process_xp_transfer: {
         Args: { p_amount: number; p_message?: string; p_receiver_id: string }
