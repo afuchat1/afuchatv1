@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useRef } from 'react';
 import { useAuth } from '@/contexts/AuthContext';
 import { supabase } from '@/integrations/supabase/client';
 
@@ -6,6 +6,7 @@ export const usePushNotifications = () => {
   const { user } = useAuth();
   const [permission, setPermission] = useState<NotificationPermission>('default');
   const [isSupported, setIsSupported] = useState(false);
+  const permissionRef = useRef<NotificationPermission>('default');
 
   useEffect(() => {
     // Check if notifications are supported
@@ -13,7 +14,9 @@ export const usePushNotifications = () => {
     setIsSupported(supported);
     
     if (supported) {
-      setPermission(Notification.permission);
+      const currentPermission = Notification.permission;
+      setPermission(currentPermission);
+      permissionRef.current = currentPermission;
     }
   }, []);
 
@@ -26,6 +29,8 @@ export const usePushNotifications = () => {
     try {
       const result = await Notification.requestPermission();
       setPermission(result);
+      permissionRef.current = result;
+      console.log('Push notification permission:', result);
       return result === 'granted';
     } catch (error) {
       console.error('Error requesting notification permission:', error);
@@ -34,11 +39,16 @@ export const usePushNotifications = () => {
   }, [isSupported]);
 
   const showNotification = useCallback((title: string, options?: NotificationOptions & { data?: { url?: string } }) => {
-    if (!isSupported || permission !== 'granted') {
+    // Check directly from browser API instead of state
+    const currentPermission = 'Notification' in window ? Notification.permission : 'denied';
+    
+    if (!('Notification' in window) || currentPermission !== 'granted') {
+      console.log('Cannot show notification - permission:', currentPermission);
       return null;
     }
 
     try {
+      console.log('Showing notification:', title, options?.body);
       const notification = new Notification(title, {
         icon: '/favicon.png',
         badge: '/favicon.png',
@@ -59,11 +69,20 @@ export const usePushNotifications = () => {
       console.error('Error showing notification:', error);
       return null;
     }
-  }, [isSupported, permission]);
+  }, []);
 
   // Subscribe to real-time notifications
   useEffect(() => {
-    if (!user || permission !== 'granted') return;
+    if (!user) return;
+    
+    // Check permission directly from browser
+    const currentPermission = 'Notification' in window ? Notification.permission : 'denied';
+    if (currentPermission !== 'granted') {
+      console.log('Push notifications not enabled, skipping subscription');
+      return;
+    }
+
+    console.log('Setting up push notification subscriptions for user:', user.id);
 
     const channel = supabase
       .channel('push-notifications')
@@ -76,6 +95,7 @@ export const usePushNotifications = () => {
           filter: `user_id=eq.${user.id}`,
         },
         async (payload) => {
+          console.log('New notification received:', payload);
           const notification = payload.new as any;
           
           // Don't show if triggered by current user
@@ -135,7 +155,9 @@ export const usePushNotifications = () => {
           });
         }
       )
-      .subscribe();
+      .subscribe((status) => {
+        console.log('Notification subscription status:', status);
+      });
 
     // Also subscribe to new messages
     const messageChannel = supabase
@@ -148,6 +170,7 @@ export const usePushNotifications = () => {
           table: 'messages',
         },
         async (payload) => {
+          console.log('New message received for push:', payload);
           const message = payload.new as any;
           
           // Don't notify for own messages
@@ -180,13 +203,16 @@ export const usePushNotifications = () => {
           });
         }
       )
-      .subscribe();
+      .subscribe((status) => {
+        console.log('Message subscription status:', status);
+      });
 
     return () => {
+      console.log('Cleaning up push notification subscriptions');
       supabase.removeChannel(channel);
       supabase.removeChannel(messageChannel);
     };
-  }, [user, permission, showNotification]);
+  }, [user, showNotification]);
 
   return {
     isSupported,
