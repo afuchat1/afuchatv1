@@ -1,6 +1,6 @@
 import React from 'react';
 import { 
-  Ellipsis, Trash2, Flag, Maximize2, Share, LogIn, EyeOff, UserPlus, List, Volume2, UserX, AlertTriangle, MessageCircle, Pencil 
+  Ellipsis, Trash2, Flag, Maximize2, Share, LogIn, EyeOff, UserPlus, List, Volume2, UserX, AlertTriangle, MessageCircle, Pencil, Quote 
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { 
@@ -45,12 +45,13 @@ interface PostActionsSheetProps {
   onDelete: (postId: string) => void;
   onReport: (postId: string) => void;
   onEdit?: (postId: string) => void;
+  onQuote?: (post: Post) => void;
 }
 
 /**
  * Renders a type-safe bottom sheet modal for contextual post actions with a richer UI.
  */
-const PostActionsSheet: React.FC<PostActionsSheetProps> = ({ post, user, navigate, onDelete, onReport, onEdit }) => {
+const PostActionsSheet: React.FC<PostActionsSheetProps> = ({ post, user, navigate, onDelete, onReport, onEdit, onQuote }) => {
     const { t } = useTranslation();
     const isAuthor = user?.id === post.author_id;
 
@@ -110,6 +111,20 @@ const PostActionsSheet: React.FC<PostActionsSheetProps> = ({ post, user, navigat
         return (
             <div className="bg-background">
                 <div className="px-4">
+                    {/* Quote Post */}
+                    {onQuote && (
+                        <SheetClose asChild>
+                            <Button 
+                                variant="ghost" 
+                                className="justify-start w-full text-left py-3.5 h-auto text-foreground hover:bg-muted/80 text-sm rounded-lg transition-all duration-300 ease-out hover:scale-[1.005] group"
+                                onClick={() => onQuote(post)}
+                            >
+                                <Quote className="h-4 w-4 mr-4 flex-shrink-0 text-muted-foreground transition-colors duration-300 group-hover:text-foreground" />
+                                <span className="font-normal transition-colors duration-300 group-hover:text-foreground">Quote Post</span>
+                            </Button>
+                        </SheetClose>
+                    )}
+
                     {/* Not interested - mapped to View Details for now */}
                     <SheetClose asChild>
                         <Button 

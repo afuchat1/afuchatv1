@@ -21,6 +21,7 @@ import PostActionsSheet from '@/components/PostActionsSheet';
 import DeletePostSheet from '@/components/DeletePostSheet';
 import ReportPostSheet from '@/components/ReportPostSheet';
 import { EditPostModal } from '@/components/EditPostModal';
+import NewPostModal from '@/components/ui/NewPostModal';
 import { NestedReplyItem } from '@/components/feed/NestedReplyItem';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { SendGiftDialog } from '@/components/gifts/SendGiftDialog';
@@ -40,6 +41,7 @@ import { NativeAdCard } from '@/components/ads/NativeAdCard';
 import { AdsterraBannerAd } from '@/components/ads/AdsterraBannerAd';
 import { AdsterraNativeAdCard } from '@/components/ads/AdsterraNativeAdCard';
 import { ProfileDrawer } from '@/components/ProfileDrawer';
+import { QuotedPostCard } from '@/components/feed/QuotedPostCard';
 import { cn } from '@/lib/utils';
 // --- INTERFACES ---
 
@@ -61,6 +63,22 @@ interface Post {
   updated_at: string;
   author_id: string;
   image_url: string | null;
+  quoted_post_id?: string | null;
+  quoted_post?: {
+    id: string;
+    content: string;
+    created_at: string;
+    author_id: string;
+    image_url?: string | null;
+    post_images?: Array<{ image_url: string; display_order: number; alt_text?: string }>;
+    profiles: {
+      display_name: string;
+      handle: string;
+      is_verified: boolean;
+      is_organization_verified: boolean;
+      avatar_url?: string | null;
+    };
+  } | null;
   post_images?: Array<{ image_url: string; display_order: number; alt_text?: string }>;
   post_link_previews?: Array<{
     url: string;
@@ -398,7 +416,7 @@ const ReplyItem = ({ reply, navigate, handleViewProfile }: {
 
 // --- POST CARD (Updated to accept and pass through new props) ---
 
-const PostCard = ({ post, addReply, user, navigate, onAcknowledge, onDeletePost, onReportPost, onEditPost, userProfile, expandedPosts, setExpandedPosts, guestMode = false }:
+const PostCard = ({ post, addReply, user, navigate, onAcknowledge, onDeletePost, onReportPost, onEditPost, onQuotePost, userProfile, expandedPosts, setExpandedPosts, guestMode = false }:
   { 
     post: Post;
     addReply: (postId: string, newReply: Reply) => void;
@@ -408,6 +426,7 @@ const PostCard = ({ post, addReply, user, navigate, onAcknowledge, onDeletePost,
     onDeletePost: (postId: string) => void;
     onReportPost: (postId: string) => void;
     onEditPost: (postId: string) => void;
+    onQuotePost: (post: Post) => void;
     userProfile: { display_name: string; avatar_url: string | null } | null;
     expandedPosts: Set<string>;
     setExpandedPosts: React.Dispatch<React.SetStateAction<Set<string>>>;
@@ -869,6 +888,7 @@ const PostCard = ({ post, addReply, user, navigate, onAcknowledge, onDeletePost,
                 onDelete={onDeletePost}
                 onReport={onReportPost}
                 onEdit={onEditPost}
+                onQuote={onQuotePost}
             />
           </div>
         </div>
@@ -931,6 +951,10 @@ const PostCard = ({ post, addReply, user, navigate, onAcknowledge, onDeletePost,
               }
               className="mt-2"
             />
+          )}
+          {/* Quoted Post */}
+          {post.quoted_post && (
+            <QuotedPostCard quotedPost={post.quoted_post} />
           )}
           {post.post_link_previews && post.post_link_previews.length > 0 && (
             <div className="mt-2 space-y-2">
@@ -1138,7 +1162,16 @@ const Feed = ({ defaultTab = 'foryou', guestMode = false }: FeedProps = {}) => {
   const [deletePostId, setDeletePostId] = useState<string | null>(null);
   const [reportPostId, setReportPostId] = useState<string | null>(null);
   const [editPost, setEditPost] = useState<Post | null>(null);
+  const [quotePost, setQuotePost] = useState<Post | null>(null);
   const [isDeleting, setIsDeleting] = useState(false);
+  
+  const handleQuotePost = (post: Post) => {
+    if (!user) {
+      navigate('/auth');
+      return;
+    }
+    setQuotePost(post);
+  };
   
   // Pull to refresh state
   const [isRefreshing, setIsRefreshing] = useState(false);
@@ -2397,6 +2430,7 @@ const Feed = ({ defaultTab = 'foryou', guestMode = false }: FeedProps = {}) => {
                     onDeletePost={handleDeletePost}
                     onReportPost={handleReportPost}
                     onEditPost={handleEditPost}
+                    onQuotePost={handleQuotePost}
                     userProfile={userProfile}
                     expandedPosts={expandedPosts}
                     setExpandedPosts={setExpandedPosts}
@@ -2466,6 +2500,29 @@ const Feed = ({ defaultTab = 'foryou', guestMode = false }: FeedProps = {}) => {
           onClose={() => setEditPost(null)}
           post={editPost}
           onPostUpdated={handlePostUpdated}
+        />
+      )}
+
+      {/* Quote Post Modal */}
+      {quotePost && (
+        <NewPostModal
+          isOpen={!!quotePost}
+          onClose={() => setQuotePost(null)}
+          quotedPost={{
+            id: quotePost.id,
+            content: quotePost.content,
+            created_at: quotePost.created_at,
+            author_id: quotePost.author_id,
+            image_url: quotePost.image_url,
+            post_images: quotePost.post_images,
+            profiles: {
+              display_name: quotePost.profiles.display_name,
+              handle: quotePost.profiles.handle,
+              is_verified: quotePost.profiles.is_verified,
+              is_organization_verified: quotePost.profiles.is_organization_verified,
+              avatar_url: quotePost.profiles.avatar_url,
+            },
+          }}
         />
       )}
     </div>

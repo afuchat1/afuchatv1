@@ -2021,6 +2021,7 @@ export type Database = {
           id: string
           image_url: string | null
           language_code: string | null
+          quoted_post_id: string | null
           updated_at: string | null
           view_count: number
         }
@@ -2031,6 +2032,7 @@ export type Database = {
           id?: string
           image_url?: string | null
           language_code?: string | null
+          quoted_post_id?: string | null
           updated_at?: string | null
           view_count?: number
         }
@@ -2041,6 +2043,7 @@ export type Database = {
           id?: string
           image_url?: string | null
           language_code?: string | null
+          quoted_post_id?: string | null
           updated_at?: string | null
           view_count?: number
         }
@@ -2065,6 +2068,13 @@ export type Database = {
             isOneToOne: false
             referencedRelation: "supported_languages"
             referencedColumns: ["code"]
+          },
+          {
+            foreignKeyName: "posts_quoted_post_id_fkey"
+            columns: ["quoted_post_id"]
+            isOneToOne: false
+            referencedRelation: "posts"
+            referencedColumns: ["id"]
           },
         ]
       }

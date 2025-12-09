@@ -21,13 +21,31 @@ import { useLinkPreview } from '@/hooks/useLinkPreview';
 import { LinkPreviewCard } from '@/components/ui/LinkPreviewCard';
 import { extractUrls } from '@/lib/postUtils';
 import { useNavigate } from 'react-router-dom';
+import { QuotedPostCard } from '@/components/feed/QuotedPostCard';
+
+interface QuotedPost {
+    id: string;
+    content: string;
+    created_at: string;
+    author_id: string;
+    image_url?: string | null;
+    post_images?: Array<{ image_url: string; display_order: number; alt_text?: string }>;
+    profiles: {
+        display_name: string;
+        handle: string;
+        is_verified: boolean;
+        is_organization_verified: boolean;
+        avatar_url?: string | null;
+    };
+}
 
 interface NewPostModalProps {
     isOpen: boolean;
     onClose: () => void;
+    quotedPost?: QuotedPost | null;
 }
 
-const NewPostModal: React.FC<NewPostModalProps> = ({ isOpen, onClose }) => {
+const NewPostModal: React.FC<NewPostModalProps> = ({ isOpen, onClose, quotedPost }) => {
     const { user } = useAuth();
     const { awardNexa } = useNexa();
     const { isPremium } = usePremiumStatus();
@@ -148,6 +166,7 @@ const NewPostModal: React.FC<NewPostModalProps> = ({ isOpen, onClose }) => {
                     content: newPost,
                     author_id: user?.id,
                     image_url: imageUrls.length > 0 ? imageUrls[0] : null,
+                    quoted_post_id: quotedPost?.id || null,
                 })
                 .select()
                 .single();
@@ -384,6 +403,11 @@ const NewPostModal: React.FC<NewPostModalProps> = ({ isOpen, onClose }) => {
                                         userSelect: 'text'
                                     }}
                                 />
+
+                                {/* Quoted Post Preview */}
+                                {quotedPost && (
+                                    <QuotedPostCard quotedPost={quotedPost} className="mt-0" />
+                                )}
 
                                 {/* Link Previews */}
                                 {linkPreviews.length > 0 && (
