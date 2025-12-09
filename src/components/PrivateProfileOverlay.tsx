@@ -97,7 +97,6 @@ export const PrivateProfileOverlay = ({
             Follow @{handle} to see their posts, photos, and other content.
           </p>
         </div>
-        {renderActionButton()}
       </div>
     </Card>
   );
