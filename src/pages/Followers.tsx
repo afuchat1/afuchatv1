@@ -2,7 +2,7 @@ import { useEffect, useState } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
-import { ArrowLeft } from "lucide-react";
+import { ArrowLeft, Lock } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -31,10 +31,12 @@ export default function Followers() {
   const [followingIds, setFollowingIds] = useState<Set<string>>(new Set());
   const [followerIds, setFollowerIds] = useState<Set<string>>(new Set());
   const [profileId, setProfileId] = useState<string | null>(null);
+  const [isPrivate, setIsPrivate] = useState(false);
+  const [isOwnProfile, setIsOwnProfile] = useState(false);
 
   useEffect(() => {
     resolveProfile();
-  }, [handleOrId]);
+  }, [handleOrId, user]);
 
   useEffect(() => {
     if (profileId) {
@@ -52,8 +54,10 @@ export default function Followers() {
       // Check if it's a UUID or handle
       const isUUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(handleOrId);
       
+      let resolvedId: string;
+      
       if (isUUID) {
-        setProfileId(handleOrId);
+        resolvedId = handleOrId;
       } else {
         // Resolve handle to ID
         const { data, error } = await supabase
@@ -63,7 +67,23 @@ export default function Followers() {
           .single();
 
         if (error) throw error;
-        setProfileId(data.id);
+        resolvedId = data.id;
+      }
+      
+      setProfileId(resolvedId);
+      setIsOwnProfile(user?.id === resolvedId);
+      
+      // Check if followers list is private
+      const { data: profileData } = await supabase
+        .from("profiles")
+        .select("hide_followers_list")
+        .eq("id", resolvedId)
+        .single();
+      
+      if (profileData?.hide_followers_list && user?.id !== resolvedId) {
+        setIsPrivate(true);
+      } else {
+        setIsPrivate(false);
       }
     } catch (error) {
       console.error("Error resolving profile:", error);
@@ -203,6 +223,24 @@ export default function Followers() {
   const handleUserClick = (userHandle: string) => {
     navigate(`/${userHandle}`);
   };
+
+  if (isPrivate && !isOwnProfile) {
+    return (
+      <div className="min-h-screen bg-background pb-20">
+        <div className="max-w-2xl mx-auto">
+          <div className="flex flex-col items-center justify-center py-20 px-6 text-center">
+            <div className="p-4 bg-muted/50 rounded-full mb-4">
+              <Lock className="h-8 w-8 text-muted-foreground" />
+            </div>
+            <h3 className="text-lg font-semibold mb-2">Followers List is Private</h3>
+            <p className="text-sm text-muted-foreground max-w-xs">
+              This user has chosen to keep their followers list private.
+            </p>
+          </div>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen bg-background pb-20">

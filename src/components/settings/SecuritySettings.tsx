@@ -15,6 +15,7 @@ export const SecuritySettings = () => {
   const [showOnlineStatus, setShowOnlineStatus] = useState(true);
   const [showReadReceipts, setShowReadReceipts] = useState(true);
   const [hideFollowingList, setHideFollowingList] = useState(false);
+  const [hideFollowersList, setHideFollowersList] = useState(false);
 
   useEffect(() => {
     if (user) {
@@ -27,7 +28,7 @@ export const SecuritySettings = () => {
 
     const { data } = await supabase
       .from('profiles')
-      .select('is_private, show_online_status, show_read_receipts, hide_following_list')
+      .select('is_private, show_online_status, show_read_receipts, hide_following_list, hide_followers_list')
       .eq('id', user.id)
       .single();
 
@@ -36,6 +37,7 @@ export const SecuritySettings = () => {
       setShowOnlineStatus(data.show_online_status ?? true);
       setShowReadReceipts(data.show_read_receipts ?? true);
       setHideFollowingList(data.hide_following_list || false);
+      setHideFollowersList(data.hide_followers_list || false);
     }
   };
 
@@ -162,6 +164,23 @@ export const SecuritySettings = () => {
               onCheckedChange={(checked) => {
                 setHideFollowingList(checked);
                 handlePrivacyToggle('hide_following_list', checked);
+              }}
+            />
+          </div>
+          
+          <div className="flex items-start justify-between gap-4 p-4 rounded-lg bg-muted/30 hover:bg-muted/50 transition-colors">
+            <div className="flex-1">
+              <div className="flex items-center gap-2 mb-1">
+                <Users className="h-4 w-4 text-muted-foreground" />
+                <p className="font-semibold">Hide Followers List</p>
+              </div>
+              <p className="text-sm text-muted-foreground">Hide your followers from other users</p>
+            </div>
+            <Switch
+              checked={hideFollowersList}
+              onCheckedChange={(checked) => {
+                setHideFollowersList(checked);
+                handlePrivacyToggle('hide_followers_list', checked);
               }}
             />
           </div>
