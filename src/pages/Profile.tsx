@@ -742,12 +742,22 @@ const Profile = ({ mustExist = false }: ProfileProps) => {
 		setIsRequestingFollow(true);
 		
 		try {
+			// Delete any existing rejected request first to allow re-requesting
+			await supabase
+				.from('follow_requests')
+				.delete()
+				.eq('requester_id', user.id)
+				.eq('target_id', profileId)
+				.eq('status', 'rejected');
+
 			const { error } = await supabase
 				.from('follow_requests')
 				.upsert({ 
 					requester_id: user.id, 
 					target_id: profileId,
-					status: 'pending'
+					status: 'pending',
+					responded_at: null,
+					created_at: new Date().toISOString()
 				}, { onConflict: 'requester_id,target_id' });
 
 			if (error) throw error;
