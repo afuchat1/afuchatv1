@@ -43,6 +43,7 @@ import {
 } from 'lucide-react';
 import { VerifiedBadge } from './VerifiedBadge';
 import { usePremiumStatus } from '@/hooks/usePremiumStatus';
+import { AddAccountSheet } from './AddAccountSheet';
 
 interface ProfileDrawerProps {
   trigger: React.ReactNode;
@@ -67,6 +68,7 @@ export function ProfileDrawer({ trigger }: ProfileDrawerProps) {
   const [open, setOpen] = useState(false);
   const [settingsOpen, setSettingsOpen] = useState(false);
   const [accountsDrawerOpen, setAccountsDrawerOpen] = useState(false);
+  const [addAccountOpen, setAddAccountOpen] = useState(false);
   const [profile, setProfile] = useState<{
     display_name: string;
     handle: string;
@@ -418,9 +420,7 @@ export function ProfileDrawer({ trigger }: ProfileDrawerProps) {
                 variant="outline"
                 className="w-full justify-center py-6 text-base"
                 onClick={() => {
-                  setAccountsDrawerOpen(false);
-                  setOpen(false);
-                  navigate('/auth');
+                  setAddAccountOpen(true);
                 }}
               >
                 <UserPlus className="h-5 w-5 mr-2" />
@@ -448,6 +448,16 @@ export function ProfileDrawer({ trigger }: ProfileDrawerProps) {
         </div>
       </DrawerContent>
     </Drawer>
+
+    {/* Add Account Sheet */}
+    <AddAccountSheet 
+      open={addAccountOpen} 
+      onOpenChange={setAddAccountOpen}
+      onSuccess={() => {
+        setAccountsDrawerOpen(false);
+        setOpen(false);
+      }}
+    />
     </>
   );
 }
