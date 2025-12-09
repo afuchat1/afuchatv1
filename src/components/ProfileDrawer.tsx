@@ -212,8 +212,15 @@ export function ProfileDrawer({ trigger }: ProfileDrawerProps) {
       <SheetTrigger asChild>
         {trigger}
       </SheetTrigger>
-      <SheetContent side="left" className="w-[85vw] max-w-[320px] p-0 overflow-hidden">
-        <div className="overflow-y-auto h-full px-4 py-6">
+      <SheetContent 
+        side="left" 
+        className="w-[85vw] max-w-[320px] p-0 overflow-hidden"
+        onPointerDownOutside={(e) => e.preventDefault()}
+      >
+        <div 
+          className="overflow-y-auto h-full px-4 py-6 overscroll-contain"
+          onTouchMove={(e) => e.stopPropagation()}
+        >
           {/* Profile Header */}
           {user && profile && (
             <div className="py-4">
