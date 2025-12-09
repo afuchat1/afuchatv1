@@ -4,13 +4,45 @@ import { useAuth } from '@/contexts/AuthContext';
 import { Card } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
-import { Search as SearchIcon, User, MessageSquare, TrendingUp, Users } from 'lucide-react';
+import { Search as SearchIcon, User, MessageSquare, TrendingUp, Users, Clock, X, Trash2 } from 'lucide-react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { CustomLoader } from '@/components/ui/CustomLoader';
 import { toast } from 'sonner';
 import { useTranslation } from 'react-i18next';
 import { searchSchema } from '@/lib/validation';
+
+const SEARCH_HISTORY_KEY = 'afuchat_search_history';
+const MAX_SEARCH_HISTORY = 10;
+
+const getSearchHistory = (): string[] => {
+  try {
+    const stored = localStorage.getItem(SEARCH_HISTORY_KEY);
+    return stored ? JSON.parse(stored) : [];
+  } catch {
+    return [];
+  }
+};
+
+const addToSearchHistory = (query: string) => {
+  const trimmed = query.trim();
+  if (!trimmed) return;
+  
+  const history = getSearchHistory();
+  const filtered = history.filter(h => h.toLowerCase() !== trimmed.toLowerCase());
+  const updated = [trimmed, ...filtered].slice(0, MAX_SEARCH_HISTORY);
+  localStorage.setItem(SEARCH_HISTORY_KEY, JSON.stringify(updated));
+};
+
+const removeFromSearchHistory = (query: string) => {
+  const history = getSearchHistory();
+  const updated = history.filter(h => h !== query);
+  localStorage.setItem(SEARCH_HISTORY_KEY, JSON.stringify(updated));
+};
+
+const clearSearchHistory = () => {
+  localStorage.removeItem(SEARCH_HISTORY_KEY);
+};
 
 interface PostImage {
   id: string;
@@ -163,14 +195,89 @@ const TrendingSection = ({ onTrendClick }: { onTrendClick: (topic: string) => vo
   );
 };
 
+const SearchHistorySection = ({ 
+  onHistoryClick, 
+  onRemove, 
+  onClearAll 
+}: { 
+  onHistoryClick: (query: string) => void;
+  onRemove: (query: string) => void;
+  onClearAll: () => void;
+}) => {
+  const { t } = useTranslation();
+  const [history, setHistory] = useState<string[]>([]);
+
+  useEffect(() => {
+    setHistory(getSearchHistory());
+  }, []);
+
+  const handleRemove = (query: string, e: React.MouseEvent) => {
+    e.stopPropagation();
+    removeFromSearchHistory(query);
+    setHistory(getSearchHistory());
+    onRemove(query);
+  };
+
+  const handleClearAll = () => {
+    clearSearchHistory();
+    setHistory([]);
+    onClearAll();
+  };
+
+  if (history.length === 0) return null;
+
+  return (
+    <div className="mb-6">
+      <div className="flex items-center justify-between mb-3">
+        <h2 className="text-base font-bold text-foreground flex items-center">
+          <Clock className="h-5 w-5 mr-2 text-muted-foreground" />
+          {t('search.recentSearches', 'Recent Searches')}
+        </h2>
+        <Button
+          variant="ghost"
+          size="sm"
+          onClick={handleClearAll}
+          className="text-xs text-muted-foreground hover:text-destructive h-8 px-2"
+        >
+          <Trash2 className="h-4 w-4 mr-1" />
+          {t('search.clearAll', 'Clear All')}
+        </Button>
+      </div>
+      <Card className="p-0 divide-y">
+        {history.map((item, index) => (
+          <div
+            key={index}
+            className="flex items-center justify-between p-3 cursor-pointer hover:bg-muted/50 transition-colors"
+            onClick={() => onHistoryClick(item)}
+          >
+            <div className="flex items-center gap-3">
+              <Clock className="h-4 w-4 text-muted-foreground" />
+              <span className="text-sm text-foreground">{item}</span>
+            </div>
+            <Button
+              variant="ghost"
+              size="icon"
+              className="h-8 w-8 text-muted-foreground hover:text-destructive"
+              onClick={(e) => handleRemove(item, e)}
+            >
+              <X className="h-4 w-4" />
+            </Button>
+          </div>
+        ))}
+      </Card>
+    </div>
+  );
+};
+
 const Search = () => {
   const { t } = useTranslation();
   const { user } = useAuth();
-  const location = useLocation(); // 🚨 Hook to access current URL search params
+  const location = useLocation();
   const [query, setQuery] = useState('');
   const [results, setResults] = useState<SearchResult[]>([]);
   const [loading, setLoading] = useState(false);
   const [debouncedQuery, setDebouncedQuery] = useState('');
+  const [historyKey, setHistoryKey] = useState(0);
   const navigate = useNavigate();
 
   // 🚨 NEW useEffect: Read query from URL on component mount
@@ -203,6 +310,10 @@ const Search = () => {
     }
 
     setLoading(true);
+
+    // Save to search history
+    addToSearchHistory(trimmedQuery);
+    setHistoryKey(prev => prev + 1);
 
     // Update URL
     navigate(`?q=${encodeURIComponent(trimmedQuery)}`, { replace: true });
@@ -417,7 +528,15 @@ const Search = () => {
         {loading && isSearchActive ? (
           <SearchSkeleton />
         ) : !isSearchActive ? (
-          <TrendingSection onTrendClick={handleTrendClick} />
+          <>
+            <SearchHistorySection 
+              key={historyKey}
+              onHistoryClick={(term) => setQuery(term)}
+              onRemove={() => {}}
+              onClearAll={() => toast.success(t('search.historyCleared', 'Search history cleared'))}
+            />
+            <TrendingSection onTrendClick={handleTrendClick} />
+          </>
         ) : !hasAnyResults ? (
           <div className="text-center text-muted-foreground py-8 text-sm">
             {t('search.noResults', { query })}
