@@ -59,9 +59,21 @@ export function AddAccountSheet({ open, onOpenChange, onSuccess }: AddAccountShe
       }
 
       const linkedUserId = signInData.user?.id;
+      const linkedSession = signInData.session;
       
-      if (!linkedUserId) {
+      if (!linkedUserId || !linkedSession) {
         toast.error('Failed to authenticate the account');
+        setLoading(false);
+        return;
+      }
+
+      // Check if trying to link to self
+      if (linkedUserId === user.id) {
+        // Sign back to original account
+        if (currentSession) {
+          await supabase.auth.setSession(currentSession);
+        }
+        toast.error('You cannot link your own account');
         setLoading(false);
         return;
       }
@@ -70,7 +82,7 @@ export function AddAccountSheet({ open, onOpenChange, onSuccess }: AddAccountShe
       const { data: existingLink } = await supabase
         .from('linked_accounts')
         .select('id')
-        .or(`primary_user_id.eq.${user.id},linked_user_id.eq.${linkedUserId}`)
+        .or(`and(primary_user_id.eq.${user.id},linked_user_id.eq.${linkedUserId}),and(primary_user_id.eq.${linkedUserId},linked_user_id.eq.${user.id})`)
         .maybeSingle();
 
       if (existingLink) {
@@ -83,25 +95,33 @@ export function AddAccountSheet({ open, onOpenChange, onSuccess }: AddAccountShe
         return;
       }
 
-      // Check if trying to link to self
-      if (linkedUserId === user.id) {
-        toast.error('You cannot link your own account');
-        setLoading(false);
-        return;
+      // Store linked account session for seamless switching
+      const storedSessions = JSON.parse(localStorage.getItem('afuchat_linked_sessions') || '{}');
+      storedSessions[linkedUserId] = {
+        access_token: linkedSession.access_token,
+        refresh_token: linkedSession.refresh_token,
+      };
+      // Also store current user's session for switching back
+      if (currentSession) {
+        storedSessions[user.id] = {
+          access_token: currentSession.access_token,
+          refresh_token: currentSession.refresh_token,
+        };
       }
+      localStorage.setItem('afuchat_linked_sessions', JSON.stringify(storedSessions));
 
-      // Sign back to original account first
+      // Sign back to original account
       if (currentSession) {
         await supabase.auth.setSession(currentSession);
       }
 
-      // Create the link
+      // Create bidirectional links
       const { error: linkError } = await supabase
         .from('linked_accounts')
-        .insert({
-          primary_user_id: user.id,
-          linked_user_id: linkedUserId,
-        });
+        .insert([
+          { primary_user_id: user.id, linked_user_id: linkedUserId },
+          { primary_user_id: linkedUserId, linked_user_id: user.id },
+        ]);
 
       if (linkError) {
         console.error('Link error:', linkError);

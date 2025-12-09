@@ -433,6 +433,17 @@ const CompleteProfileContent = ({ user }: CompleteProfileContentProps) => {
       const linkToUserId = localStorage.getItem('afuchat_link_to_user');
       if (linkToUserId && linkToUserId !== user.id) {
         try {
+          // Store new account's session for seamless switching
+          const { data: currentSession } = await supabase.auth.getSession();
+          if (currentSession?.session) {
+            const storedSessions = JSON.parse(localStorage.getItem('afuchat_linked_sessions') || '{}');
+            storedSessions[user.id] = {
+              access_token: currentSession.session.access_token,
+              refresh_token: currentSession.session.refresh_token,
+            };
+            localStorage.setItem('afuchat_linked_sessions', JSON.stringify(storedSessions));
+          }
+
           // Create bidirectional links
           await supabase
             .from('linked_accounts')

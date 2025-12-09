@@ -187,40 +187,44 @@ export function ProfileDrawer({ trigger }: ProfileDrawerProps) {
 
   const handleSwitchAccount = async (linkedUserId: string) => {
     try {
-      // Fetch the linked account's profile for display
-      const linkedAccount = linkedAccounts.find(a => a.linked_user_id === linkedUserId);
+      // Get stored session for this linked account
+      const storedSessions = JSON.parse(localStorage.getItem('afuchat_linked_sessions') || '{}');
+      const linkedSession = storedSessions[linkedUserId];
       
-      // Store current user as linked account for the target user (bidirectional)
-      // This allows switching back
+      if (!linkedSession?.refresh_token) {
+        toast.error('Session expired. Please re-link this account.');
+        return;
+      }
+
+      // Store current session before switching (for switching back)
       if (user) {
-        const { error: linkBackError } = await supabase
-          .from('linked_accounts')
-          .upsert({
-            primary_user_id: linkedUserId,
-            linked_user_id: user.id,
-          }, { onConflict: 'primary_user_id,linked_user_id' });
-        
-        if (linkBackError) {
-          console.error('Error creating reverse link:', linkBackError);
+        const { data: currentSession } = await supabase.auth.getSession();
+        if (currentSession?.session) {
+          storedSessions[user.id] = {
+            access_token: currentSession.session.access_token,
+            refresh_token: currentSession.session.refresh_token,
+          };
+          localStorage.setItem('afuchat_linked_sessions', JSON.stringify(storedSessions));
         }
       }
 
-      // Store current session info for potential return
-      localStorage.setItem('afuchat_previous_user', user?.id || '');
-      
-      // Sign out current user and redirect to sign in with pre-filled info
-      await supabase.auth.signOut();
-      
-      // Navigate to signin with the linked account info
-      toast.success(`Switching to @${linkedAccount?.profile?.handle || 'account'}...`);
+      // Switch to the linked account using stored refresh token
+      const { error } = await supabase.auth.setSession({
+        access_token: linkedSession.access_token,
+        refresh_token: linkedSession.refresh_token,
+      });
+
+      if (error) {
+        console.error('Switch error:', error);
+        toast.error('Failed to switch account. Please re-link.');
+        return;
+      }
+
+      toast.success('Switched account!');
       setAccountsDrawerOpen(false);
       setOpen(false);
-      navigate('/auth/signin', { 
-        state: { 
-          switchingTo: linkedAccount?.profile?.handle,
-          linkedUserId 
-        } 
-      });
+      // Refresh the page to update all contexts
+      window.location.href = '/home';
     } catch (error) {
       console.error('Switch account error:', error);
       toast.error('Failed to switch account');
@@ -548,17 +552,27 @@ export function ProfileDrawer({ trigger }: ProfileDrawerProps) {
                 variant="outline"
                 className="w-full justify-center py-6 text-base"
                 disabled={hasLinkedAccount}
-                onClick={() => {
+                onClick={async () => {
                   // Store current user ID to auto-link after signup
                   if (user) {
                     localStorage.setItem('afuchat_link_to_user', user.id);
+                    
+                    // Store current session before signing out
+                    const { data: currentSession } = await supabase.auth.getSession();
+                    if (currentSession?.session) {
+                      const storedSessions = JSON.parse(localStorage.getItem('afuchat_linked_sessions') || '{}');
+                      storedSessions[user.id] = {
+                        access_token: currentSession.session.access_token,
+                        refresh_token: currentSession.session.refresh_token,
+                      };
+                      localStorage.setItem('afuchat_linked_sessions', JSON.stringify(storedSessions));
+                    }
                   }
                   setAccountsDrawerOpen(false);
                   setOpen(false);
                   // Sign out current user first so they can create new account
-                  supabase.auth.signOut().then(() => {
-                    navigate('/auth/signup', { state: { linkingAccount: true } });
-                  });
+                  await supabase.auth.signOut();
+                  navigate('/auth/signup', { state: { linkingAccount: true } });
                 }}
               >
                 <Plus className="h-5 w-5 mr-2" />
