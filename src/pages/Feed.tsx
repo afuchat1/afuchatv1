@@ -1386,6 +1386,55 @@ const Feed = ({ defaultTab = 'foryou', guestMode = false }: FeedProps = {}) => {
       setFollowingPosts(prev => prev.filter(p => p.id !== tempId));
     };
 
+    // Handle new post created by current user - add immediately to top
+    const handleOwnPostCreated = async (event: CustomEvent) => {
+      const postData = event.detail;
+      
+      // Fetch the complete post data
+      const { data: newPost, error } = await supabase
+        .from('posts')
+        .select(`
+          *,
+          profiles(display_name, handle, is_verified, is_organization_verified, is_affiliate, is_business_mode, avatar_url, affiliated_business_id, last_seen, show_online_status),
+          post_images(image_url, display_order, alt_text),
+          post_link_previews(url, title, description, image_url, site_name)
+        `)
+        .eq('id', postData.id)
+        .single();
+
+      if (!error && newPost) {
+        // Fetch quoted post if exists
+        let quotedPost = null;
+        if (newPost.quoted_post_id) {
+          const { data: quotedData } = await supabase
+            .from('posts')
+            .select(`
+              id, content, created_at, author_id, image_url,
+              profiles(display_name, handle, is_verified, is_organization_verified, avatar_url),
+              post_images(image_url, display_order, alt_text)
+            `)
+            .eq('id', newPost.quoted_post_id)
+            .single();
+          quotedPost = quotedData;
+        }
+
+        const mappedPost: Post = {
+          ...newPost,
+          profiles: newPost.profiles || { display_name: 'Unknown', handle: 'unknown', is_verified: false, is_organization_verified: false, is_affiliate: false },
+          replies: [],
+          reply_count: 0,
+          like_count: 0,
+          view_count: newPost.view_count || 0,
+          has_liked: false,
+          quoted_post: quotedPost,
+        };
+        
+        // Add to top of feed immediately
+        setPosts(prev => [mappedPost, ...prev.filter(p => p.id !== postData.id)]);
+        setFollowingPosts(prev => [mappedPost, ...prev.filter(p => p.id !== postData.id)]);
+      }
+    };
+
     const handleRemoveOptimisticReply = (event: CustomEvent) => {
       const { postId, replyId } = event.detail;
       const removeReply = (currentPosts: Post[]) =>
@@ -1407,12 +1456,14 @@ const Feed = ({ defaultTab = 'foryou', guestMode = false }: FeedProps = {}) => {
     window.addEventListener('optimistic-post-success', handleOptimisticPostSuccess as EventListener);
     window.addEventListener('optimistic-post-error', handleOptimisticPostError as EventListener);
     window.addEventListener('remove-optimistic-reply', handleRemoveOptimisticReply as EventListener);
+    window.addEventListener('own-post-created', handleOwnPostCreated as EventListener);
 
     return () => {
       window.removeEventListener('optimistic-post-add', handleOptimisticPostAdd as EventListener);
       window.removeEventListener('optimistic-post-success', handleOptimisticPostSuccess as EventListener);
       window.removeEventListener('optimistic-post-error', handleOptimisticPostError as EventListener);
       window.removeEventListener('remove-optimistic-reply', handleRemoveOptimisticReply as EventListener);
+      window.removeEventListener('own-post-created', handleOwnPostCreated as EventListener);
     };
   }, []);
 
@@ -1882,37 +1933,11 @@ const Feed = ({ defaultTab = 'foryou', guestMode = false }: FeedProps = {}) => {
         'postgres_changes',
         { event: 'INSERT', schema: 'public', table: 'posts' },
         async (payload) => {
-          // Skip if this is current user's post (already added optimistically)
+          // Skip if this is current user's post (will be added via custom event)
           if (payload.new.author_id === user?.id) return;
           
-          // Fetch the new post with full data
-          const { data: newPost, error } = await supabase
-            .from('posts')
-            .select(`
-              *,
-              profiles(display_name, handle, is_verified, is_organization_verified, is_affiliate, is_business_mode, avatar_url, affiliated_business_id, last_seen, show_online_status),
-              post_images(image_url, display_order, alt_text),
-              post_link_previews(url, title, description, image_url, site_name)
-            `)
-            .eq('id', payload.new.id)
-            .single();
-
-          if (!error && newPost) {
-            // Add new post to the top of the feed
-            const mappedPost: Post = {
-              ...newPost,
-              profiles: newPost.profiles || { display_name: 'Unknown', handle: 'unknown', is_verified: false, is_organization_verified: false, is_affiliate: false },
-              replies: [],
-              reply_count: 0,
-              like_count: 0,
-              view_count: newPost.view_count || 0,
-              has_liked: false,
-            };
-            
-            setPosts(prev => [mappedPost, ...prev]);
-            // Show notification for new post
-            toast.info('New post added to feed', { duration: 2000 });
-          }
+          // For other users' posts, just increment the new posts count
+          setNewPostsCount(prev => prev + 1);
         }
       )
       .on(
@@ -2436,6 +2461,27 @@ const Feed = ({ defaultTab = 'foryou', guestMode = false }: FeedProps = {}) => {
         
         {/* Spacer for fixed tabs */}
         <div className="h-12" />
+
+        {/* New posts indicator */}
+        <AnimatePresence>
+          {newPostsCount > 0 && (
+            <motion.div
+              initial={{ opacity: 0, y: -20 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, y: -20 }}
+              className="fixed top-28 left-1/2 -translate-x-1/2 z-40"
+            >
+              <Button
+                onClick={handleLoadNewPosts}
+                size="sm"
+                className="rounded-full shadow-lg bg-primary text-primary-foreground hover:bg-primary/90 gap-2 px-4"
+              >
+                <RefreshCw className="h-4 w-4" />
+                {newPostsCount} new {newPostsCount === 1 ? 'post' : 'posts'}
+              </Button>
+            </motion.div>
+          )}
+        </AnimatePresence>
 
         {/* Content area */}
         <div className="flex-1 overflow-hidden">

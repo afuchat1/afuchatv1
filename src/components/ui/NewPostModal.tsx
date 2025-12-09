@@ -173,6 +173,11 @@ const NewPostModal: React.FC<NewPostModalProps> = ({ isOpen, onClose, quotedPost
 
             if (postError) throw postError;
 
+            // Emit event so Feed can add this post to the top immediately
+            window.dispatchEvent(new CustomEvent('own-post-created', { 
+              detail: { id: postData.id } 
+            }));
+
             if (imageUrls.length > 0 && postData) {
                 const imageInserts = imageUrls.map((url, index) => ({
                     post_id: postData.id,
