@@ -54,8 +54,6 @@
     <script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-6547165240467026"
      crossorigin="anonymous"></script>
     
-    <!-- Telegram Mini App SDK -->
-    <script src="https://telegram.org/js/telegram-web-app.js"></script>
   
   
   
@@ -82,12 +80,14 @@
     <!-- Inline script to prevent theme flash - runs before React -->
     <script>
       (function() {
-        var theme = localStorage.getItem('theme') || 'system';
+        var theme = localStorage.getItem('afuchat-theme') || 'system';
         var resolved;
         if (theme === 'system') {
           resolved = window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
-        } else {
+        } else if (theme === 'light' || theme === 'dark') {
           resolved = theme;
+        } else {
+          resolved = window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
         }
         document.documentElement.classList.add(resolved);
         // Update theme-color meta tag

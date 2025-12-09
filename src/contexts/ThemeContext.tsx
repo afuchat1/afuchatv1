@@ -10,63 +10,62 @@ interface ThemeContextType {
 
 const ThemeContext = createContext<ThemeContextType | undefined>(undefined);
 
-// Apply theme immediately to prevent flash
-const getInitialTheme = (): { theme: Theme; resolved: 'light' | 'dark' } => {
-  if (typeof window === 'undefined') {
-    return { theme: 'system', resolved: 'light' };
+// Get stored theme synchronously to prevent flash
+const getStoredTheme = (): Theme => {
+  if (typeof window === 'undefined') return 'system';
+  try {
+    const stored = localStorage.getItem('afuchat-theme') as Theme;
+    if (stored === 'light' || stored === 'dark' || stored === 'system') {
+      return stored;
+    }
+  } catch {
+    // localStorage might not be available
   }
-  
-  const stored = localStorage.getItem('theme') as Theme;
-  const currentTheme = stored || 'system';
-  const mediaQuery = window.matchMedia('(prefers-color-scheme: dark)');
-  
-  let resolved: 'light' | 'dark';
-  if (currentTheme === 'system') {
-    resolved = mediaQuery.matches ? 'dark' : 'light';
-  } else {
-    resolved = currentTheme;
+  return 'system';
+};
+
+const resolveTheme = (theme: Theme): 'light' | 'dark' => {
+  if (theme === 'system') {
+    if (typeof window !== 'undefined') {
+      return window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
+    }
+    return 'light';
   }
+  return theme;
+};
+
+// Apply theme to DOM immediately
+const applyTheme = (resolved: 'light' | 'dark') => {
+  if (typeof document === 'undefined') return;
   
-  // Apply immediately before React renders
   const root = document.documentElement;
   root.classList.remove('light', 'dark');
   root.classList.add(resolved);
-  
-  return { theme: currentTheme, resolved };
+
+  // Update meta theme-color for status bar
+  const themeColor = resolved === 'dark' ? '#0F1114' : '#F6F6F6';
+  const metaThemeColor = document.querySelector('meta[name="theme-color"]:not([media])');
+  if (metaThemeColor) {
+    metaThemeColor.setAttribute('content', themeColor);
+  }
 };
 
-// Run once on module load to prevent flash
-const initialValues = typeof window !== 'undefined' ? getInitialTheme() : { theme: 'system' as Theme, resolved: 'light' as const };
+// Initialize theme immediately on module load to prevent flash
+const initialTheme = getStoredTheme();
+const initialResolved = resolveTheme(initialTheme);
+applyTheme(initialResolved);
 
 export function ThemeProvider({ children }: { children: React.ReactNode }) {
-  const [theme, setThemeState] = useState<Theme>(initialValues.theme);
-  const [resolvedTheme, setResolvedTheme] = useState<'light' | 'dark'>(initialValues.resolved);
+  const [theme, setThemeState] = useState<Theme>(initialTheme);
+  const [resolvedTheme, setResolvedTheme] = useState<'light' | 'dark'>(initialResolved);
 
   const updateTheme = useCallback((currentTheme: Theme) => {
-    const root = document.documentElement;
-    const mediaQuery = window.matchMedia('(prefers-color-scheme: dark)');
-    let resolved: 'light' | 'dark';
-
-    if (currentTheme === 'system') {
-      resolved = mediaQuery.matches ? 'dark' : 'light';
-    } else {
-      resolved = currentTheme;
-    }
-
+    const resolved = resolveTheme(currentTheme);
     setResolvedTheme(resolved);
-    
-    // Remove both classes first to ensure clean state
-    root.classList.remove('light', 'dark');
-    root.classList.add(resolved);
-
-    // Update meta theme-color for status bar
-    const themeColor = resolved === 'dark' ? '#0F1114' : '#F6F6F6';
-    const metaThemeColor = document.querySelector('meta[name="theme-color"]:not([media])');
-    if (metaThemeColor) {
-      metaThemeColor.setAttribute('content', themeColor);
-    }
+    applyTheme(resolved);
   }, []);
 
+  // Listen for system theme changes
   useEffect(() => {
     const mediaQuery = window.matchMedia('(prefers-color-scheme: dark)');
     
@@ -76,13 +75,21 @@ export function ThemeProvider({ children }: { children: React.ReactNode }) {
       }
     };
 
-    updateTheme(theme);
     mediaQuery.addEventListener('change', handleChange);
     return () => mediaQuery.removeEventListener('change', handleChange);
   }, [theme, updateTheme]);
 
+  // Re-apply theme on mount to ensure consistency
+  useEffect(() => {
+    updateTheme(theme);
+  }, [theme, updateTheme]);
+
   const setTheme = useCallback((newTheme: Theme) => {
-    localStorage.setItem('theme', newTheme);
+    try {
+      localStorage.setItem('afuchat-theme', newTheme);
+    } catch {
+      // localStorage might not be available
+    }
     setThemeState(newTheme);
     updateTheme(newTheme);
   }, [updateTheme]);
