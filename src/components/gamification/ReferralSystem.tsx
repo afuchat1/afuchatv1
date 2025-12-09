@@ -34,17 +34,36 @@ export const ReferralSystem = () => {
     if (!user) return;
 
     try {
-      const { data, error } = await supabase
+      // First get referrals
+      const { data: referralData, error: referralError } = await supabase
         .from('referrals')
-        .select('*, profiles!referred_id(display_name, handle)')
+        .select('*')
         .eq('referrer_id', user.id)
         .order('created_at', { ascending: false });
 
-      if (error) throw error;
+      if (referralError) throw referralError;
 
-      setReferrals(data || []);
-      const rewardedCount = data?.filter((r) => r.rewarded).length || 0;
-      setTotalXP(rewardedCount * 500);
+      if (referralData && referralData.length > 0) {
+        // Fetch profile data for referred users
+        const referredIds = referralData.map(r => r.referred_id);
+        const { data: profilesData } = await supabase
+          .from('profiles')
+          .select('id, display_name, handle')
+          .in('id', referredIds);
+
+        // Merge profile data with referrals
+        const mergedData = referralData.map(referral => ({
+          ...referral,
+          profile: profilesData?.find(p => p.id === referral.referred_id)
+        }));
+
+        setReferrals(mergedData);
+        const rewardedCount = mergedData.filter((r) => r.rewarded).length;
+        setTotalXP(rewardedCount * 500);
+      } else {
+        setReferrals([]);
+        setTotalXP(0);
+      }
     } catch (error) {
       console.error('Error fetching referrals:', error);
     }
@@ -136,7 +155,7 @@ export const ReferralSystem = () => {
                     </div>
                     <div>
                       <div className="text-sm font-medium">
-                        @{referral.profiles?.handle || 'User'}
+                        @{referral.profile?.handle || 'User'}
                       </div>
                       <div className="text-xs text-muted-foreground">
                         {new Date(referral.created_at).toLocaleDateString()}
