@@ -937,6 +937,26 @@ const ChatRoom = () => {
     }
   };
 
+  const handleDeleteMessage = async (messageId: string) => {
+    if (!user) return;
+
+    try {
+      const { error } = await supabase
+        .from('messages')
+        .delete()
+        .eq('id', messageId)
+        .eq('sender_id', user.id);
+
+      if (error) throw error;
+
+      // Update local state
+      setMessages(prev => prev.filter(msg => msg.id !== messageId));
+      toast.success('Message deleted');
+    } catch (error) {
+      toast.error('Failed to delete message');
+    }
+  };
+
   const handleReaction = async (messageId: string, emoji: string) => {
     if (!user) return;
 
@@ -1226,6 +1246,7 @@ const ChatRoom = () => {
                       onToggleAudio={() => message.audio_url && toggleAudio(message.id, message.audio_url)}
                       audioPlayerState={audioPlayers[message.id] || { isPlaying: false }}
                       onEdit={handleEditMessage}
+                      onDelete={handleDeleteMessage}
                       bubbleStyle={chatPreferences.bubbleStyle as 'rounded' | 'square' | 'minimal'}
                       themeColors={currentTheme?.colors}
                       showReadReceipts={chatPreferences.readReceipts}

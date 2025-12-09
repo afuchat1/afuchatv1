@@ -1,16 +1,17 @@
 import { motion } from 'framer-motion';
-import { Check, CheckCheck, Play, Pause, Volume2, Smile, Reply, Pencil, FileText, Download, Image as ImageIcon } from 'lucide-react';
+import { Check, CheckCheck, Play, Pause, Volume2, Smile, Reply, Pencil, FileText, Download, Image as ImageIcon, MoreVertical } from 'lucide-react';
 import { Avatar } from './Avatar';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { AttachmentPreview } from './AttachmentPreview';
-import { useState } from 'react';
+import { useState, useRef, useCallback } from 'react';
 import { createPortal } from 'react-dom';
 import { ImageLightbox } from '@/components/ui/ImageLightbox';
 import { VerifiedBadge } from '@/components/VerifiedBadge';
 import { toast } from 'sonner';
 import { Link } from 'react-router-dom';
+import { MessageActionsSheet } from './MessageActionsSheet';
 
 // Helper function to parse message content with clickable links, mentions, and hashtags
 const parseMessageContent = (content: string): React.ReactNode => {
@@ -146,6 +147,7 @@ interface MessageBubbleProps {
   onToggleAudio: () => void;
   audioPlayerState: { isPlaying: boolean };
   onEdit?: (messageId: string, newContent: string) => void;
+  onDelete?: (messageId: string) => void;
   bubbleStyle?: 'rounded' | 'square' | 'minimal';
   themeColors?: { primary: string; secondary: string; accent: string };
   showReadReceipts?: boolean;
@@ -163,12 +165,16 @@ export const MessageBubble = ({
   onToggleAudio,
   audioPlayerState,
   onEdit,
+  onDelete,
   bubbleStyle = 'rounded',
   themeColors,
   showReadReceipts = true,
   fontSize = 16,
 }: MessageBubbleProps) => {
   const [lightboxOpen, setLightboxOpen] = useState(false);
+  const [actionsSheetOpen, setActionsSheetOpen] = useState(false);
+  const longPressTimerRef = useRef<NodeJS.Timeout | null>(null);
+  const isLongPressRef = useRef(false);
   const time = new Date(message.sent_at).toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' });
   const isVoice = !!message.audio_url;
   const hasAttachment = !!message.attachment_url;
@@ -242,6 +248,26 @@ export const MessageBubble = ({
     }
   };
 
+  // Long press handlers for mobile
+  const handleTouchStart = useCallback(() => {
+    isLongPressRef.current = false;
+    longPressTimerRef.current = setTimeout(() => {
+      isLongPressRef.current = true;
+      setActionsSheetOpen(true);
+    }, 500);
+  }, []);
+
+  const handleTouchEnd = useCallback(() => {
+    if (longPressTimerRef.current) {
+      clearTimeout(longPressTimerRef.current);
+    }
+  }, []);
+
+  const handleContextMenu = useCallback((e: React.MouseEvent) => {
+    e.preventDefault();
+    setActionsSheetOpen(true);
+  }, []);
+
   // Find the message being replied to (if any)
   // In a real app, this might be fetched or passed in
   const repliedMessage = message.reply_to_message;
@@ -306,11 +332,15 @@ export const MessageBubble = ({
   };
 
   return (
+    <>
     <motion.div
       drag="x"
       dragConstraints={{ left: isOwn ? -100 : 0, right: isOwn ? 0 : 100 }}
       dragElastic={0.2}
       onDragEnd={handleDragEnd}
+      onTouchStart={handleTouchStart}
+      onTouchEnd={handleTouchEnd}
+      onContextMenu={handleContextMenu}
       className={`flex w-full group ${isOwn ? 'justify-end' : 'justify-start'} relative ${
         isLastInGroup ? 'mb-2' : 'mb-0.5'
       }`}
@@ -442,21 +472,14 @@ export const MessageBubble = ({
             <div className={`flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity ${
               isOwn ? 'flex-row-reverse' : 'flex-row'
             }`}>
-              {canEdit && onEdit && (
-                <Button
-                  variant="ghost"
-                  size="icon"
-                  className="h-7 w-7 p-0 rounded-full hover:bg-muted"
-                  onClick={() => {
-                    const newContent = prompt('Edit message:', message.encrypted_content);
-                    if (newContent && newContent.trim() && newContent !== message.encrypted_content) {
-                      onEdit(message.id, newContent.trim());
-                    }
-                  }}
-                >
-                  <Pencil className="h-3.5 w-3.5" />
-                </Button>
-              )}
+              <Button
+                variant="ghost"
+                size="icon"
+                className="h-7 w-7 p-0 rounded-full hover:bg-muted"
+                onClick={() => setActionsSheetOpen(true)}
+              >
+                <MoreVertical className="h-3.5 w-3.5" />
+              </Button>
               <ReactionButton />
             </div>
           </div>
@@ -481,5 +504,18 @@ export const MessageBubble = ({
         document.body
       )}
     </motion.div>
+
+    {/* Message Actions Sheet */}
+    <MessageActionsSheet
+      open={actionsSheetOpen}
+      onOpenChange={setActionsSheetOpen}
+      message={message}
+      isOwn={isOwn}
+      onReply={() => onReply(message)}
+      onReaction={(emoji) => onReaction(message.id, emoji)}
+      onEdit={(newContent) => onEdit?.(message.id, newContent)}
+      onDelete={() => onDelete?.(message.id)}
+    />
+    </>
   );
 };
