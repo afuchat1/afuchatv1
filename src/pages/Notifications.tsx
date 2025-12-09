@@ -1,4 +1,4 @@
-import { useEffect, useState, useMemo } from 'react';
+import { useEffect, useState, useMemo, useRef } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/contexts/AuthContext';
 import { CustomLoader } from '@/components/ui/CustomLoader';
@@ -456,6 +456,9 @@ const Notifications = () => {
   const confirmDeleteNotification = async () => {
     if (!user || !pendingDeleteId) return;
     
+    // Track this ID as deleted to prevent reappearing
+    deletedIdsRef.current.add(pendingDeleteId);
+    
     setIsDeletingNotification(pendingDeleteId);
     setShowDeleteConfirm(false);
     
@@ -468,9 +471,21 @@ const Notifications = () => {
       if (error) throw error;
 
       setNotifications(prev => prev.filter(n => n.id !== pendingDeleteId));
+      // Update cache to exclude deleted notification
+      const cached = sessionStorage.getItem('cachedNotifications');
+      if (cached) {
+        try {
+          const parsed = JSON.parse(cached);
+          sessionStorage.setItem('cachedNotifications', JSON.stringify(
+            parsed.filter((n: Notification) => n.id !== pendingDeleteId)
+          ));
+        } catch (e) {}
+      }
       toast.success('Notification deleted');
     } catch (error) {
       console.error('Error deleting notification:', error);
+      // Remove from tracked deleted IDs if delete failed
+      deletedIdsRef.current.delete(pendingDeleteId);
       toast.error('Failed to delete notification');
     } finally {
       setIsDeletingNotification(null);
@@ -480,6 +495,9 @@ const Notifications = () => {
 
   const handleDeleteSelected = async () => {
     if (!user || selectedIds.size === 0) return;
+    
+    // Track all selected IDs as deleted
+    selectedIds.forEach(id => deletedIdsRef.current.add(id));
     
     setIsClearingAll(true);
     try {
@@ -491,11 +509,23 @@ const Notifications = () => {
       if (error) throw error;
 
       setNotifications(prev => prev.filter(n => !selectedIds.has(n.id)));
+      // Update cache
+      const cached = sessionStorage.getItem('cachedNotifications');
+      if (cached) {
+        try {
+          const parsed = JSON.parse(cached);
+          sessionStorage.setItem('cachedNotifications', JSON.stringify(
+            parsed.filter((n: Notification) => !selectedIds.has(n.id))
+          ));
+        } catch (e) {}
+      }
       setSelectedIds(new Set());
       setIsSelectionMode(false);
       toast.success(`${selectedIds.size} notification(s) deleted`);
     } catch (error) {
       console.error('Error deleting selected notifications:', error);
+      // Remove from tracked deleted IDs if delete failed
+      selectedIds.forEach(id => deletedIdsRef.current.delete(id));
       toast.error('Failed to delete notifications');
     } finally {
       setIsClearingAll(false);
@@ -508,6 +538,9 @@ const Notifications = () => {
 
   const confirmClearAllNotifications = async () => {
     if (!user || notifications.length === 0) return;
+    
+    // Track all current notification IDs as deleted
+    notifications.forEach(n => deletedIdsRef.current.add(n.id));
     
     setShowClearAllConfirm(false);
     setIsClearingAll(true);
@@ -524,6 +557,8 @@ const Notifications = () => {
       toast.success('All notifications cleared');
     } catch (error) {
       console.error('Error clearing notifications:', error);
+      // Remove from tracked deleted IDs if delete failed
+      notifications.forEach(n => deletedIdsRef.current.delete(n.id));
       toast.error('Failed to clear notifications');
     } finally {
       setIsClearingAll(false);
@@ -651,15 +686,23 @@ const Notifications = () => {
     }
   };
 
+  // Track deleted notification IDs to prevent them from reappearing
+  const deletedIdsRef = useRef<Set<string>>(new Set());
+
   useEffect(() => {
     if (!user) return;
 
-    const fetchData = async () => {
+    const fetchData = async (excludeDeleted = true) => {
       // Load cached notifications first
       const cachedNotifications = sessionStorage.getItem('cachedNotifications');
       if (cachedNotifications) {
         try {
-          setNotifications(JSON.parse(cachedNotifications));
+          const cached = JSON.parse(cachedNotifications) as Notification[];
+          // Filter out any previously deleted notifications
+          const filtered = excludeDeleted 
+            ? cached.filter(n => !deletedIdsRef.current.has(n.id))
+            : cached;
+          setNotifications(filtered);
         } catch (e) {
           console.error('Failed to parse cached notifications:', e);
         }
@@ -695,8 +738,12 @@ const Notifications = () => {
         if (notificationsResult.error) {
           console.error('Error fetching notifications:', notificationsResult.error);
         } else if (notificationsResult.data) {
-          setNotifications(notificationsResult.data as unknown as Notification[]);
-          sessionStorage.setItem('cachedNotifications', JSON.stringify(notificationsResult.data));
+          // Filter out any deleted notifications (they shouldn't come from DB but just in case)
+          const freshNotifications = excludeDeleted
+            ? (notificationsResult.data as unknown as Notification[]).filter(n => !deletedIdsRef.current.has(n.id))
+            : notificationsResult.data as unknown as Notification[];
+          setNotifications(freshNotifications);
+          sessionStorage.setItem('cachedNotifications', JSON.stringify(freshNotifications));
         }
 
         if (followRequestsResult.error) {
@@ -720,11 +767,31 @@ const Notifications = () => {
 
     fetchData();
 
-    // Real-time subscriptions
+    // Real-time subscriptions - handle events granularly
     const notificationsChannel = supabase
       .channel('notifications-updates')
-      .on('postgres_changes', { event: '*', schema: 'public', table: 'notifications', filter: `user_id=eq.${user.id}` }, () => {
+      .on('postgres_changes', { 
+        event: 'INSERT', 
+        schema: 'public', 
+        table: 'notifications', 
+        filter: `user_id=eq.${user.id}` 
+      }, (payload) => {
+        // Only fetch new data for INSERT events (new notifications)
+        // This won't bring back deleted ones
         fetchData();
+      })
+      .on('postgres_changes', { 
+        event: 'DELETE', 
+        schema: 'public', 
+        table: 'notifications', 
+        filter: `user_id=eq.${user.id}` 
+      }, (payload) => {
+        // For DELETE events, just ensure it's removed from local state
+        const deletedId = (payload.old as { id?: string })?.id;
+        if (deletedId) {
+          deletedIdsRef.current.add(deletedId);
+          setNotifications(prev => prev.filter(n => n.id !== deletedId));
+        }
       })
       .subscribe();
 
