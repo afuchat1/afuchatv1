@@ -978,7 +978,7 @@ const ChatRoom = () => {
   };
 
   const handleBack = () => {
-    navigate(-1);
+    navigate('/chats');
   };
 
   const handleJoinGroup = async () => {
