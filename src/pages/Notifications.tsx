@@ -394,6 +394,9 @@ const Notifications = () => {
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
   const [showClearAllConfirm, setShowClearAllConfirm] = useState(false);
   const [pendingDeleteId, setPendingDeleteId] = useState<string | null>(null);
+  
+  // Track deleted notification IDs to prevent them from reappearing
+  const deletedIdsRef = useRef<Set<string>>(new Set());
 
   const markAsRead = async () => {
     if (!user) return;
@@ -456,8 +459,22 @@ const Notifications = () => {
   const confirmDeleteNotification = async () => {
     if (!user || !pendingDeleteId) return;
     
-    // Track this ID as deleted to prevent reappearing
-    deletedIdsRef.current.add(pendingDeleteId);
+    // Find the notification and all its duplicates (same actor, type, post)
+    const targetNotification = notifications.find(n => n.id === pendingDeleteId);
+    if (!targetNotification) {
+      setPendingDeleteId(null);
+      setShowDeleteConfirm(false);
+      return;
+    }
+    
+    // Get all notification IDs that match the same deduplication key
+    const dedupeKey = `${targetNotification.actor_id}-${targetNotification.type}-${targetNotification.post_id || 'no-post'}`;
+    const idsToDelete = notifications
+      .filter(n => `${n.actor_id}-${n.type}-${n.post_id || 'no-post'}` === dedupeKey)
+      .map(n => n.id);
+    
+    // Track all IDs as deleted to prevent reappearing
+    idsToDelete.forEach(id => deletedIdsRef.current.add(id));
     
     setIsDeletingNotification(pendingDeleteId);
     setShowDeleteConfirm(false);
@@ -466,18 +483,18 @@ const Notifications = () => {
       const { error } = await supabase
         .from('notifications')
         .delete()
-        .eq('id', pendingDeleteId);
+        .in('id', idsToDelete);
 
       if (error) throw error;
 
-      setNotifications(prev => prev.filter(n => n.id !== pendingDeleteId));
-      // Update cache to exclude deleted notification
+      setNotifications(prev => prev.filter(n => !idsToDelete.includes(n.id)));
+      // Update cache to exclude deleted notifications
       const cached = sessionStorage.getItem('cachedNotifications');
       if (cached) {
         try {
           const parsed = JSON.parse(cached);
           sessionStorage.setItem('cachedNotifications', JSON.stringify(
-            parsed.filter((n: Notification) => n.id !== pendingDeleteId)
+            parsed.filter((n: Notification) => !idsToDelete.includes(n.id))
           ));
         } catch (e) {}
       }
@@ -485,7 +502,7 @@ const Notifications = () => {
     } catch (error) {
       console.error('Error deleting notification:', error);
       // Remove from tracked deleted IDs if delete failed
-      deletedIdsRef.current.delete(pendingDeleteId);
+      idsToDelete.forEach(id => deletedIdsRef.current.delete(id));
       toast.error('Failed to delete notification');
     } finally {
       setIsDeletingNotification(null);
@@ -496,26 +513,38 @@ const Notifications = () => {
   const handleDeleteSelected = async () => {
     if (!user || selectedIds.size === 0) return;
     
-    // Track all selected IDs as deleted
-    selectedIds.forEach(id => deletedIdsRef.current.add(id));
+    // Find all notification IDs including duplicates for each selected notification
+    const allIdsToDelete = new Set<string>();
+    selectedIds.forEach(selectedId => {
+      const targetNotification = notifications.find(n => n.id === selectedId);
+      if (targetNotification) {
+        const dedupeKey = `${targetNotification.actor_id}-${targetNotification.type}-${targetNotification.post_id || 'no-post'}`;
+        notifications
+          .filter(n => `${n.actor_id}-${n.type}-${n.post_id || 'no-post'}` === dedupeKey)
+          .forEach(n => allIdsToDelete.add(n.id));
+      }
+    });
+    
+    // Track all IDs as deleted
+    allIdsToDelete.forEach(id => deletedIdsRef.current.add(id));
     
     setIsClearingAll(true);
     try {
       const { error } = await supabase
         .from('notifications')
         .delete()
-        .in('id', Array.from(selectedIds));
+        .in('id', Array.from(allIdsToDelete));
 
       if (error) throw error;
 
-      setNotifications(prev => prev.filter(n => !selectedIds.has(n.id)));
+      setNotifications(prev => prev.filter(n => !allIdsToDelete.has(n.id)));
       // Update cache
       const cached = sessionStorage.getItem('cachedNotifications');
       if (cached) {
         try {
           const parsed = JSON.parse(cached);
           sessionStorage.setItem('cachedNotifications', JSON.stringify(
-            parsed.filter((n: Notification) => !selectedIds.has(n.id))
+            parsed.filter((n: Notification) => !allIdsToDelete.has(n.id))
           ));
         } catch (e) {}
       }
@@ -525,7 +554,7 @@ const Notifications = () => {
     } catch (error) {
       console.error('Error deleting selected notifications:', error);
       // Remove from tracked deleted IDs if delete failed
-      selectedIds.forEach(id => deletedIdsRef.current.delete(id));
+      allIdsToDelete.forEach(id => deletedIdsRef.current.delete(id));
       toast.error('Failed to delete notifications');
     } finally {
       setIsClearingAll(false);
@@ -685,9 +714,6 @@ const Notifications = () => {
       setIsProcessingRequest(null);
     }
   };
-
-  // Track deleted notification IDs to prevent them from reappearing
-  const deletedIdsRef = useRef<Set<string>>(new Set());
 
   useEffect(() => {
     if (!user) return;
