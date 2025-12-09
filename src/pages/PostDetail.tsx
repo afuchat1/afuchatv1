@@ -1,4 +1,4 @@
-import { useEffect, useState, useRef } from 'react';
+import React, { useEffect, useState, useRef } from 'react';
 import { useParams, useNavigate, Link } from 'react-router-dom';
 import { supabase } from '@/integrations/supabase/client';
 import { CustomLoader } from '@/components/ui/CustomLoader';
@@ -36,27 +36,75 @@ const VerifiedBadge = ({ isVerified, isOrgVerified }: { isVerified?: boolean; is
 // --- END: Verified Badge Components ---
 
 
-// --- Utility to render text with clickable mentions ---
+// --- Utility to render text with clickable mentions, hashtags, and links ---
 const renderContentWithMentions = (content: string) => {
   // Ensure content is a string
   const safeContent = typeof content === 'string' ? content : String(content || '');
-  const parts = safeContent.split(/(@[\w]+)/g);
-
-  return parts.map((part, index) => {
-    if (part.startsWith('@')) {
-      const handle = part.substring(1); 
-      return (
+  
+  // Parse mentions, hashtags, and links (including plain domains)
+  const combinedRegex = /(@[a-zA-Z0-9_-]+|#\w+|https?:\/\/[^\s]+|(?:www\.)?[a-zA-Z0-9-]+\.[a-zA-Z]{2,}(?:\/[^\s]*)?)/g;
+  const parts: React.ReactNode[] = [];
+  let lastIndex = 0;
+  
+  const matches = Array.from(safeContent.matchAll(combinedRegex));
+  
+  matches.forEach((match, idx) => {
+    const matchText = match[0];
+    const index = match.index!;
+    
+    if (index > lastIndex) {
+      parts.push(safeContent.substring(lastIndex, index));
+    }
+    
+    if (matchText.startsWith('@')) {
+      const handle = matchText.substring(1);
+      parts.push(
         <Link 
-          key={index} 
-          to={`/profile/${handle}`} 
+          key={`mention-${idx}`} 
+          to={`/${handle}`} 
           className="text-primary hover:underline font-semibold"
+          onClick={(e) => e.stopPropagation()}
         >
-          {part}
+          {matchText}
         </Link>
       );
+    } else if (matchText.startsWith('#')) {
+      const hashtag = matchText.substring(1);
+      parts.push(
+        <Link
+          key={`hashtag-${idx}`}
+          to={`/search?q=${encodeURIComponent(hashtag)}`}
+          className="text-primary hover:underline font-medium"
+          onClick={(e) => e.stopPropagation()}
+        >
+          {matchText}
+        </Link>
+      );
+    } else {
+      // It's a URL (either with http/https or a plain domain)
+      const url = matchText.startsWith('http') ? matchText : `https://${matchText}`;
+      parts.push(
+        <a
+          key={`url-${idx}`}
+          href={url}
+          target="_blank"
+          rel="noopener noreferrer"
+          className="text-primary hover:underline"
+          onClick={(e) => e.stopPropagation()}
+        >
+          {matchText.length > 50 ? matchText.substring(0, 50) + '...' : matchText}
+        </a>
+      );
     }
-    return part;
+    
+    lastIndex = index + matchText.length;
   });
+
+  if (lastIndex < safeContent.length) {
+    parts.push(safeContent.substring(lastIndex));
+  }
+  
+  return <>{parts}</>;
 };
 
 // --- Reply Interface (NEW) ---

@@ -23,9 +23,14 @@ export const LinkPreviewCard = ({
   const safeSiteName = extractText(site_name);
   const safeImageUrl = extractText(image_url);
 
+  // Ensure URL has proper protocol
+  const normalizedUrl = url.startsWith('http://') || url.startsWith('https://') 
+    ? url 
+    : `https://${url}`;
+
   return (
     <a
-      href={url}
+      href={normalizedUrl}
       target="_blank"
       rel="noopener noreferrer"
       className="block no-underline"
