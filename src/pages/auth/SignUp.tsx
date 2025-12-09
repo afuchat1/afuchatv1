@@ -1,11 +1,11 @@
 import { useState, useEffect } from 'react';
-import { useNavigate, Link, Navigate } from 'react-router-dom';
+import { useNavigate, Link, Navigate, useLocation } from 'react-router-dom';
 import { supabase } from '@/integrations/supabase/client';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { toast } from 'sonner';
-import { Eye, EyeOff, ArrowLeft, ChevronRight, Search, User, Briefcase, AlertTriangle, Gift, Crown } from 'lucide-react';
+import { Eye, EyeOff, ArrowLeft, ChevronRight, Search, User, Briefcase, AlertTriangle, Gift, Crown, Link2 } from 'lucide-react';
 import Logo from '@/components/Logo';
 import { emailSchema } from '@/lib/validation';
 import { countries } from '@/lib/countries';
@@ -37,6 +37,7 @@ const SignUp = () => {
 
 const SignUpContent = () => {
   const navigate = useNavigate();
+  const location = useLocation();
   const [loading, setLoading] = useState(false);
   const [step, setStep] = useState(1); // 1: Country, 2: Account Type, 3: Registration Method, 4: Email/Password
   const [country, setCountry] = useState('');
@@ -48,6 +49,10 @@ const SignUpContent = () => {
   const [showPassword, setShowPassword] = useState(false);
   const [googleLoading, setGoogleLoading] = useState(false);
   const [githubLoading, setGithubLoading] = useState(false);
+
+  // Check if linking account from existing user
+  const isLinkingAccount = (location.state as any)?.linkingAccount === true;
+  const linkToUserId = localStorage.getItem('afuchat_link_to_user');
 
   // Password validation states
   const hasSpecialChar = /[!@#$%^&*\-=+]/.test(password);
@@ -226,6 +231,10 @@ const SignUpContent = () => {
 
   const handleBack = () => {
     if (step === 1) {
+      // Clear linking state if user cancels
+      if (isLinkingAccount) {
+        localStorage.removeItem('afuchat_link_to_user');
+      }
       navigate('/');
     } else if (step === 4) {
       setStep(3); // Go back to registration method from email/password
@@ -238,8 +247,27 @@ const SignUpContent = () => {
 
   return (
     <div className="min-h-screen flex flex-col bg-background">
+      {/* Linking Account Banner */}
+      {isLinkingAccount && linkToUserId && (
+        <div className="bg-gradient-to-r from-blue-500/20 to-blue-400/10 border-b border-blue-500/20 p-4">
+          <div className="flex items-center gap-3">
+            <div className="h-10 w-10 rounded-full bg-blue-500/20 flex items-center justify-center">
+              <Link2 className="h-5 w-5 text-blue-500" />
+            </div>
+            <div className="flex-1">
+              <p className="text-sm font-medium text-foreground">
+                Creating linked account
+              </p>
+              <p className="text-xs text-muted-foreground">
+                This account will be linked to your existing account after setup
+              </p>
+            </div>
+          </div>
+        </div>
+      )}
+
       {/* Referral Banner */}
-      {referralCode && (
+      {referralCode && !isLinkingAccount && (
         <div className="bg-gradient-to-r from-primary/20 to-primary/10 border-b border-primary/20 p-4">
           <div className="flex items-center gap-3">
             <div className="h-10 w-10 rounded-full bg-primary/20 flex items-center justify-center">
@@ -263,7 +291,9 @@ const SignUpContent = () => {
         <button onClick={handleBack} className="text-foreground">
           <ArrowLeft className="h-6 w-6" />
         </button>
-        <span className="text-lg font-medium">Create account</span>
+        <span className="text-lg font-medium">
+          {isLinkingAccount ? 'Create linked account' : 'Create account'}
+        </span>
       </div>
 
       {/* Progress Bar */}
