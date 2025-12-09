@@ -132,7 +132,7 @@ const Support = () => {
     },
     {
       question: "How does the referral system work?",
-      answer: "Share your unique referral link (found in Settings > Referral). When someone signs up using your link and completes their profile, both of you earn bonus Nexa. Track your referrals and rewards in your profile."
+      answer: "Share your unique referral link (found in your Profile > Referrals tab). When someone signs up using your link, you both receive 1 week free Premium subscription! Plus, you earn 500 Nexa for each successful referral. Track your referrals and rewards in your profile."
     },
     {
       question: "Can I schedule posts for later?",

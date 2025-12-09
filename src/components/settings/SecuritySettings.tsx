@@ -4,13 +4,15 @@ import { useAuth } from '@/contexts/AuthContext';
 import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Switch } from '@/components/ui/switch';
-import { Lock, Shield, Eye, EyeOff, UserX, Clock, Users } from 'lucide-react';
+import { Lock, Shield, Eye, EyeOff, UserX, Clock, Users, Crown } from 'lucide-react';
 import { toast } from 'sonner';
 import { supabase } from '@/integrations/supabase/client';
+import { usePremiumStatus } from '@/hooks/usePremiumStatus';
 
 export const SecuritySettings = () => {
   const navigate = useNavigate();
   const { user } = useAuth();
+  const { isPremium } = usePremiumStatus();
   const [privateAccount, setPrivateAccount] = useState(false);
   const [showOnlineStatus, setShowOnlineStatus] = useState(true);
   const [showReadReceipts, setShowReadReceipts] = useState(true);
@@ -158,12 +160,29 @@ export const SecuritySettings = () => {
               <div className="flex items-center gap-2 mb-1">
                 <Users className="h-4 w-4 text-muted-foreground" />
                 <p className="font-semibold">Hide Following List</p>
+                {!isPremium && (
+                  <span className="flex items-center gap-1 text-xs bg-gradient-to-r from-amber-500 to-orange-500 text-white px-2 py-0.5 rounded-full">
+                    <Crown className="h-3 w-3" />
+                    Premium
+                  </span>
+                )}
               </div>
               <p className="text-sm text-muted-foreground">Hide who you follow from other users</p>
             </div>
             <Switch
               checked={hideFollowingList}
+              disabled={!isPremium}
               onCheckedChange={(checked) => {
+                if (!isPremium) {
+                  toast.error('Premium feature', {
+                    description: 'Upgrade to Premium to hide your following list',
+                    action: {
+                      label: 'Upgrade',
+                      onClick: () => navigate('/premium'),
+                    },
+                  });
+                  return;
+                }
                 setHideFollowingList(checked);
                 handlePrivacyToggle('hide_following_list', checked);
               }}
