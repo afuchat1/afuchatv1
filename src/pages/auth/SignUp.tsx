@@ -1,11 +1,11 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useNavigate, Link, Navigate } from 'react-router-dom';
 import { supabase } from '@/integrations/supabase/client';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { toast } from 'sonner';
-import { Eye, EyeOff, ArrowLeft, ChevronRight, Search, User, Briefcase, AlertTriangle } from 'lucide-react';
+import { Eye, EyeOff, ArrowLeft, ChevronRight, Search, User, Briefcase, AlertTriangle, Gift, Crown } from 'lucide-react';
 import Logo from '@/components/Logo';
 import { emailSchema } from '@/lib/validation';
 import { countries } from '@/lib/countries';
@@ -58,6 +58,28 @@ const SignUpContent = () => {
   // Capture referral code from URL
   const urlParams = new URLSearchParams(window.location.search);
   const referralCode = urlParams.get('ref');
+  const [referrerName, setReferrerName] = useState<string | null>(null);
+
+  // Fetch referrer name on mount
+  useEffect(() => {
+    const fetchReferrerName = async () => {
+      if (!referralCode) return;
+      
+      try {
+        const { data, error } = await supabase.rpc('get_referrer_name', {
+          referral_code_input: referralCode
+        });
+        
+        if (data && !error && typeof data === 'string') {
+          setReferrerName(data);
+        }
+      } catch (error) {
+        console.error('Error fetching referrer:', error);
+      }
+    };
+    
+    fetchReferrerName();
+  }, [referralCode]);
 
   const filteredCountries = countries.filter(c => 
     c.toLowerCase().includes(countrySearch.toLowerCase())
@@ -192,6 +214,26 @@ const SignUpContent = () => {
 
   return (
     <div className="min-h-screen flex flex-col bg-background">
+      {/* Referral Banner */}
+      {referralCode && (
+        <div className="bg-gradient-to-r from-primary/20 to-primary/10 border-b border-primary/20 p-4">
+          <div className="flex items-center gap-3">
+            <div className="h-10 w-10 rounded-full bg-primary/20 flex items-center justify-center">
+              <Gift className="h-5 w-5 text-primary" />
+            </div>
+            <div className="flex-1">
+              <p className="text-sm font-medium text-foreground">
+                {referrerName ? `Invited by ${referrerName}` : 'You\'re using a referral link!'}
+              </p>
+              <p className="text-xs text-muted-foreground flex items-center gap-1">
+                <Crown className="h-3 w-3 text-amber-500" />
+                You'll get 1 week free Premium upon signup
+              </p>
+            </div>
+          </div>
+        </div>
+      )}
+
       {/* Header */}
       <div className="flex items-center gap-4 p-4">
         <button onClick={handleBack} className="text-foreground">

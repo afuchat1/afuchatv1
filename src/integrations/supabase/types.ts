@@ -2887,14 +2887,14 @@ export type Database = {
           {
             foreignKeyName: "user_subscriptions_user_id_fkey"
             columns: ["user_id"]
-            isOneToOne: false
+            isOneToOne: true
             referencedRelation: "profiles"
             referencedColumns: ["id"]
           },
           {
             foreignKeyName: "user_subscriptions_user_id_fkey"
             columns: ["user_id"]
-            isOneToOne: false
+            isOneToOne: true
             referencedRelation: "public_profiles"
             referencedColumns: ["id"]
           },
@@ -3175,6 +3175,10 @@ export type Database = {
           website_url: string
           xp: number
         }[]
+      }
+      get_referrer_name: {
+        Args: { referral_code_input: string }
+        Returns: string
       }
       get_requesting_user: { Args: never; Returns: string }
       get_safe_profile_fields: {

@@ -126,11 +126,13 @@ const CompleteProfileContent = ({ user }: CompleteProfileContentProps) => {
     loadExistingProfile();
   }, [user]);
 
-  // Process referral reward
-  const processReferral = async () => {
-    if (!referralCode || !user) return;
+  // Process referral reward - returns true if successful
+  const processReferral = async (): Promise<boolean> => {
+    if (!referralCode || !user) return false;
     
     try {
+      console.log('Processing referral with code:', referralCode, 'for user:', user.id);
+      
       // Call the process_referral_reward function
       const { data, error } = await supabase.rpc('process_referral_reward', {
         referral_code_input: referralCode,
@@ -139,8 +141,10 @@ const CompleteProfileContent = ({ user }: CompleteProfileContentProps) => {
       
       if (error) {
         console.error('Referral processing error:', error);
-        return;
+        return false;
       }
+      
+      console.log('Referral result:', data);
       
       // The function returns an array with {success, referrer_name}
       const result = Array.isArray(data) ? data[0] : data;
@@ -150,17 +154,20 @@ const CompleteProfileContent = ({ user }: CompleteProfileContentProps) => {
           setReferrerName(result.referrer_name);
         }
         
-        setShowReferralWelcome(true);
-        
         // Clear the referral code from session storage
         sessionStorage.removeItem('pendingSignupData');
         
         toast.success('Welcome! You received 1 week free Premium!', {
           description: 'Thank you for joining through a referral link.',
         });
+        
+        return true;
       }
+      
+      return false;
     } catch (error) {
       console.error('Error processing referral:', error);
+      return false;
     }
   };
 
@@ -335,13 +342,18 @@ const CompleteProfileContent = ({ user }: CompleteProfileContentProps) => {
       if (error) throw error;
 
       // Process referral if user came via referral link
+      let referralSuccess = false;
       if (referralCode) {
-        await processReferral();
+        referralSuccess = await processReferral();
       }
 
-      if (showReferralWelcome) {
-        // Let the referral welcome banner show, then redirect
-        return;
+      if (referralSuccess) {
+        // Show referral welcome banner
+        setShowReferralWelcome(true);
+        // Redirect after 4 seconds
+        setTimeout(() => {
+          window.location.href = '/home';
+        }, 4000);
       } else if (shouldReward) {
         setShowRewardModal(true);
         setTimeout(() => {
