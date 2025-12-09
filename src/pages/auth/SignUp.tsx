@@ -156,7 +156,7 @@ const SignUpContent = () => {
     }
   };
 
-  // Store signup data in sessionStorage for OAuth flows
+  // Store signup data in localStorage for OAuth flows (sessionStorage doesn't persist across redirects)
   const storeSignupDataForOAuth = () => {
     const signupData = {
       country,
@@ -164,17 +164,23 @@ const SignUpContent = () => {
       referral_code: referralCode || null,
     };
     console.log('Storing signup data for OAuth:', signupData);
-    sessionStorage.setItem('pendingSignupData', JSON.stringify(signupData));
+    // Use localStorage since sessionStorage is lost after OAuth redirect
+    localStorage.setItem('pendingSignupData', JSON.stringify(signupData));
   };
 
   const handleGoogleSignUp = async () => {
     setGoogleLoading(true);
     storeSignupDataForOAuth();
     try {
+      // Include referral code in redirect URL as backup
+      const redirectUrl = referralCode 
+        ? `${window.location.origin}/complete-profile?ref=${referralCode}`
+        : `${window.location.origin}/complete-profile`;
+      
       const { error } = await supabase.auth.signInWithOAuth({
         provider: 'google',
         options: {
-          redirectTo: `${window.location.origin}/complete-profile`,
+          redirectTo: redirectUrl,
         },
       });
       if (error) throw error;
@@ -188,10 +194,15 @@ const SignUpContent = () => {
     setGithubLoading(true);
     storeSignupDataForOAuth();
     try {
+      // Include referral code in redirect URL as backup
+      const redirectUrl = referralCode 
+        ? `${window.location.origin}/complete-profile?ref=${referralCode}`
+        : `${window.location.origin}/complete-profile`;
+      
       const { error } = await supabase.auth.signInWithOAuth({
         provider: 'github',
         options: {
-          redirectTo: `${window.location.origin}/complete-profile`,
+          redirectTo: redirectUrl,
         },
       });
       if (error) throw error;

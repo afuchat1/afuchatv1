@@ -66,20 +66,36 @@ const CompleteProfileContent = ({ user }: CompleteProfileContentProps) => {
     const checkReferralCode = () => {
       let foundCode: string | null = null;
       
-      // Check session storage first (from OAuth flow)
-      const pendingData = sessionStorage.getItem('pendingSignupData');
-      console.log('Pending signup data from sessionStorage:', pendingData);
+      // Check localStorage first (from OAuth flow - sessionStorage doesn't persist)
+      const pendingDataLocal = localStorage.getItem('pendingSignupData');
+      console.log('Pending signup data from localStorage:', pendingDataLocal);
       
-      if (pendingData) {
+      if (pendingDataLocal) {
         try {
-          const parsed = JSON.parse(pendingData);
-          console.log('Parsed pending data:', parsed);
+          const parsed = JSON.parse(pendingDataLocal);
+          console.log('Parsed pending data from localStorage:', parsed);
           if (parsed.referral_code) {
             foundCode = parsed.referral_code;
-            console.log('Found referral code in sessionStorage:', foundCode);
+            console.log('Found referral code in localStorage:', foundCode);
           }
         } catch (e) {
-          console.error('Error parsing pending signup data:', e);
+          console.error('Error parsing pending signup data from localStorage:', e);
+        }
+      }
+      
+      // Also check sessionStorage as backup
+      if (!foundCode) {
+        const pendingDataSession = sessionStorage.getItem('pendingSignupData');
+        if (pendingDataSession) {
+          try {
+            const parsed = JSON.parse(pendingDataSession);
+            if (parsed.referral_code) {
+              foundCode = parsed.referral_code;
+              console.log('Found referral code in sessionStorage:', foundCode);
+            }
+          } catch (e) {
+            console.error('Error parsing pending signup data from sessionStorage:', e);
+          }
         }
       }
       
@@ -140,20 +156,47 @@ const CompleteProfileContent = ({ user }: CompleteProfileContentProps) => {
 
   // Process referral reward - returns true if successful
   const processReferral = async (): Promise<boolean> => {
-    // Get code from state OR directly from sessionStorage as backup
+    // Get code from state OR directly from storage as backup
     let codeToUse = referralCode;
     
     if (!codeToUse) {
-      const pendingData = sessionStorage.getItem('pendingSignupData');
-      if (pendingData) {
+      // Try localStorage first
+      const pendingDataLocal = localStorage.getItem('pendingSignupData');
+      if (pendingDataLocal) {
         try {
-          const parsed = JSON.parse(pendingData);
+          const parsed = JSON.parse(pendingDataLocal);
           if (parsed.referral_code) {
             codeToUse = parsed.referral_code;
+            console.log('Got referral code from localStorage:', codeToUse);
           }
         } catch (e) {
-          console.error('Error parsing pending signup data in processReferral:', e);
+          console.error('Error parsing localStorage:', e);
         }
+      }
+    }
+    
+    if (!codeToUse) {
+      // Try sessionStorage as last resort
+      const pendingDataSession = sessionStorage.getItem('pendingSignupData');
+      if (pendingDataSession) {
+        try {
+          const parsed = JSON.parse(pendingDataSession);
+          if (parsed.referral_code) {
+            codeToUse = parsed.referral_code;
+            console.log('Got referral code from sessionStorage:', codeToUse);
+          }
+        } catch (e) {
+          console.error('Error parsing sessionStorage:', e);
+        }
+      }
+    }
+    
+    if (!codeToUse) {
+      // Try URL params as final fallback
+      const urlParams = new URLSearchParams(window.location.search);
+      codeToUse = urlParams.get('ref');
+      if (codeToUse) {
+        console.log('Got referral code from URL:', codeToUse);
       }
     }
     
@@ -186,7 +229,8 @@ const CompleteProfileContent = ({ user }: CompleteProfileContentProps) => {
           setReferrerName(result.referrer_name);
         }
         
-        // Clear the referral code from session storage
+        // Clear the referral code from both storages
+        localStorage.removeItem('pendingSignupData');
         sessionStorage.removeItem('pendingSignupData');
         
         toast.success('Welcome! You received 1 week free Premium!', {
