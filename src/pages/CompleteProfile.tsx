@@ -429,6 +429,25 @@ const CompleteProfileContent = ({ user }: CompleteProfileContentProps) => {
       // Process referral - processReferral checks both state and sessionStorage
       const referralSuccess = await processReferral();
 
+      // Check if this account should be linked to another account
+      const linkToUserId = localStorage.getItem('afuchat_link_to_user');
+      if (linkToUserId && linkToUserId !== user.id) {
+        try {
+          // Create bidirectional links
+          await supabase
+            .from('linked_accounts')
+            .upsert([
+              { primary_user_id: linkToUserId, linked_user_id: user.id },
+              { primary_user_id: user.id, linked_user_id: linkToUserId }
+            ], { onConflict: 'primary_user_id,linked_user_id' });
+          
+          localStorage.removeItem('afuchat_link_to_user');
+          toast.success('Account created and linked successfully!');
+        } catch (linkError) {
+          console.error('Error linking accounts:', linkError);
+        }
+      }
+
       if (referralSuccess) {
         // Show referral welcome banner
         setShowReferralWelcome(true);

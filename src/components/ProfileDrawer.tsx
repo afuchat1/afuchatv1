@@ -186,9 +186,45 @@ export function ProfileDrawer({ trigger }: ProfileDrawerProps) {
   };
 
   const handleSwitchAccount = async (linkedUserId: string) => {
-    // For now, show a toast - full session switching would require storing credentials
-    toast.info('Switching accounts requires re-authentication. Use the accounts drawer to manage.');
-    setAccountsDrawerOpen(true);
+    try {
+      // Fetch the linked account's profile for display
+      const linkedAccount = linkedAccounts.find(a => a.linked_user_id === linkedUserId);
+      
+      // Store current user as linked account for the target user (bidirectional)
+      // This allows switching back
+      if (user) {
+        const { error: linkBackError } = await supabase
+          .from('linked_accounts')
+          .upsert({
+            primary_user_id: linkedUserId,
+            linked_user_id: user.id,
+          }, { onConflict: 'primary_user_id,linked_user_id' });
+        
+        if (linkBackError) {
+          console.error('Error creating reverse link:', linkBackError);
+        }
+      }
+
+      // Store current session info for potential return
+      localStorage.setItem('afuchat_previous_user', user?.id || '');
+      
+      // Sign out current user and redirect to sign in with pre-filled info
+      await supabase.auth.signOut();
+      
+      // Navigate to signin with the linked account info
+      toast.success(`Switching to @${linkedAccount?.profile?.handle || 'account'}...`);
+      setAccountsDrawerOpen(false);
+      setOpen(false);
+      navigate('/auth/signin', { 
+        state: { 
+          switchingTo: linkedAccount?.profile?.handle,
+          linkedUserId 
+        } 
+      });
+    } catch (error) {
+      console.error('Switch account error:', error);
+      toast.error('Failed to switch account');
+    }
   };
 
   const hasLinkedAccount = linkedAccounts.length > 0;
@@ -513,9 +549,16 @@ export function ProfileDrawer({ trigger }: ProfileDrawerProps) {
                 className="w-full justify-center py-6 text-base"
                 disabled={hasLinkedAccount}
                 onClick={() => {
+                  // Store current user ID to auto-link after signup
+                  if (user) {
+                    localStorage.setItem('afuchat_link_to_user', user.id);
+                  }
                   setAccountsDrawerOpen(false);
                   setOpen(false);
-                  navigate('/auth/signup');
+                  // Sign out current user first so they can create new account
+                  supabase.auth.signOut().then(() => {
+                    navigate('/auth/signup', { state: { linkingAccount: true } });
+                  });
                 }}
               >
                 <Plus className="h-5 w-5 mr-2" />
