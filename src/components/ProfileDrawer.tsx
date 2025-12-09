@@ -309,22 +309,6 @@ export function ProfileDrawer({ trigger }: ProfileDrawerProps) {
             </span>
           </button>
 
-          {/* Sign Out */}
-          {user && (
-            <>
-              <Separator className="my-4" />
-              <button
-                onClick={async () => {
-                  await supabase.auth.signOut();
-                  setOpen(false);
-                  navigate('/');
-                }}
-                className="flex items-center gap-4 w-full px-4 py-3 text-destructive hover:bg-destructive/10 transition-colors rounded-lg"
-              >
-                <span className="text-lg font-medium">Sign Out</span>
-              </button>
-            </>
-          )}
 
           {/* Sign In for guests */}
           {!user && (
