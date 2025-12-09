@@ -103,7 +103,7 @@ export const QuotedPostCard: React.FC<QuotedPostCardProps> = ({ quotedPost, clas
 
       {/* Image preview (single image, small) */}
       {images.length > 0 && (
-        <div className="mt-2 rounded-xl overflow-hidden max-h-32">
+        <div className="mt-2 rounded-xl overflow-hidden max-h-32 relative">
           <img 
             src={images[0].image_url} 
             alt={images[0].alt_text || 'Quoted post image'}
