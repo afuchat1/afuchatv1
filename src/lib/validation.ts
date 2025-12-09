@@ -21,12 +21,25 @@ export const postSchema = z.string()
   .min(1, 'Post cannot be empty')
   .max(280, 'Post must be 280 characters or less');
 
-// Handle validation
+// Handle validation - normalized to lowercase for case-insensitive matching
 export const handleSchema = z.string()
   .trim()
   .min(4, 'Username must be at least 4 characters')
   .max(20, 'Username must be less than 20 characters')
+  .regex(/^[a-zA-Z0-9_]+$/, 'Username can only contain letters, numbers, and underscores')
+  .transform(val => val.toLowerCase());
+
+// Raw handle validation without transformation (for display purposes)
+export const handleSchemaRaw = z.string()
+  .trim()
+  .min(4, 'Username must be at least 4 characters')
+  .max(20, 'Username must be less than 20 characters')
   .regex(/^[a-zA-Z0-9_]+$/, 'Username can only contain letters, numbers, and underscores');
+
+// Helper to normalize username for lookups
+export const normalizeUsername = (username: string): string => {
+  return username.trim().toLowerCase();
+};
 
 // Display name validation
 export const displayNameSchema = z.string()

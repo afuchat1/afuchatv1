@@ -168,14 +168,17 @@ const EditProfile: React.FC = () => {
   const handleSave = async () => {
     if (!user) return;
 
-    if (!profile.display_name.trim() || !profile.handle.trim()) {
+    // Normalize handle to lowercase
+    const normalizedHandle = profile.handle.toLowerCase().trim();
+
+    if (!profile.display_name.trim() || !normalizedHandle) {
         toast.error("Display Name and Handle are required.");
         return;
     }
     
     // Validate inputs
     try {
-      handleSchema.parse(profile.handle);
+      handleSchema.parse(normalizedHandle);
       displayNameSchema.parse(profile.display_name);
       if (profile.bio) bioSchema.parse(profile.bio);
     } catch (error: any) {
@@ -185,10 +188,24 @@ const EditProfile: React.FC = () => {
     
     setSaving(true);
     try {
+      // Check username uniqueness (case-insensitive)
+      const { data: existingUser } = await supabase
+        .from('profiles')
+        .select('id')
+        .ilike('handle', normalizedHandle)
+        .neq('id', user.id)
+        .maybeSingle();
+      
+      if (existingUser) {
+        toast.error('Username is already taken (usernames are case-insensitive)');
+        setSaving(false);
+        return;
+      }
+      
       const updateData: ProfileUpdate = {
         id: user.id,
         display_name: profile.display_name.trim(),
-        handle: profile.handle.trim(),
+        handle: normalizedHandle,
         bio: profile.bio.trim() || null,
         website_url: profile.website_url.trim() || null,
         is_private: profile.is_private,

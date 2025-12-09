@@ -167,9 +167,28 @@ const CompleteProfileContent = ({ user }: CompleteProfileContentProps) => {
     
     if (!user) return;
     
+    // Normalize handle to lowercase
+    const normalizedHandle = formData.handle.toLowerCase().trim();
+    
     // Validation - require essential fields including country
-    if (!formData.display_name || !formData.handle) {
+    if (!formData.display_name || !normalizedHandle) {
       toast.error('Display name and username are required');
+      return;
+    }
+    
+    // Validate handle format
+    if (normalizedHandle.length < 4) {
+      toast.error('Username must be at least 4 characters');
+      return;
+    }
+    
+    if (normalizedHandle.length > 20) {
+      toast.error('Username must be less than 20 characters');
+      return;
+    }
+    
+    if (!/^[a-z0-9_]+$/.test(normalizedHandle)) {
+      toast.error('Username can only contain letters, numbers, and underscores');
       return;
     }
     
@@ -188,6 +207,19 @@ const CompleteProfileContent = ({ user }: CompleteProfileContentProps) => {
     setLoading(true);
 
     try {
+      // Check username uniqueness (case-insensitive)
+      const { data: existingUser } = await supabase
+        .from('profiles')
+        .select('id')
+        .ilike('handle', normalizedHandle)
+        .neq('id', user.id)
+        .maybeSingle();
+      
+      if (existingUser) {
+        toast.error('Username is already taken (usernames are case-insensitive)');
+        setLoading(false);
+        return;
+      }
       // Upload avatar only if new file selected
       let avatarUrl = existingAvatarUrl;
       if (avatarFile) {
@@ -210,10 +242,10 @@ const CompleteProfileContent = ({ user }: CompleteProfileContentProps) => {
       const isFullyCompleted = formData.phone_number && formData.country;
       const shouldReward = isFullyCompleted && !profile?.profile_completion_rewarded;
 
-      // Update profile
+      // Update profile with normalized handle
       const updateData: any = {
-        display_name: formData.display_name,
-        handle: formData.handle,
+        display_name: formData.display_name.trim(),
+        handle: normalizedHandle,
         avatar_url: avatarUrl,
       };
 
