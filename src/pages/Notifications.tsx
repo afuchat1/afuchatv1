@@ -2,10 +2,12 @@ import { useEffect, useState } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/contexts/AuthContext';
 import { CustomLoader } from '@/components/ui/CustomLoader';
-import { Link } from 'react-router-dom';
-import { Heart, MessageSquare, UserPlus } from 'lucide-react';
+import { Link, useNavigate } from 'react-router-dom';
+import { Heart, MessageSquare, UserPlus, Gift, Check, X, Eye, UserCheck, UserX } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { toast } from 'sonner';
+import { Button } from '@/components/ui/button';
+import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 
 const TwitterVerifiedBadge = ({ size = 'w-4 h-4' }: { size?: string }) => (
   <svg viewBox="0 0 22 22" xmlns="http://www.w3.org/2000/svg" className={`${size} ml-1`}>
@@ -28,12 +30,14 @@ const VerifiedBadge = ({ isVerified, isOrgVerified }: { isVerified?: boolean; is
 export interface Notification {
   id: string;
   created_at: string;
-  type: 'new_follower' | 'new_like' | 'new_reply' | 'new_mention' | 'gift';
+  type: 'new_follower' | 'new_like' | 'new_reply' | 'new_mention' | 'gift' | 'follow_request';
   is_read: boolean;
-  post_id: string;
+  post_id: string | null;
+  actor_id: string | null;
   actor: {
     display_name: string;
     handle: string;
+    avatar_url?: string;
     is_verified?: boolean;
     is_organization_verified?: boolean;
   };
@@ -42,71 +46,253 @@ export interface Notification {
   };
 }
 
-const NotificationRow = ({ notification }: { notification: Notification }) => {
-  const { actor, post, type, created_at } = notification;
+interface FollowRequest {
+  id: string;
+  requester_id: string;
+  status: string;
+  created_at: string;
+  requester: {
+    display_name: string;
+    handle: string;
+    avatar_url?: string;
+    is_verified?: boolean;
+    is_organization_verified?: boolean;
+  };
+}
+
+interface NotificationRowProps {
+  notification: Notification;
+  onFollowBack: (actorId: string, handle: string) => void;
+  isFollowingBack: string | null;
+}
+
+const NotificationRow = ({ notification, onFollowBack, isFollowingBack }: NotificationRowProps) => {
+  const navigate = useNavigate();
+  const { actor, post, type, created_at, post_id, actor_id } = notification;
 
   const renderIcon = () => {
     switch (type) {
       case 'new_like':
-        return <Heart className="h-5 w-5 text-red-500" />;
+        return <Heart className="h-5 w-5 text-red-500 fill-red-500" />;
       case 'new_reply':
+      case 'new_mention':
         return <MessageSquare className="h-5 w-5 text-blue-500" />;
       case 'new_follower':
         return <UserPlus className="h-5 w-5 text-green-500" />;
+      case 'gift':
+        return <Gift className="h-5 w-5 text-yellow-500" />;
       default:
         return null;
     }
   };
 
   const renderMessage = () => {
-    const ActorLink = (
-      <Link 
-        to={`/profile/${actor.handle}`} 
-        className="font-semibold hover:underline flex items-center gap-1"
-        onClick={(e) => e.stopPropagation()}
-      >
-        {actor.display_name}
-        <VerifiedBadge isVerified={actor.is_verified} isOrgVerified={actor.is_organization_verified} />
-      </Link>
-    );
-
     switch (type) {
       case 'new_like':
-        return <div className="flex flex-wrap items-center gap-1">{ActorLink} liked your post</div>;
+        return <span><span className="font-semibold">{actor.display_name}</span> liked your post</span>;
       case 'new_reply':
-        return <div className="flex flex-wrap items-center gap-1">{ActorLink} replied to your post</div>;
+        return <span><span className="font-semibold">{actor.display_name}</span> replied to your post</span>;
+      case 'new_mention':
+        return <span><span className="font-semibold">{actor.display_name}</span> mentioned you</span>;
       case 'new_follower':
-        return <div className="flex flex-wrap items-center gap-1">{ActorLink} started following you</div>;
+        return <span><span className="font-semibold">{actor.display_name}</span> started following you</span>;
+      case 'gift':
+        return <span><span className="font-semibold">{actor.display_name}</span> sent you a gift</span>;
       default:
         return 'New notification';
+    }
+  };
+
+  const renderActionButtons = () => {
+    switch (type) {
+      case 'new_like':
+      case 'new_reply':
+      case 'new_mention':
+        return (
+          <div className="flex gap-2 mt-2">
+            <Button
+              size="sm"
+              variant="outline"
+              className="h-8 text-xs"
+              onClick={(e) => {
+                e.stopPropagation();
+                if (post_id) navigate(`/post/${post_id}`);
+              }}
+            >
+              <Eye className="h-3.5 w-3.5 mr-1" />
+              View Post
+            </Button>
+          </div>
+        );
+      case 'new_follower':
+        return (
+          <div className="flex gap-2 mt-2">
+            <Button
+              size="sm"
+              variant="outline"
+              className="h-8 text-xs"
+              onClick={(e) => {
+                e.stopPropagation();
+                navigate(`/profile/${actor.handle}`);
+              }}
+            >
+              <Eye className="h-3.5 w-3.5 mr-1" />
+              View Profile
+            </Button>
+            <Button
+              size="sm"
+              className="h-8 text-xs"
+              disabled={isFollowingBack === actor_id}
+              onClick={(e) => {
+                e.stopPropagation();
+                if (actor_id) onFollowBack(actor_id, actor.handle);
+              }}
+            >
+              <UserPlus className="h-3.5 w-3.5 mr-1" />
+              {isFollowingBack === actor_id ? 'Following...' : 'Follow Back'}
+            </Button>
+          </div>
+        );
+      case 'gift':
+        return (
+          <div className="flex gap-2 mt-2">
+            <Button
+              size="sm"
+              variant="outline"
+              className="h-8 text-xs"
+              onClick={(e) => {
+                e.stopPropagation();
+                navigate(`/profile/${actor.handle}`);
+              }}
+            >
+              <Eye className="h-3.5 w-3.5 mr-1" />
+              View Profile
+            </Button>
+            <Button
+              size="sm"
+              className="h-8 text-xs"
+              onClick={(e) => {
+                e.stopPropagation();
+                navigate('/gifts');
+              }}
+            >
+              <Gift className="h-3.5 w-3.5 mr-1" />
+              View Gifts
+            </Button>
+          </div>
+        );
+      default:
+        return null;
     }
   };
   
   return (
     <div className={cn(
-      "flex items-start gap-3 sm:gap-4 p-3 sm:p-4 border-b border-border relative",
+      "flex items-start gap-3 sm:gap-4 p-3 sm:p-4 border-b border-border",
       !notification.is_read && "bg-primary/5"
     )}>
-      <div className="mt-1 flex-shrink-0">{renderIcon()}</div>
+      <Link to={`/profile/${actor.handle}`} onClick={(e) => e.stopPropagation()}>
+        <Avatar className="h-10 w-10 flex-shrink-0">
+          <AvatarImage src={actor.avatar_url} alt={actor.display_name} />
+          <AvatarFallback>{actor.display_name?.charAt(0)?.toUpperCase()}</AvatarFallback>
+        </Avatar>
+      </Link>
       <div className="flex-1 min-w-0">
-        <div className="text-xs sm:text-sm text-foreground">{renderMessage()}</div>
+        <div className="flex items-center gap-2">
+          <div className="flex-shrink-0">{renderIcon()}</div>
+          <div className="text-xs sm:text-sm text-foreground flex items-center flex-wrap gap-1">
+            {renderMessage()}
+            <VerifiedBadge isVerified={actor.is_verified} isOrgVerified={actor.is_organization_verified} />
+          </div>
+        </div>
         
-        {type === 'new_follower' && (
-          <Link to={`/profile/${actor.handle}`} className="absolute inset-0" aria-label={`View ${actor.display_name}'s profile`} />
+        {post?.content && (
+          <p className="text-xs sm:text-sm text-muted-foreground mt-1 p-2 border border-border rounded-md bg-muted/30 line-clamp-2">
+            {post.content}
+          </p>
         )}
 
-        {post?.content && (
-          <Link 
-            to={`/post/${notification.post_id}`} 
-            className="block relative z-10"
-          >
-            <p className="text-xs sm:text-sm text-muted-foreground mt-1 p-2 border border-border rounded-md hover:bg-muted/50 transition-colors">
-              {post.content.substring(0, 100)}...
-            </p>
-          </Link>
-        )}
+        {renderActionButtons()}
         
-        <p className="text-[10px] sm:text-xs text-muted-foreground mt-1">
+        <p className="text-[10px] sm:text-xs text-muted-foreground mt-2">
+          {new Date(created_at).toLocaleString('en-UG')}
+        </p>
+      </div>
+    </div>
+  );
+};
+
+interface FollowRequestRowProps {
+  request: FollowRequest;
+  onApprove: (requestId: string, requesterId: string) => void;
+  onReject: (requestId: string) => void;
+  isProcessing: string | null;
+}
+
+const FollowRequestRow = ({ request, onApprove, onReject, isProcessing }: FollowRequestRowProps) => {
+  const navigate = useNavigate();
+  const { requester, created_at } = request;
+
+  return (
+    <div className="flex items-start gap-3 sm:gap-4 p-3 sm:p-4 border-b border-border bg-primary/5">
+      <Link to={`/profile/${requester.handle}`} onClick={(e) => e.stopPropagation()}>
+        <Avatar className="h-10 w-10 flex-shrink-0">
+          <AvatarImage src={requester.avatar_url} alt={requester.display_name} />
+          <AvatarFallback>{requester.display_name?.charAt(0)?.toUpperCase()}</AvatarFallback>
+        </Avatar>
+      </Link>
+      <div className="flex-1 min-w-0">
+        <div className="flex items-center gap-2">
+          <div className="flex-shrink-0">
+            <UserPlus className="h-5 w-5 text-primary" />
+          </div>
+          <div className="text-xs sm:text-sm text-foreground flex items-center flex-wrap gap-1">
+            <span><span className="font-semibold">{requester.display_name}</span> wants to follow you</span>
+            <VerifiedBadge isVerified={requester.is_verified} isOrgVerified={requester.is_organization_verified} />
+          </div>
+        </div>
+        
+        <div className="flex gap-2 mt-2">
+          <Button
+            size="sm"
+            variant="outline"
+            className="h-8 text-xs"
+            onClick={(e) => {
+              e.stopPropagation();
+              navigate(`/profile/${requester.handle}`);
+            }}
+          >
+            <Eye className="h-3.5 w-3.5 mr-1" />
+            View Profile
+          </Button>
+          <Button
+            size="sm"
+            className="h-8 text-xs bg-green-600 hover:bg-green-700"
+            disabled={isProcessing === request.id}
+            onClick={(e) => {
+              e.stopPropagation();
+              onApprove(request.id, request.requester_id);
+            }}
+          >
+            <UserCheck className="h-3.5 w-3.5 mr-1" />
+            {isProcessing === request.id ? 'Approving...' : 'Approve'}
+          </Button>
+          <Button
+            size="sm"
+            variant="destructive"
+            className="h-8 text-xs"
+            disabled={isProcessing === request.id}
+            onClick={(e) => {
+              e.stopPropagation();
+              onReject(request.id);
+            }}
+          >
+            <UserX className="h-3.5 w-3.5 mr-1" />
+            Reject
+          </Button>
+        </div>
+        
+        <p className="text-[10px] sm:text-xs text-muted-foreground mt-2">
           {new Date(created_at).toLocaleString('en-UG')}
         </p>
       </div>
@@ -117,7 +303,10 @@ const NotificationRow = ({ notification }: { notification: Notification }) => {
 const Notifications = () => {
   const { user } = useAuth();
   const [notifications, setNotifications] = useState<Notification[]>([]);
+  const [followRequests, setFollowRequests] = useState<FollowRequest[]>([]);
   const [loading, setLoading] = useState(true);
+  const [isFollowingBack, setIsFollowingBack] = useState<string | null>(null);
+  const [isProcessingRequest, setIsProcessingRequest] = useState<string | null>(null);
 
   const markAsRead = async () => {
     if (!user) return;
@@ -135,37 +324,173 @@ const Notifications = () => {
     }
   };
 
+  const handleFollowBack = async (actorId: string, handle: string) => {
+    if (!user) return;
+    
+    setIsFollowingBack(actorId);
+    try {
+      // Check if already following
+      const { data: existingFollow } = await supabase
+        .from('follows')
+        .select('id')
+        .eq('follower_id', user.id)
+        .eq('following_id', actorId)
+        .single();
+
+      if (existingFollow) {
+        toast.info(`You're already following @${handle}`);
+        setIsFollowingBack(null);
+        return;
+      }
+
+      // Check if target user is private
+      const { data: targetProfile } = await supabase
+        .from('profiles')
+        .select('is_private')
+        .eq('id', actorId)
+        .single();
+
+      if (targetProfile?.is_private) {
+        // Create follow request instead
+        const { error } = await supabase
+          .from('follow_requests')
+          .insert({
+            requester_id: user.id,
+            target_id: actorId,
+            status: 'pending'
+          });
+
+        if (error) throw error;
+        toast.success(`Follow request sent to @${handle}`);
+      } else {
+        // Direct follow
+        const { error } = await supabase
+          .from('follows')
+          .insert({
+            follower_id: user.id,
+            following_id: actorId
+          });
+
+        if (error) throw error;
+        toast.success(`You're now following @${handle}`);
+      }
+    } catch (error) {
+      console.error('Error following back:', error);
+      toast.error('Failed to follow');
+    } finally {
+      setIsFollowingBack(null);
+    }
+  };
+
+  const handleApproveRequest = async (requestId: string, requesterId: string) => {
+    if (!user) return;
+    
+    setIsProcessingRequest(requestId);
+    try {
+      // Update request status
+      const { error: updateError } = await supabase
+        .from('follow_requests')
+        .update({ 
+          status: 'approved',
+          responded_at: new Date().toISOString()
+        })
+        .eq('id', requestId);
+
+      if (updateError) throw updateError;
+
+      // Create the follow relationship
+      const { error: followError } = await supabase
+        .from('follows')
+        .insert({
+          follower_id: requesterId,
+          following_id: user.id
+        });
+
+      if (followError) throw followError;
+
+      // Remove from local state
+      setFollowRequests(prev => prev.filter(r => r.id !== requestId));
+      toast.success('Follow request approved');
+    } catch (error) {
+      console.error('Error approving request:', error);
+      toast.error('Failed to approve request');
+    } finally {
+      setIsProcessingRequest(null);
+    }
+  };
+
+  const handleRejectRequest = async (requestId: string) => {
+    setIsProcessingRequest(requestId);
+    try {
+      const { error } = await supabase
+        .from('follow_requests')
+        .update({ 
+          status: 'rejected',
+          responded_at: new Date().toISOString()
+        })
+        .eq('id', requestId);
+
+      if (error) throw error;
+
+      // Remove from local state
+      setFollowRequests(prev => prev.filter(r => r.id !== requestId));
+      toast.success('Follow request rejected');
+    } catch (error) {
+      console.error('Error rejecting request:', error);
+      toast.error('Failed to reject request');
+    } finally {
+      setIsProcessingRequest(null);
+    }
+  };
+
   useEffect(() => {
     if (!user) return;
 
-    const fetchNotifications = async () => {
+    const fetchData = async () => {
       // Load cached notifications first
       const cachedNotifications = sessionStorage.getItem('cachedNotifications');
       if (cachedNotifications) {
         try {
           setNotifications(JSON.parse(cachedNotifications));
-          setLoading(false);
         } catch (e) {
           console.error('Failed to parse cached notifications:', e);
         }
       }
 
       try {
-        const { data, error } = await supabase
-          .from('notifications')
-          .select(`
-            id, created_at, type, is_read, post_id,
-            actor:profiles!actor_id ( display_name, handle, is_verified, is_organization_verified ),
-            post:posts!post_id ( content )
-          `)
-          .eq('user_id', user.id)
-          .order('created_at', { ascending: false });
+        // Fetch notifications and follow requests in parallel
+        const [notificationsResult, followRequestsResult] = await Promise.all([
+          supabase
+            .from('notifications')
+            .select(`
+              id, created_at, type, is_read, post_id, actor_id,
+              actor:profiles!actor_id ( display_name, handle, avatar_url, is_verified, is_organization_verified ),
+              post:posts!post_id ( content )
+            `)
+            .eq('user_id', user.id)
+            .order('created_at', { ascending: false }),
+          supabase
+            .from('follow_requests')
+            .select(`
+              id, requester_id, status, created_at,
+              requester:profiles!requester_id ( display_name, handle, avatar_url, is_verified, is_organization_verified )
+            `)
+            .eq('target_id', user.id)
+            .eq('status', 'pending')
+            .order('created_at', { ascending: false })
+        ]);
 
-        if (error) {
-          console.error('Error fetching notifications:', error);
-        } else if (data) {
-          setNotifications(data);
-          sessionStorage.setItem('cachedNotifications', JSON.stringify(data));
+        if (notificationsResult.error) {
+          console.error('Error fetching notifications:', notificationsResult.error);
+        } else if (notificationsResult.data) {
+          setNotifications(notificationsResult.data as unknown as Notification[]);
+          sessionStorage.setItem('cachedNotifications', JSON.stringify(notificationsResult.data));
+        }
+
+        if (followRequestsResult.error) {
+          console.error('Error fetching follow requests:', followRequestsResult.error);
+        } else if (followRequestsResult.data) {
+          setFollowRequests(followRequestsResult.data as unknown as FollowRequest[]);
         }
       } catch (err) {
         console.error('Unexpected error:', err);
@@ -174,25 +499,33 @@ const Notifications = () => {
       }
     };
 
-    fetchNotifications();
+    fetchData();
 
-    // Real-time subscription
-    const channel = supabase
+    // Real-time subscriptions
+    const notificationsChannel = supabase
       .channel('notifications-updates')
       .on('postgres_changes', { event: '*', schema: 'public', table: 'notifications', filter: `user_id=eq.${user.id}` }, () => {
-        fetchNotifications();
+        fetchData();
+      })
+      .subscribe();
+
+    const followRequestsChannel = supabase
+      .channel('follow-requests-updates')
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'follow_requests', filter: `target_id=eq.${user.id}` }, () => {
+        fetchData();
       })
       .subscribe();
 
     const timer = setTimeout(markAsRead, 1500); 
     return () => {
       clearTimeout(timer);
-      supabase.removeChannel(channel);
+      supabase.removeChannel(notificationsChannel);
+      supabase.removeChannel(followRequestsChannel);
     };
 
   }, [user]);
   
-  if (loading && notifications.length === 0) {
+  if (loading && notifications.length === 0 && followRequests.length === 0) {
     return (
       <div className="h-full flex items-center justify-center max-w-4xl mx-auto">
         <CustomLoader size="lg" text="Loading notifications..." />
@@ -200,15 +533,59 @@ const Notifications = () => {
     );
   }
 
+  const hasContent = notifications.length > 0 || followRequests.length > 0;
+
   return (
     <div className="h-full flex flex-col max-w-4xl mx-auto">
-      <div className="p-3 sm:p-4 md:p-5">
+      <div className="p-3 sm:p-4 md:p-5 border-b border-border">
+        <h1 className="text-lg font-semibold">Notifications</h1>
       </div>
       <div className="flex-1 overflow-y-auto">
-        {notifications.length === 0 ? (
+        {!hasContent ? (
           <p className="text-center text-muted-foreground p-6 sm:p-8 text-xs sm:text-sm">No notifications yet.</p>
         ) : (
-          notifications.map(n => <NotificationRow key={n.id} notification={n} />)
+          <>
+            {/* Follow Requests Section */}
+            {followRequests.length > 0 && (
+              <div>
+                <div className="px-4 py-2 bg-muted/50 border-b border-border">
+                  <span className="text-xs font-medium text-muted-foreground uppercase tracking-wider">
+                    Follow Requests ({followRequests.length})
+                  </span>
+                </div>
+                {followRequests.map(request => (
+                  <FollowRequestRow
+                    key={request.id}
+                    request={request}
+                    onApprove={handleApproveRequest}
+                    onReject={handleRejectRequest}
+                    isProcessing={isProcessingRequest}
+                  />
+                ))}
+              </div>
+            )}
+
+            {/* Notifications Section */}
+            {notifications.length > 0 && (
+              <div>
+                {followRequests.length > 0 && (
+                  <div className="px-4 py-2 bg-muted/50 border-b border-border">
+                    <span className="text-xs font-medium text-muted-foreground uppercase tracking-wider">
+                      Activity
+                    </span>
+                  </div>
+                )}
+                {notifications.map(n => (
+                  <NotificationRow 
+                    key={n.id} 
+                    notification={n}
+                    onFollowBack={handleFollowBack}
+                    isFollowingBack={isFollowingBack}
+                  />
+                ))}
+              </div>
+            )}
+          </>
         )}
       </div>
     </div>
