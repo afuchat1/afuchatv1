@@ -3,11 +3,22 @@ import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/contexts/AuthContext';
 import { CustomLoader } from '@/components/ui/CustomLoader';
 import { Link, useNavigate } from 'react-router-dom';
-import { Heart, MessageSquare, UserPlus, Gift, Check, X, Eye, UserCheck, UserX, Trash2 } from 'lucide-react';
+import { Heart, MessageSquare, UserPlus, Gift, Check, X, Eye, UserCheck, UserX, Trash2, CheckSquare, Square } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { toast } from 'sonner';
 import { Button } from '@/components/ui/button';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from '@/components/ui/alert-dialog';
+
 const TwitterVerifiedBadge = ({ size = 'w-4 h-4' }: { size?: string }) => (
   <svg viewBox="0 0 22 22" xmlns="http://www.w3.org/2000/svg" className={`${size} ml-1`}>
     <path d="M20.396 11c-.018-.646-.215-1.275-.57-1.816-.354-.54-.852-.972-1.438-1.246.223-.607.27-1.264.14-1.897-.131-.634-.437-1.218-.882-1.687-.47-.445-1.053-.75-1.687-.882-.633-.13-1.29-.083-1.897.14-.273-.587-.704-1.086-1.245-1.44S11.647 1.62 11 1.604c-.646.017-1.273.213-1.813.568s-.969.854-1.24 1.44c-.608-.223-1.267-.272-1.902-.14-.635.13-1.22.436-1.69.882-.445.47-.749 1.055-.878 1.688-.13.633-.08 1.29.144 1.896-.587.274-1.087.705-1.443 1.245-.356.54-.555 1.17-.574 1.817.02.647.218 1.276.574 1.817.356.54.856.972 1.443 1.245-.224.606-.274 1.263-.144 1.896.13.634.433 1.218.877 1.688.47.443 1.054.747 1.687.878.633.132 1.29.084 1.897-.136.274.586.705 1.084 1.246 1.439.54.354 1.17.551 1.816.569.647-.016 1.276-.213 1.817-.567s.972-.854 1.245-1.44c.604.239 1.266.296 1.903.164.636-.132 1.22-.447 1.68-.907.46-.46.776-1.044.908-1.681s.075-1.299-.165-1.903c.586-.274 1.084-.705 1.439-1.246.354-.54.551-1.17.569-1.816zM9.662 14.85l-3.429-3.428 1.293-1.302 2.072 2.072 4.4-4.794 1.347 1.246z" fill="#00C2CB" />
@@ -66,9 +77,22 @@ interface NotificationRowProps {
   followingIds: Set<string>;
   onDelete: (id: string) => void;
   isDeleting: string | null;
+  isSelectionMode: boolean;
+  isSelected: boolean;
+  onToggleSelect: (id: string) => void;
 }
 
-const NotificationRow = ({ notification, onFollowBack, isFollowingBack, followingIds, onDelete, isDeleting }: NotificationRowProps) => {
+const NotificationRow = ({ 
+  notification, 
+  onFollowBack, 
+  isFollowingBack, 
+  followingIds, 
+  onDelete, 
+  isDeleting,
+  isSelectionMode,
+  isSelected,
+  onToggleSelect 
+}: NotificationRowProps) => {
   const navigate = useNavigate();
   const { actor, post, type, created_at, post_id, actor_id } = notification;
   const isAlreadyFollowing = actor_id ? followingIds.has(actor_id) : false;
@@ -108,6 +132,8 @@ const NotificationRow = ({ notification, onFollowBack, isFollowingBack, followin
   };
 
   const renderActionButtons = () => {
+    if (isSelectionMode) return null;
+    
     switch (type) {
       case 'new_like':
       case 'new_reply':
@@ -193,11 +219,40 @@ const NotificationRow = ({ notification, onFollowBack, isFollowingBack, followin
   };
   
   return (
-    <div className={cn(
-      "flex items-start gap-3 sm:gap-4 p-3 sm:p-4 border-b border-border relative group",
-      !notification.is_read && "bg-primary/5"
-    )}>
-      <Link to={`/profile/${actor.handle}`} onClick={(e) => e.stopPropagation()}>
+    <div 
+      className={cn(
+        "flex items-start gap-3 sm:gap-4 p-3 sm:p-4 border-b border-border relative group cursor-pointer",
+        !notification.is_read && "bg-primary/5",
+        isSelected && "bg-primary/10"
+      )}
+      onClick={() => isSelectionMode && onToggleSelect(notification.id)}
+    >
+      {isSelectionMode && (
+        <button 
+          className="flex-shrink-0 mt-1"
+          onClick={(e) => {
+            e.stopPropagation();
+            onToggleSelect(notification.id);
+          }}
+        >
+          {isSelected ? (
+            <CheckSquare className="h-5 w-5 text-primary" />
+          ) : (
+            <Square className="h-5 w-5 text-muted-foreground" />
+          )}
+        </button>
+      )}
+      <Link 
+        to={`/profile/${actor.handle}`} 
+        onClick={(e) => {
+          if (isSelectionMode) {
+            e.preventDefault();
+            onToggleSelect(notification.id);
+          } else {
+            e.stopPropagation();
+          }
+        }}
+      >
         <Avatar className="h-10 w-10 flex-shrink-0">
           <AvatarImage src={actor.avatar_url} alt={actor.display_name} />
           <AvatarFallback>{actor.display_name?.charAt(0)?.toUpperCase()}</AvatarFallback>
@@ -224,18 +279,20 @@ const NotificationRow = ({ notification, onFollowBack, isFollowingBack, followin
           {new Date(created_at).toLocaleString('en-UG')}
         </p>
       </div>
-      <Button
-        size="icon"
-        variant="ghost"
-        className="absolute top-2 right-2 h-7 w-7 opacity-0 group-hover:opacity-100 transition-opacity text-muted-foreground hover:text-destructive"
-        onClick={(e) => {
-          e.stopPropagation();
-          onDelete(notification.id);
-        }}
-        disabled={isCurrentlyDeleting}
-      >
-        <Trash2 className="h-4 w-4" />
-      </Button>
+      {!isSelectionMode && (
+        <Button
+          size="icon"
+          variant="ghost"
+          className="absolute top-2 right-2 h-7 w-7 opacity-0 group-hover:opacity-100 transition-opacity text-muted-foreground hover:text-destructive"
+          onClick={(e) => {
+            e.stopPropagation();
+            onDelete(notification.id);
+          }}
+          disabled={isCurrentlyDeleting}
+        >
+          <Trash2 className="h-4 w-4" />
+        </Button>
+      )}
     </div>
   );
 };
@@ -328,6 +385,15 @@ const Notifications = () => {
   const [isDeletingNotification, setIsDeletingNotification] = useState<string | null>(null);
   const [isClearingAll, setIsClearingAll] = useState(false);
   const [isProcessingRequest, setIsProcessingRequest] = useState<string | null>(null);
+  
+  // Selection mode state
+  const [isSelectionMode, setIsSelectionMode] = useState(false);
+  const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
+  
+  // Confirmation dialog state
+  const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
+  const [showClearAllConfirm, setShowClearAllConfirm] = useState(false);
+  const [pendingDeleteId, setPendingDeleteId] = useState<string | null>(null);
 
   const markAsRead = async () => {
     if (!user) return;
@@ -362,31 +428,88 @@ const Notifications = () => {
     return Array.from(seen.values());
   }, [notifications]);
 
-  const handleDeleteNotification = async (notificationId: string) => {
-    if (!user) return;
+  const toggleSelectNotification = (id: string) => {
+    setSelectedIds(prev => {
+      const newSet = new Set(prev);
+      if (newSet.has(id)) {
+        newSet.delete(id);
+      } else {
+        newSet.add(id);
+      }
+      return newSet;
+    });
+  };
+
+  const selectAllNotifications = () => {
+    if (selectedIds.size === deduplicatedNotifications.length) {
+      setSelectedIds(new Set());
+    } else {
+      setSelectedIds(new Set(deduplicatedNotifications.map(n => n.id)));
+    }
+  };
+
+  const handleDeleteNotification = (notificationId: string) => {
+    setPendingDeleteId(notificationId);
+    setShowDeleteConfirm(true);
+  };
+
+  const confirmDeleteNotification = async () => {
+    if (!user || !pendingDeleteId) return;
     
-    setIsDeletingNotification(notificationId);
+    setIsDeletingNotification(pendingDeleteId);
+    setShowDeleteConfirm(false);
+    
     try {
       const { error } = await supabase
         .from('notifications')
         .delete()
-        .eq('id', notificationId);
+        .eq('id', pendingDeleteId);
 
       if (error) throw error;
 
-      setNotifications(prev => prev.filter(n => n.id !== notificationId));
+      setNotifications(prev => prev.filter(n => n.id !== pendingDeleteId));
       toast.success('Notification deleted');
     } catch (error) {
       console.error('Error deleting notification:', error);
       toast.error('Failed to delete notification');
     } finally {
       setIsDeletingNotification(null);
+      setPendingDeleteId(null);
     }
   };
 
-  const handleClearAllNotifications = async () => {
+  const handleDeleteSelected = async () => {
+    if (!user || selectedIds.size === 0) return;
+    
+    setIsClearingAll(true);
+    try {
+      const { error } = await supabase
+        .from('notifications')
+        .delete()
+        .in('id', Array.from(selectedIds));
+
+      if (error) throw error;
+
+      setNotifications(prev => prev.filter(n => !selectedIds.has(n.id)));
+      setSelectedIds(new Set());
+      setIsSelectionMode(false);
+      toast.success(`${selectedIds.size} notification(s) deleted`);
+    } catch (error) {
+      console.error('Error deleting selected notifications:', error);
+      toast.error('Failed to delete notifications');
+    } finally {
+      setIsClearingAll(false);
+    }
+  };
+
+  const handleClearAllNotifications = () => {
+    setShowClearAllConfirm(true);
+  };
+
+  const confirmClearAllNotifications = async () => {
     if (!user || notifications.length === 0) return;
     
+    setShowClearAllConfirm(false);
     setIsClearingAll(true);
     try {
       const { error } = await supabase
@@ -633,19 +756,68 @@ const Notifications = () => {
 
   return (
     <div className="h-full flex flex-col max-w-4xl mx-auto">
-      <div className="p-3 sm:p-4 md:p-5 border-b border-border flex items-center justify-between">
+      <div className="p-3 sm:p-4 md:p-5 border-b border-border flex items-center justify-between gap-2">
         <h1 className="text-lg font-semibold">Notifications</h1>
         {deduplicatedNotifications.length > 0 && (
-          <Button
-            variant="ghost"
-            size="sm"
-            className="text-xs text-muted-foreground hover:text-destructive"
-            onClick={handleClearAllNotifications}
-            disabled={isClearingAll}
-          >
-            <Trash2 className="h-4 w-4 mr-1" />
-            {isClearingAll ? 'Clearing...' : 'Clear All'}
-          </Button>
+          <div className="flex items-center gap-2">
+            {isSelectionMode ? (
+              <>
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  className="text-xs"
+                  onClick={selectAllNotifications}
+                >
+                  {selectedIds.size === deduplicatedNotifications.length ? 'Deselect All' : 'Select All'}
+                </Button>
+                {selectedIds.size > 0 && (
+                  <Button
+                    variant="destructive"
+                    size="sm"
+                    className="text-xs"
+                    onClick={handleDeleteSelected}
+                    disabled={isClearingAll}
+                  >
+                    <Trash2 className="h-4 w-4 mr-1" />
+                    Delete ({selectedIds.size})
+                  </Button>
+                )}
+                <Button
+                  variant="outline"
+                  size="sm"
+                  className="text-xs"
+                  onClick={() => {
+                    setIsSelectionMode(false);
+                    setSelectedIds(new Set());
+                  }}
+                >
+                  Cancel
+                </Button>
+              </>
+            ) : (
+              <>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  className="text-xs"
+                  onClick={() => setIsSelectionMode(true)}
+                >
+                  <CheckSquare className="h-4 w-4 mr-1" />
+                  Select
+                </Button>
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  className="text-xs text-muted-foreground hover:text-destructive"
+                  onClick={handleClearAllNotifications}
+                  disabled={isClearingAll}
+                >
+                  <Trash2 className="h-4 w-4 mr-1" />
+                  {isClearingAll ? 'Clearing...' : 'Clear All'}
+                </Button>
+              </>
+            )}
+          </div>
         )}
       </div>
       <div className="flex-1 overflow-y-auto">
@@ -692,6 +864,9 @@ const Notifications = () => {
                     followingIds={followingIds}
                     onDelete={handleDeleteNotification}
                     isDeleting={isDeletingNotification}
+                    isSelectionMode={isSelectionMode}
+                    isSelected={selectedIds.has(n.id)}
+                    onToggleSelect={toggleSelectNotification}
                   />
                 ))}
               </div>
@@ -699,6 +874,42 @@ const Notifications = () => {
           </>
         )}
       </div>
+
+      {/* Single Delete Confirmation Dialog */}
+      <AlertDialog open={showDeleteConfirm} onOpenChange={setShowDeleteConfirm}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Delete Notification</AlertDialogTitle>
+            <AlertDialogDescription>
+              Are you sure you want to delete this notification? This action cannot be undone.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel onClick={() => setPendingDeleteId(null)}>Cancel</AlertDialogCancel>
+            <AlertDialogAction onClick={confirmDeleteNotification} className="bg-destructive text-destructive-foreground hover:bg-destructive/90">
+              Delete
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+
+      {/* Clear All Confirmation Dialog */}
+      <AlertDialog open={showClearAllConfirm} onOpenChange={setShowClearAllConfirm}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Clear All Notifications</AlertDialogTitle>
+            <AlertDialogDescription>
+              Are you sure you want to delete all {deduplicatedNotifications.length} notification(s)? This action cannot be undone.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancel</AlertDialogCancel>
+            <AlertDialogAction onClick={confirmClearAllNotifications} className="bg-destructive text-destructive-foreground hover:bg-destructive/90">
+              Clear All
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 };
