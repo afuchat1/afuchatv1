@@ -142,24 +142,22 @@ const CompleteProfileContent = ({ user }: CompleteProfileContentProps) => {
         return;
       }
       
-      if (data) {
-        // Try to get referrer name
-        // The referral code is the first 12 chars of user ID without hyphens
-        // We need to find the user with that ID pattern
-        const { data: referrerData } = await supabase
-          .from('profiles')
-          .select('display_name')
-          .ilike('id', `${referralCode.toLowerCase().substring(0, 8)}%`)
-          .maybeSingle();
-        
-        if (referrerData?.display_name) {
-          setReferrerName(referrerData.display_name);
+      // The function returns an array with {success, referrer_name}
+      const result = Array.isArray(data) ? data[0] : data;
+      
+      if (result?.success) {
+        if (result.referrer_name) {
+          setReferrerName(result.referrer_name);
         }
         
         setShowReferralWelcome(true);
         
         // Clear the referral code from session storage
         sessionStorage.removeItem('pendingSignupData');
+        
+        toast.success('Welcome! You received 1 week free Premium!', {
+          description: 'Thank you for joining through a referral link.',
+        });
       }
     } catch (error) {
       console.error('Error processing referral:', error);
