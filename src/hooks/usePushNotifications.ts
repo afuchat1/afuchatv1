@@ -1,12 +1,12 @@
 import { useState, useEffect, useCallback, useRef } from 'react';
 import { useAuth } from '@/contexts/AuthContext';
 import { supabase } from '@/integrations/supabase/client';
+import { useNavigate } from 'react-router-dom';
 
 export const usePushNotifications = () => {
   const { user } = useAuth();
   const [permission, setPermission] = useState<NotificationPermission>('default');
   const [isSupported, setIsSupported] = useState(false);
-  const permissionRef = useRef<NotificationPermission>('default');
 
   useEffect(() => {
     // Check if notifications are supported
@@ -16,8 +16,20 @@ export const usePushNotifications = () => {
     if (supported) {
       const currentPermission = Notification.permission;
       setPermission(currentPermission);
-      permissionRef.current = currentPermission;
     }
+
+    // Listen for notification click messages from service worker
+    const handleMessage = (event: MessageEvent) => {
+      if (event.data?.type === 'NOTIFICATION_CLICK' && event.data?.url) {
+        window.location.href = event.data.url;
+      }
+    };
+    
+    navigator.serviceWorker?.addEventListener('message', handleMessage);
+    
+    return () => {
+      navigator.serviceWorker?.removeEventListener('message', handleMessage);
+    };
   }, []);
 
   const requestPermission = useCallback(async () => {
@@ -29,7 +41,6 @@ export const usePushNotifications = () => {
     try {
       const result = await Notification.requestPermission();
       setPermission(result);
-      permissionRef.current = result;
       console.log('Push notification permission:', result);
       return result === 'granted';
     } catch (error) {
@@ -38,8 +49,8 @@ export const usePushNotifications = () => {
     }
   }, [isSupported]);
 
-  const showNotification = useCallback((title: string, options?: NotificationOptions & { data?: { url?: string } }) => {
-    // Check directly from browser API instead of state
+  const showNotification = useCallback(async (title: string, options?: NotificationOptions & { data?: { url?: string } }) => {
+    // Check directly from browser API
     const currentPermission = 'Notification' in window ? Notification.permission : 'denied';
     
     if (!('Notification' in window) || currentPermission !== 'granted') {
@@ -49,6 +60,22 @@ export const usePushNotifications = () => {
 
     try {
       console.log('Showing notification:', title, options?.body);
+      
+      // Try to use service worker for better PWA support
+      if ('serviceWorker' in navigator && navigator.serviceWorker.controller) {
+        const registration = await navigator.serviceWorker.ready;
+        await registration.showNotification(title, {
+          icon: '/favicon.png',
+          badge: '/favicon.png',
+          tag: options?.tag || 'afuchat-notification',
+          body: options?.body,
+          data: options?.data,
+          requireInteraction: false,
+        });
+        return null;
+      }
+      
+      // Fallback to regular Notification API
       const notification = new Notification(title, {
         icon: '/favicon.png',
         badge: '/favicon.png',

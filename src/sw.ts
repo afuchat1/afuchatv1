@@ -173,6 +173,72 @@ self.addEventListener('message', (event) => {
   if (event.data && event.data.type === 'SKIP_WAITING') {
     self.skipWaiting();
   }
+  
+  // Handle notification message from main thread
+  if (event.data && event.data.type === 'SHOW_NOTIFICATION') {
+    const { title, options } = event.data;
+    self.registration.showNotification(title, {
+      icon: '/favicon.png',
+      badge: '/favicon.png',
+      ...options,
+    });
+  }
+});
+
+// --- Push Event - Handle push notifications ---
+self.addEventListener('push', (event) => {
+  console.log('Push event received:', event);
+  
+  let data = {
+    title: 'AfuChat',
+    body: 'You have a new notification',
+    icon: '/favicon.png',
+    badge: '/favicon.png',
+    url: '/notifications'
+  };
+  
+  if (event.data) {
+    try {
+      data = { ...data, ...event.data.json() };
+    } catch (e) {
+      data.body = event.data.text();
+    }
+  }
+  
+  event.waitUntil(
+    self.registration.showNotification(data.title, {
+      body: data.body,
+      icon: data.icon,
+      badge: data.badge,
+      data: { url: data.url },
+      requireInteraction: true,
+    })
+  );
+});
+
+// --- Notification Click - Handle notification clicks ---
+self.addEventListener('notificationclick', (event) => {
+  console.log('Notification clicked:', event);
+  event.notification.close();
+  
+  const urlToOpen = event.notification.data?.url || '/';
+  
+  event.waitUntil(
+    self.clients.matchAll({ type: 'window', includeUncontrolled: true }).then((clientList) => {
+      // Check if a window is already open
+      for (const client of clientList) {
+        if (client.url.includes(self.location.origin) && 'focus' in client) {
+          client.focus();
+          client.postMessage({ type: 'NOTIFICATION_CLICK', url: urlToOpen });
+          return;
+        }
+      }
+      // Open new window if none exists
+      if (self.clients.openWindow) {
+        return self.clients.openWindow(urlToOpen);
+      }
+    })
+  );
 });
 
 // --- Install Event - Pre-cache critical assets ---
