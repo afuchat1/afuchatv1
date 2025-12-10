@@ -296,16 +296,16 @@ export const MessageBubble = ({
     <>
     <motion.div
       drag="x"
-      dragConstraints={{ left: isOwn ? -80 : 0, right: isOwn ? 0 : 80 }}
-      dragElastic={0.15}
+      dragConstraints={{ left: isOwn ? -60 : 0, right: isOwn ? 0 : 60 }}
+      dragElastic={0.1}
       dragSnapToOrigin
       onDragEnd={handleDragEnd}
       onTouchStart={handleTouchStart}
       onTouchEnd={handleTouchEnd}
       onContextMenu={handleContextMenu}
       style={{ touchAction: 'pan-y' }}
-      className={`flex w-full group ${isOwn ? 'justify-end pl-12' : 'justify-start pr-12'} ${
-        isLastInGroup ? 'mb-1' : 'mb-0.5'
+      className={`flex w-full ${isOwn ? 'justify-end' : 'justify-start'} ${
+        isLastInGroup ? 'mb-1' : 'mb-px'
       }`}
     >
       {/* --- Message Bubble --- */}
@@ -314,31 +314,37 @@ export const MessageBubble = ({
           isOwn
             ? 'bg-primary text-primary-foreground'
             : 'bg-muted text-foreground'
-        } ${getBubbleRadius()} min-w-[48px] max-w-full`}
+        } ${getBubbleRadius()} max-w-[85%]`}
       >
-        {/* --- Reply Preview --- */}
+        {/* --- Reply Preview (WhatsApp style) --- */}
         {repliedMessage && (
-          <div className={`px-2.5 py-1.5 border-l-2 ${
+          <div className={`mx-1 mt-1 rounded-lg overflow-hidden ${
             isOwn 
-              ? 'border-primary-foreground/50 bg-primary-foreground/10' 
-              : 'border-primary/70 bg-primary/5'
+              ? 'bg-primary-foreground/15' 
+              : 'bg-background/50'
           }`}>
-            <p className={`text-[11px] font-medium truncate ${
-              isOwn ? 'text-primary-foreground/80' : 'text-primary'
+            <div className={`flex border-l-4 ${
+              isOwn ? 'border-primary-foreground/60' : 'border-primary'
             }`}>
-              {repliedMessage.profiles?.display_name || 'User'}
-            </p>
-            <p className={`text-[11px] truncate ${
-              isOwn ? 'text-primary-foreground/60' : 'text-muted-foreground'
-            }`}>
-              {repliedMessage.audio_url ? '🎤 Voice message' : repliedMessage.encrypted_content}
-            </p>
+              <div className="flex-1 px-2 py-1.5 min-w-0">
+                <p className={`text-xs font-semibold truncate ${
+                  isOwn ? 'text-primary-foreground/90' : 'text-primary'
+                }`}>
+                  {repliedMessage.profiles?.display_name || 'User'}
+                </p>
+                <p className={`text-xs truncate ${
+                  isOwn ? 'text-primary-foreground/70' : 'text-muted-foreground'
+                }`}>
+                  {repliedMessage.audio_url ? '🎤 Voice message' : repliedMessage.encrypted_content}
+                </p>
+              </div>
+            </div>
           </div>
         )}
         
         {/* --- Main Content --- */}
         {hasAttachment ? (
-          <div className="p-1">
+          <div className="p-0.5">
             <AttachmentPreview
               url={message.attachment_url!}
               type={message.attachment_type || ''}
@@ -351,54 +357,54 @@ export const MessageBubble = ({
               }
             />
             {message.encrypted_content && (
-              <div className="px-2 pb-1 pt-1">
+              <div className="px-2 pb-0.5 pt-1">
                 <p className="leading-snug whitespace-pre-wrap break-words" style={{ fontSize: `${fontSize}px` }}>
                   {parseMessageContent(message.encrypted_content)}
                 </p>
               </div>
             )}
             {/* Timestamp inside for attachments */}
-            <div className={`flex items-center gap-1 px-2 pb-1 ${isOwn ? 'justify-end' : 'justify-end'}`}>
+            <div className="flex items-center gap-1 px-2 pb-1 justify-end">
               {message.edited_at && <span className="text-[10px] opacity-60">edited</span>}
-              <span className="text-[10px] opacity-60">{time}</span>
+              <span className="text-[10px] opacity-70">{time}</span>
               <ReadStatus />
             </div>
           </div>
         ) : isVoice ? (
-          <div className="flex items-center gap-2 pl-2 pr-3 py-1.5">
+          <div className="flex items-center gap-2 pl-1.5 pr-2 py-1">
             <Button
               variant="ghost"
               size="icon"
-              className={`h-8 w-8 rounded-full flex-shrink-0 ${
+              className={`h-7 w-7 rounded-full flex-shrink-0 ${
                 isOwn ? 'hover:bg-primary-foreground/20' : 'hover:bg-primary/10'
               }`}
               onClick={onToggleAudio}
             >
               {audioPlayerState?.isPlaying ? (
-                <Pause className="h-4 w-4" />
+                <Pause className="h-3.5 w-3.5" />
               ) : (
-                <Play className="h-4 w-4 ml-0.5" />
+                <Play className="h-3.5 w-3.5 ml-0.5" />
               )}
             </Button>
-            <div className="flex items-center gap-2 flex-1 min-w-[100px]">
-              <div className="h-1 flex-1 bg-current opacity-20 rounded-full">
-                <div className="h-full w-1/3 bg-current opacity-60 rounded-full" />
+            <div className="flex items-center gap-2 flex-1 min-w-[80px]">
+              <div className="h-0.5 flex-1 bg-current opacity-30 rounded-full">
+                <div className="h-full w-1/3 bg-current opacity-70 rounded-full" />
               </div>
             </div>
-            <div className="flex items-center gap-1 ml-1">
-              <span className="text-[10px] opacity-60">{time}</span>
+            <div className="flex items-center gap-1">
+              <span className="text-[10px] opacity-70">{time}</span>
               <ReadStatus />
             </div>
           </div>
         ) : (
-          <div className="px-2.5 py-1.5">
-            <p className="leading-snug whitespace-pre-wrap break-words inline" style={{ fontSize: `${fontSize}px` }}>
+          <div className="px-2 py-1">
+            <span className="leading-snug whitespace-pre-wrap break-words" style={{ fontSize: `${fontSize}px` }}>
               {parseMessageContent(message.encrypted_content)}
-            </p>
+            </span>
             {/* Inline timestamp and status */}
-            <span className="inline-flex items-center gap-1 ml-2 align-bottom float-right mt-1">
-              {message.edited_at && <span className="text-[10px] opacity-60">edited</span>}
-              <span className="text-[10px] opacity-60">{time}</span>
+            <span className="inline-flex items-center gap-0.5 ml-1.5 align-bottom float-right translate-y-0.5">
+              {message.edited_at && <span className="text-[10px] opacity-60 mr-0.5">edited</span>}
+              <span className="text-[10px] opacity-70">{time}</span>
               <ReadStatus />
             </span>
           </div>
@@ -406,49 +412,20 @@ export const MessageBubble = ({
         
         {/* --- Reactions --- */}
         {(message.message_reactions?.length ?? 0) > 0 && (
-          <div className={`absolute -bottom-3 ${isOwn ? 'right-2' : 'left-2'}`}>
+          <div className={`absolute -bottom-2.5 ${isOwn ? 'right-1' : 'left-1'}`}>
             <div className="flex gap-0.5">
               {aggregateReactions(message.message_reactions || []).map(({ emoji, count }) => (
                 <span 
                   key={emoji} 
-                  className="bg-background/90 backdrop-blur-sm rounded-full px-1.5 py-0.5 text-xs border border-border/50 shadow-sm"
+                  className="bg-background/95 backdrop-blur-sm rounded-full px-1 py-0.5 text-[11px] border border-border/30 shadow-sm"
                 >
-                  {emoji}{count > 1 && <span className="ml-0.5 text-[10px] opacity-70">{count}</span>}
+                  {emoji}{count > 1 && <span className="ml-0.5 text-[9px] opacity-70">{count}</span>}
                 </span>
               ))}
             </div>
           </div>
         )}
       </div>
-      
-      {/* --- Hover Action Button --- */}
-      <div className={`flex items-center opacity-0 group-hover:opacity-100 transition-opacity ${
-        isOwn ? 'order-first mr-1' : 'order-last ml-1'
-      }`}>
-        <Button
-          variant="ghost"
-          size="icon"
-          className="h-6 w-6 p-0 rounded-full hover:bg-muted/80"
-          onClick={() => setActionsSheetOpen(true)}
-        >
-          <MoreVertical className="h-3 w-3 text-muted-foreground" />
-        </Button>
-      </div>
-      
-      {/* Image Lightbox */}
-      {lightboxOpen && hasAttachment && message.attachment_type?.startsWith('image/') && createPortal(
-        <ImageLightbox
-          images={[{ url: message.attachment_url!, alt: message.attachment_name || 'Image' }]}
-          initialIndex={0}
-          onClose={(e) => {
-            e?.stopPropagation();
-            setLightboxOpen(false);
-          }}
-          senderName={message.profiles?.display_name}
-          timestamp={message.sent_at}
-        />,
-        document.body
-      )}
     </motion.div>
 
     {/* Message Actions Sheet */}
