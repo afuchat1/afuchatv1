@@ -8,6 +8,7 @@ import { cn } from '@/lib/utils';
 import { toast } from 'sonner';
 import { Button } from '@/components/ui/button';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
+import { ProfileDrawer } from '@/components/ProfileDrawer';
 import {
   AlertDialog,
   AlertDialogAction,
@@ -387,6 +388,7 @@ const Notifications = () => {
   const [isDeletingNotification, setIsDeletingNotification] = useState<string | null>(null);
   const [isClearingAll, setIsClearingAll] = useState(false);
   const [isProcessingRequest, setIsProcessingRequest] = useState<string | null>(null);
+  const [userProfile, setUserProfile] = useState<{ avatar_url: string | null; display_name: string } | null>(null);
   
   // Selection mode state
   const [isSelectionMode, setIsSelectionMode] = useState(false);
@@ -399,6 +401,20 @@ const Notifications = () => {
   
   // Track deleted notification IDs to prevent them from reappearing
   const deletedIdsRef = useRef<Set<string>>(new Set());
+
+  // Fetch user profile
+  useEffect(() => {
+    if (!user) return;
+    const fetchProfile = async () => {
+      const { data } = await supabase
+        .from('profiles')
+        .select('avatar_url, display_name')
+        .eq('id', user.id)
+        .single();
+      if (data) setUserProfile(data);
+    };
+    fetchProfile();
+  }, [user]);
 
   const markAsRead = async () => {
     if (!user) return;
@@ -852,7 +868,21 @@ const Notifications = () => {
   return (
     <div className="h-full flex flex-col max-w-4xl mx-auto">
       <div className="p-3 sm:p-4 md:p-5 border-b border-border flex items-center justify-between gap-2">
-        <h1 className="text-lg font-semibold">Notifications</h1>
+        <div className="flex items-center gap-3">
+          <ProfileDrawer
+            trigger={
+              <button className="flex-shrink-0">
+                <Avatar className="h-8 w-8">
+                  <AvatarImage src={userProfile?.avatar_url || undefined} />
+                  <AvatarFallback className="bg-primary text-primary-foreground text-xs">
+                    {userProfile?.display_name?.charAt(0)?.toUpperCase() || 'U'}
+                  </AvatarFallback>
+                </Avatar>
+              </button>
+            }
+          />
+          <h1 className="text-lg font-semibold">Notifications</h1>
+        </div>
         {deduplicatedNotifications.length > 0 && (
           <div className="flex items-center gap-2">
             {isSelectionMode ? (

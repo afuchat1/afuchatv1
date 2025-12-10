@@ -6,11 +6,11 @@ import { useAuth } from '@/contexts/AuthContext';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
-import { Plus, ArrowLeft, Eye } from 'lucide-react';
+import { Plus, ArrowLeft, Eye, Crown } from 'lucide-react';
 import { toast } from 'sonner';
 import { StoryViewer } from '@/components/moments/StoryViewer';
 import { CreateStoryDialog } from '@/components/moments/CreateStoryDialog';
-import { PremiumGate } from '@/components/PremiumGate';
+import { usePremiumStatus } from '@/hooks/usePremiumStatus';
 
 interface Story {
   id: string;
@@ -38,6 +38,16 @@ const Moments = () => {
   const [loading, setLoading] = useState(true);
   const [selectedStory, setSelectedStory] = useState<Story | null>(null);
   const [createDialogOpen, setCreateDialogOpen] = useState(false);
+  const { isPremium } = usePremiumStatus(user?.id);
+
+  const handleCreateStory = () => {
+    if (!isPremium) {
+      toast.error('Premium required to create stories');
+      navigate('/premium');
+      return;
+    }
+    setCreateDialogOpen(true);
+  };
 
   useEffect(() => {
     fetchStories();
@@ -129,7 +139,6 @@ const Moments = () => {
   }, {} as Record<string, Story[]>);
 
   return (
-    <PremiumGate feature="Stories & Moments" showUpgrade={true}>
     <div className="min-h-screen bg-background pb-20 md:pb-0">
       <div className="max-w-4xl mx-auto">
         {/* Hero Header */}
@@ -143,7 +152,8 @@ const Moments = () => {
                   <p className="text-muted-foreground">Share your day, 24 hours at a time</p>
                 </div>
               </div>
-              <Button onClick={() => setCreateDialogOpen(true)} size="lg" className="gap-2">
+              <Button onClick={handleCreateStory} size="lg" className="gap-2">
+                {!isPremium && <Crown className="h-4 w-4" />}
                 <Plus className="h-5 w-5" />
                 <span className="hidden sm:inline">Create</span>
               </Button>
@@ -163,7 +173,7 @@ const Moments = () => {
               {myStories.length === 0 && (
                 <Card 
                   className="flex-shrink-0 w-28 h-40 cursor-pointer hover:ring-2 hover:ring-primary transition-all"
-                  onClick={() => setCreateDialogOpen(true)}
+                  onClick={handleCreateStory}
                 >
                   <CardContent className="p-0 relative h-full">
                     <div className="absolute inset-0 flex flex-col items-center justify-center bg-gradient-to-br from-primary/10 to-primary/5">
@@ -275,7 +285,6 @@ const Moments = () => {
         onSuccess={fetchStories}
       />
     </div>
-    </PremiumGate>
   );
 };
 
