@@ -26,8 +26,7 @@ export default {
         '4xl': ['34px', { lineHeight: '40px' }],
       },
       fontFamily: {
-        'sans': ['Plus Jakarta Sans', 'system-ui', 'sans-serif'],
-        'jakarta': ['Plus Jakarta Sans', 'system-ui', 'sans-serif'],
+        'sans': ['DM Sans', 'system-ui', 'sans-serif'],
       },
       colors: {
         border: "hsl(var(--border))",
