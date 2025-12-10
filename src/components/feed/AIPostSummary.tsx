@@ -22,13 +22,10 @@ const MIN_CONTENT_LENGTH = 200;
 
 // Check if post content is worth summarizing based on AI analysis
 const isWorthSummarizing = (content: string): boolean => {
-  // Must be long enough
   if (content.length < MIN_CONTENT_LENGTH) return false;
   
-  // Analyze content category
   const categories = categorizeContent(content);
   
-  // Check if top category is summary-worthy with sufficient confidence
   if (categories.length > 0) {
     const topCategory = categories[0];
     if (SUMMARY_WORTHY_CATEGORIES.includes(topCategory.category) && 
@@ -37,28 +34,14 @@ const isWorthSummarizing = (content: string): boolean => {
     }
   }
   
-  // Additional heuristics for informative content
   const informativePatterns = [
-    /breaking:/i,
-    /announced/i,
-    /according to/i,
-    /research shows/i,
-    /study finds/i,
-    /experts say/i,
-    /official/i,
-    /report/i,
-    /update:/i,
-    /important:/i,
-    /\d+%/,
-    /million|billion/i,
-    /government/i,
-    /launched/i,
-    /released/i,
+    /breaking:/i, /announced/i, /according to/i, /research shows/i,
+    /study finds/i, /experts say/i, /official/i, /report/i,
+    /update:/i, /important:/i, /\d+%/, /million|billion/i,
+    /government/i, /launched/i, /released/i,
   ];
   
   const matchCount = informativePatterns.filter(pattern => pattern.test(content)).length;
-  
-  // If multiple informative patterns match, it's worth summarizing
   return matchCount >= 2;
 };
 
@@ -68,20 +51,36 @@ export const AIPostSummary = ({ postContent, postId }: AIPostSummaryProps) => {
   const [loading, setLoading] = useState(false);
   const [expanded, setExpanded] = useState(true);
   const [shouldShow, setShouldShow] = useState(false);
+  const [checked, setChecked] = useState(false);
 
   useEffect(() => {
-    // Only process for premium users
-    if (!isPremium) return;
+    if (!isPremium || checked) return;
     
-    // Check if this post is worth summarizing
     const worthSummarizing = isWorthSummarizing(postContent);
     setShouldShow(worthSummarizing);
     
-    // Auto-generate summary if worthy
-    if (worthSummarizing && !summary && !loading) {
-      generateSummary();
+    if (worthSummarizing) {
+      checkAndGenerateSummary();
     }
-  }, [isPremium, postContent, postId]);
+    setChecked(true);
+  }, [isPremium, postId]);
+
+  const checkAndGenerateSummary = async () => {
+    // First check if summary already exists in database
+    const { data: existingSummary } = await supabase
+      .from('post_ai_summaries')
+      .select('summary')
+      .eq('post_id', postId)
+      .maybeSingle();
+    
+    if (existingSummary?.summary) {
+      setSummary(existingSummary.summary);
+      return;
+    }
+    
+    // Generate new summary if not cached
+    await generateSummary();
+  };
 
   const generateSummary = async () => {
     if (loading || summary) return;
@@ -96,7 +95,17 @@ export const AIPostSummary = ({ postContent, postId }: AIPostSummaryProps) => {
       });
 
       if (error) throw error;
-      setSummary(data?.reply || null);
+      
+      const generatedSummary = data?.reply || null;
+      
+      if (generatedSummary) {
+        setSummary(generatedSummary);
+        
+        // Cache the summary in database
+        await supabase
+          .from('post_ai_summaries')
+          .upsert({ post_id: postId, summary: generatedSummary }, { onConflict: 'post_id' });
+      }
     } catch (error) {
       console.error('AI Summary error:', error);
       setShouldShow(false);
@@ -105,7 +114,6 @@ export const AIPostSummary = ({ postContent, postId }: AIPostSummaryProps) => {
     }
   };
 
-  // Don't render anything if not premium or not worth summarizing
   if (!isPremium || !shouldShow) return null;
 
   return (

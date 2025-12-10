@@ -1829,6 +1829,35 @@ export type Database = {
           },
         ]
       }
+      post_ai_summaries: {
+        Row: {
+          created_at: string
+          id: string
+          post_id: string
+          summary: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          post_id: string
+          summary: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          post_id?: string
+          summary?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "post_ai_summaries_post_id_fkey"
+            columns: ["post_id"]
+            isOneToOne: true
+            referencedRelation: "posts"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       post_images: {
         Row: {
           alt_text: string | null
