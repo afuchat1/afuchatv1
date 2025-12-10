@@ -1,6 +1,4 @@
 import { useState, memo } from 'react';
-import { ChevronLeft, ChevronRight } from 'lucide-react';
-import { Button } from './button';
 import { cn } from '@/lib/utils';
 import { ImageLightbox } from './ImageLightbox';
 
@@ -10,7 +8,6 @@ interface ImageCarouselProps {
 }
 
 export const ImageCarousel = memo(({ images, className }: ImageCarouselProps) => {
-  const [currentIndex, setCurrentIndex] = useState(0);
   const [lightboxOpen, setLightboxOpen] = useState(false);
   const [lightboxIndex, setLightboxIndex] = useState(0);
 
@@ -18,24 +15,6 @@ export const ImageCarousel = memo(({ images, className }: ImageCarouselProps) =>
 
   const imageUrls = images.map(img => typeof img === 'string' ? img : img.url);
   const imageAlts = images.map(img => typeof img === 'string' ? 'Post image' : (img.alt || 'Post image'));
-
-  const goToPrevious = (e: React.MouseEvent) => {
-    e.stopPropagation();
-    setCurrentIndex((prev) => (prev === 0 ? imageUrls.length - 1 : prev - 1));
-  };
-
-  const goToNext = (e: React.MouseEvent) => {
-    e.stopPropagation();
-    setCurrentIndex((prev) => (prev === imageUrls.length - 1 ? 0 : prev + 1));
-  };
-
-  const gridClass = imageUrls.length === 1 
-    ? 'grid-cols-1'
-    : imageUrls.length === 2
-    ? 'grid-cols-2'
-    : imageUrls.length === 3
-    ? 'grid-cols-2'
-    : 'grid-cols-2';
 
   const handleImageClick = (e: React.MouseEvent, index: number) => {
     e.preventDefault();
@@ -46,12 +25,14 @@ export const ImageCarousel = memo(({ images, className }: ImageCarouselProps) =>
 
   const imageObjects = images.map(img => typeof img === 'string' ? { url: img, alt: 'Post image' } : img);
 
+  // X/Twitter style image layouts
   return (
     <>
-      <div className={cn('relative group', className)}>
-        {imageUrls.length === 1 ? (
+      <div className={cn('relative', className)}>
+        {/* Single Image */}
+        {imageUrls.length === 1 && (
           <div 
-            className="relative rounded-2xl overflow-hidden border border-border cursor-pointer hover:shadow-lg transition-shadow"
+            className="rounded-2xl overflow-hidden border border-border cursor-pointer"
             onClick={(e) => handleImageClick(e, 0)}
           >
             <img
@@ -59,17 +40,18 @@ export const ImageCarousel = memo(({ images, className }: ImageCarouselProps) =>
               alt={imageAlts[0]}
               loading="lazy"
               decoding="async"
-              className="w-full h-[280px] object-cover hover:opacity-95 transition-opacity"
+              className="w-full max-h-[510px] object-cover hover:brightness-95 transition-all"
             />
-            {/* Gradient fade at bottom to indicate more content */}
-            <div className="absolute bottom-0 left-0 right-0 h-8 bg-gradient-to-t from-black/20 to-transparent pointer-events-none" />
           </div>
-        ) : imageUrls.length === 2 ? (
-          <div className="grid grid-cols-2 gap-0.5 rounded-2xl overflow-hidden border border-border h-[200px]">
-            {imageUrls.slice(0, 2).map((image, index) => (
+        )}
+
+        {/* Two Images - Side by side */}
+        {imageUrls.length === 2 && (
+          <div className="grid grid-cols-2 gap-0.5 rounded-2xl overflow-hidden border border-border">
+            {imageUrls.map((image, index) => (
               <div
                 key={index}
-                className="relative overflow-hidden cursor-pointer hover:opacity-95 transition-opacity"
+                className="relative aspect-[4/5] overflow-hidden cursor-pointer"
                 onClick={(e) => handleImageClick(e, index)}
               >
                 <img
@@ -77,15 +59,18 @@ export const ImageCarousel = memo(({ images, className }: ImageCarouselProps) =>
                   alt={imageAlts[index]}
                   loading="lazy"
                   decoding="async"
-                  className="w-full h-full object-cover hover:scale-105 transition-transform duration-300"
+                  className="w-full h-full object-cover hover:brightness-95 transition-all"
                 />
               </div>
             ))}
           </div>
-        ) : imageUrls.length === 3 ? (
-          <div className="grid grid-cols-2 gap-0.5 rounded-2xl overflow-hidden border border-border h-[240px]">
+        )}
+
+        {/* Three Images - One large left, two stacked right */}
+        {imageUrls.length === 3 && (
+          <div className="grid grid-cols-2 gap-0.5 rounded-2xl overflow-hidden border border-border aspect-[16/9]">
             <div
-              className="relative row-span-2 overflow-hidden cursor-pointer hover:opacity-95 transition-opacity"
+              className="relative row-span-2 overflow-hidden cursor-pointer"
               onClick={(e) => handleImageClick(e, 0)}
             >
               <img
@@ -93,31 +78,43 @@ export const ImageCarousel = memo(({ images, className }: ImageCarouselProps) =>
                 alt={imageAlts[0]}
                 loading="lazy"
                 decoding="async"
-                className="w-full h-full object-cover hover:scale-105 transition-transform duration-300"
+                className="w-full h-full object-cover hover:brightness-95 transition-all"
               />
             </div>
-            {imageUrls.slice(1, 3).map((image, index) => (
-              <div
-                key={index + 1}
-                className="relative overflow-hidden cursor-pointer hover:opacity-95 transition-opacity"
-                onClick={(e) => handleImageClick(e, index + 1)}
-              >
-                <img
-                  src={image}
-                  alt={imageAlts[index + 1]}
-                  loading="lazy"
-                  decoding="async"
-                  className="w-full h-full object-cover hover:scale-105 transition-transform duration-300"
-                />
-              </div>
-            ))}
+            <div
+              className="relative overflow-hidden cursor-pointer"
+              onClick={(e) => handleImageClick(e, 1)}
+            >
+              <img
+                src={imageUrls[1]}
+                alt={imageAlts[1]}
+                loading="lazy"
+                decoding="async"
+                className="w-full h-full object-cover hover:brightness-95 transition-all"
+              />
+            </div>
+            <div
+              className="relative overflow-hidden cursor-pointer"
+              onClick={(e) => handleImageClick(e, 2)}
+            >
+              <img
+                src={imageUrls[2]}
+                alt={imageAlts[2]}
+                loading="lazy"
+                decoding="async"
+                className="w-full h-full object-cover hover:brightness-95 transition-all"
+              />
+            </div>
           </div>
-        ) : (
-          <div className="grid grid-cols-2 gap-0.5 rounded-2xl overflow-hidden border border-border h-[240px]">
+        )}
+
+        {/* Four+ Images - 2x2 Grid */}
+        {imageUrls.length >= 4 && (
+          <div className="grid grid-cols-2 gap-0.5 rounded-2xl overflow-hidden border border-border aspect-square">
             {imageUrls.slice(0, 4).map((image, index) => (
               <div
                 key={index}
-                className="relative overflow-hidden cursor-pointer hover:opacity-95 transition-opacity"
+                className="relative overflow-hidden cursor-pointer"
                 onClick={(e) => handleImageClick(e, index)}
               >
                 <img
@@ -125,8 +122,9 @@ export const ImageCarousel = memo(({ images, className }: ImageCarouselProps) =>
                   alt={imageAlts[index]}
                   loading="lazy"
                   decoding="async"
-                  className="w-full h-full object-cover hover:scale-105 transition-transform duration-300"
+                  className="w-full h-full object-cover hover:brightness-95 transition-all"
                 />
+                {/* Show +N overlay on 4th image if more than 4 */}
                 {imageUrls.length > 4 && index === 3 && (
                   <div className="absolute inset-0 bg-black/60 flex items-center justify-center">
                     <span className="text-white text-2xl font-bold">+{imageUrls.length - 4}</span>
@@ -136,45 +134,6 @@ export const ImageCarousel = memo(({ images, className }: ImageCarouselProps) =>
             ))}
           </div>
         )}
-
-      {imageUrls.length > 1 && (
-        <>
-          <Button
-            variant="outline"
-            size="icon"
-            className="absolute left-2 top-1/2 -translate-y-1/2 opacity-0 group-hover:opacity-100 transition-opacity bg-background/80 backdrop-blur-sm"
-            onClick={goToPrevious}
-          >
-            <ChevronLeft className="h-4 w-4" />
-          </Button>
-          <Button
-            variant="outline"
-            size="icon"
-            className="absolute right-2 top-1/2 -translate-y-1/2 opacity-0 group-hover:opacity-100 transition-opacity bg-background/80 backdrop-blur-sm"
-            onClick={goToNext}
-          >
-            <ChevronRight className="h-4 w-4" />
-          </Button>
-
-          <div className="absolute bottom-3 left-1/2 -translate-x-1/2 flex gap-1.5">
-            {imageUrls.map((_, index) => (
-              <button
-                key={index}
-                onClick={(e) => {
-                  e.stopPropagation();
-                  setCurrentIndex(index);
-                }}
-                className={cn(
-                  'h-1.5 rounded-full transition-all',
-                  index === currentIndex
-                    ? 'bg-primary w-6'
-                    : 'bg-muted-foreground/40 w-1.5 hover:bg-muted-foreground/60'
-                )}
-              />
-            ))}
-          </div>
-        </>
-      )}
       </div>
 
       {lightboxOpen && (
