@@ -316,29 +316,18 @@ export const MessageBubble = ({
             : 'bg-muted text-foreground'
         } ${getBubbleRadius()} max-w-[85%]`}
       >
-        {/* --- Reply Preview (WhatsApp style) --- */}
+        {/* --- Reply Preview (minimal) --- */}
         {repliedMessage && (
-          <div className={`mx-1 mt-1 rounded-lg overflow-hidden ${
+          <div className={`mx-1 mt-1 rounded-md overflow-hidden border-l-2 ${
             isOwn 
-              ? 'bg-primary-foreground/15' 
-              : 'bg-background/50'
+              ? 'bg-primary-foreground/10 border-primary-foreground/50' 
+              : 'bg-background/40 border-primary/60'
           }`}>
-            <div className={`flex border-l-4 ${
-              isOwn ? 'border-primary-foreground/60' : 'border-primary'
+            <p className={`px-2 py-1 text-xs truncate ${
+              isOwn ? 'text-primary-foreground/70' : 'text-muted-foreground'
             }`}>
-              <div className="flex-1 px-2 py-1.5 min-w-0">
-                <p className={`text-xs font-semibold truncate ${
-                  isOwn ? 'text-primary-foreground/90' : 'text-primary'
-                }`}>
-                  {repliedMessage.profiles?.display_name || 'User'}
-                </p>
-                <p className={`text-xs truncate ${
-                  isOwn ? 'text-primary-foreground/70' : 'text-muted-foreground'
-                }`}>
-                  {repliedMessage.audio_url ? '🎤 Voice message' : repliedMessage.encrypted_content}
-                </p>
-              </div>
-            </div>
+              {repliedMessage.audio_url ? '🎤 Voice message' : repliedMessage.encrypted_content}
+            </p>
           </div>
         )}
         
