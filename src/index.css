@@ -247,7 +247,8 @@
   html, body {
     @apply bg-background text-foreground antialiased;
     font-family: 'Outfit', 'Inter', system-ui, -apple-system, sans-serif;
-    font-size: 16px;
+    font-size: 17px;
+    line-height: 1.5;
     -webkit-font-smoothing: antialiased;
     -moz-osx-font-smoothing: grayscale;
     overflow-x: hidden;
@@ -285,6 +286,27 @@
 
   h4 {
     @apply text-lg font-bold;
+  }
+
+  /* Readable paragraph text */
+  p, span, div {
+    @apply text-base;
+  }
+
+  /* Larger small text for better readability */
+  .text-xs {
+    font-size: 0.8125rem !important; /* 13px instead of 12px */
+    line-height: 1.4;
+  }
+
+  .text-sm {
+    font-size: 0.9375rem !important; /* 15px instead of 14px */
+    line-height: 1.5;
+  }
+
+  /* Ensure muted text is still readable */
+  .text-muted-foreground {
+    @apply opacity-90;
   }
 
   /* Bold text utility for headers */

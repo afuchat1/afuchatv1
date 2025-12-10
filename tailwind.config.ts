@@ -13,6 +13,16 @@ export default {
       },
     },
     extend: {
+      fontSize: {
+        'xs': ['0.8125rem', { lineHeight: '1.4' }],    // 13px
+        'sm': ['0.9375rem', { lineHeight: '1.5' }],    // 15px
+        'base': ['1.0625rem', { lineHeight: '1.6' }],  // 17px
+        'lg': ['1.1875rem', { lineHeight: '1.5' }],    // 19px
+        'xl': ['1.3125rem', { lineHeight: '1.4' }],    // 21px
+        '2xl': ['1.5625rem', { lineHeight: '1.35' }],  // 25px
+        '3xl': ['1.9375rem', { lineHeight: '1.3' }],   // 31px
+        '4xl': ['2.4375rem', { lineHeight: '1.2' }],   // 39px
+      },
       fontFamily: {
         'outfit': ['Outfit', 'Inter', 'system-ui', 'sans-serif'],
         'inter': ['Inter', 'system-ui', 'sans-serif'],
