@@ -313,8 +313,15 @@ export const MessageBubble = ({
           isOwn
             ? 'bg-primary text-primary-foreground'
             : 'bg-muted text-foreground'
-        } ${getBubbleRadius()} max-w-[85%]`}
+        } ${getBubbleRadius()} max-w-[85%] overflow-hidden`}
       >
+        {repliedMessage && (
+          <div className={`px-2 pt-1.5 pb-1 border-l-2 ${isOwn ? 'border-primary-foreground/50 bg-primary-foreground/10' : 'border-primary/50 bg-primary/10'} mx-1 mt-1 rounded-r`}>
+            <p className="text-xs opacity-80 line-clamp-2">
+              {repliedMessage.audio_url ? '🎤 Voice message' : repliedMessage.encrypted_content}
+            </p>
+          </div>
+        )}
         {hasAttachment ? (
           <>
             <AttachmentPreview
