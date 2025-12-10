@@ -621,6 +621,7 @@ export type Database = {
           is_favorite: boolean | null
           is_group: boolean | null
           is_pinned: boolean | null
+          is_verified: boolean | null
           member_limit: number | null
           name: string | null
           updated_at: string | null
@@ -637,6 +638,7 @@ export type Database = {
           is_favorite?: boolean | null
           is_group?: boolean | null
           is_pinned?: boolean | null
+          is_verified?: boolean | null
           member_limit?: number | null
           name?: string | null
           updated_at?: string | null
@@ -653,6 +655,7 @@ export type Database = {
           is_favorite?: boolean | null
           is_group?: boolean | null
           is_pinned?: boolean | null
+          is_verified?: boolean | null
           member_limit?: number | null
           name?: string | null
           updated_at?: string | null

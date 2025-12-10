@@ -15,6 +15,7 @@ import { ProfileDrawer } from '@/components/ProfileDrawer';
 import { TrendingInfoSheet } from '@/components/search/TrendingInfoSheet';
 import { HashtagsSection } from '@/components/search/HashtagsSection';
 import { AISearchSummary } from '@/components/search/AISearchSummary';
+import { VerifiedBadge as PlatformVerifiedBadge } from '@/components/VerifiedBadge';
 import { 
   ContentCategory, 
   categorizeContent, 
@@ -86,6 +87,7 @@ interface SearchResult {
   description?: string;
   member_count?: number;
   is_member?: boolean;
+  group_verified?: boolean;
 }
 
 interface Trend {
@@ -100,22 +102,16 @@ interface ExtendedTrend extends Trend {
 }
 
 const TwitterVerifiedBadge = ({ size = 'w-4 h-4' }: { size?: string }) => (
-  <svg viewBox="0 0 22 22" xmlns="http://www.w3.org/2000/svg" className={`${size} ml-0.5 fill-[#1d9bf0] flex-shrink-0`}>
+  <svg viewBox="0 0 22 22" xmlns="http://www.w3.org/2000/svg" className={`${size} ml-0.5 fill-primary flex-shrink-0`}>
     <path d="M20.396 11c-.018-.646-.215-1.275-.57-1.816-.354-.54-.852-.972-1.438-1.246.223-.607.27-1.264.14-1.897-.131-.634-.437-1.218-.882-1.687-.47-.445-1.053-.75-1.687-.882-.633-.13-1.29-.083-1.897.14-.273-.587-.704-1.086-1.245-1.44S11.647 1.62 11 1.604c-.646.017-1.273.213-1.813.568s-.969.854-1.24 1.44c-.608-.223-1.267-.272-1.902-.14-.635.13-1.22.436-1.69.882-.445.47-.749 1.055-.878 1.688-.13.633-.08 1.29.144 1.896-.587.274-1.087.705-1.443 1.245-.356.54-.555 1.17-.574 1.817.02.647.218 1.276.574 1.817.356.54.856.972 1.443 1.245-.224.606-.274 1.263-.144 1.896.13.634.433 1.218.877 1.688.47.443 1.054.747 1.687.878.633.132 1.29.084 1.897-.136.274.586.705 1.084 1.246 1.439.54.354 1.17.551 1.816.569.647-.016 1.276-.213 1.817-.567s.972-.854 1.245-1.44c.604.239 1.266.296 1.903.164.636-.132 1.22-.447 1.68-.907.46-.46.776-1.044.908-1.681s.075-1.299-.165-1.903c.586-.274 1.084-.705 1.439-1.246.354-.54.551-1.17.569-1.816zM9.662 14.85l-3.429-3.428 1.293-1.302 2.072 2.072 4.4-4.794 1.347 1.246z" />
   </svg>
 );
 
 const GoldVerifiedBadge = ({ size = 'w-4 h-4' }: { size?: string }) => (
-  <svg viewBox="0 0 22 22" xmlns="http://www.w3.org/2000/svg" className={`${size} ml-0.5 fill-[#FFD43B] flex-shrink-0`}>
+  <svg viewBox="0 0 22 22" xmlns="http://www.w3.org/2000/svg" className={`${size} ml-0.5 fill-yellow-500 flex-shrink-0`}>
     <path d="M20.396 11c-.018-.646-.215-1.275-.57-1.816-.354-.54-.852-.972-1.438-1.246.223-.607.27-1.264.14-1.897-.131-.634-.437-1.218-.882-1.687-.47-.445-1.053-.75-1.687-.882-.633-.13-1.29-.083-1.897.14-.273-.587-.704-1.086-1.245-1.44S11.647 1.62 11 1.604c-.646.017-1.273.213-1.813.568s-.969.854-1.24 1.44c-.608-.223-1.267-.272-1.902-.14-.635.13-1.22.436-1.69.882-.445.47-.749 1.055-.878 1.688-.13.633-.08 1.29.144 1.896-.587.274-1.087.705-1.443 1.245-.356.54-.555 1.17-.574 1.817.02.647.218 1.276.574 1.817.356.54.856.972 1.443 1.245-.224.606-.274 1.263-.144 1.896.13.634.433 1.218.877 1.688.47.443 1.054.747 1.687.878.633.132 1.29.084 1.897-.136.274.586.705 1.084 1.246 1.439.54.354 1.17.551 1.816.569.647-.016 1.276-.213 1.817-.567s.972-.854 1.245-1.44c.604.239 1.266.296 1.903.164.636-.132 1.22-.447 1.68-.907.46-.46.776-1.044.908-1.681s.075-1.299-.165-1.903c.586-.274 1.084-.705 1.439-1.246.354-.54.551-1.17.569-1.816zM9.662 14.85l-3.429-3.428 1.293-1.302 2.072 2.072 4.4-4.794 1.347 1.246z" />
   </svg>
 );
-
-const VerifiedBadge = ({ isVerified, isOrgVerified }: { isVerified?: boolean; isOrgVerified?: boolean }) => {
-  if (isOrgVerified) return <GoldVerifiedBadge />;
-  if (isVerified) return <TwitterVerifiedBadge />;
-  return null;
-};
 
 const TABS = ['For You', 'Trending', 'News', 'Sports', 'Entertainment'] as const;
 type TabType = typeof TABS[number];
@@ -215,9 +211,10 @@ const CategoryPostItem = ({
           <span className="font-bold text-[15px] text-foreground max-w-[120px] truncate" title={post.author.display_name}>
             {post.author.display_name.length > 12 ? `${post.author.display_name.slice(0, 10)}...` : post.author.display_name}
           </span>
-          <VerifiedBadge
+          <PlatformVerifiedBadge
             isVerified={post.author.is_verified}
             isOrgVerified={post.author.is_organization_verified}
+            size="sm"
           />
           <span className="text-[15px] text-muted-foreground">
             @{post.author.handle}
@@ -637,7 +634,7 @@ const Search = () => {
 
       const { data: groupData } = await supabase
         .from('chats')
-        .select('id, name, description, avatar_url')
+        .select('id, name, description, avatar_url, is_verified')
         .eq('is_group', true)
         .or(`name.ilike.%${trimmedQuery}%,description.ilike.%${trimmedQuery}%`)
         .limit(8);
@@ -670,6 +667,7 @@ const Search = () => {
           ...g,
           is_member: memberGroupIds.has(g.id),
           member_count: countMap.get(g.id) || 0,
+          is_verified: g.is_verified,
         }));
       }
 
@@ -686,6 +684,7 @@ const Search = () => {
           avatar_url: g.avatar_url,
           member_count: g.member_count,
           is_member: g.is_member,
+          group_verified: g.is_verified,
         })),
         ...(postData || []).map((p: any) => ({
           type: 'post' as const,
@@ -907,7 +906,7 @@ const Search = () => {
                             <span className="font-bold text-[15px] text-foreground truncate">
                               {result.display_name}
                             </span>
-                            <VerifiedBadge isVerified={result.is_verified} isOrgVerified={result.is_organization_verified} />
+                            <PlatformVerifiedBadge isVerified={result.is_verified} isOrgVerified={result.is_organization_verified} size="sm" />
                           </div>
                           <p className="text-[15px] text-muted-foreground truncate">@{result.handle}</p>
                           {result.bio && (
@@ -943,9 +942,12 @@ const Search = () => {
                         </Avatar>
                         <div className="flex-1 min-w-0">
                           <div className="flex items-center justify-between">
-                            <span className="font-bold text-[15px] text-foreground truncate">
-                              {result.name || 'Unnamed Group'}
-                            </span>
+                            <div className="flex items-center gap-0.5">
+                              <span className="font-bold text-[15px] text-foreground truncate">
+                                {result.name || 'Unnamed Group'}
+                              </span>
+                              {result.group_verified && <PlatformVerifiedBadge isVerified={true} size="sm" />}
+                            </div>
                             {result.is_member ? (
                               <Button
                                 variant="outline"
@@ -1010,9 +1012,10 @@ const Search = () => {
                             <span className="font-bold text-[15px] text-foreground">
                               {result.author_profiles?.display_name}
                             </span>
-                            <VerifiedBadge
+                            <PlatformVerifiedBadge
                               isVerified={result.author_profiles?.is_verified}
                               isOrgVerified={result.author_profiles?.is_organization_verified}
+                              size="sm"
                             />
                             <span className="text-[15px] text-muted-foreground">
                               @{result.author_profiles?.handle}
