@@ -151,10 +151,8 @@ export const ChatStoriesHeader = ({ isExpanded, onToggleExpand, onSearch }: Chat
   const displayUsers = storyUsers.slice(0, 3); // Show max 3 overlapping avatars
 
   return (
-    <>
+    <div className="flex-shrink-0 bg-background border-b border-border z-50">
       <ChatMenuDrawer isOpen={isMenuOpen} onClose={() => setIsMenuOpen(false)} />
-      
-      <div className="flex-shrink-0 bg-background border-b border-border">
         {/* Header */}
         <div className="flex items-center justify-between px-4 h-14">
           {isSearchOpen ? (
@@ -340,7 +338,6 @@ export const ChatStoriesHeader = ({ isExpanded, onToggleExpand, onSearch }: Chat
             </motion.div>
           )}
         </AnimatePresence>
-      </div>
-    </>
+    </div>
   );
 };
