@@ -2,6 +2,8 @@ import { Link } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { useTranslation } from 'react-i18next';
 import { UserAvatar } from '@/components/avatar/UserAvatar';
+import { MessageCircle, Pin, Trash2, MoreHorizontal } from 'lucide-react';
+import { cn } from '@/lib/utils';
 import React from 'react';
 
 interface Reply {
@@ -54,71 +56,101 @@ export const NestedReplyItem = ({
   const { t, i18n } = useTranslation();
   const shouldShowReplyButton = depth < MAX_DEPTH;
 
+  const formatTime = (dateString: string) => {
+    const date = new Date(dateString);
+    const now = new Date();
+    const diff = now.getTime() - date.getTime();
+    const hours = Math.floor(diff / (1000 * 60 * 60));
+    const days = Math.floor(diff / (1000 * 60 * 60 * 24));
+    
+    if (hours < 1) return 'now';
+    if (hours < 24) return `${hours}h`;
+    if (days < 7) return `${days}d`;
+    return date.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
+  };
+
   return (
-    <div className={`${depth > 0 ? 'ml-8 mt-3' : ''}`}>
-      <div className={`p-4 ${reply.is_pinned ? 'bg-primary/5' : 'hover:bg-muted/50'} transition-colors`}>
+    <div className={cn(
+      "relative",
+      depth > 0 && "ml-10 mt-2"
+    )}>
+      {/* Thread line for nested replies */}
+      {depth > 0 && (
+        <div className="absolute left-[-20px] top-0 bottom-0 w-[2px] bg-border" />
+      )}
+      
+      <div className={cn(
+        "py-3 px-4 rounded-xl transition-colors",
+        reply.is_pinned ? "bg-primary/5 border border-primary/20" : "hover:bg-muted/50",
+        depth > 0 && "bg-muted/30"
+      )}>
+        {/* Pinned indicator */}
         {reply.is_pinned && (
-          <div className="text-xs text-primary font-medium mb-2 flex items-center gap-1">
-            📌 Pinned by author
+          <div className="flex items-center gap-1.5 text-xs text-primary font-medium mb-2">
+            <Pin className="h-3 w-3" />
+            <span>Pinned by author</span>
           </div>
         )}
+        
         <div className="flex items-start gap-3">
-              <UserAvatar
-                userId={reply.author.handle}
-                avatarUrl={reply.author.avatar_url}
-                name={reply.author.display_name}
-                size={40}
-              />
+          <Link to={`/${reply.author.handle}`} className="flex-shrink-0">
+            <UserAvatar
+              userId={reply.author.handle}
+              avatarUrl={reply.author.avatar_url}
+              name={reply.author.display_name}
+              size={depth === 0 ? 40 : 32}
+            />
+          </Link>
           
           <div className="flex-1 min-w-0">
-            <div className="flex items-center justify-between">
-              <div className="flex items-center min-w-0 flex-1">
-                <Link 
-                  to={`/profile/${reply.author.handle}`} 
-                  className="font-bold hover:underline truncate"
-                >
-                  {reply.author.display_name}
-                </Link>
-                <VerifiedBadge 
-                  isVerified={reply.author.is_verified} 
-                  isOrgVerified={reply.author.is_organization_verified} 
-                />
-                <span className="text-sm text-muted-foreground ml-2 truncate">
-                  @{reply.author.handle}
-                </span>
-              </div>
-              <span className="text-xs text-muted-foreground ml-4 flex-shrink-0">
-                {new Date(reply.created_at).toLocaleDateString('en-US', { 
-                  month: 'short', 
-                  day: 'numeric' 
-                })}
+            {/* Header with name, handle, time */}
+            <div className="flex items-center gap-2 flex-wrap">
+              <Link 
+                to={`/${reply.author.handle}`} 
+                className="font-bold text-sm hover:underline truncate"
+              >
+                {reply.author.display_name}
+              </Link>
+              <VerifiedBadge 
+                isVerified={reply.author.is_verified} 
+                isOrgVerified={reply.author.is_organization_verified} 
+              />
+              <span className="text-xs text-muted-foreground">
+                @{reply.author.handle}
+              </span>
+              <span className="text-xs text-muted-foreground">·</span>
+              <span className="text-xs text-muted-foreground">
+                {formatTime(reply.created_at)}
               </span>
             </div>
             
-            <p className="text-foreground mt-1 whitespace-pre-wrap">
+            {/* Content */}
+            <div className="mt-1.5 text-sm text-foreground whitespace-pre-wrap leading-relaxed">
               {renderContentWithMentions(translatedReplies[reply.id] || (typeof reply.content === 'string' ? reply.content : String(reply.content || '')))}
-            </p>
+            </div>
             
-            <div className="flex gap-2 mt-2">
-              {i18n.language !== 'en' && (
-                <Button
-                  variant="ghost"
-                  size="sm"
-                  onClick={() => onTranslate(reply.id, reply.content)}
-                  className="text-xs text-muted-foreground hover:text-primary p-0 h-auto"
-                >
-                  {translatedReplies[reply.id] ? t('common.showOriginal') : t('common.translate')}
-                </Button>
-              )}
-              
+            {/* Action buttons */}
+            <div className="flex items-center gap-1 mt-2">
               {shouldShowReplyButton && (
                 <Button
                   variant="ghost"
                   size="sm"
                   onClick={() => onReplyClick(reply.id, reply.author.handle)}
-                  className="text-xs text-muted-foreground hover:text-primary p-0 h-auto"
+                  className="h-7 px-2 text-xs text-muted-foreground hover:text-primary gap-1"
                 >
-                  {t('feed.replyTo', 'Reply')}
+                  <MessageCircle className="h-3.5 w-3.5" />
+                  Reply
+                </Button>
+              )}
+              
+              {i18n.language !== 'en' && (
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={() => onTranslate(reply.id, reply.content)}
+                  className="h-7 px-2 text-xs text-muted-foreground hover:text-primary"
+                >
+                  {translatedReplies[reply.id] ? t('common.showOriginal') : t('common.translate')}
                 </Button>
               )}
               
@@ -127,9 +159,13 @@ export const NestedReplyItem = ({
                   variant="ghost"
                   size="sm"
                   onClick={() => onPinReply(reply.id, reply.is_pinned || false)}
-                  className="text-xs text-muted-foreground hover:text-primary p-0 h-auto"
+                  className={cn(
+                    "h-7 px-2 text-xs gap-1",
+                    reply.is_pinned ? "text-primary" : "text-muted-foreground hover:text-primary"
+                  )}
                 >
-                  {reply.is_pinned ? '📌 Unpin' : '📌 Pin'}
+                  <Pin className="h-3.5 w-3.5" />
+                  {reply.is_pinned ? 'Unpin' : 'Pin'}
                 </Button>
               )}
               
@@ -142,8 +178,9 @@ export const NestedReplyItem = ({
                       onDeleteReply(reply.id);
                     }
                   }}
-                  className="text-xs text-red-500 hover:text-red-600 p-0 h-auto"
+                  className="h-7 px-2 text-xs text-muted-foreground hover:text-destructive gap-1"
                 >
+                  <Trash2 className="h-3.5 w-3.5" />
                   Delete
                 </Button>
               )}
@@ -152,8 +189,9 @@ export const NestedReplyItem = ({
         </div>
       </div>
 
+      {/* Nested replies */}
       {reply.nested_replies && reply.nested_replies.length > 0 && (
-        <div className="ml-6">
+        <div className="relative">
           {reply.nested_replies.map(nestedReply => (
             <NestedReplyItem
               key={nestedReply.id}

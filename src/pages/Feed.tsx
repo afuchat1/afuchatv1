@@ -4,7 +4,7 @@ import { useNavigate, Link } from 'react-router-dom';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/contexts/AuthContext';
 import { toast } from 'sonner';
-import { MessageSquare, Heart, Send, Ellipsis, Gift, Eye, TrendingUp, Crown, RefreshCw } from 'lucide-react';
+import { MessageCircle, Heart, Send, Ellipsis, Gift, Eye, TrendingUp, Crown, RefreshCw } from 'lucide-react';
 import { PullToRefreshIndicator } from '@/components/PullToRefreshIndicator';
 import platformLogo from '@/assets/platform-logo.png';
 import aiSparkIcon from '@/assets/ai-spark-icon.png';
@@ -1001,7 +1001,7 @@ const PostCard = ({ post, addReply, user, navigate, onAcknowledge, onDeletePost,
             }
             setShowComments(!showComments);
           }}>
-            <MessageSquare className="h-3.5 w-3.5 sm:h-4 sm:w-4 group-hover:text-primary transition-colors" />
+            <MessageCircle className="h-3.5 w-3.5 sm:h-4 sm:w-4 group-hover:text-primary transition-colors" />
             <span className="group-hover:text-primary transition-colors text-[10px] sm:text-xs">{post.reply_count > 0 ? post.reply_count : ''}</span>
           </Button>
           <Button variant="ghost" size="sm" className="flex items-center gap-0.5 sm:gap-1 group h-7 sm:h-8 px-2 sm:px-3" onClick={() => onAcknowledge(post.id, post.has_liked)}>

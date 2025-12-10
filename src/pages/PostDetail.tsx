@@ -2,7 +2,7 @@ import React, { useEffect, useState, useRef } from 'react';
 import { useParams, useNavigate, Link } from 'react-router-dom';
 import { supabase } from '@/integrations/supabase/client';
 import { CustomLoader } from '@/components/ui/CustomLoader';
-import { ArrowLeft, User as UserIcon, TrendingUp } from 'lucide-react';
+import { ArrowLeft, User as UserIcon, TrendingUp, MessageCircle, Heart, Send } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
 import { useTranslation } from 'react-i18next';
@@ -660,20 +660,25 @@ const PostDetail = () => {
               {formatDate(post.created_at)}
             </p>
 
-            {/* STATS SECTION */}
-            <div className="flex gap-4 text-foreground">
-                <span className="text-sm font-semibold">
-                  {post.likes_count} <span className="text-muted-foreground font-normal">Likes</span>
-                </span>
-                <span className="text-sm font-semibold">
-                  {post.replies_count} <span className="text-muted-foreground font-normal">Replies</span>
-                </span>
+            {/* STATS SECTION - Interactive buttons */}
+            <div className="flex items-center gap-6 py-3 border-t border-border">
+                <button className="flex items-center gap-2 text-muted-foreground hover:text-red-500 transition-colors">
+                  <Heart className="h-5 w-5" />
+                  <span className="text-sm font-semibold">{post.likes_count}</span>
+                </button>
+                <button className="flex items-center gap-2 text-muted-foreground hover:text-primary transition-colors">
+                  <MessageCircle className="h-5 w-5" />
+                  <span className="text-sm font-semibold">{post.replies_count}</span>
+                </button>
                 <button 
                   onClick={() => setShowViewsSheet(true)}
-                  className="text-sm font-semibold flex items-center gap-1 hover:text-primary transition-colors cursor-pointer"
+                  className="flex items-center gap-2 text-muted-foreground hover:text-primary transition-colors"
                 >
-                  <TrendingUp className="h-3.5 w-3.5 text-muted-foreground" />
-                  {post.view_count} <span className="text-muted-foreground font-normal">Views</span>
+                  <TrendingUp className="h-5 w-5" />
+                  <span className="text-sm font-semibold">{post.view_count}</span>
+                </button>
+                <button className="flex items-center gap-2 text-muted-foreground hover:text-primary transition-colors ml-auto">
+                  <Send className="h-5 w-5" />
                 </button>
             </div>
         </div>
@@ -725,27 +730,43 @@ const PostDetail = () => {
 
         {/* --- REPLIES LIST --- */}
         <div className="flex flex-col">
-            {replies.map(reply => (
-              <NestedReplyItem
-                key={reply.id}
-                reply={reply}
-                depth={0}
-                onTranslate={handleTranslateReply}
-                translatedReplies={translatedReplies}
-                onReplyClick={(replyId, authorHandle) => {
-                  setReplyingTo({ replyId, authorHandle });
-                  setReplyText(`@${authorHandle} `);
-                }}
-                onPinReply={handlePinReply}
-                onDeleteReply={handleDeleteReply}
-                isPostAuthor={user?.id === post?.author.id}
-                currentUserId={user?.id}
-                VerifiedBadge={VerifiedBadge}
-                renderContentWithMentions={renderContentWithMentions}
-              />
-            ))}
+            {/* Comments header */}
+            <div className="px-4 py-3 border-b border-border flex items-center gap-2">
+              <MessageCircle className="h-5 w-5 text-primary" />
+              <h3 className="font-bold text-lg">Comments</h3>
+              {replies.length > 0 && (
+                <span className="text-sm text-muted-foreground">({replies.length})</span>
+              )}
+            </div>
+            
+            <div className="divide-y divide-border">
+              {replies.map(reply => (
+                <NestedReplyItem
+                  key={reply.id}
+                  reply={reply}
+                  depth={0}
+                  onTranslate={handleTranslateReply}
+                  translatedReplies={translatedReplies}
+                  onReplyClick={(replyId, authorHandle) => {
+                    setReplyingTo({ replyId, authorHandle });
+                    setReplyText(`@${authorHandle} `);
+                  }}
+                  onPinReply={handlePinReply}
+                  onDeleteReply={handleDeleteReply}
+                  isPostAuthor={user?.id === post?.author.id}
+                  currentUserId={user?.id}
+                  VerifiedBadge={VerifiedBadge}
+                  renderContentWithMentions={renderContentWithMentions}
+                />
+              ))}
+            </div>
+            
             {replies.length === 0 && (
-                <p className="text-center text-muted-foreground p-8">No replies yet. Be the first!</p>
+              <div className="text-center py-12">
+                <MessageCircle className="h-12 w-12 mx-auto text-muted-foreground/50 mb-3" />
+                <p className="text-muted-foreground font-medium">No comments yet</p>
+                <p className="text-sm text-muted-foreground/70">Be the first to share your thoughts!</p>
+              </div>
             )}
         </div>
       </div>
