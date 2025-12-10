@@ -16,25 +16,6 @@ const SUMMARY_WORTHY_CATEGORIES: ContentCategory[] = ['news', 'technology', 'pol
 const MIN_CONFIDENCE_THRESHOLD = 40;
 const MIN_CONTENT_LENGTH = 200;
 
-// Global throttling - limit summaries per session to save API credits
-const MAX_SUMMARIES_PER_SESSION = 3;
-const DELAY_BETWEEN_REQUESTS = 5000; // 5 seconds
-let summariesGeneratedThisSession = 0;
-let lastRequestTime = 0;
-
-const canGenerateSummary = (): boolean => {
-  return summariesGeneratedThisSession < MAX_SUMMARIES_PER_SESSION;
-};
-
-const waitForNextSlot = async (): Promise<void> => {
-  const now = Date.now();
-  const timeSinceLastRequest = now - lastRequestTime;
-  if (timeSinceLastRequest < DELAY_BETWEEN_REQUESTS) {
-    await new Promise(resolve => setTimeout(resolve, DELAY_BETWEEN_REQUESTS - timeSinceLastRequest));
-  }
-  lastRequestTime = Date.now();
-};
-
 const isWorthSummarizing = (content: string): boolean => {
   if (content.length < MIN_CONTENT_LENGTH) return false;
   
@@ -80,42 +61,30 @@ export const AIPostSummary = ({ postContent, postId }: AIPostSummaryProps) => {
     const worthSummarizing = isWorthSummarizing(postContent);
     setShouldShow(worthSummarizing);
     
+    // Check for cached summary only (don't auto-generate)
     if (worthSummarizing) {
       checkCachedSummary();
     }
   }, [isPremium, postId]);
 
   const checkCachedSummary = async () => {
-    // First check database cache
     const { data: existingSummary } = await supabase
       .from('post_ai_summaries')
       .select('summary')
       .eq('post_id', postId)
       .maybeSingle();
     
-    if (existingSummary?.summary) {
-      if (mountedRef.current) setSummary(existingSummary.summary);
-      return;
+    if (existingSummary?.summary && mountedRef.current) {
+      setSummary(existingSummary.summary);
     }
-    
-    // Check if we can generate more summaries this session
-    if (!canGenerateSummary()) {
-      if (mountedRef.current) setShouldShow(false);
-      return;
-    }
-    
-    // Generate with throttling
-    setLoading(true);
-    await waitForNextSlot();
-    await generateSummary();
   };
 
-  const generateSummary = async () => {
-    if (!mountedRef.current) return;
+  const handleGenerateSummary = async () => {
+    if (loading || summary) return;
+    
+    setLoading(true);
     
     try {
-      summariesGeneratedThisSession++;
-      
       const { data, error } = await supabase.functions.invoke('chat-with-afuai', {
         body: {
           message: `Summarize this social media post in 1-2 concise sentences. Focus on the main point or message:\n\n"${postContent}"`,
@@ -125,12 +94,7 @@ export const AIPostSummary = ({ postContent, postId }: AIPostSummaryProps) => {
 
       if (error) {
         if (error.message?.includes('429') || error.message?.includes('rate')) {
-          console.warn('Rate limited, will retry later');
-          if (mountedRef.current) {
-            setShouldShow(false);
-            setLoading(false);
-          }
-          return;
+          console.warn('Rate limited, please try again later');
         }
         throw error;
       }
@@ -140,13 +104,13 @@ export const AIPostSummary = ({ postContent, postId }: AIPostSummaryProps) => {
       if (generatedSummary && mountedRef.current) {
         setSummary(generatedSummary);
         
+        // Cache in database
         await supabase
           .from('post_ai_summaries')
           .upsert({ post_id: postId, summary: generatedSummary }, { onConflict: 'post_id' });
       }
     } catch (error) {
       console.error('AI Summary error:', error);
-      if (mountedRef.current) setShouldShow(false);
     } finally {
       if (mountedRef.current) setLoading(false);
     }
@@ -197,7 +161,17 @@ export const AIPostSummary = ({ postContent, postId }: AIPostSummaryProps) => {
                   <p className="text-xs text-foreground/90 leading-relaxed bg-background/50 rounded p-2">
                     {summary}
                   </p>
-                ) : null}
+                ) : (
+                  <button
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      handleGenerateSummary();
+                    }}
+                    className="w-full py-2 text-xs text-primary hover:text-primary/80 transition-colors"
+                  >
+                    Tap to generate summary
+                  </button>
+                )}
               </div>
             </motion.div>
           )}
