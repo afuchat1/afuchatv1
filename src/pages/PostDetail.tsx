@@ -593,13 +593,15 @@ const PostDetail = () => {
               </div>
               <Link to={`/profile/${post.author.handle}`} className="flex-1 min-w-0">
                 <div className="flex items-center">
-                  <span className="text-lg font-bold hover:underline truncate">{post.author.display_name}</span>
+                  <span className="text-xl font-bold hover:underline truncate max-w-[180px]" title={post.author.display_name}>
+                    {post.author.display_name.length > 15 ? `${post.author.display_name.slice(0, 13)}...` : post.author.display_name}
+                  </span>
                   <VerifiedBadge 
                     isVerified={post.author.is_verified} 
                     isOrgVerified={post.author.is_organization_verified} 
                   />
                 </div>
-                <p className="text-sm text-muted-foreground truncate">@{post.author.handle}</p>
+                <p className="text-base text-muted-foreground truncate">@{post.author.handle}</p>
               </Link>
             </div>
 
@@ -732,10 +734,10 @@ const PostDetail = () => {
         <div className="flex flex-col">
             {/* Comments header */}
             <div className="px-4 py-3 border-b border-border flex items-center gap-2">
-              <MessageCircle className="h-5 w-5 text-primary" />
-              <h3 className="font-bold text-lg">Comments</h3>
+              <MessageCircle className="h-6 w-6 text-primary" />
+              <h3 className="font-extrabold text-xl">Comments</h3>
               {replies.length > 0 && (
-                <span className="text-sm text-muted-foreground">({replies.length})</span>
+                <span className="text-base font-semibold text-muted-foreground">({replies.length})</span>
               )}
             </div>
             

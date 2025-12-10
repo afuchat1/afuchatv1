@@ -107,9 +107,10 @@ export const NestedReplyItem = ({
             <div className="flex items-center gap-2 flex-wrap">
               <Link 
                 to={`/${reply.author.handle}`} 
-                className="font-bold text-sm hover:underline truncate"
+                className="font-bold text-base hover:underline truncate max-w-[120px]"
+                title={reply.author.display_name}
               >
-                {reply.author.display_name}
+                {reply.author.display_name.length > 12 ? `${reply.author.display_name.slice(0, 10)}...` : reply.author.display_name}
               </Link>
               <VerifiedBadge 
                 isVerified={reply.author.is_verified} 

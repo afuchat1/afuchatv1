@@ -361,10 +361,11 @@ const ReplyItem = ({ reply, navigate, handleViewProfile }: {
             <div className="flex-1 min-w-0">
                 <div className="flex items-center gap-x-1 min-w-0">
                     <span
-                        className="font-bold text-foreground text-[10px] sm:text-xs cursor-pointer hover:underline whitespace-nowrap"
+                        className="font-bold text-foreground text-xs sm:text-sm cursor-pointer hover:underline truncate max-w-[80px] sm:max-w-[120px]"
                         onClick={() => handleViewProfile(reply.author_id)}
+                        title={reply.profiles.display_name}
                     >
-                        {reply.profiles.display_name}
+                        {reply.profiles.display_name.length > 10 ? `${reply.profiles.display_name.slice(0, 8)}...` : reply.profiles.display_name}
                     </span>
                     
                     {reply.profiles.is_affiliate && reply.profiles.is_business_mode && (
@@ -838,10 +839,11 @@ const PostCard = ({ post, addReply, user, navigate, onAcknowledge, onDeletePost,
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-x-1 min-w-0">
             <span
-              className="font-bold text-foreground text-xs sm:text-sm cursor-pointer hover:underline whitespace-nowrap"
+              className="font-bold text-foreground text-sm sm:text-base cursor-pointer hover:underline truncate max-w-[100px] sm:max-w-[140px]"
               onClick={() => handleViewProfile(post.author_id)}
+              title={post.profiles.display_name}
             >
-              {post.profiles.display_name}
+              {post.profiles.display_name.length > 12 ? `${post.profiles.display_name.slice(0, 10)}...` : post.profiles.display_name}
             </span>
             
             {post.profiles.is_affiliate && post.profiles.is_business_mode && (
@@ -1050,7 +1052,7 @@ const PostCard = ({ post, addReply, user, navigate, onAcknowledge, onDeletePost,
         <div className="mt-1 ml-[-8px] sm:ml-[-12px] pr-[8px] sm:pr-[12px]">
           {post.reply_count > 0 && !showComments && (
             <span
-              className="text-[10px] sm:text-xs text-muted-foreground cursor-pointer hover:underline"
+              className="text-sm sm:text-base font-semibold text-muted-foreground cursor-pointer hover:underline hover:text-primary transition-colors"
               onClick={() => setShowComments(true)}
             >
               {t('feed.viewComments', { count: post.reply_count })}
