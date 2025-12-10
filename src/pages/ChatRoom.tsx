@@ -117,6 +117,22 @@ interface OtherUserProfile {
   affiliated_business_id: string | null;
 }
 
+const formatLastSeen = (isoString: string): string => {
+  const date = new Date(isoString);
+  const now = new Date();
+  const diffMs = now.getTime() - date.getTime();
+  const diffMins = Math.floor(diffMs / 60000);
+  const diffHours = Math.floor(diffMs / 3600000);
+  const diffDays = Math.floor(diffMs / 86400000);
+
+  if (diffMins < 1) return 'just now';
+  if (diffMins < 60) return `${diffMins}m ago`;
+  if (diffHours < 24) return `${diffHours}h ago`;
+  if (diffDays < 7) return `${diffDays}d ago`;
+  
+  return date.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
+};
+
 const ChatRoom = () => {
   const { chatId } = useParams();
   const { user } = useAuth();
@@ -147,6 +163,7 @@ const ChatRoom = () => {
   const mediaRecorderRef = useRef<MediaRecorder | null>(null);
   const streamRef = useRef<MediaStream | null>(null);
   const typingTimeoutRef = useRef<NodeJS.Timeout | null>(null);
+  const currentUserDisplayNameRef = useRef<string | null>(null);
   const [currentTheme, setCurrentTheme] = useState<ChatTheme | null>(null);
   const [currentWallpaper, setCurrentWallpaper] = useState<ChatWallpaper | null>(null);
   const [isGroupSettingsOpen, setIsGroupSettingsOpen] = useState(false);
@@ -231,24 +248,30 @@ const ChatRoom = () => {
     }
   }, [chatPreferences.chatTheme, chatPreferences.wallpaper, prefsLoading]);
 
-  // Update user's last_seen on mount and interval
+  // Update user's last_seen on mount and fetch display name for typing
   useEffect(() => {
     if (!user) return;
 
     const updateLastSeen = async () => {
-      await supabase
+      const { data } = await supabase
         .from('profiles')
         .update({ last_seen: new Date().toISOString() })
-        .eq('id', user.id);
+        .eq('id', user.id)
+        .select('display_name')
+        .single();
+      
+      if (data) {
+        currentUserDisplayNameRef.current = data.display_name;
+      }
     };
 
     updateLastSeen();
-    const interval = setInterval(updateLastSeen, 30000); // Update every 30 seconds
+    const interval = setInterval(updateLastSeen, 30000);
 
     return () => clearInterval(interval);
   }, [user]);
 
-  // Set up presence tracking
+  // Set up presence tracking and typing indicators
   useEffect(() => {
     if (!chatId || !user) return;
 
@@ -279,6 +302,26 @@ const ChatRoom = () => {
       .on('presence', { event: 'leave' }, ({ key, leftPresences }) => {
         if (otherUser && leftPresences.some((p: any) => p.user_id === otherUser.id)) {
           setOnline(false);
+        }
+      })
+      // Typing indicator via broadcast
+      .on('broadcast', { event: 'typing' }, ({ payload }) => {
+        if (payload.user_id !== user.id) {
+          setTypingUsers(prev => {
+            if (!prev.includes(payload.display_name)) {
+              return [...prev, payload.display_name];
+            }
+            return prev;
+          });
+          // Auto-remove typing indicator after 3 seconds
+          setTimeout(() => {
+            setTypingUsers(prev => prev.filter(name => name !== payload.display_name));
+          }, 3000);
+        }
+      })
+      .on('broadcast', { event: 'stop_typing' }, ({ payload }) => {
+        if (payload.user_id !== user.id) {
+          setTypingUsers(prev => prev.filter(name => name !== payload.display_name));
         }
       })
       .subscribe(async (status) => {
@@ -400,46 +443,7 @@ const ChatRoom = () => {
       )
       .subscribe();
 
-    // Subscribe to typing indicators
-    const typingChannel = supabase
-      .channel(`typing-${chatId}`)
-      .on(
-        'postgres_changes',
-        {
-          event: '*',
-          schema: 'public',
-          table: 'typing_indicators',
-          filter: `chat_id=eq.${chatId}`,
-        },
-        async (payload) => {
-          if (payload.eventType === 'INSERT' || payload.eventType === 'UPDATE') {
-            const typingUserId = payload.new.user_id;
-            if (typingUserId !== user?.id) {
-              const { data: profile } = await supabase
-                .from('profiles')
-                .select('display_name')
-                .eq('id', typingUserId)
-                .single();
-              
-              if (profile) {
-                setTypingUsers(prev => [...new Set([...prev, profile.display_name])]);
-              }
-            }
-          } else if (payload.eventType === 'DELETE') {
-            const typingUserId = payload.old.user_id;
-            const { data: profile } = await supabase
-              .from('profiles')
-              .select('display_name')
-              .eq('id', typingUserId)
-              .single();
-            
-            if (profile) {
-              setTypingUsers(prev => prev.filter(name => name !== profile.display_name));
-            }
-          }
-        }
-      )
-      .subscribe();
+
 
     // Subscribe to message status changes (read receipts)
     const statusChannel = supabase
@@ -476,7 +480,6 @@ const ChatRoom = () => {
     return () => {
       supabase.removeChannel(channel);
       supabase.removeChannel(envelopeChannel);
-      supabase.removeChannel(typingChannel);
       supabase.removeChannel(statusChannel);
       supabase.removeChannel(reactionsChannel);
       stopRecording();
@@ -868,32 +871,36 @@ const ChatRoom = () => {
     }
   };
 
-  const updateTypingIndicator = async () => {
-    if (!user || !chatId) return;
+  const updateTypingIndicator = () => {
+    if (!user || !chatId || !presenceChannel || !currentUserDisplayNameRef.current) return;
 
     if (typingTimeoutRef.current) {
       clearTimeout(typingTimeoutRef.current);
     }
 
-    await supabase
-      .from('typing_indicators')
-      .upsert({
-        chat_id: chatId,
+    presenceChannel.send({
+      type: 'broadcast',
+      event: 'typing',
+      payload: {
         user_id: user.id,
-        started_at: new Date().toISOString(),
-      });
+        display_name: currentUserDisplayNameRef.current,
+      },
+    });
 
     typingTimeoutRef.current = setTimeout(removeTypingIndicator, 3000);
   };
 
-  const removeTypingIndicator = async () => {
-    if (!user || !chatId) return;
+  const removeTypingIndicator = () => {
+    if (!user || !chatId || !presenceChannel || !currentUserDisplayNameRef.current) return;
 
-    await supabase
-      .from('typing_indicators')
-      .delete()
-      .eq('chat_id', chatId)
-      .eq('user_id', user.id);
+    presenceChannel.send({
+      type: 'broadcast',
+      event: 'stop_typing',
+      payload: {
+        user_id: user.id,
+        display_name: currentUserDisplayNameRef.current,
+      },
+    });
 
     if (typingTimeoutRef.current) {
       clearTimeout(typingTimeoutRef.current);
@@ -1068,6 +1075,29 @@ const ChatRoom = () => {
                   />
                 )}
               </div>
+              {/* Last seen / Online status / Typing */}
+              {!chatInfo?.is_group && otherUser && (
+                <p className="text-xs text-muted-foreground truncate">
+                  {typingUsers.length > 0 ? (
+                    <span className="text-primary">typing...</span>
+                  ) : online ? (
+                    <span className="text-green-500">online</span>
+                  ) : otherUser.show_online_status !== false && otherUser.last_seen ? (
+                    `last seen ${formatLastSeen(otherUser.last_seen)}`
+                  ) : (
+                    `@${otherUser.handle}`
+                  )}
+                </p>
+              )}
+              {chatInfo?.is_group && (
+                <p className="text-xs text-muted-foreground">
+                  {typingUsers.length > 0 ? (
+                    <span className="text-primary">{typingUsers[0]} is typing...</span>
+                  ) : (
+                    'Tap for group info'
+                  )}
+                </p>
+              )}
             </div>
           </div>
 
