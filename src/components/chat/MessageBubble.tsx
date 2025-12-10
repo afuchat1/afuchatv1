@@ -263,10 +263,10 @@ export const MessageBubble = ({
   }, []);
 
   // Find the message being replied to (if any)
-  // Supabase returns reply_to_message as an array - get first element if exists
-  const replyData = Array.isArray(message.reply_to_message) 
+  // IMPORTANT: Only show quote if reply_to_message_id exists (Supabase join may return data even when null)
+  const replyData = message.reply_to_message_id && Array.isArray(message.reply_to_message) && message.reply_to_message.length > 0
     ? message.reply_to_message[0] 
-    : message.reply_to_message;
+    : null;
   const repliedMessage = replyData?.encrypted_content ? replyData : null;
 
 
