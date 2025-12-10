@@ -133,6 +133,7 @@ const formatLastSeen = (isoString: string): string => {
   return date.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
 };
 
+// ChatRoom component
 const ChatRoom = () => {
   const { chatId } = useParams();
   const { user } = useAuth();
