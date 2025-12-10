@@ -2,9 +2,10 @@ import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/contexts/AuthContext';
-import { Plus, Menu, Search, X } from 'lucide-react';
+import { Plus, Menu, Search, X, ChevronDown } from 'lucide-react';
 import { Input } from '@/components/ui/input';
 import { ChatMenuDrawer } from './ChatMenuDrawer';
+import { motion, AnimatePresence } from 'framer-motion';
 
 interface StoryUser {
   user_id: string;
@@ -29,7 +30,7 @@ export const ChatStoriesHeader = ({ shouldCollapse = false, onToggleCollapse, on
     display_name: string;
   } | null>(null);
   const [loading, setLoading] = useState(true);
-  const [isCollapsed, setIsCollapsed] = useState(true); // Always start collapsed
+  const [isExpanded, setIsExpanded] = useState(false); // Start collapsed
   const [isSearchOpen, setIsSearchOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
   const [isMenuOpen, setIsMenuOpen] = useState(false);
@@ -123,16 +124,18 @@ export const ChatStoriesHeader = ({ shouldCollapse = false, onToggleCollapse, on
     }
   };
 
-  const handleStoryClick = (userId: string) => {
+  const handleStoryClick = (e: React.MouseEvent, userId: string) => {
+    e.stopPropagation();
     navigate(`/moments?user=${userId}`);
   };
 
-  const handleCreateStory = () => {
+  const handleCreateStory = (e: React.MouseEvent) => {
+    e.stopPropagation();
     navigate('/moments');
   };
 
   const handleStoriesToggle = () => {
-    setIsCollapsed(!isCollapsed);
+    setIsExpanded(!isExpanded);
   };
 
   const handleSearchToggle = () => {
@@ -154,162 +157,173 @@ export const ChatStoriesHeader = ({ shouldCollapse = false, onToggleCollapse, on
       <ChatMenuDrawer isOpen={isMenuOpen} onClose={() => setIsMenuOpen(false)} />
       
       <div className="sticky top-0 z-50 bg-background border-b border-border">
-      {/* Header - tap middle section to expand when collapsed */}
-      <div className="flex items-center justify-between px-4 h-16">
-        {/* Search Bar */}
-        {isSearchOpen ? (
-          <div className="flex items-center gap-3 flex-1 animate-fade-in">
-            <div className="flex items-center gap-2 flex-1 bg-muted/30 rounded-full px-4 py-2 border border-border/50 focus-within:border-primary/50 transition-colors">
-              <Search className="h-5 w-5 text-muted-foreground" />
-              <Input
-                type="text"
-                placeholder="Search chats..."
-                value={searchQuery}
-                onChange={handleSearchChange}
-                className="flex-1 border-0 bg-transparent focus-visible:ring-0 focus-visible:ring-offset-0 placeholder:text-muted-foreground/70 h-8 px-0"
-                autoFocus
-              />
-              {searchQuery && (
-                <button 
-                  onClick={() => {
-                    setSearchQuery('');
-                    onSearch?.('');
-                  }}
-                  className="p-1 hover:bg-muted/50 rounded-full transition-colors"
-                >
-                  <X className="h-4 w-4 text-muted-foreground" />
-                </button>
-              )}
-            </div>
-            <button 
-              onClick={handleSearchToggle}
-              className="p-2 hover:bg-muted/20 rounded-full transition-colors"
-            >
-              <X className="h-6 w-6 text-foreground" />
-            </button>
-          </div>
-        ) : (
-          <>
-            <button 
-              onClick={() => setIsMenuOpen(true)}
-              className="p-2 hover:bg-muted/20 rounded-full transition-all hover:scale-110 active:scale-95"
-            >
-              <Menu className="h-7 w-7 text-foreground" />
-            </button>
-
-            {/* Compact overlapping bubbles - always visible, click to toggle */}
-            <button
-              type="button"
-              onClick={handleStoriesToggle}
-              className="flex items-center gap-3 overflow-hidden focus:outline-none"
-            >
-              <div className="flex items-center -space-x-2">
-                {storyUsers.slice(0, 3).map((storyUser, index) => (
-                  <div
-                    key={storyUser.user_id}
-                    className="h-9 w-9 rounded-full border-2 border-background bg-gradient-to-br from-cyan-400 via-teal-400 to-green-500 flex items-center justify-center overflow-hidden cursor-pointer hover:scale-110 transition-transform"
-                    style={{ zIndex: 3 - index }}
+        {/* Header */}
+        <div className="flex items-center justify-between px-4 h-14">
+          {isSearchOpen ? (
+            <div className="flex items-center gap-3 flex-1 animate-fade-in">
+              <div className="flex items-center gap-2 flex-1 bg-muted/30 rounded-full px-4 py-2 border border-border/50 focus-within:border-primary/50 transition-colors">
+                <Search className="h-5 w-5 text-muted-foreground" />
+                <Input
+                  type="text"
+                  placeholder="Search chats..."
+                  value={searchQuery}
+                  onChange={handleSearchChange}
+                  className="flex-1 border-0 bg-transparent focus-visible:ring-0 focus-visible:ring-offset-0 placeholder:text-muted-foreground/70 h-8 px-0"
+                  autoFocus
+                />
+                {searchQuery && (
+                  <button 
+                    onClick={() => {
+                      setSearchQuery('');
+                      onSearch?.('');
+                    }}
+                    className="p-1 hover:bg-muted/50 rounded-full transition-colors"
                   >
-                    {storyUser.avatar_url ? (
-                      <img
-                        src={storyUser.avatar_url}
-                        alt={storyUser.display_name}
-                        className="h-full w-full object-cover"
-                      />
-                    ) : (
-                      <span className="text-xs font-semibold text-primary-foreground">
-                        {storyUser.display_name?.charAt(0).toUpperCase()}
-                      </span>
-                    )}
-                  </div>
-                ))}
+                    <X className="h-4 w-4 text-muted-foreground" />
+                  </button>
+                )}
               </div>
-              <h1 className="text-lg font-semibold text-foreground">
-                {storyUsers.length > 0 
-                  ? `${storyUsers.length} ${storyUsers.length === 1 ? 'Story' : 'Stories'}`
-                  : 'AfuChat'
-                }
-              </h1>
-            </button>
+              <button 
+                onClick={handleSearchToggle}
+                className="p-2 hover:bg-muted/20 rounded-full transition-colors"
+              >
+                <X className="h-6 w-6 text-foreground" />
+              </button>
+            </div>
+          ) : (
+            <>
+              <button 
+                onClick={() => setIsMenuOpen(true)}
+                className="p-2 hover:bg-muted/20 rounded-full transition-all active:scale-95"
+              >
+                <Menu className="h-6 w-6 text-foreground" />
+              </button>
 
-            <button 
-              onClick={handleSearchToggle}
-              className="p-2 hover:bg-muted/20 rounded-full transition-all hover:scale-110 active:scale-95"
-            >
-              <Search className="h-6 w-6 text-foreground" />
-            </button>
-          </>
-        )}
-      </div>
-
-      {/* Stories horizontal scroll - slides closed when collapsed */}
-      <div
-        className={`overflow-hidden transition-all duration-300 ease-in-out ${
-          isCollapsed
-            ? 'max-h-0 opacity-0'
-            : 'max-h-[140px] opacity-100'
-        }`}
-      >
-        <div className="overflow-x-auto scrollbar-hide px-4 pb-4">
-          <div className="flex gap-5">
-            {/* My Story */}
-            <div
-              onClick={handleCreateStory}
-              className="flex-shrink-0 cursor-pointer flex flex-col items-center gap-2 hover-scale"
-            >
-              <div className="relative">
-                {currentUserProfile?.avatar_url ? (
-                  <img
-                    src={currentUserProfile.avatar_url}
-                    alt="My Story"
-                    className="h-[72px] w-[72px] rounded-full object-cover border-2 border-border"
-                  />
-                ) : (
-                  <div className="h-[72px] w-[72px] rounded-full bg-muted flex items-center justify-center border-2 border-border">
-                    <span className="text-xl font-semibold text-muted-foreground">
-                      {currentUserProfile?.display_name?.charAt(0).toUpperCase() || 'M'}
-                    </span>
+              {/* Stories toggle button */}
+              <button
+                type="button"
+                onClick={handleStoriesToggle}
+                className="flex items-center gap-2 focus:outline-none active:opacity-70 transition-opacity"
+              >
+                {storyUsers.length > 0 && (
+                  <div className="flex items-center -space-x-2">
+                    {storyUsers.slice(0, 3).map((storyUser, index) => (
+                      <div
+                        key={storyUser.user_id}
+                        className="h-8 w-8 rounded-full border-2 border-background bg-gradient-to-br from-cyan-400 via-teal-400 to-green-500 flex items-center justify-center overflow-hidden"
+                        style={{ zIndex: 3 - index }}
+                      >
+                        {storyUser.avatar_url ? (
+                          <img
+                            src={storyUser.avatar_url}
+                            alt={storyUser.display_name}
+                            className="h-full w-full object-cover"
+                          />
+                        ) : (
+                          <span className="text-xs font-semibold text-primary-foreground">
+                            {storyUser.display_name?.charAt(0).toUpperCase()}
+                          </span>
+                        )}
+                      </div>
+                    ))}
                   </div>
                 )}
-                <div className="absolute bottom-0 right-0 h-6 w-6 rounded-full bg-primary flex items-center justify-center border-2 border-background shadow-md">
-                  <Plus className="h-4 w-4 text-primary-foreground" />
-                </div>
-              </div>
-              <p className="text-xs text-center font-medium text-foreground w-20 truncate">
-                My Story
-              </p>
-            </div>
+                <span className="text-base font-semibold text-foreground">
+                  {storyUsers.length > 0 
+                    ? `${storyUsers.length} ${storyUsers.length === 1 ? 'Story' : 'Stories'}`
+                    : 'AfuChat'
+                  }
+                </span>
+                <motion.div
+                  animate={{ rotate: isExpanded ? 180 : 0 }}
+                  transition={{ duration: 0.2 }}
+                >
+                  <ChevronDown className="h-4 w-4 text-muted-foreground" />
+                </motion.div>
+              </button>
 
-            {/* Other stories */}
-            {storyUsers.map((storyUser) => (
-              <div
-                key={storyUser.user_id}
-                onClick={() => handleStoryClick(storyUser.user_id)}
-                className="flex-shrink-0 cursor-pointer flex flex-col items-center gap-2 hover-scale"
+              <button 
+                onClick={handleSearchToggle}
+                className="p-2 hover:bg-muted/20 rounded-full transition-all active:scale-95"
               >
-                <div className="p-[3px] rounded-full bg-gradient-to-br from-cyan-400 via-teal-400 to-green-500">
-                  {storyUser.avatar_url ? (
-                    <img
-                      src={storyUser.avatar_url}
-                      alt={storyUser.display_name}
-                      className="h-[72px] w-[72px] rounded-full object-cover border-[3px] border-background"
-                    />
-                  ) : (
-                    <div className="h-[72px] w-[72px] rounded-full bg-primary flex items-center justify-center border-[3px] border-background">
-                      <span className="text-xl font-semibold text-primary-foreground">
-                        {storyUser.display_name?.charAt(0).toUpperCase()}
-                      </span>
-                    </div>
-                  )}
-                </div>
-                <p className="text-xs text-center font-medium text-foreground w-20 truncate">
-                  {storyUser.display_name}
-                </p>
-              </div>
-            ))}
-          </div>
+                <Search className="h-6 w-6 text-foreground" />
+              </button>
+            </>
+          )}
         </div>
-      </div>
+
+        {/* Stories panel - animated with framer-motion */}
+        <AnimatePresence>
+          {isExpanded && (
+            <motion.div
+              initial={{ height: 0, opacity: 0 }}
+              animate={{ height: 'auto', opacity: 1 }}
+              exit={{ height: 0, opacity: 0 }}
+              transition={{ duration: 0.25, ease: 'easeInOut' }}
+              className="overflow-hidden"
+            >
+              <div className="overflow-x-auto scrollbar-hide px-4 pb-4 pt-2">
+                <div className="flex gap-4">
+                  {/* My Story */}
+                  <div
+                    onClick={handleCreateStory}
+                    className="flex-shrink-0 cursor-pointer flex flex-col items-center gap-1.5"
+                  >
+                    <div className="relative">
+                      {currentUserProfile?.avatar_url ? (
+                        <img
+                          src={currentUserProfile.avatar_url}
+                          alt="My Story"
+                          className="h-16 w-16 rounded-full object-cover border-2 border-border"
+                        />
+                      ) : (
+                        <div className="h-16 w-16 rounded-full bg-muted flex items-center justify-center border-2 border-border">
+                          <span className="text-lg font-semibold text-muted-foreground">
+                            {currentUserProfile?.display_name?.charAt(0).toUpperCase() || 'M'}
+                          </span>
+                        </div>
+                      )}
+                      <div className="absolute bottom-0 right-0 h-5 w-5 rounded-full bg-primary flex items-center justify-center border-2 border-background">
+                        <Plus className="h-3 w-3 text-primary-foreground" />
+                      </div>
+                    </div>
+                    <p className="text-xs text-center font-medium text-foreground w-16 truncate">
+                      My Story
+                    </p>
+                  </div>
+
+                  {/* Other stories */}
+                  {storyUsers.map((storyUser) => (
+                    <div
+                      key={storyUser.user_id}
+                      onClick={(e) => handleStoryClick(e, storyUser.user_id)}
+                      className="flex-shrink-0 cursor-pointer flex flex-col items-center gap-1.5"
+                    >
+                      <div className="p-[2px] rounded-full bg-gradient-to-br from-cyan-400 via-teal-400 to-green-500">
+                        {storyUser.avatar_url ? (
+                          <img
+                            src={storyUser.avatar_url}
+                            alt={storyUser.display_name}
+                            className="h-16 w-16 rounded-full object-cover border-2 border-background"
+                          />
+                        ) : (
+                          <div className="h-16 w-16 rounded-full bg-primary flex items-center justify-center border-2 border-background">
+                            <span className="text-lg font-semibold text-primary-foreground">
+                              {storyUser.display_name?.charAt(0).toUpperCase()}
+                            </span>
+                          </div>
+                        )}
+                      </div>
+                      <p className="text-xs text-center font-medium text-foreground w-16 truncate">
+                        {storyUser.display_name}
+                      </p>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            </motion.div>
+          )}
+        </AnimatePresence>
       </div>
     </>
   );
