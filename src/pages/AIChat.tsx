@@ -174,8 +174,8 @@ const AIChat: React.FC = () => {
   return (
     <PremiumGate feature="AI Chat Assistant" showUpgrade={true}>
       <div className="flex flex-col h-full bg-background relative">
-        {/* Header */}
-        <header className="flex items-center justify-between px-4 py-3 border-b border-border bg-background flex-shrink-0">
+        {/* Header - Fixed at top */}
+        <header className="fixed top-0 left-0 right-0 flex items-center justify-between px-4 py-3 border-b border-border bg-background z-40">
           <ProfileDrawer
             trigger={
               <button className="flex-shrink-0">
@@ -202,8 +202,8 @@ const AIChat: React.FC = () => {
           </div>
         </header>
 
-        {/* Chat Messages Area - Scrollable with bottom padding for input */}
-        <div className="flex-1 overflow-y-auto pb-16">
+        {/* Chat Messages Area - Scrollable with padding for fixed header and input */}
+        <div className="flex-1 overflow-y-auto pt-16 pb-16">
           {messages.length === 0 ? (
             <div className="flex flex-col items-center justify-center h-full p-6 text-center">
               <div className="w-16 h-16 rounded-full bg-primary/10 flex items-center justify-center mb-4">
