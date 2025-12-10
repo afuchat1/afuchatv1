@@ -57,15 +57,15 @@ interface Message {
     reaction: string;
     user_id: string;
   }>;
-  reply_to_message?: {
+  reply_to_message?: Array<{
     audio_url?: string;
     encrypted_content: string;
-    sender_id: string;
-    profiles: {
+    sender_id?: string;
+    profiles?: {
       display_name: string;
       avatar_url?: string | null;
     };
-  };
+  }>;
   profiles: {
     display_name: string;
     handle: string;
@@ -591,7 +591,7 @@ const ChatRoom = () => {
       return;
     }
     if (data) {
-      setMessages(data);
+      setMessages(data as unknown as Message[]);
       // Mark messages as delivered and read
       if (user) {
         const messageIds = data
@@ -822,6 +822,13 @@ const ChatRoom = () => {
           },
           message_status: [],
           message_reactions: [],
+          // Include reply data for optimistic update so quote shows immediately
+          reply_to_message: replyToMessage ? [{
+            encrypted_content: replyToMessage.encrypted_content,
+            audio_url: replyToMessage.audio_url || null,
+            sender_id: replyToMessage.sender_id,
+            profiles: replyToMessage.profiles,
+          }] : [],
         } as Message;
         
         setMessages((prev) => {

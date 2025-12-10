@@ -95,15 +95,15 @@ export interface Message {
   edited_at?: string | null;
   reply_to_message_id?: string | null;
   message_reactions?: Reaction[];
-  reply_to_message?: {
+  reply_to_message?: Array<{
     audio_url?: string;
     encrypted_content: string;
     sender_id?: string;
-    profiles: {
+    profiles?: {
       display_name: string;
       avatar_url?: string | null;
     };
-  };
+  }>;
   profiles: {
     display_name: string;
     handle: string;
