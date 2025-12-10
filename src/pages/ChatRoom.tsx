@@ -361,55 +361,72 @@ const ChatRoom = () => {
           table: 'messages',
           filter: `chat_id=eq.${chatId}`,
         },
-        (payload) => {
-          supabase
-            .from('profiles')
-            .select('display_name, handle, is_verified, is_organization_verified, is_affiliate, affiliated_business_id')
-            .eq('id', payload.new.sender_id)
-            .single()
-            .then(async ({ data: profile, error }) => {
-              if (error) {
-                // Silent fail - profile fetch is not critical
-                return;
+        async (payload) => {
+          try {
+            // Fetch profile data
+            const { data: profile, error: profileError } = await supabase
+              .from('profiles')
+              .select('display_name, handle, avatar_url, is_verified, is_organization_verified, is_affiliate, affiliated_business_id')
+              .eq('id', payload.new.sender_id)
+              .single();
+              
+            if (profileError || !profile) return;
+
+            // Fetch reply_to_message data if this message is a reply
+            let replyData: any[] = [];
+            if (payload.new.reply_to_message_id) {
+              const { data: replyMsg } = await supabase
+                .from('messages')
+                .select('encrypted_content, audio_url, sender_id, profiles(display_name, avatar_url)')
+                .eq('id', payload.new.reply_to_message_id)
+                .single();
+              
+              if (replyMsg) {
+                replyData = [replyMsg];
               }
-              if (profile) {
-                const newMsg = {
-                  id: payload.new.id,
-                  encrypted_content: payload.new.encrypted_content,
-                  audio_url: payload.new.audio_url,
-                  attachment_url: payload.new.attachment_url,
-                  attachment_type: payload.new.attachment_type,
-                  attachment_name: payload.new.attachment_name,
-                  attachment_size: payload.new.attachment_size,
-                  sender_id: payload.new.sender_id,
-                  sent_at: payload.new.sent_at,
-                  profiles: profile,
-                } as Message;
-                
-                setMessages((prev) => {
-                  // Prevent duplicates (message may already exist from optimistic update)
-                  if (prev.some(m => m.id === newMsg.id)) return prev;
-                  return [...prev, newMsg];
-                });
-                
-                // Mark as delivered and read if we're the recipient
-                if (user && payload.new.sender_id !== user.id) {
-                  const now = new Date().toISOString();
-                  // Upsert message_status for delivered + read
-                  await supabase
-                    .from('message_status')
-                    .upsert(
-                      {
-                        message_id: payload.new.id,
-                        user_id: user.id,
-                        delivered_at: now,
-                        read_at: now,
-                      },
-                      { onConflict: 'message_id,user_id' }
-                    );
-                }
-              }
+            }
+
+            const newMsg = {
+              id: payload.new.id,
+              encrypted_content: payload.new.encrypted_content,
+              audio_url: payload.new.audio_url,
+              attachment_url: payload.new.attachment_url,
+              attachment_type: payload.new.attachment_type,
+              attachment_name: payload.new.attachment_name,
+              attachment_size: payload.new.attachment_size,
+              sender_id: payload.new.sender_id,
+              sent_at: payload.new.sent_at,
+              reply_to_message_id: payload.new.reply_to_message_id,
+              reply_to_message: replyData,
+              profiles: profile,
+              message_status: [],
+              message_reactions: [],
+            } as Message;
+            
+            setMessages((prev) => {
+              // Prevent duplicates (message may already exist from optimistic update)
+              if (prev.some(m => m.id === newMsg.id)) return prev;
+              return [...prev, newMsg];
             });
+                
+            // Mark as delivered and read if we're the recipient
+            if (user && payload.new.sender_id !== user.id) {
+              const now = new Date().toISOString();
+              await supabase
+                .from('message_status')
+                .upsert(
+                  {
+                    message_id: payload.new.id,
+                    user_id: user.id,
+                    delivered_at: now,
+                    read_at: now,
+                  },
+                  { onConflict: 'message_id,user_id' }
+                );
+            }
+          } catch (error) {
+            console.error('Error processing new message:', error);
+          }
         }
       )
       .subscribe();
@@ -834,19 +851,39 @@ const ChatRoom = () => {
     setUploading(false);
   };
 
-  const toggleAudio = (messageId: string, audioUrl: string) => {
-    setAudioPlayers((prev) => {
-      const current = prev[messageId];
-      if (current?.isPlaying) {
-        current.audio?.pause();
-        return { ...prev, [messageId]: { ...current, isPlaying: false } };
-      } else {
-        const audio = new Audio(audioUrl);
-        audio.play();
-        audio.onended = () => setAudioPlayers((p) => ({ ...p, [messageId]: { ...p[messageId], isPlaying: false } }));
-        return { ...prev, [messageId]: { audio, isPlaying: true } };
+  const toggleAudio = async (messageId: string, audioUrl: string) => {
+    const current = audioPlayers[messageId];
+    
+    if (current?.isPlaying) {
+      current.audio?.pause();
+      setAudioPlayers((prev) => ({ ...prev, [messageId]: { ...current, isPlaying: false } }));
+      return;
+    }
+    
+    try {
+      // Check if URL is a storage path (not a full URL)
+      let finalUrl = audioUrl;
+      if (!audioUrl.startsWith('http')) {
+        const { data } = supabase.storage.from('voice-messages').getPublicUrl(audioUrl);
+        finalUrl = data.publicUrl;
       }
-    });
+      
+      const audio = new Audio(finalUrl);
+      audio.onerror = () => {
+        console.error('Audio playback error for URL:', finalUrl);
+        toast.error('Could not play audio');
+        setAudioPlayers((prev) => ({ ...prev, [messageId]: { audio: null, isPlaying: false } }));
+      };
+      audio.onended = () => {
+        setAudioPlayers((prev) => ({ ...prev, [messageId]: { ...prev[messageId], isPlaying: false } }));
+      };
+      
+      await audio.play();
+      setAudioPlayers((prev) => ({ ...prev, [messageId]: { audio, isPlaying: true } }));
+    } catch (error) {
+      console.error('Audio play error:', error);
+      toast.error('Could not play audio');
+    }
   };
 
   const handleSend = async () => {
