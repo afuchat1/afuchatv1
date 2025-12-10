@@ -13,7 +13,7 @@ import {
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { Badge } from '@/components/ui/badge';
-import { Coins, DollarSign } from 'lucide-react';
+import { Coins, Banknote } from 'lucide-react';
 import { toast } from 'sonner';
 
 interface TipButtonProps {
@@ -123,7 +123,7 @@ export const TipButton = ({
     <Dialog open={open} onOpenChange={handleOpenChange}>
       <DialogTrigger asChild>
         <Button variant={variant} size={size} className="gap-2 group">
-          <DollarSign className="w-5 h-5 text-green-500 money-pulse group-hover:animate-none group-hover:scale-125 transition-transform" />
+          <Banknote className="w-5 h-5 text-green-500 money-pulse group-hover:animate-none group-hover:scale-125 transition-transform" />
           {showLabel && <span className="text-green-500 font-semibold">Tip</span>}
         </Button>
       </DialogTrigger>
