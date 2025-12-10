@@ -11,6 +11,7 @@ import { toast } from 'sonner';
 import { useTranslation } from 'react-i18next';
 import { searchSchema } from '@/lib/validation';
 import { ScrollArea, ScrollBar } from '@/components/ui/scroll-area';
+import { ProfileDrawer } from '@/components/ProfileDrawer';
 
 const SEARCH_HISTORY_KEY = 'afuchat_search_history';
 const MAX_SEARCH_HISTORY = 10;
@@ -293,8 +294,23 @@ const Search = () => {
   const [debouncedQuery, setDebouncedQuery] = useState('');
   const [historyKey, setHistoryKey] = useState(0);
   const [activeTab, setActiveTab] = useState('For You');
+  const [userProfile, setUserProfile] = useState<{ avatar_url?: string | null; display_name?: string } | null>(null);
   const navigate = useNavigate();
   const inputRef = useRef<HTMLInputElement>(null);
+
+  // Fetch current user profile
+  useEffect(() => {
+    const fetchUserProfile = async () => {
+      if (!user) return;
+      const { data } = await supabase
+        .from('profiles')
+        .select('avatar_url, display_name')
+        .eq('id', user.id)
+        .single();
+      if (data) setUserProfile(data);
+    };
+    fetchUserProfile();
+  }, [user]);
 
   useEffect(() => {
     const params = new URLSearchParams(location.search);
@@ -502,6 +518,18 @@ const Search = () => {
       {/* Search Header */}
       <div className="sticky top-0 z-10 bg-background/95 backdrop-blur-sm border-b border-border">
         <div className="flex items-center gap-3 px-4 py-2">
+          <ProfileDrawer
+            trigger={
+              <button className="flex-shrink-0">
+                <Avatar className="h-8 w-8">
+                  <AvatarImage src={userProfile?.avatar_url || undefined} />
+                  <AvatarFallback className="bg-primary text-primary-foreground text-xs">
+                    {userProfile?.display_name?.charAt(0)?.toUpperCase() || 'U'}
+                  </AvatarFallback>
+                </Avatar>
+              </button>
+            }
+          />
           <div className="flex-1 relative">
             <SearchIcon className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
             <Input
