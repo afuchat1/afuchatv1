@@ -247,12 +247,13 @@
   html, body {
     @apply bg-background text-foreground antialiased;
     font-family: 'Outfit', 'Inter', system-ui, -apple-system, sans-serif;
-    font-size: 16px;
+    font-size: 15px;
+    line-height: 1.5;
     -webkit-font-smoothing: antialiased;
     -moz-osx-font-smoothing: grayscale;
     overflow-x: hidden;
     overscroll-behavior: none;
-    letter-spacing: -0.01em;
+    letter-spacing: 0;
   }
   
   /* App-like fixed viewport */
@@ -266,25 +267,62 @@
     min-height: -webkit-fill-available;
   }
 
-  /* Typography refinements - X/Twitter style bold headers */
+  /* X/Twitter Style Typography System */
   h1, h2, h3, h4, h5, h6 {
-    @apply font-outfit tracking-tight font-extrabold;
+    @apply font-outfit tracking-tight;
+    letter-spacing: -0.02em;
   }
 
   h1 {
-    @apply text-4xl font-black;
+    @apply text-[23px] font-extrabold leading-7;
   }
 
   h2 {
-    @apply text-2xl font-extrabold;
+    @apply text-[20px] font-bold leading-6;
   }
 
   h3 {
-    @apply text-xl font-bold;
+    @apply text-[17px] font-bold leading-6;
   }
 
   h4 {
-    @apply text-lg font-bold;
+    @apply text-[15px] font-semibold leading-5;
+  }
+
+  /* Body text - X style */
+  p {
+    @apply text-[15px] leading-5;
+  }
+
+  /* Display name style */
+  .display-name {
+    @apply text-[15px] font-bold leading-5;
+  }
+
+  /* Username/handle style */
+  .username {
+    @apply text-[15px] text-muted-foreground leading-5;
+  }
+
+  /* Post content style */
+  .post-content {
+    @apply text-[15px] leading-[20px];
+    word-wrap: break-word;
+  }
+
+  /* Small metadata text */
+  .meta-text {
+    @apply text-[13px] text-muted-foreground leading-4;
+  }
+
+  /* Tab/Navigation text */
+  .nav-text {
+    @apply text-[15px] font-semibold leading-5;
+  }
+
+  /* Button text */
+  .btn-text {
+    @apply text-[15px] font-bold leading-5;
   }
 
   /* Bold text utility for headers */

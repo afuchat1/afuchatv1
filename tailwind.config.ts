@@ -13,6 +13,18 @@ export default {
       },
     },
     extend: {
+      fontSize: {
+        // X/Twitter style font sizes
+        '2xs': ['11px', { lineHeight: '16px' }],
+        'xs': ['13px', { lineHeight: '16px' }],
+        'sm': ['14px', { lineHeight: '18px' }],
+        'base': ['15px', { lineHeight: '20px' }],
+        'lg': ['17px', { lineHeight: '22px' }],
+        'xl': ['20px', { lineHeight: '24px' }],
+        '2xl': ['23px', { lineHeight: '28px' }],
+        '3xl': ['28px', { lineHeight: '32px' }],
+        '4xl': ['34px', { lineHeight: '40px' }],
+      },
       fontFamily: {
         'outfit': ['Outfit', 'Inter', 'system-ui', 'sans-serif'],
         'inter': ['Inter', 'system-ui', 'sans-serif'],
