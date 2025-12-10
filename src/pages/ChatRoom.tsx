@@ -152,6 +152,7 @@ const ChatRoom = () => {
   
   const [recording, setRecording] = useState(false);
   const [audioBlob, setAudioBlob] = useState<Blob | null>(null);
+  const [recordedMimeType, setRecordedMimeType] = useState<string>('audio/webm');
   const [uploading, setUploading] = useState(false);
   const [audioPlayers, setAudioPlayers] = useState<{ [key: string]: { isPlaying: boolean; audio: HTMLAudioElement | null } }>({});
   const [recordingTime, setRecordingTime] = useState(0);
@@ -698,6 +699,7 @@ const ChatRoom = () => {
       streamRef.current = stream;
       
       const mimeType = getSupportedMimeType();
+      setRecordedMimeType(mimeType.split(';')[0]); // Store the base mime type
       const mediaRecorder = new MediaRecorder(stream, { mimeType });
       mediaRecorderRef.current = mediaRecorder;
 
@@ -709,7 +711,8 @@ const ChatRoom = () => {
       };
       
       mediaRecorder.onstop = () => {
-        const blob = new Blob(chunks, { type: mimeType.split(';')[0] });
+        const baseMimeType = mimeType.split(';')[0];
+        const blob = new Blob(chunks, { type: baseMimeType });
         setAudioBlob(blob);
         stream.getTracks().forEach(track => track.stop());
         
@@ -799,17 +802,29 @@ const ChatRoom = () => {
     return `${mins}:${secs.toString().padStart(2, '0')}`;
   };
 
+  const getFileExtension = (mimeType: string): string => {
+    const extensionMap: { [key: string]: string } = {
+      'audio/webm': 'webm',
+      'audio/ogg': 'ogg',
+      'audio/mp4': 'm4a',
+      'audio/mpeg': 'mp3',
+      'audio/wav': 'wav',
+    };
+    return extensionMap[mimeType] || 'webm';
+  };
+
   const sendVoiceMessage = async () => {
     if (!audioBlob || !user || !chatId) return;
 
     setUploading(true);
     try {
-      // Use user folder structure for RLS compliance
-      const fileName = `${user.id}/voice-${Date.now()}.webm`;
+      // Use correct file extension based on recorded mime type
+      const fileExt = getFileExtension(recordedMimeType);
+      const fileName = `${user.id}/voice-${Date.now()}.${fileExt}`;
       const { data, error } = await supabase.storage
         .from('voice-messages')
         .upload(fileName, audioBlob, { 
-          contentType: 'audio/webm',
+          contentType: recordedMimeType,
           upsert: false 
         });
 
