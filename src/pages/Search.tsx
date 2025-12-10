@@ -3,7 +3,7 @@ import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/contexts/AuthContext';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
-import { Search as SearchIcon, User, MessageSquare, Users, Clock, X, Trash2, MoreHorizontal } from 'lucide-react';
+import { Search as SearchIcon, User, MessageSquare, Users, Clock, X, Trash2, MoreHorizontal, Hash } from 'lucide-react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { CustomLoader } from '@/components/ui/CustomLoader';
@@ -12,6 +12,9 @@ import { useTranslation } from 'react-i18next';
 import { searchSchema } from '@/lib/validation';
 import { ScrollArea, ScrollBar } from '@/components/ui/scroll-area';
 import { ProfileDrawer } from '@/components/ProfileDrawer';
+import { TrendingInfoSheet } from '@/components/search/TrendingInfoSheet';
+import { HashtagsSection } from '@/components/search/HashtagsSection';
+import { AISearchSummary } from '@/components/search/AISearchSummary';
 import { 
   ContentCategory, 
   categorizeContent, 
@@ -90,6 +93,12 @@ interface Trend {
   post_count: number;
 }
 
+interface ExtendedTrend extends Trend {
+  category?: string;
+  relatedHashtags?: string[];
+  topPosts?: Array<{ id: string; content: string; author: string }>;
+}
+
 const TwitterVerifiedBadge = ({ size = 'w-4 h-4' }: { size?: string }) => (
   <svg viewBox="0 0 22 22" xmlns="http://www.w3.org/2000/svg" className={`${size} ml-0.5 fill-[#1d9bf0] flex-shrink-0`}>
     <path d="M20.396 11c-.018-.646-.215-1.275-.57-1.816-.354-.54-.852-.972-1.438-1.246.223-.607.27-1.264.14-1.897-.131-.634-.437-1.218-.882-1.687-.47-.445-1.053-.75-1.687-.882-.633-.13-1.29-.083-1.897.14-.273-.587-.704-1.086-1.245-1.44S11.647 1.62 11 1.604c-.646.017-1.273.213-1.813.568s-.969.854-1.24 1.44c-.608-.223-1.267-.272-1.902-.14-.635.13-1.22.436-1.69.882-.445.47-.749 1.055-.878 1.688-.13.633-.08 1.29.144 1.896-.587.274-1.087.705-1.443 1.245-.356.54-.555 1.17-.574 1.817.02.647.218 1.276.574 1.817.356.54.856.972 1.443 1.245-.224.606-.274 1.263-.144 1.896.13.634.433 1.218.877 1.688.47.443 1.054.747 1.687.878.633.132 1.29.084 1.897-.136.274.586.705 1.084 1.246 1.439.54.354 1.17.551 1.816.569.647-.016 1.276-.213 1.817-.567s.972-.854 1.245-1.44c.604.239 1.266.296 1.903.164.636-.132 1.22-.447 1.68-.907.46-.46.776-1.044.908-1.681s.075-1.299-.165-1.903c.586-.274 1.084-.705 1.439-1.246.354-.54.551-1.17.569-1.816zM9.662 14.85l-3.429-3.428 1.293-1.302 2.072 2.072 4.4-4.794 1.347 1.246z" />
@@ -121,12 +130,14 @@ const TrendingItem = ({
   trend, 
   index, 
   category,
-  onClick 
+  onClick,
+  onMoreClick
 }: { 
-  trend: Trend; 
+  trend: ExtendedTrend; 
   index: number;
   category?: string;
   onClick: () => void;
+  onMoreClick: (e: React.MouseEvent) => void;
 }) => (
   <div 
     className="px-4 py-3 hover:bg-muted/50 transition-colors cursor-pointer flex justify-between items-start"
@@ -136,14 +147,29 @@ const TrendingItem = ({
       <p className="text-[13px] text-muted-foreground">
         {category || `${index + 1} · Trending`}
       </p>
-      <p className="font-bold text-[15px] text-foreground mt-0.5">
-        {trend.topic.startsWith('#') ? trend.topic : trend.topic}
+      <p className="font-bold text-[15px] text-foreground mt-0.5 flex items-center gap-1">
+        {trend.topic.startsWith('#') && <Hash className="h-3.5 w-3.5 text-primary" />}
+        {trend.topic}
       </p>
       <p className="text-[13px] text-muted-foreground mt-0.5">
         {formatPostCount(trend.post_count)}
       </p>
+      {trend.relatedHashtags && trend.relatedHashtags.length > 0 && (
+        <div className="flex items-center gap-1.5 mt-1.5 flex-wrap">
+          {trend.relatedHashtags.slice(0, 3).map((tag, idx) => (
+            <span key={idx} className="text-xs text-primary bg-primary/10 px-2 py-0.5 rounded-full">
+              #{tag}
+            </span>
+          ))}
+        </div>
+      )}
     </div>
-    <Button variant="ghost" size="icon" className="h-8 w-8 text-muted-foreground -mr-2">
+    <Button 
+      variant="ghost" 
+      size="icon" 
+      className="h-8 w-8 text-muted-foreground -mr-2 hover:text-primary hover:bg-primary/10"
+      onClick={onMoreClick}
+    >
       <MoreHorizontal className="h-4 w-4" />
     </Button>
   </div>
@@ -237,9 +263,11 @@ const TrendingSection = ({
   onPostClick: (postId: string) => void;
 }) => {
   const { t } = useTranslation();
-  const [trends, setTrends] = useState<Trend[]>([]);
+  const [trends, setTrends] = useState<ExtendedTrend[]>([]);
   const [categoryPosts, setCategoryPosts] = useState<CategoryPost[]>([]);
   const [loading, setLoading] = useState(true);
+  const [selectedTrend, setSelectedTrend] = useState<ExtendedTrend | null>(null);
+  const [sheetOpen, setSheetOpen] = useState(false);
 
   useEffect(() => {
     const fetchContent = async () => {
@@ -257,11 +285,50 @@ const TrendingSection = ({
             console.error('Error fetching trends:', error);
             setTrends([]);
           } else if (Array.isArray(data)) {
-            const formattedData = data.map((d: Trend) => ({
-              ...d,
-              topic: d.topic.charAt(0).toUpperCase() + d.topic.slice(1),
-            }));
-            setTrends(formattedData);
+            // Fetch related hashtags and top posts for each trend
+            const enhancedTrends = await Promise.all(
+              data.map(async (d: Trend, idx: number) => {
+                const topic = d.topic.charAt(0).toUpperCase() + d.topic.slice(1);
+                
+                // Fetch top posts for this topic
+                const { data: topPostsData } = await supabase
+                  .from('posts')
+                  .select('id, content, profiles!author_id(handle)')
+                  .textSearch('content', d.topic, { type: 'plain', config: 'english' })
+                  .order('created_at', { ascending: false })
+                  .limit(5);
+
+                // Extract related hashtags from top posts
+                const relatedHashtags: string[] = [];
+                topPostsData?.forEach((post: any) => {
+                  const matches = post.content.match(/#[\w\u0590-\u05ff\u0600-\u06ff]+/g);
+                  if (matches) {
+                    matches.forEach((tag: string) => {
+                      const normalized = tag.replace('#', '').toLowerCase();
+                      if (!relatedHashtags.includes(normalized) && normalized !== d.topic.toLowerCase()) {
+                        relatedHashtags.push(normalized);
+                      }
+                    });
+                  }
+                });
+
+                return {
+                  topic,
+                  post_count: d.post_count,
+                  category: idx % 5 === 0 ? 'Trending' : 
+                           idx % 5 === 1 ? 'Politics · Trending' : 
+                           idx % 5 === 2 ? 'Entertainment · Trending' : 
+                           idx % 5 === 3 ? 'Sports · Trending' : 'Technology · Trending',
+                  relatedHashtags: relatedHashtags.slice(0, 5),
+                  topPosts: topPostsData?.slice(0, 3).map((p: any) => ({
+                    id: p.id,
+                    content: p.content,
+                    author: p.profiles?.handle || 'unknown'
+                  })) || []
+                };
+              })
+            );
+            setTrends(enhancedTrends);
           } else {
             setTrends([]);
           }
@@ -342,6 +409,12 @@ const TrendingSection = ({
     fetchContent();
   }, [activeTab]);
 
+  const handleMoreClick = (trend: ExtendedTrend, e: React.MouseEvent) => {
+    e.stopPropagation();
+    setSelectedTrend(trend);
+    setSheetOpen(true);
+  };
+
   if (loading) {
     return (
       <div className="flex items-center justify-center py-12">
@@ -360,25 +433,30 @@ const TrendingSection = ({
       );
     }
 
-    const categories = activeTab === 'Trending' 
-      ? ['Trending', 'Trending', 'Trending', 'Trending', 'Trending']
-      : ['Trending', 'Politics · Trending', 'Entertainment · Trending', 'Sports · Trending', 'Technology · Trending'];
-
     return (
-      <div className="divide-y divide-border">
-        <h2 className="px-4 py-3 text-[20px] font-extrabold text-foreground">
-          {activeTab === 'For You' ? 'Trends for you' : 'What\'s happening'}
-        </h2>
-        {trends.map((trend, index) => (
-          <TrendingItem
-            key={index}
-            trend={trend}
-            index={index}
-            category={categories[index % categories.length]}
-            onClick={() => onTrendClick(trend.topic)}
-          />
-        ))}
-      </div>
+      <>
+        <div className="divide-y divide-border">
+          <h2 className="px-4 py-3 text-[20px] font-extrabold text-foreground">
+            {activeTab === 'For You' ? 'Trends for you' : 'What\'s happening'}
+          </h2>
+          {trends.map((trend, index) => (
+            <TrendingItem
+              key={index}
+              trend={trend}
+              index={index}
+              category={trend.category}
+              onClick={() => onTrendClick(trend.topic)}
+              onMoreClick={(e) => handleMoreClick(trend, e)}
+            />
+          ))}
+        </div>
+        <TrendingInfoSheet
+          open={sheetOpen}
+          onOpenChange={setSheetOpen}
+          trend={selectedTrend}
+          onSearchTopic={onTrendClick}
+        />
+      </>
     );
   }
 
@@ -787,6 +865,7 @@ const Search = () => {
               onRemove={() => {}}
               onClearAll={() => toast.success(t('search.historyCleared', 'Search history cleared'))}
             />
+            <HashtagsSection onHashtagClick={handleTrendClick} />
             <TrendingSection 
               activeTab={activeTab} 
               onTrendClick={handleTrendClick} 
@@ -798,7 +877,11 @@ const Search = () => {
             {t('search.noResults', { query })}
           </div>
         ) : (
-          <div className="divide-y divide-border">
+          <div>
+            {/* AI Search Summary for Premium Users */}
+            <AISearchSummary query={query} resultsCount={results.length} />
+            
+            <div className="divide-y divide-border">
             {/* People Results */}
             {userResults.length > 0 && (
               <div>
@@ -975,6 +1058,7 @@ const Search = () => {
                 </div>
               </div>
             )}
+            </div>
           </div>
         )}
       </div>
