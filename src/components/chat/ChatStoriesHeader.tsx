@@ -29,14 +29,10 @@ export const ChatStoriesHeader = ({ shouldCollapse = false, onToggleCollapse, on
     display_name: string;
   } | null>(null);
   const [loading, setLoading] = useState(true);
-  const [isCollapsed, setIsCollapsed] = useState(false);
+  const [isCollapsed, setIsCollapsed] = useState(true); // Always start collapsed
   const [isSearchOpen, setIsSearchOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
   const [isMenuOpen, setIsMenuOpen] = useState(false);
-
-  useEffect(() => {
-    setIsCollapsed(shouldCollapse);
-  }, [shouldCollapse]);
 
   useEffect(() => {
     if (!user) return;
@@ -135,10 +131,8 @@ export const ChatStoriesHeader = ({ shouldCollapse = false, onToggleCollapse, on
     navigate('/moments');
   };
 
-  const handleHeaderExpandClick = () => {
-    if (isCollapsed && onToggleCollapse) {
-      onToggleCollapse(false);
-    }
+  const handleStoriesToggle = () => {
+    setIsCollapsed(!isCollapsed);
   };
 
   const handleSearchToggle = () => {
@@ -203,44 +197,40 @@ export const ChatStoriesHeader = ({ shouldCollapse = false, onToggleCollapse, on
               <Menu className="h-7 w-7 text-foreground" />
             </button>
 
-            {/* Compact overlapping bubbles - ONLY visible when collapsed */}
-            {isCollapsed && (
-              <button
-                type="button"
-                onClick={handleHeaderExpandClick}
-                className="flex items-center gap-3 overflow-hidden animate-fade-in focus:outline-none"
-              >
-                <div className="flex items-center -space-x-2">
-                  {storyUsers.slice(0, 3).map((storyUser, index) => (
-                    <div
-                      key={storyUser.user_id}
-                      className="h-9 w-9 rounded-full border-2 border-background bg-gradient-to-br from-cyan-400 via-teal-400 to-green-500 flex items-center justify-center overflow-hidden cursor-pointer hover:scale-110 transition-transform"
-                      style={{ zIndex: 3 - index }}
-                    >
-                      {storyUser.avatar_url ? (
-                        <img
-                          src={storyUser.avatar_url}
-                          alt={storyUser.display_name}
-                          className="h-full w-full object-cover"
-                        />
-                      ) : (
-                        <span className="text-xs font-semibold text-primary-foreground">
-                          {storyUser.display_name?.charAt(0).toUpperCase()}
-                        </span>
-                      )}
-                    </div>
-                  ))}
-                </div>
-                <h1 className="text-lg font-semibold text-foreground">
-                  {storyUsers.length} {storyUsers.length === 1 ? 'Story' : 'Stories'}
-                </h1>
-              </button>
-            )}
-
-            {/* Title when expanded */}
-            {!isCollapsed && (
-              <h1 className="text-xl font-semibold text-foreground animate-fade-in">AfuChat</h1>
-            )}
+            {/* Compact overlapping bubbles - always visible, click to toggle */}
+            <button
+              type="button"
+              onClick={handleStoriesToggle}
+              className="flex items-center gap-3 overflow-hidden focus:outline-none"
+            >
+              <div className="flex items-center -space-x-2">
+                {storyUsers.slice(0, 3).map((storyUser, index) => (
+                  <div
+                    key={storyUser.user_id}
+                    className="h-9 w-9 rounded-full border-2 border-background bg-gradient-to-br from-cyan-400 via-teal-400 to-green-500 flex items-center justify-center overflow-hidden cursor-pointer hover:scale-110 transition-transform"
+                    style={{ zIndex: 3 - index }}
+                  >
+                    {storyUser.avatar_url ? (
+                      <img
+                        src={storyUser.avatar_url}
+                        alt={storyUser.display_name}
+                        className="h-full w-full object-cover"
+                      />
+                    ) : (
+                      <span className="text-xs font-semibold text-primary-foreground">
+                        {storyUser.display_name?.charAt(0).toUpperCase()}
+                      </span>
+                    )}
+                  </div>
+                ))}
+              </div>
+              <h1 className="text-lg font-semibold text-foreground">
+                {storyUsers.length > 0 
+                  ? `${storyUsers.length} ${storyUsers.length === 1 ? 'Story' : 'Stories'}`
+                  : 'AfuChat'
+                }
+              </h1>
+            </button>
 
             <button 
               onClick={handleSearchToggle}
