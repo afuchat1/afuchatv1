@@ -59,18 +59,17 @@ export const ImageCarousel = memo(({ images, className }: ImageCarouselProps) =>
               alt={imageAlts[0]}
               loading="lazy"
               decoding="async"
-              className="w-full max-h-[500px] object-cover hover:opacity-95 transition-opacity"
+              className="w-full h-[280px] object-cover hover:opacity-95 transition-opacity"
             />
+            {/* Gradient fade at bottom to indicate more content */}
+            <div className="absolute bottom-0 left-0 right-0 h-8 bg-gradient-to-t from-black/20 to-transparent pointer-events-none" />
           </div>
-        ) : (
-          <div className={cn('grid gap-0.5 rounded-2xl overflow-hidden border border-border', gridClass)}>
-            {imageUrls.slice(0, 4).map((image, index) => (
+        ) : imageUrls.length === 2 ? (
+          <div className="grid grid-cols-2 gap-0.5 rounded-2xl overflow-hidden border border-border h-[200px]">
+            {imageUrls.slice(0, 2).map((image, index) => (
               <div
                 key={index}
-                className={cn(
-                  'relative aspect-square overflow-hidden cursor-pointer hover:opacity-95 transition-opacity',
-                  imageUrls.length === 3 && index === 0 && 'row-span-2'
-                )}
+                className="relative overflow-hidden cursor-pointer hover:opacity-95 transition-opacity"
                 onClick={(e) => handleImageClick(e, index)}
               >
                 <img
@@ -80,15 +79,63 @@ export const ImageCarousel = memo(({ images, className }: ImageCarouselProps) =>
                   decoding="async"
                   className="w-full h-full object-cover hover:scale-105 transition-transform duration-300"
                 />
-              {imageUrls.length > 4 && index === 3 && (
-                <div className="absolute inset-0 bg-black/60 flex items-center justify-center">
-                  <span className="text-white text-2xl font-bold">+{imageUrls.length - 4}</span>
-                </div>
-              )}
+              </div>
+            ))}
+          </div>
+        ) : imageUrls.length === 3 ? (
+          <div className="grid grid-cols-2 gap-0.5 rounded-2xl overflow-hidden border border-border h-[240px]">
+            <div
+              className="relative row-span-2 overflow-hidden cursor-pointer hover:opacity-95 transition-opacity"
+              onClick={(e) => handleImageClick(e, 0)}
+            >
+              <img
+                src={imageUrls[0]}
+                alt={imageAlts[0]}
+                loading="lazy"
+                decoding="async"
+                className="w-full h-full object-cover hover:scale-105 transition-transform duration-300"
+              />
             </div>
-          ))}
-        </div>
-      )}
+            {imageUrls.slice(1, 3).map((image, index) => (
+              <div
+                key={index + 1}
+                className="relative overflow-hidden cursor-pointer hover:opacity-95 transition-opacity"
+                onClick={(e) => handleImageClick(e, index + 1)}
+              >
+                <img
+                  src={image}
+                  alt={imageAlts[index + 1]}
+                  loading="lazy"
+                  decoding="async"
+                  className="w-full h-full object-cover hover:scale-105 transition-transform duration-300"
+                />
+              </div>
+            ))}
+          </div>
+        ) : (
+          <div className="grid grid-cols-2 gap-0.5 rounded-2xl overflow-hidden border border-border h-[240px]">
+            {imageUrls.slice(0, 4).map((image, index) => (
+              <div
+                key={index}
+                className="relative overflow-hidden cursor-pointer hover:opacity-95 transition-opacity"
+                onClick={(e) => handleImageClick(e, index)}
+              >
+                <img
+                  src={image}
+                  alt={imageAlts[index]}
+                  loading="lazy"
+                  decoding="async"
+                  className="w-full h-full object-cover hover:scale-105 transition-transform duration-300"
+                />
+                {imageUrls.length > 4 && index === 3 && (
+                  <div className="absolute inset-0 bg-black/60 flex items-center justify-center">
+                    <span className="text-white text-2xl font-bold">+{imageUrls.length - 4}</span>
+                  </div>
+                )}
+              </div>
+            ))}
+          </div>
+        )}
 
       {imageUrls.length > 1 && (
         <>
