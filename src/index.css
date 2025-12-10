@@ -329,6 +329,35 @@
   .heading {
     @apply font-extrabold tracking-tight;
   }
+
+  /* X-style icon sizing - larger and more visible */
+  svg {
+    min-width: 20px;
+    min-height: 20px;
+  }
+
+  /* Action icons in posts/feeds */
+  .action-icon {
+    @apply w-[22px] h-[22px];
+  }
+
+  /* Navigation icons */
+  .nav-icon {
+    @apply w-6 h-6;
+  }
+
+  /* Avatar sizing */
+  .avatar-sm {
+    @apply w-10 h-10;
+  }
+
+  .avatar-md {
+    @apply w-12 h-12;
+  }
+
+  .avatar-lg {
+    @apply w-14 h-14;
+  }
   
   /* Remove all click/tap markers and outlines */
   button, a, input, textarea, select {
