@@ -1259,7 +1259,16 @@ const ChatRoom = () => {
             <ArrowLeft className="h-5 w-5" />
           </Button>
           
-          <div className="flex items-center gap-3 flex-1 min-w-0">
+          <div 
+            className="flex items-center gap-3 flex-1 min-w-0 cursor-pointer"
+            onClick={() => {
+              if (chatInfo?.is_group) {
+                setIsGroupSettingsOpen(true);
+              } else if (otherUser) {
+                navigate(`/${otherUser.handle}`);
+              }
+            }}
+          >
             <UserAvatar 
               userId={chatInfo?.is_group ? chatId! : (otherUser?.id || 'unknown')}
               avatarUrl={chatInfo?.is_group ? chatInfo.avatar_url : otherUser?.avatar_url} 

@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { useAuth } from '@/contexts/AuthContext';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
@@ -12,7 +13,8 @@ import {
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { Users } from 'lucide-react';
+import { Users, Crown } from 'lucide-react';
+import { usePremiumStatus } from '@/hooks/usePremiumStatus';
 
 interface CreateGroupDialogProps {
   isOpen: boolean;
@@ -22,10 +24,19 @@ interface CreateGroupDialogProps {
 
 export const CreateGroupDialog = ({ isOpen, onClose, onGroupCreated }: CreateGroupDialogProps) => {
   const { user } = useAuth();
+  const navigate = useNavigate();
+  const { isPremium } = usePremiumStatus();
   const [groupName, setGroupName] = useState('');
   const [loading, setLoading] = useState(false);
 
   const handleCreateGroup = async () => {
+    if (!isPremium) {
+      toast.error('Premium required to create groups');
+      navigate('/premium');
+      onClose();
+      return;
+    }
+
     if (!user || !groupName.trim()) {
       toast.error('Please enter a group name');
       return;
@@ -76,9 +87,12 @@ export const CreateGroupDialog = ({ isOpen, onClose, onGroupCreated }: CreateGro
           <DialogTitle className="flex items-center gap-2">
             <Users className="h-5 w-5 text-primary" />
             Create Group
+            {!isPremium && <Crown className="h-4 w-4 text-yellow-500" />}
           </DialogTitle>
           <DialogDescription>
-            Create a new group chat to communicate with multiple people
+            {isPremium 
+              ? 'Create a new group chat to communicate with multiple people'
+              : 'Premium subscription required to create groups'}
           </DialogDescription>
         </DialogHeader>
 
