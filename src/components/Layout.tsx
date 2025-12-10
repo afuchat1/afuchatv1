@@ -4,14 +4,12 @@ import { useAuth } from '@/contexts/AuthContext';
 import { useAccountMode } from '@/contexts/AccountModeContext';
 import { useSettings } from '@/contexts/SettingsContext';
 import { Home, MessageSquare, Search, Bell, User, Settings, Shield, BarChart3, Grid3x3, Gamepad2, Bot, ShoppingBag, Wallet, Send, Gift, Image as ImageIcon, Hash, TrendingUp, Building2, MessageCircle } from 'lucide-react';
-import menuIcon from '@/assets/menu-icon.png';
 import { Button } from '@/components/ui/button';
 import Logo from '@/components/Logo';
 import NotificationIcon from '@/components/nav/NotificationIcon';
 import InstallPromptBanner from '@/components/InstallPromptBanner';
 import { OfflineIndicator } from '@/components/OfflineIndicator';
 import { AccountModeSwitcher } from '@/components/AccountModeSwitcher';
-import { MobileMenuSheet } from '@/components/MobileMenuSheet';
 import { supabase } from '@/integrations/supabase/client';
 import { cn } from '@/lib/utils';
 import { useTranslation } from 'react-i18next';
@@ -278,7 +276,7 @@ const Layout = ({ children }: LayoutProps) => {
         </motion.div>
       </main>
 
-      {/* Mobile Bottom Navigation - X-style clean design */}
+      {/* Mobile Bottom Navigation - X-style with AfuAI center */}
       {!isChatRoom && (
         <div className={cn(
           "lg:hidden fixed bottom-0 left-0 right-0 z-50 transition-all duration-300",
@@ -319,17 +317,19 @@ const Layout = ({ children }: LayoutProps) => {
                 />
               </Link>
               
-              <MobileMenuSheet 
-                trigger={
-                  <button className="flex items-center justify-center w-12 h-12">
-                    <img 
-                      src={menuIcon} 
-                      alt="Menu" 
-                      className="h-7 w-7 rounded-full object-cover"
-                    />
-                  </button>
-                }
-              />
+              {/* AfuAI Center Button */}
+              <Link
+                to="/ai-chat"
+                className="flex items-center justify-center w-12 h-12 transition-colors"
+              >
+                <Bot 
+                  className={cn(
+                    "h-7 w-7",
+                    isActive('/ai-chat') ? "text-primary" : "text-foreground"
+                  )} 
+                  strokeWidth={isActive('/ai-chat') ? 2.5 : 1.5} 
+                />
+              </Link>
               
               <Link
                 to="/notifications"
@@ -373,7 +373,7 @@ const Layout = ({ children }: LayoutProps) => {
             </div>
           </nav>
           {/* Safe area padding for devices with home indicator */}
-          <div className="bg-background/95 backdrop-blur-md h-[env(safe-area-inset-bottom)]" />
+          <div className="bg-background h-[env(safe-area-inset-bottom)]" />
         </div>
       )}
     </div>

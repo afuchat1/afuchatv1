@@ -4,13 +4,22 @@ import { supabase } from '@/integrations/supabase/client';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Card } from '@/components/ui/card';
-import { Badge } from '@/components/ui/badge';
-import { Bot, Send, ArrowLeft, Copy, Check } from 'lucide-react';
+import { 
+  Bot, Send, Copy, Check, History, PenSquare, 
+  Paperclip, ChevronDown, ImagePlus, PencilLine, Newspaper, ArrowUp 
+} from 'lucide-react';
 import { Skeleton } from '@/components/ui/skeleton';
 import { toast } from 'sonner';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { PremiumGate } from '@/components/PremiumGate';
 import { parseRichText } from '@/lib/richTextUtils';
+import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from '@/components/ui/dropdown-menu';
 
 interface Message {
   role: 'user' | 'assistant';
@@ -18,45 +27,70 @@ interface Message {
   timestamp: Date;
 }
 
+interface Conversation {
+  id: string;
+  title: string;
+  lastMessage: string;
+  timestamp: Date;
+}
+
 interface PostDetails {
-    postId: string;
-    postContent: string;
-    postAuthorHandle: string;
+  postId: string;
+  postContent: string;
+  postAuthorHandle: string;
 }
 
 interface LocationState {
-    context?: 'post_analysis';
-    postDetails?: PostDetails;
+  context?: 'post_analysis';
+  postDetails?: PostDetails;
 }
 
 const AIChat: React.FC = () => {
   const { user } = useAuth();
   const navigate = useNavigate();
   const location = useLocation();
+  const [profile, setProfile] = useState<{ avatar_url: string | null; display_name: string } | null>(null);
   
-  // AI Features are now live for premium subscribers
   const AI_COMING_SOON = false;
   
   useEffect(() => {
     if (!user) {
       toast.error('Please log in to chat with AfuAI');
       navigate('/auth');
+    } else {
+      // Fetch user profile
+      const fetchProfile = async () => {
+        const { data } = await supabase
+          .from('profiles')
+          .select('avatar_url, display_name')
+          .eq('id', user.id)
+          .single();
+        if (data) setProfile(data);
+      };
+      fetchProfile();
     }
   }, [user, navigate]);
   
-  const [messages, setMessages] = useState<Message[]>([
-    {
-      role: 'assistant',
-      content: "Hi! I'm AfuAI, your personal assistant. I can help you create posts, answer questions about AfuChat, or just chat! How can I help you today?\n\n*Tip:* Use formatting like *bold*, _italic_, ~strikethrough~, or `code` in your messages!",
-      timestamp: new Date(),
-    }
+  const [messages, setMessages] = useState<Message[]>([]);
+  const [conversations, setConversations] = useState<Conversation[]>([
+    { id: '1', title: 'AfuChat Updates: Features, Growth, Innovat...', lastMessage: '', timestamp: new Date() },
+    { id: '2', title: 'AfuChat: Social, E-commerce, AI Integration', lastMessage: '', timestamp: new Date() },
+    { id: '3', title: 'AfuChat: New Social Platform Launch', lastMessage: '', timestamp: new Date() },
   ]);
   const [input, setInput] = useState('');
   const [loading, setLoading] = useState(false);
   const [copiedId, setCopiedId] = useState<number | null>(null);
+  const [selectedModel, setSelectedModel] = useState('Auto');
+  const [showChat, setShowChat] = useState(false);
   const messagesEndRef = useRef<HTMLDivElement>(null);
 
-  const isAIVerified = true;
+  const models = ['Auto', 'AfuAI Pro', 'AfuAI Fast'];
+
+  const quickActions = [
+    { icon: ImagePlus, label: 'Create Images', action: () => setInput('Create an image of ') },
+    { icon: PencilLine, label: 'Edit Image', action: () => setInput('Edit this image: ') },
+    { icon: Newspaper, label: 'Latest News', action: () => handleQuickAction('What are the latest news and trends?') },
+  ];
 
   const handleCopy = async (content: string, messageIndex: number) => {
     try {
@@ -69,85 +103,36 @@ const AIChat: React.FC = () => {
     }
   };
 
-  const handleInitialSend = async (initialPrompt: string, currentMessages: Message[]) => {
-    setLoading(true);
-
-    try {
-        const { data, error } = await supabase.functions.invoke('chat-with-afuai', {
-            body: {
-                message: initialPrompt,
-                history: [...currentMessages, { role: 'user', content: initialPrompt, timestamp: new Date() }].slice(-6), 
-            }
-        });
-
-        if (error) {
-          console.error('Edge function error:', error);
-          
-          // Get error message from various possible sources
-          const errorMsg = error.message || JSON.stringify(error);
-          
-        // Check for payment required error (402)
-        if (errorMsg.includes('402') || errorMsg.includes('Payment required') || errorMsg.includes('API_KEY')) {
-          toast.error('Invalid or exhausted Gemini API key. Please check your API key configuration.', {
-            duration: 6000,
-          });
-          return;
-        }
-          
-        // Check for rate limit error (429)
-        if (errorMsg.includes('429') || errorMsg.includes('Rate limit')) {
-          toast.error('Gemini API quota exhausted. The free tier limit has been reached. Please upgrade your Gemini API plan or wait for quota reset.', {
-            duration: 6000,
-          });
-          return;
-        }
-          
-          throw error;
-        }
-        
-        const assistantMessage: Message = {
-            role: 'assistant',
-            content: data.reply,
-            timestamp: new Date(),
-        };
-
-        setMessages(prev => {
-            if (prev[prev.length - 1]?.content !== initialPrompt) {
-                return [...prev, { role: 'user', content: initialPrompt, timestamp: new Date() }, assistantMessage];
-            }
-            return [...prev, assistantMessage];
-        });
-    } catch (error) {
-        console.error('AI Chat error:', error);
-        toast.error('Failed to get response from AfuAI for initial prompt');
-    } finally {
-        setLoading(false);
-    }
+  const handleQuickAction = async (prompt: string) => {
+    setInput(prompt);
+    setShowChat(true);
+    // Auto-send the message
+    setTimeout(() => {
+      const fakeEvent = { key: 'Enter', shiftKey: false };
+      handleSendWithMessage(prompt);
+    }, 100);
   };
 
-
-  const handleSend = async () => {
-    if (!input.trim() || loading) return;
+  const handleSendWithMessage = async (messageText: string) => {
+    if (!messageText.trim() || loading) return;
     
     if (!user) {
       toast.error('You must be logged in to chat');
       return;
     }
 
-    console.log('Sending message:', input.trim());
-
     const userMessage: Message = {
       role: 'user',
-      content: input.trim(),
+      content: messageText.trim(),
       timestamp: new Date(),
     };
 
     setMessages(prev => [...prev, userMessage]);
     setInput('');
     setLoading(true);
+    setShowChat(true);
 
     try {
-      console.log('Invoking chat-with-afuai function...');
       const { data, error } = await supabase.functions.invoke('chat-with-afuai', {
         body: {
           message: userMessage.content,
@@ -155,27 +140,16 @@ const AIChat: React.FC = () => {
         }
       });
 
-      console.log('Response:', { data, error });
-
       if (error) {
-        console.error('Edge function error:', error);
-        
-        // Get error message from various possible sources
         const errorMsg = error.message || JSON.stringify(error);
         
-        // Check for payment required error (402)
-        if (errorMsg.includes('402') || errorMsg.includes('Payment required') || errorMsg.includes('API_KEY')) {
-          toast.error('Invalid or exhausted Gemini API key. Please check your API key configuration.', {
-            duration: 6000,
-          });
+        if (errorMsg.includes('402') || errorMsg.includes('Payment required')) {
+          toast.error('API quota exhausted. Please try again later.');
           return;
         }
         
-        // Check for rate limit error (429)
         if (errorMsg.includes('429') || errorMsg.includes('Rate limit')) {
-          toast.error('Gemini API quota exhausted. The free tier limit has been reached. Please upgrade your Gemini API plan or wait for quota reset.', {
-            duration: 6000,
-          });
+          toast.error('Rate limit exceeded. Please wait a moment.');
           return;
         }
         
@@ -196,22 +170,36 @@ const AIChat: React.FC = () => {
       setLoading(false);
     }
   };
-  
-  const handleAIAvatarClick = () => {
-    navigate('/profile/afuai'); 
+
+  const handleSend = async () => {
+    await handleSendWithMessage(input);
+  };
+
+  const handleNewChat = () => {
+    setMessages([]);
+    setShowChat(false);
+    setInput('');
+  };
+
+  const handleConversationClick = (conv: Conversation) => {
+    setShowChat(true);
+    setMessages([
+      {
+        role: 'assistant',
+        content: `Continuing conversation: "${conv.title}"...\n\nHow can I help you today?`,
+        timestamp: new Date(),
+      }
+    ]);
   };
 
   useEffect(() => {
     const state = location.state as LocationState;
 
     if (state?.context === 'post_analysis' && state.postDetails) {
-        const { postContent, postAuthorHandle } = state.postDetails;
-        
-        const initialPrompt = `Please analyze this post from @${postAuthorHandle}:\n\n"${postContent}"`;
-        
-        navigate(location.pathname, { replace: true, state: {} });
-
-        handleInitialSend(initialPrompt, messages); 
+      const { postContent, postAuthorHandle } = state.postDetails;
+      const initialPrompt = `Please analyze this post from @${postAuthorHandle}:\n\n"${postContent}"`;
+      navigate(location.pathname, { replace: true, state: {} });
+      handleSendWithMessage(initialPrompt);
     }
   }, []);
 
@@ -219,164 +207,174 @@ const AIChat: React.FC = () => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
   }, [messages]);
 
-
   if (AI_COMING_SOON) {
     return (
       <PremiumGate feature="AI Chat Assistant" showUpgrade={true}>
-      <div className="flex flex-col h-screen bg-background">
-        <div className="border-b border-border bg-card p-4 flex items-center gap-3">
-          <Button variant="ghost" size="icon" onClick={() => navigate(-1)} className="rounded-full">
-            <ArrowLeft className="h-5 w-5" />
-          </Button>
-          
-          <div className="flex items-center gap-2">
-            <div className="h-10 w-10 rounded-full bg-primary/10 flex items-center justify-center">
-              <Bot className="h-6 w-6 text-primary" />
-            </div>
-            <div>
-              <h1 className="font-bold text-foreground">AfuAI</h1>
-              <p className="text-xs text-muted-foreground">AI Assistant</p>
-            </div>
-          </div>
+        <div className="flex flex-col h-screen bg-background items-center justify-center">
+          <Bot className="h-16 w-16 text-primary mb-4" />
+          <h2 className="text-xl font-bold">AI Features Coming Soon</h2>
         </div>
-
-        <div className="flex-1 flex items-center justify-center p-8">
-          <Card className="max-w-md w-full p-8 text-center space-y-6">
-            <div className="flex justify-center">
-              <div className="h-20 w-20 rounded-full bg-primary/10 flex items-center justify-center">
-                <Bot className="h-10 w-10 text-primary" />
-              </div>
-            </div>
-            
-            <div className="space-y-2">
-              <h2 className="text-2xl font-bold">AI Features Coming Soon</h2>
-              <p className="text-muted-foreground">
-                We're working hard to bring you amazing AI-powered features. Stay tuned!
-              </p>
-            </div>
-
-            <Badge variant="secondary" className="text-sm px-4 py-2">
-              Under Development
-            </Badge>
-
-            <Button 
-              onClick={() => navigate(-1)} 
-              variant="outline"
-              className="w-full"
-            >
-              Go Back
-            </Button>
-          </Card>
-        </div>
-      </div>
       </PremiumGate>
     );
   }
 
   return (
     <PremiumGate feature="AI Chat Assistant" showUpgrade={true}>
-    <div className="flex flex-col h-screen bg-background">
-      <div className="border-b border-border bg-card p-4 flex items-center gap-3">
-        <Button variant="ghost" size="icon" onClick={() => navigate(-1)} className="rounded-full hidden lg:inline-flex">
-          <ArrowLeft className="h-5 w-5" />
-        </Button>
-        
-        <div 
-          className="flex items-center gap-2 cursor-pointer hover:opacity-80 transition-opacity" 
-          onClick={handleAIAvatarClick} 
-        >
-          <div className="h-10 w-10 rounded-full bg-primary/10 flex items-center justify-center">
-            <Bot className="h-6 w-6 text-primary" />
+      <div className="flex flex-col h-screen bg-background">
+        {/* Header */}
+        <header className="flex items-center justify-between px-4 py-3 border-b border-border">
+          <Avatar className="h-10 w-10">
+            <AvatarImage src={profile?.avatar_url || ''} />
+            <AvatarFallback>{profile?.display_name?.[0] || 'U'}</AvatarFallback>
+          </Avatar>
+          
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <Button variant="ghost" className="gap-2 text-[17px] font-medium">
+                {selectedModel}
+                <ChevronDown className="h-5 w-5 text-muted-foreground" />
+              </Button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="center">
+              {models.map((model) => (
+                <DropdownMenuItem 
+                  key={model} 
+                  onClick={() => setSelectedModel(model)}
+                  className="text-[15px]"
+                >
+                  {model}
+                </DropdownMenuItem>
+              ))}
+            </DropdownMenuContent>
+          </DropdownMenu>
+          
+          <div className="flex items-center gap-2">
+            <Button variant="ghost" size="icon" className="h-10 w-10">
+              <History className="h-6 w-6" />
+            </Button>
+            <Button variant="ghost" size="icon" className="h-10 w-10" onClick={handleNewChat}>
+              <PenSquare className="h-6 w-6" />
+            </Button>
           </div>
-          <div>
-            <div className="flex items-center gap-1">
-              <h1 className="font-bold text-foreground">AfuAI</h1>
-              {isAIVerified && (
-                <img 
-                  src="https://upload.wikimedia.org/wikipedia/commons/archive/8/81/20230122072306!Twitter_Verified_Badge_Gold.svg" 
-                  alt="Verified Organization" 
-                  className="h-5 w-5" 
-                  title="Verified AI Assistant"
-                />
-              )}
-            </div>
-            <p className="text-xs text-muted-foreground">Your AI Assistant</p>
-          </div>
-        </div>
-      </div>
+        </header>
 
-      <div className="flex-1 overflow-y-auto p-4 space-y-4">
-        {messages.map((msg, idx) => (
-          <div
-            key={idx}
-            className={`flex ${msg.role === 'user' ? 'justify-end' : 'justify-start'}`}
-          >
-            <Card
-              className={`max-w-[80%] p-3 relative group ${
-                msg.role === 'user'
-                  ? 'bg-primary text-primary-foreground'
-                  : 'bg-card border-border'
-              }`}
-            >
-              <div className="text-sm whitespace-pre-wrap select-text">
-                {parseRichText(msg.content)}
+        {/* Main Content Area */}
+        <div className="flex-1 overflow-y-auto">
+          {!showChat ? (
+            /* Home View - Recent Conversations & Quick Actions */
+            <div className="flex flex-col h-full justify-end p-4 pb-0">
+              {/* Recent Conversations */}
+              <div className="mb-4">
+                <div className="flex items-center gap-2 text-muted-foreground mb-3">
+                  <History className="h-5 w-5" />
+                  <span className="text-[15px]">Recent Conversations</span>
+                </div>
+                <div className="space-y-2">
+                  {conversations.map((conv) => (
+                    <button
+                      key={conv.id}
+                      onClick={() => handleConversationClick(conv)}
+                      className="w-full text-left px-4 py-3 bg-card rounded-xl border border-border hover:bg-muted transition-colors"
+                    >
+                      <span className="text-[15px] text-foreground line-clamp-1">{conv.title}</span>
+                    </button>
+                  ))}
+                </div>
               </div>
-              <div className="flex items-center justify-between mt-1">
-                <p className="text-xs opacity-70">
-                  {msg.timestamp.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
-                </p>
-                {msg.role === 'assistant' && (
-                  <Button
-                    variant="ghost"
-                    size="icon"
-                    className="h-6 w-6 opacity-0 group-hover:opacity-100 transition-opacity"
-                    onClick={() => handleCopy(msg.content, idx)}
+
+              {/* Quick Action Cards */}
+              <div className="flex gap-3 overflow-x-auto pb-4 scrollbar-hide">
+                {quickActions.map((action, idx) => (
+                  <button
+                    key={idx}
+                    onClick={action.action}
+                    className="flex-shrink-0 flex flex-col items-start gap-2 px-4 py-3 bg-card rounded-xl border border-border hover:bg-muted transition-colors min-w-[140px]"
                   >
-                    {copiedId === idx ? (
-                      <Check className="h-3 w-3 text-green-500" />
-                    ) : (
-                      <Copy className="h-3 w-3" />
-                    )}
-                  </Button>
-                )}
+                    <action.icon className="h-6 w-6 text-muted-foreground" />
+                    <span className="text-[15px] text-foreground">{action.label}</span>
+                  </button>
+                ))}
               </div>
-            </Card>
-          </div>
-        ))}
-        {loading && (
-          <div className="flex justify-start">
-            <Card className="max-w-[80%] p-3 bg-card border-border">
-              <Skeleton className="h-4 w-32" />
-            </Card>
-          </div>
-        )}
-        <div ref={messagesEndRef} />
-      </div>
-
-      <div className="border-t border-border bg-card p-4">
-        <div className="flex gap-2">
-          <Input
-            value={input}
-            onChange={(e) => setInput(e.target.value)}
-            onKeyDown={(e) => e.key === 'Enter' && !e.shiftKey && handleSend()}
-            placeholder="Message AfuAI..."
-            className="flex-1"
-            disabled={loading}
-          />
-          <Button
-            onClick={handleSend}
-            disabled={!input.trim() || loading}
-            className="rounded-full"
-            size="icon"
-          >
-            {loading ? <Send className="h-4 w-4 opacity-50" /> : <Send className="h-4 w-4" />}
-          </Button>
+            </div>
+          ) : (
+            /* Chat View */
+            <div className="p-4 space-y-4">
+              {messages.map((msg, idx) => (
+                <div
+                  key={idx}
+                  className={`flex ${msg.role === 'user' ? 'justify-end' : 'justify-start'}`}
+                >
+                  <Card
+                    className={`max-w-[85%] p-3 relative group ${
+                      msg.role === 'user'
+                        ? 'bg-primary text-primary-foreground'
+                        : 'bg-card border-border'
+                    }`}
+                  >
+                    <div className="text-[15px] whitespace-pre-wrap select-text leading-[22px]">
+                      {parseRichText(msg.content)}
+                    </div>
+                    <div className="flex items-center justify-between mt-2">
+                      <p className="text-[13px] opacity-70">
+                        {msg.timestamp.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                      </p>
+                      {msg.role === 'assistant' && (
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          className="h-7 w-7 opacity-0 group-hover:opacity-100 transition-opacity"
+                          onClick={() => handleCopy(msg.content, idx)}
+                        >
+                          {copiedId === idx ? (
+                            <Check className="h-4 w-4 text-green-500" />
+                          ) : (
+                            <Copy className="h-4 w-4" />
+                          )}
+                        </Button>
+                      )}
+                    </div>
+                  </Card>
+                </div>
+              ))}
+              {loading && (
+                <div className="flex justify-start">
+                  <Card className="max-w-[85%] p-3 bg-card border-border">
+                    <Skeleton className="h-5 w-40" />
+                  </Card>
+                </div>
+              )}
+              <div ref={messagesEndRef} />
+            </div>
+          )}
         </div>
-        <p className="text-xs text-muted-foreground mt-2 text-center">
-          Use *bold*, _italic_, ~strikethrough~, or `code` for formatting
-        </p>
+
+        {/* Input Area */}
+        <div className="p-4 pb-6">
+          <div className="bg-card border border-border rounded-2xl px-4 py-3">
+            <Input
+              value={input}
+              onChange={(e) => setInput(e.target.value)}
+              onKeyDown={(e) => e.key === 'Enter' && !e.shiftKey && handleSend()}
+              placeholder="Ask anything"
+              className="border-0 bg-transparent p-0 text-[17px] placeholder:text-muted-foreground focus-visible:ring-0 h-auto"
+              disabled={loading}
+            />
+            <div className="flex items-center justify-between mt-3">
+              <Button variant="ghost" size="icon" className="h-9 w-9 text-muted-foreground">
+                <Paperclip className="h-5 w-5" />
+              </Button>
+              <Button
+                onClick={handleSend}
+                disabled={!input.trim() || loading}
+                size="icon"
+                className="h-10 w-10 rounded-full bg-muted hover:bg-muted/80 disabled:opacity-30"
+              >
+                <ArrowUp className="h-5 w-5 text-foreground" />
+              </Button>
+            </div>
+          </div>
+        </div>
       </div>
-    </div>
     </PremiumGate>
   );
 };
