@@ -12,6 +12,12 @@ import { useTranslation } from 'react-i18next';
 import { searchSchema } from '@/lib/validation';
 import { ScrollArea, ScrollBar } from '@/components/ui/scroll-area';
 import { ProfileDrawer } from '@/components/ProfileDrawer';
+import { 
+  ContentCategory, 
+  categorizeContent, 
+  getPrimaryCategory,
+  mapTabToCategory 
+} from '@/lib/contentCategorization';
 
 const SEARCH_HISTORY_KEY = 'afuchat_search_history';
 const MAX_SEARCH_HISTORY = 10;
@@ -105,21 +111,13 @@ const VerifiedBadge = ({ isVerified, isOrgVerified }: { isVerified?: boolean; is
 const TABS = ['For You', 'Trending', 'News', 'Sports', 'Entertainment'] as const;
 type TabType = typeof TABS[number];
 
-const TAB_KEYWORDS: Record<TabType, string[]> = {
-  'For You': [],
-  'Trending': [],
-  'News': ['news', 'breaking', 'headline', 'report', 'update', 'announce', 'official', 'latest'],
-  'Sports': ['sport', 'game', 'match', 'team', 'player', 'score', 'win', 'championship', 'league', 'football', 'basketball', 'soccer', 'tennis', 'cricket'],
-  'Entertainment': ['movie', 'music', 'celebrity', 'film', 'song', 'concert', 'album', 'star', 'show', 'tv', 'series', 'actor', 'singer', 'award'],
-};
-
 const formatPostCount = (count: number): string => {
   if (count >= 1000000) return `${(count / 1000000).toFixed(1)}M posts`;
   if (count >= 1000) return `${(count / 1000).toFixed(0)}K posts`;
   return `${count} posts`;
 };
 
-const TrendingItem = ({ 
+const TrendingItem = ({
   trend, 
   index, 
   category,
@@ -165,6 +163,7 @@ interface CategoryPost {
   image_url?: string;
   post_images?: PostImage[];
   like_count: number;
+  confidence?: number;
 }
 
 const CategoryPostItem = ({ 
@@ -272,11 +271,11 @@ const TrendingSection = ({
         }
         setCategoryPosts([]);
       } else {
-        // Fetch category-specific posts
-        const keywords = TAB_KEYWORDS[activeTab];
-        const searchConditions = keywords.map(k => `content.ilike.%${k}%`).join(',');
+        // Fetch posts and filter by category using the algorithm
+        const targetCategory = mapTabToCategory(activeTab);
         
         try {
+          // Fetch recent posts (more than needed to filter)
           const { data, error } = await supabase
             .from('posts')
             .select(`
@@ -285,21 +284,39 @@ const TrendingSection = ({
               post_images(id, image_url, display_order),
               post_acknowledgments(id)
             `)
-            .or(searchConditions)
             .order('created_at', { ascending: false })
-            .limit(20);
+            .limit(100);
 
           if (error) {
-            console.error('Error fetching category posts:', error);
+            console.error('Error fetching posts:', error);
             setCategoryPosts([]);
-          } else if (data) {
-            const formattedPosts: CategoryPost[] = data.map((p: any) => ({
+          } else if (data && targetCategory) {
+            // Use the categorization algorithm to filter posts
+            const categorizedPosts = data
+              .map((p: any) => {
+                const scores = categorizeContent(p.content);
+                const primaryCategory = getPrimaryCategory(p.content, 20);
+                const categoryScore = scores.find(s => s.category === targetCategory);
+                
+                return {
+                  post: p,
+                  category: primaryCategory,
+                  confidence: categoryScore?.confidence || 0,
+                  matches: primaryCategory === targetCategory || (categoryScore && categoryScore.confidence >= 15)
+                };
+              })
+              .filter(item => item.matches)
+              .sort((a, b) => b.confidence - a.confidence)
+              .slice(0, 20);
+
+            const formattedPosts: CategoryPost[] = categorizedPosts.map(({ post: p, confidence }) => ({
               id: p.id,
               content: p.content,
               created_at: p.created_at,
               image_url: p.image_url,
               post_images: p.post_images?.sort((a: any, b: any) => a.display_order - b.display_order) || [],
               like_count: p.post_acknowledgments?.length || 0,
+              confidence,
               author: {
                 display_name: p.profiles?.display_name || 'Unknown',
                 handle: p.profiles?.handle || 'unknown',
@@ -309,6 +326,8 @@ const TrendingSection = ({
               },
             }));
             setCategoryPosts(formattedPosts);
+          } else {
+            setCategoryPosts([]);
           }
         } catch (error) {
           console.error('Category fetch failed:', error);
