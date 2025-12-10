@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { Sparkles, ChevronDown, ChevronUp } from 'lucide-react';
 import { CustomLoader } from '@/components/ui/CustomLoader';
 import { supabase } from '@/integrations/supabase/client';
@@ -13,14 +13,33 @@ interface AIPostSummaryProps {
 
 // Categories that are worth summarizing
 const SUMMARY_WORTHY_CATEGORIES: ContentCategory[] = ['news', 'technology', 'politics', 'business', 'sports'];
-
-// Minimum confidence score to trigger auto-summary
 const MIN_CONFIDENCE_THRESHOLD = 40;
-
-// Minimum content length for summary consideration
 const MIN_CONTENT_LENGTH = 200;
 
-// Check if post content is worth summarizing based on AI analysis
+// Global queue to throttle AI requests
+const requestQueue: Array<() => Promise<void>> = [];
+let isProcessingQueue = false;
+
+const processQueue = async () => {
+  if (isProcessingQueue || requestQueue.length === 0) return;
+  isProcessingQueue = true;
+  
+  while (requestQueue.length > 0) {
+    const task = requestQueue.shift();
+    if (task) {
+      try {
+        await task();
+      } catch (e) {
+        console.error('Queue task error:', e);
+      }
+      // Wait 2 seconds between requests to avoid rate limits
+      await new Promise(resolve => setTimeout(resolve, 2000));
+    }
+  }
+  
+  isProcessingQueue = false;
+};
+
 const isWorthSummarizing = (content: string): boolean => {
   if (content.length < MIN_CONTENT_LENGTH) return false;
   
@@ -51,22 +70,28 @@ export const AIPostSummary = ({ postContent, postId }: AIPostSummaryProps) => {
   const [loading, setLoading] = useState(false);
   const [expanded, setExpanded] = useState(true);
   const [shouldShow, setShouldShow] = useState(false);
-  const [checked, setChecked] = useState(false);
+  const checkedRef = useRef(false);
+  const mountedRef = useRef(true);
 
   useEffect(() => {
-    if (!isPremium || checked) return;
+    mountedRef.current = true;
+    return () => { mountedRef.current = false; };
+  }, []);
+
+  useEffect(() => {
+    if (!isPremium || checkedRef.current) return;
+    checkedRef.current = true;
     
     const worthSummarizing = isWorthSummarizing(postContent);
     setShouldShow(worthSummarizing);
     
     if (worthSummarizing) {
-      checkAndGenerateSummary();
+      checkCachedSummary();
     }
-    setChecked(true);
   }, [isPremium, postId]);
 
-  const checkAndGenerateSummary = async () => {
-    // First check if summary already exists in database
+  const checkCachedSummary = async () => {
+    // First check database cache
     const { data: existingSummary } = await supabase
       .from('post_ai_summaries')
       .select('summary')
@@ -74,18 +99,19 @@ export const AIPostSummary = ({ postContent, postId }: AIPostSummaryProps) => {
       .maybeSingle();
     
     if (existingSummary?.summary) {
-      setSummary(existingSummary.summary);
+      if (mountedRef.current) setSummary(existingSummary.summary);
       return;
     }
     
-    // Generate new summary if not cached
-    await generateSummary();
+    // Queue the AI generation request (throttled)
+    setLoading(true);
+    requestQueue.push(() => generateSummary());
+    processQueue();
   };
 
   const generateSummary = async () => {
-    if (loading || summary) return;
+    if (!mountedRef.current) return;
     
-    setLoading(true);
     try {
       const { data, error } = await supabase.functions.invoke('chat-with-afuai', {
         body: {
@@ -94,23 +120,34 @@ export const AIPostSummary = ({ postContent, postId }: AIPostSummaryProps) => {
         }
       });
 
-      if (error) throw error;
+      if (error) {
+        // Check if it's a rate limit error
+        if (error.message?.includes('429') || error.message?.includes('rate')) {
+          console.warn('Rate limited, will retry later');
+          if (mountedRef.current) {
+            setShouldShow(false);
+            setLoading(false);
+          }
+          return;
+        }
+        throw error;
+      }
       
       const generatedSummary = data?.reply || null;
       
-      if (generatedSummary) {
+      if (generatedSummary && mountedRef.current) {
         setSummary(generatedSummary);
         
-        // Cache the summary in database
+        // Cache in database
         await supabase
           .from('post_ai_summaries')
           .upsert({ post_id: postId, summary: generatedSummary }, { onConflict: 'post_id' });
       }
     } catch (error) {
       console.error('AI Summary error:', error);
-      setShouldShow(false);
+      if (mountedRef.current) setShouldShow(false);
     } finally {
-      setLoading(false);
+      if (mountedRef.current) setLoading(false);
     }
   };
 
