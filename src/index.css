@@ -238,17 +238,12 @@
   html, body {
     @apply bg-background text-foreground antialiased;
     font-family: 'Outfit', 'Inter', system-ui, -apple-system, sans-serif;
-    font-weight: 600;
+    font-weight: 500;
     -webkit-font-smoothing: antialiased;
     -moz-osx-font-smoothing: grayscale;
     overflow-x: hidden;
     overscroll-behavior: none;
     letter-spacing: -0.01em;
-  }
-  
-  /* Make all text elements bold */
-  p, span, div, li, a, label, input, textarea, button {
-    font-weight: inherit;
   }
   
   /* App-like fixed viewport */
