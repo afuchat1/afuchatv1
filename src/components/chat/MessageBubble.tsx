@@ -179,9 +179,10 @@ export const MessageBubble = ({
   const isVoice = !!message.audio_url;
   const hasAttachment = !!message.attachment_url;
   
-  // Check read status for own messages
-  const allRead = showReadReceipts && isOwn && message.message_status && message.message_status.every(s => s.read_at);
-  const anyDelivered = showReadReceipts && isOwn && message.message_status && message.message_status.some(s => s.delivered_at);
+  // Check read/delivered status for own messages
+  const hasStatus = message.message_status && message.message_status.length > 0;
+  const allRead = hasStatus && message.message_status!.every(s => s.read_at);
+  const anyDelivered = hasStatus && message.message_status!.some(s => s.delivered_at);
   
   // Check if message can be edited (within 15 minutes)
   const canEdit = isOwn && !isVoice && !hasAttachment && message.sent_at && 
@@ -323,14 +324,22 @@ export const MessageBubble = ({
   const ReadStatus = () => {
     if (!isOwn || !showReadReceipts) return null;
     
+    // No status entries yet = just sent (single gray check)
+    if (!hasStatus) {
+      return <Check className="h-3.5 w-3.5 text-muted-foreground" />;
+    }
+    
+    // All recipients have read = double colored check
     if (allRead) {
-      // Read - double check, colored (primary/accent)
       return <CheckCheck className="h-3.5 w-3.5 text-primary" />;
-    } else if (anyDelivered) {
-      // Delivered - double check, muted
+    }
+    
+    // At least one delivered = double gray check
+    if (anyDelivered) {
       return <CheckCheck className="h-3.5 w-3.5 text-muted-foreground" />;
     }
-    // Sent - single check
+    
+    // Has status but not delivered yet = single check
     return <Check className="h-3.5 w-3.5 text-muted-foreground" />;
   };
 

@@ -386,21 +386,19 @@ const ChatRoom = () => {
                 
                 // Mark as delivered and read if we're the recipient
                 if (user && payload.new.sender_id !== user.id) {
-                  // Update the messages table read_at
-                  await supabase
-                    .from('messages')
-                    .update({ read_at: new Date().toISOString() })
-                    .eq('id', payload.new.id);
-                  
-                  // Also update message_status
+                  const now = new Date().toISOString();
+                  // Upsert message_status for delivered + read
                   await supabase
                     .from('message_status')
-                    .upsert({
-                      message_id: payload.new.id,
-                      user_id: user.id,
-                      delivered_at: new Date().toISOString(),
-                      read_at: new Date().toISOString(),
-                    });
+                    .upsert(
+                      {
+                        message_id: payload.new.id,
+                        user_id: user.id,
+                        delivered_at: now,
+                        read_at: now,
+                      },
+                      { onConflict: 'message_id,user_id' }
+                    );
                 }
               }
             });
@@ -609,25 +607,23 @@ const ChatRoom = () => {
   };
 
   const markMessagesAsRead = async (messageIds: string[]) => {
-    if (!user) return;
+    if (!user || messageIds.length === 0) return;
 
-    // Update the messages table read_at field
-    await supabase
-      .from('messages')
-      .update({ read_at: new Date().toISOString() })
-      .in('id', messageIds)
-      .is('read_at', null);
+    const now = new Date().toISOString();
 
-    // Also update message_status for detailed tracking
+    // Use upsert to avoid duplicate key errors
     for (const messageId of messageIds) {
       await supabase
         .from('message_status')
-        .upsert({
-          message_id: messageId,
-          user_id: user.id,
-          delivered_at: new Date().toISOString(),
-          read_at: new Date().toISOString(),
-        });
+        .upsert(
+          {
+            message_id: messageId,
+            user_id: user.id,
+            delivered_at: now,
+            read_at: now,
+          },
+          { onConflict: 'message_id,user_id' }
+        );
     }
   };
 
@@ -711,27 +707,17 @@ const ChatRoom = () => {
 
       if (insertError) throw insertError;
 
-      // Create message_status entries for other chat members
-      const { data: members } = await supabase
-        .from('chat_members')
-        .select('user_id')
-        .eq('chat_id', chatId)
-        .neq('user_id', user.id);
-
-      if (members && members.length > 0 && inserted) {
-        const statusEntries = members.map(member => ({
-          message_id: inserted.id,
-          user_id: member.user_id,
-          delivered_at: new Date().toISOString(),
-        }));
-
-        await supabase
-          .from('message_status')
-          .insert(statusEntries);
-      }
-
+      // Add optimistic update with empty status (sent but not delivered)
       if (inserted) {
-        setMessages((prev) => [...prev, inserted as Message]);
+        const newMsg = {
+          ...inserted,
+          message_status: [],
+          message_reactions: [],
+        } as Message;
+        setMessages((prev) => {
+          if (prev.some(m => m.id === newMsg.id)) return prev;
+          return [...prev, newMsg];
+        });
       }
       setAudioBlob(null);
       toast.success('Voice message sent');
@@ -821,25 +807,29 @@ const ChatRoom = () => {
       if (error) {
         toast.error('Failed to send message');
       } else {
-        // Create message_status entries for other chat members
-        const { data: members } = await supabase
-          .from('chat_members')
-          .select('user_id')
-          .eq('chat_id', chatId)
-          .neq('user_id', user.id);
-
-        if (members && members.length > 0) {
-          const statusEntries = members.map(member => ({
-            message_id: inserted.id,
-            user_id: member.user_id,
-            delivered_at: new Date().toISOString(),
-          }));
-
-          await supabase
-            .from('message_status')
-            .insert(statusEntries);
-        }
-
+        // Message sent - status entries will be created when recipients receive/view
+        // Add optimistic update with the message having empty status (sent but not delivered)
+        const newMsg = {
+          ...inserted,
+          profiles: {
+            display_name: currentUserDisplayNameRef.current || 'You',
+            handle: '',
+            avatar_url: null,
+            is_verified: false,
+            is_organization_verified: false,
+            is_affiliate: false,
+            affiliated_business_id: null,
+          },
+          message_status: [],
+          message_reactions: [],
+        } as Message;
+        
+        setMessages((prev) => {
+          // Check if message already exists (from real-time)
+          if (prev.some(m => m.id === newMsg.id)) return prev;
+          return [...prev, newMsg];
+        });
+        
         setNewMessage('');
         setSelectedFile(null);
         setReplyToMessage(null);
