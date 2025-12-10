@@ -263,8 +263,13 @@ export const MessageBubble = ({
   }, []);
 
   // Find the message being replied to (if any)
-  // In a real app, this might be fetched or passed in
-  const repliedMessage = message.reply_to_message;
+  // Supabase returns null, empty array, or object - handle all cases
+  const repliedMessage = message.reply_to_message_id && message.reply_to_message && 
+    !Array.isArray(message.reply_to_message) && 
+    typeof message.reply_to_message === 'object' &&
+    message.reply_to_message.encrypted_content
+      ? message.reply_to_message 
+      : null;
 
 
   const ReadStatus = () => {
@@ -312,7 +317,7 @@ export const MessageBubble = ({
             : 'bg-muted text-foreground'
         } ${getBubbleRadius()} max-w-[85%] overflow-hidden`}
       >
-        {message.reply_to_message_id && repliedMessage?.encrypted_content && (
+        {repliedMessage && (
           <div className={`px-2 pt-1.5 pb-1 border-l-2 ${isOwn ? 'border-primary-foreground/50 bg-primary-foreground/10' : 'border-primary/50 bg-primary/10'} mx-1 mt-1 rounded-r`}>
             <p className="text-xs opacity-80 line-clamp-2">
               {repliedMessage.audio_url ? '🎤 Voice message' : repliedMessage.encrypted_content}
