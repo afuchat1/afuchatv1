@@ -173,7 +173,7 @@ const AIChat: React.FC = () => {
 
   return (
     <PremiumGate feature="AI Chat Assistant" showUpgrade={true}>
-      <div className="flex flex-col h-full bg-background">
+      <div className="flex flex-col h-full bg-background relative">
         {/* Header */}
         <header className="flex items-center justify-between px-4 py-3 border-b border-border bg-background flex-shrink-0">
           <ProfileDrawer
@@ -202,8 +202,8 @@ const AIChat: React.FC = () => {
           </div>
         </header>
 
-        {/* Chat Messages Area - Takes remaining space */}
-        <div className="flex-1 overflow-y-auto min-h-0">
+        {/* Chat Messages Area - Scrollable with bottom padding for input */}
+        <div className="flex-1 overflow-y-auto pb-16">
           {messages.length === 0 ? (
             <div className="flex flex-col items-center justify-center h-full p-6 text-center">
               <div className="w-16 h-16 rounded-full bg-primary/10 flex items-center justify-center mb-4">
@@ -265,9 +265,9 @@ const AIChat: React.FC = () => {
           )}
         </div>
 
-        {/* Input Area - Fixed at bottom */}
-        <div className="flex-shrink-0 px-3 py-2 bg-background">
-          <div className="flex items-end gap-2 bg-card border border-border rounded-full px-4 py-2">
+        {/* Input Area - Fixed above bottom nav */}
+        <div className="fixed bottom-14 left-0 right-0 px-3 py-2 bg-background z-40">
+          <div className="flex items-end gap-2 bg-card border border-border rounded-full px-4 py-2 max-w-lg mx-auto lg:max-w-none">
             <Textarea
               ref={textareaRef}
               value={input}
