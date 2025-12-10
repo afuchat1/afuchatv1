@@ -365,10 +365,9 @@ export const MessageBubble = ({
             <div
               className={`${
                 isOwn
-                  ? 'text-primary-foreground shadow-md'
-                  : 'bg-muted text-foreground shadow-sm'
-              } ${getBubbleRadius()} min-w-[60px]`}
-              style={isOwn ? { backgroundColor: getThemeColor() } : {}}
+                  ? 'bg-primary text-primary-foreground'
+                  : 'bg-muted text-foreground'
+              } ${getBubbleRadius()} min-w-[60px] max-w-full`}
             >
               {/* --- Reply Preview --- */}
               {repliedMessage && (
@@ -457,15 +456,6 @@ export const MessageBubble = ({
                   </p>
                 </div>
               )}
-              
-              {/* --- Timestamp & Status --- */}
-              <div className={`flex items-center justify-end gap-1 px-3 pb-1.5 ${isVoice ? 'mt-0' : '-mt-1'}`}>
-                {message.edited_at && (
-                  <span className="text-[11px] opacity-50">edited</span>
-                )}
-                <span className="text-[11px] opacity-60">{time}</span>
-                <ReadStatus />
-              </div>
             </div>
             
             {/* --- Action Buttons --- */}
@@ -482,6 +472,15 @@ export const MessageBubble = ({
               </Button>
               <ReactionButton />
             </div>
+          </div>
+
+          {/* --- Timestamp & Status - X-style below the bubble --- */}
+          <div className={`flex items-center gap-1.5 mt-1 px-1 ${isOwn ? 'justify-end' : 'justify-start'}`}>
+            {message.edited_at && (
+              <span className="text-[11px] text-muted-foreground">edited</span>
+            )}
+            <span className="text-[11px] text-muted-foreground">{time}</span>
+            <ReadStatus />
           </div>
 
           {/* --- Reactions --- */}

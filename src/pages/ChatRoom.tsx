@@ -4,11 +4,10 @@ import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/contexts/AuthContext';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
-import { Badge } from '@/components/ui/badge';
-import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
+import { TooltipProvider } from '@/components/ui/tooltip';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
 import { CustomLoader } from '@/components/ui/CustomLoader';
-import { ArrowLeft, Send, User, Phone, Video, MoreVertical, Check, MessageSquare, HelpCircle, Info, Mic, MicOff, Play, Pause, Volume2, X, Smile, Paperclip, Settings, LogOut } from 'lucide-react';
+import { ArrowLeft, Send, MoreVertical, MessageSquare, Mic, MicOff, Play, Pause, Volume2, X, Paperclip, Settings, LogOut } from 'lucide-react';
 import { toast } from 'sonner';
 import { messageSchema } from '@/lib/validation';
 import { ChatRedEnvelope } from '@/components/chat/ChatRedEnvelope';
@@ -17,11 +16,9 @@ import { MessageBubble } from '@/components/chat/MessageBubble';
 import { GroupSettingsSheet } from '@/components/chat/GroupSettingsSheet';
 import { DateDivider } from '@/components/chat/DateDivider';
 import { TypingIndicator } from '@/components/chat/TypingIndicator';
-import { isSameDay, formatDistanceToNow } from 'date-fns';
+import { isSameDay } from 'date-fns';
 import { useTranslation } from 'react-i18next';
 import { FileUploadPreview } from '@/components/chat/FileUploadPreview';
-import EmojiPicker, { EmojiClickData } from 'emoji-picker-react';
-import { Dialog, DialogContent, DialogTrigger } from '@/components/ui/dialog';
 import { UserAvatar } from '@/components/avatar/UserAvatar';
 import { VerifiedBadge } from '@/components/VerifiedBadge';
 import { useChatPreferences } from '@/hooks/useChatPreferences';
@@ -1039,12 +1036,12 @@ const ChatRoom = () => {
   return (
     <TooltipProvider delayDuration={200}>
       <div className="fixed inset-0 flex flex-col bg-background" style={{ overflow: 'hidden' }}>
-        {/* WhatsApp-style Header - Fixed at top */}
-        <header className="flex-shrink-0 flex items-center gap-3 px-2 py-2 bg-card/95 backdrop-blur-xl border-b border-border shadow-sm z-10 pt-[env(safe-area-inset-top)]">
+        {/* X-style Header - Clean and minimal */}
+        <header className="flex-shrink-0 flex items-center gap-3 px-3 py-3 bg-background border-b border-border z-10 pt-[env(safe-area-inset-top)]">
           <Button
             variant="ghost"
             size="icon"
-            className="h-10 w-10 rounded-full"
+            className="h-9 w-9 rounded-full hover:bg-muted/50"
             onClick={handleBack}
           >
             <ArrowLeft className="h-5 w-5" />
@@ -1059,7 +1056,7 @@ const ChatRoom = () => {
             />
             <div className="flex-1 min-w-0">
               <div className="flex items-center gap-1">
-                <h2 className="font-semibold text-base truncate">
+                <h2 className="font-bold text-base truncate">
                   {chatInfo?.is_group ? (chatInfo.name || 'Group') : (otherUser?.display_name || 'Chat')}
                 </h2>
                 {otherUser && !chatInfo?.is_group && (
@@ -1071,70 +1068,41 @@ const ChatRoom = () => {
                   />
                 )}
               </div>
-              {!chatInfo?.is_group && otherUser && (
-                <p className="text-xs text-muted-foreground">
-                  {online ? 'online' : otherUser.last_seen ? `last seen at ${new Date(otherUser.last_seen).toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', hour12: false })}` : 'offline'}
-                </p>
-              )}
-              {chatInfo?.is_group && chatInfo.description && (
-                <p className="text-xs text-muted-foreground truncate">
-                  {chatInfo.description}
-                </p>
-              )}
             </div>
           </div>
 
-          <div className="flex items-center gap-1">
-            {!chatInfo?.is_group && (
-              <Button
-                variant="ghost"
-                size="icon"
-                className="h-10 w-10 rounded-full"
-              >
-                <Phone className="h-5 w-5" />
-              </Button>
-            )}
-            {chatInfo?.is_group && isGroupAdmin && (
-              <Button
-                variant="ghost"
-                size="icon"
-                className="h-10 w-10 rounded-full"
-                onClick={() => setIsGroupSettingsOpen(true)}
-              >
-                <Settings className="h-5 w-5" />
-              </Button>
-            )}
-            {chatInfo?.is_group && isMember ? (
-              <DropdownMenu>
-                <DropdownMenuTrigger asChild>
-                  <Button
-                    variant="ghost"
-                    size="icon"
-                    className="h-10 w-10 rounded-full"
-                  >
-                    <MoreVertical className="h-5 w-5" />
-                  </Button>
-                </DropdownMenuTrigger>
-                <DropdownMenuContent align="end">
-                  <DropdownMenuItem 
-                    onClick={handleLeaveGroup}
-                    className="text-destructive focus:text-destructive"
-                  >
-                    <LogOut className="h-4 w-4 mr-2" />
-                    {t('chat.leaveGroup')}
-                  </DropdownMenuItem>
-                </DropdownMenuContent>
-              </DropdownMenu>
-            ) : (
-              <Button
-                variant="ghost"
-                size="icon"
-                className="h-10 w-10 rounded-full"
-              >
-                <MoreVertical className="h-5 w-5" />
-              </Button>
-            )}
-          </div>
+          {chatInfo?.is_group && isGroupAdmin && (
+            <Button
+              variant="ghost"
+              size="icon"
+              className="h-9 w-9 rounded-full hover:bg-muted/50"
+              onClick={() => setIsGroupSettingsOpen(true)}
+            >
+              <Settings className="h-5 w-5" />
+            </Button>
+          )}
+          {chatInfo?.is_group && isMember && (
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  className="h-9 w-9 rounded-full hover:bg-muted/50"
+                >
+                  <MoreVertical className="h-5 w-5" />
+                </Button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="end">
+                <DropdownMenuItem 
+                  onClick={handleLeaveGroup}
+                  className="text-destructive focus:text-destructive"
+                >
+                  <LogOut className="h-4 w-4 mr-2" />
+                  {t('chat.leaveGroup')}
+                </DropdownMenuItem>
+              </DropdownMenuContent>
+            </DropdownMenu>
+          )}
         </header>
 
         {/* Messages container - only this scrolls */}
@@ -1311,128 +1279,99 @@ const ChatRoom = () => {
           </div>
         )}
 
-        {/* Input: WhatsApp style - Fixed at bottom */}
+        {/* Input: X-style - Fixed at bottom */}
         {isMember && (
-          <div className="flex-shrink-0 bg-card border-t border-border px-2 py-2 pb-[env(safe-area-inset-bottom)]">
+          <div className="flex-shrink-0 bg-background border-t border-border px-3 py-3 pb-[env(safe-area-inset-bottom)]">
             <input
-            ref={fileInputRef}
-            type="file"
-            className="hidden"
-            accept="image/*,.pdf,.doc,.docx,.txt"
-            onChange={handleFileSelect}
-          />
-          <form onSubmit={(e) => { e.preventDefault(); handleSend(); }} className="flex items-center gap-2">
-            {recording ? (
-              <div className="flex-1 flex items-center gap-3 px-4 py-2.5 bg-card rounded-full border border-border">
-                <div className="flex items-center gap-2 flex-1">
-                  <div className="w-2 h-2 bg-destructive rounded-full animate-pulse" />
-                  <span className="text-sm text-destructive font-medium">Recording...</span>
-                </div>
-                <Button
-                  type="button"
-                  variant="ghost"
-                  size="icon"
-                  className="h-9 w-9 rounded-full"
-                  onClick={stopRecording}
-                  disabled={uploading}
-                >
-                  {uploading ? <MicOff className="h-5 w-5 opacity-50" /> : <MicOff className="h-5 w-5" />}
-                </Button>
-              </div>
-            ) : audioBlob ? (
-              <div className="flex-1 flex items-center gap-3 px-4 py-2.5 bg-card rounded-full border border-border">
-                <Volume2 className="h-5 w-5 text-primary" />
-                <span className="text-sm text-primary font-medium flex-1">Voice message ready</span>
-                <Button
-                  type="button"
-                  variant="ghost"
-                  size="icon"
-                  className="h-9 w-9 rounded-full text-primary"
-                  onClick={sendVoiceMessage}
-                  disabled={uploading}
-                >
-                  {uploading ? <Send className="h-5 w-5 opacity-50" /> : <Send className="h-5 w-5" />}
-                </Button>
-              </div>
-            ) : (
-              <>
-                <Dialog open={emojiPickerOpen} onOpenChange={setEmojiPickerOpen}>
-                  <DialogTrigger asChild>
-                    <Button
-                      type="button"
-                      variant="ghost"
-                      size="icon"
-                      className="h-10 w-10 rounded-full hover:bg-muted text-muted-foreground flex-shrink-0"
-                    >
-                      <Smile className="h-5 w-5" />
-                    </Button>
-                  </DialogTrigger>
-                  <DialogContent className="p-0 border-none bg-transparent shadow-none max-w-full w-auto">
-                    <EmojiPicker
-                      onEmojiClick={(emojiData: EmojiClickData) => {
-                        setNewMessage(prev => prev + emojiData.emoji);
-                        setEmojiPickerOpen(false);
-                      }}
-                      searchDisabled
-                      skinTonesDisabled
-                      previewConfig={{ showPreview: false }}
-                    />
-                  </DialogContent>
-                </Dialog>
-                
-                <div className="flex-1 bg-card rounded-full border border-border flex items-center px-3 gap-2">
-                  <Input
-                    value={newMessage}
-                    onChange={(e) => handleInputChange(e.target.value)}
-                    onKeyDown={(e) => e.key === 'Enter' && !e.shiftKey && (e.preventDefault(), handleSend())}
-                    placeholder={selectedFile ? 'Add a caption...' : 'Message'}
-                    className="flex-1 bg-transparent border-none h-10 text-[15px] placeholder:text-muted-foreground/60 focus-visible:ring-0 px-0"
-                    disabled={sending}
-                  />
-                  {!newMessage.trim() && !selectedFile && (
-                    <Button
-                      type="button"
-                      variant="ghost"
-                      size="icon"
-                      className="h-8 w-8 rounded-full hover:bg-muted text-muted-foreground flex-shrink-0 p-0"
-                      onClick={() => fileInputRef.current?.click()}
-                    >
-                      <Paperclip className="h-5 w-5" />
-                    </Button>
-                  )}
-                </div>
-                {(newMessage.trim() || selectedFile) ? (
+              ref={fileInputRef}
+              type="file"
+              className="hidden"
+              accept="image/*,.pdf,.doc,.docx,.txt"
+              onChange={handleFileSelect}
+            />
+            <form onSubmit={(e) => { e.preventDefault(); handleSend(); }} className="flex items-center gap-2">
+              {recording ? (
+                <div className="flex-1 flex items-center gap-3 px-4 py-2.5 bg-muted/50 rounded-full">
+                  <div className="flex items-center gap-2 flex-1">
+                    <div className="w-2 h-2 bg-destructive rounded-full animate-pulse" />
+                    <span className="text-sm text-destructive font-medium">Recording...</span>
+                  </div>
                   <Button
-                    type="submit"
+                    type="button"
+                    variant="ghost"
                     size="icon"
-                    className="h-10 w-10 rounded-full bg-primary hover:bg-primary/90 text-primary-foreground flex-shrink-0"
-                    disabled={sending || uploadingFile}
+                    className="h-9 w-9 rounded-full"
+                    onClick={stopRecording}
+                    disabled={uploading}
                   >
-                    {(sending || uploadingFile) ? <Send className="h-4 w-4 opacity-50" /> : <Send className="h-4 w-4" />}
+                    {uploading ? <MicOff className="h-5 w-5 opacity-50" /> : <MicOff className="h-5 w-5" />}
                   </Button>
-                ) : (
-                  <>
-                    {chatInfo?.is_group && (
-                      <SendRedEnvelopeDialog 
-                        chatId={chatId!} 
-                        onSuccess={fetchRedEnvelopes}
-                      />
-                    )}
+                </div>
+              ) : audioBlob ? (
+                <div className="flex-1 flex items-center gap-3 px-4 py-2.5 bg-muted/50 rounded-full">
+                  <Volume2 className="h-5 w-5 text-primary" />
+                  <span className="text-sm text-primary font-medium flex-1">Voice message ready</span>
+                  <Button
+                    type="button"
+                    variant="ghost"
+                    size="icon"
+                    className="h-9 w-9 rounded-full text-primary"
+                    onClick={sendVoiceMessage}
+                    disabled={uploading}
+                  >
+                    {uploading ? <Send className="h-5 w-5 opacity-50" /> : <Send className="h-5 w-5" />}
+                  </Button>
+                </div>
+              ) : (
+                <>
+                  {/* Plus button for attachments */}
+                  <Button
+                    type="button"
+                    variant="ghost"
+                    size="icon"
+                    className="h-10 w-10 rounded-full hover:bg-muted/50 flex-shrink-0"
+                    onClick={() => fileInputRef.current?.click()}
+                  >
+                    <Paperclip className="h-5 w-5 text-foreground" />
+                  </Button>
+                  
+                  {/* Message input */}
+                  <div className="flex-1 bg-muted/50 rounded-full flex items-center px-4">
+                    <Input
+                      value={newMessage}
+                      onChange={(e) => handleInputChange(e.target.value)}
+                      onKeyDown={(e) => e.key === 'Enter' && !e.shiftKey && (e.preventDefault(), handleSend())}
+                      placeholder={selectedFile ? 'Add a caption...' : 'Message'}
+                      className="flex-1 bg-transparent border-none h-10 text-[15px] placeholder:text-muted-foreground focus-visible:ring-0 px-0"
+                      disabled={sending}
+                    />
+                  </div>
+                  
+                  {/* Send or Mic button */}
+                  {(newMessage.trim() || selectedFile) ? (
+                    <Button
+                      type="submit"
+                      size="icon"
+                      className="h-10 w-10 rounded-full bg-primary hover:bg-primary/90 text-primary-foreground flex-shrink-0"
+                      disabled={sending || uploadingFile}
+                    >
+                      {(sending || uploadingFile) ? <Send className="h-4 w-4 opacity-50" /> : <Send className="h-4 w-4" />}
+                    </Button>
+                  ) : (
                     <Button
                       type="button"
                       variant="ghost"
                       size="icon"
-                      className="h-10 w-10 rounded-full hover:bg-muted text-primary flex-shrink-0"
+                      className="h-10 w-10 rounded-full hover:bg-muted/50 text-foreground flex-shrink-0"
                       onClick={startRecording}
                     >
                       <Mic className="h-5 w-5" />
                     </Button>
-                  </>
-                )}
-              </>
-            )}
-          </form>
-        </div>
+                  )}
+                </>
+              )}
+            </form>
+          </div>
         )}
       </div>
 
