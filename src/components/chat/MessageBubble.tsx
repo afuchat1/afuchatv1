@@ -1,6 +1,5 @@
 import { motion } from 'framer-motion';
-import { Check, CheckCheck, Play, Pause, Download } from 'lucide-react';
-import { Button } from '@/components/ui/button';
+import { Check, CheckCheck, Play, Pause } from 'lucide-react';
 import { AttachmentPreview } from './AttachmentPreview';
 import { useState, useRef, useCallback } from 'react';
 import { toast } from 'sonner';
@@ -366,49 +365,68 @@ export const MessageBubble = ({
             </div>
           </>
         ) : isVoice ? (
-          <div className="flex items-center gap-2 pl-1.5 pr-2 py-1.5">
-            <Button
-              variant="ghost"
-              size="icon"
-              className={`h-8 w-8 rounded-full flex-shrink-0 ${
-                isOwn ? 'hover:bg-primary-foreground/20' : 'hover:bg-primary/10'
-              }`}
-              onClick={onToggleAudio}
-            >
-              {audioPlayerState?.isPlaying ? (
-                <Pause className="h-4 w-4" />
-              ) : (
-                <Play className="h-4 w-4 ml-0.5" />
-              )}
-            </Button>
-            <div className="flex flex-col flex-1 min-w-[80px] gap-0.5">
-              <div className="h-1 flex-1 bg-current opacity-30 rounded-full overflow-hidden">
-                {audioPlayerState?.duration ? (
-                  <div 
-                    className="h-full bg-current opacity-70 rounded-full transition-all"
-                    style={{ width: `${((audioPlayerState.currentTime || 0) / audioPlayerState.duration) * 100}%` }}
-                  />
-                ) : null}
+          <div className="px-2 py-2">
+            <div className="flex items-center gap-3">
+              {/* Large circular play button */}
+              <button
+                onClick={onToggleAudio}
+                className={`h-12 w-12 rounded-full flex items-center justify-center flex-shrink-0 transition-transform active:scale-95 ${
+                  isOwn 
+                    ? 'bg-primary-foreground text-primary' 
+                    : 'bg-primary text-primary-foreground'
+                }`}
+              >
+                {audioPlayerState?.isPlaying ? (
+                  <Pause className="h-6 w-6" />
+                ) : (
+                  <Play className="h-6 w-6 ml-0.5" />
+                )}
+              </button>
+              
+              {/* Waveform and duration */}
+              <div className="flex-1 min-w-[100px]">
+                {/* Animated waveform bars */}
+                <div className="flex items-center gap-[2px] h-6 mb-1">
+                  {Array.from({ length: 28 }).map((_, i) => {
+                    const progress = audioPlayerState?.duration 
+                      ? ((audioPlayerState.currentTime || 0) / audioPlayerState.duration) * 100 
+                      : 0;
+                    const barProgress = (i / 28) * 100;
+                    const isPlayed = barProgress < progress;
+                    // Generate pseudo-random heights for waveform effect
+                    const heights = [60, 80, 45, 90, 55, 75, 40, 85, 65, 50, 70, 95, 55, 80, 45, 70, 60, 85, 50, 75, 65, 90, 55, 70, 80, 45, 60, 75];
+                    const height = heights[i % heights.length];
+                    
+                    return (
+                      <div
+                        key={i}
+                        className={`w-[3px] rounded-full transition-all duration-100 ${
+                          isPlayed 
+                            ? isOwn ? 'bg-primary-foreground' : 'bg-primary'
+                            : isOwn ? 'bg-primary-foreground/40' : 'bg-foreground/30'
+                        }`}
+                        style={{ height: `${height}%` }}
+                      />
+                    );
+                  })}
+                </div>
+                
+                {/* Duration */}
+                <div className="flex items-center gap-1">
+                  <span className={`text-xs ${isOwn ? 'text-primary-foreground/80' : 'text-muted-foreground'}`}>
+                    {audioPlayerState?.isPlaying && audioPlayerState?.currentTime != null
+                      ? formatAudioTime(audioPlayerState.currentTime)
+                      : audioPlayerState?.duration 
+                        ? formatAudioTime(audioPlayerState.duration)
+                        : '0:00'}
+                  </span>
+                  <span className={`w-1.5 h-1.5 rounded-full ${isOwn ? 'bg-primary-foreground/60' : 'bg-primary/60'}`} />
+                </div>
               </div>
-              <span className="text-[10px] opacity-70">
-                {audioPlayerState?.isPlaying && audioPlayerState?.currentTime != null
-                  ? formatAudioTime(audioPlayerState.currentTime)
-                  : audioPlayerState?.duration 
-                    ? formatAudioTime(audioPlayerState.duration)
-                    : '0:00'}
-              </span>
             </div>
-            <Button
-              variant="ghost"
-              size="icon"
-              className={`h-7 w-7 rounded-full flex-shrink-0 ${
-                isOwn ? 'hover:bg-primary-foreground/20' : 'hover:bg-primary/10'
-              }`}
-              onClick={() => handleVoiceDownload(message.audio_url!)}
-            >
-              <Download className="h-3.5 w-3.5" />
-            </Button>
-            <div className="flex items-center gap-0.5">
+            
+            {/* Timestamp and read status */}
+            <div className="flex items-center gap-0.5 justify-end mt-1">
               <span className="text-[10px] opacity-70">{time}</span>
               <ReadStatus />
             </div>
