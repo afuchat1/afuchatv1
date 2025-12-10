@@ -1,8 +1,9 @@
-import { FileText, Download } from 'lucide-react';
-import { useState } from 'react';
+import { FileText, Download, Play, Pause, Volume2, MoreVertical } from 'lucide-react';
+import { useState, useRef, useEffect } from 'react';
 import { createPortal } from 'react-dom';
 import { useAttachmentUrl } from '@/hooks/useAttachmentUrl';
 import { ImageLightbox } from '@/components/ui/ImageLightbox';
+import { toast } from 'sonner';
 
 interface AttachmentPreviewProps {
   url: string;
@@ -23,7 +24,14 @@ export const AttachmentPreview = ({
 }: AttachmentPreviewProps) => {
   const { url: signedUrl, loading } = useAttachmentUrl(url);
   const [lightboxOpen, setLightboxOpen] = useState(false);
+  const [isPlaying, setIsPlaying] = useState(false);
+  const [currentTime, setCurrentTime] = useState(0);
+  const [duration, setDuration] = useState(0);
+  const audioRef = useRef<HTMLAudioElement | null>(null);
+  const progressRef = useRef<HTMLDivElement>(null);
+  
   const isImage = type.startsWith('image/');
+  const isAudio = type.startsWith('audio/');
   
   const formatSize = (bytes?: number) => {
     if (!bytes) return '';
@@ -32,11 +40,73 @@ export const AttachmentPreview = ({
     return (bytes / 1048576).toFixed(1) + ' MB';
   };
 
+  const formatTime = (seconds: number) => {
+    const mins = Math.floor(seconds / 60);
+    const secs = Math.floor(seconds % 60);
+    return `${mins}:${secs.toString().padStart(2, '0')}`;
+  };
+
   const handleImageClick = () => {
     if (isImage && signedUrl) {
       setLightboxOpen(true);
     }
   };
+
+  const toggleAudioPlay = async () => {
+    if (!signedUrl) return;
+    
+    if (!audioRef.current) {
+      audioRef.current = new Audio(signedUrl);
+      audioRef.current.onloadedmetadata = () => {
+        setDuration(audioRef.current?.duration || 0);
+      };
+      audioRef.current.ontimeupdate = () => {
+        setCurrentTime(audioRef.current?.currentTime || 0);
+      };
+      audioRef.current.onended = () => {
+        setIsPlaying(false);
+        setCurrentTime(0);
+      };
+      audioRef.current.onerror = () => {
+        toast.error('Could not play audio');
+        setIsPlaying(false);
+      };
+    }
+
+    if (isPlaying) {
+      audioRef.current.pause();
+      setIsPlaying(false);
+    } else {
+      try {
+        await audioRef.current.play();
+        setIsPlaying(true);
+      } catch (error) {
+        toast.error('Could not play audio');
+      }
+    }
+  };
+
+  const handleProgressClick = (e: React.MouseEvent<HTMLDivElement>) => {
+    if (!audioRef.current || !progressRef.current || !duration) return;
+    
+    const rect = progressRef.current.getBoundingClientRect();
+    const clickX = e.clientX - rect.left;
+    const percentage = clickX / rect.width;
+    const newTime = percentage * duration;
+    
+    audioRef.current.currentTime = newTime;
+    setCurrentTime(newTime);
+  };
+
+  // Cleanup audio on unmount
+  useEffect(() => {
+    return () => {
+      if (audioRef.current) {
+        audioRef.current.pause();
+        audioRef.current = null;
+      }
+    };
+  }, []);
 
   if (loading) {
     return <div className="w-[220px] h-[160px] bg-muted/50 rounded-lg animate-pulse" />;
@@ -65,6 +135,60 @@ export const AttachmentPreview = ({
           document.body
         )}
       </>
+    );
+  }
+
+  // Audio file player - styled like the reference image
+  if (isAudio && signedUrl) {
+    const progress = duration > 0 ? (currentTime / duration) * 100 : 0;
+    
+    return (
+      <div className="flex items-center gap-3 px-4 py-3 rounded-full bg-muted min-w-[280px] max-w-[320px]">
+        {/* Play/Pause button */}
+        <button
+          onClick={toggleAudioPlay}
+          className="flex-shrink-0 text-foreground hover:opacity-80 transition-opacity"
+        >
+          {isPlaying ? (
+            <Pause className="h-5 w-5" />
+          ) : (
+            <Play className="h-5 w-5 ml-0.5" />
+          )}
+        </button>
+        
+        {/* Time display */}
+        <span className="text-sm text-foreground font-medium whitespace-nowrap">
+          {formatTime(currentTime)} / {formatTime(duration || 0)}
+        </span>
+        
+        {/* Progress bar */}
+        <div 
+          ref={progressRef}
+          className="flex-1 h-1 bg-foreground/20 rounded-full cursor-pointer relative"
+          onClick={handleProgressClick}
+        >
+          <div 
+            className="absolute left-0 top-0 h-full bg-foreground rounded-full transition-all"
+            style={{ width: `${progress}%` }}
+          />
+          {/* Seek handle */}
+          <div 
+            className="absolute top-1/2 -translate-y-1/2 w-3 h-3 bg-foreground rounded-full shadow-md transition-all"
+            style={{ left: `calc(${progress}% - 6px)` }}
+          />
+        </div>
+        
+        {/* Volume icon */}
+        <Volume2 className="h-5 w-5 text-foreground flex-shrink-0" />
+        
+        {/* More options / Download */}
+        <button 
+          onClick={onDownload}
+          className="text-foreground hover:opacity-80 transition-opacity flex-shrink-0"
+        >
+          <MoreVertical className="h-5 w-5" />
+        </button>
+      </div>
     );
   }
 
