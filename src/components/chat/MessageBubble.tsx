@@ -393,34 +393,37 @@ export const MessageBubble = ({
                       : 0;
                     const barProgress = (i / 28) * 100;
                     const isPlayed = barProgress < progress;
+                    const isPlaying = audioPlayerState?.isPlaying;
                     // Generate pseudo-random heights for waveform effect
-                    const heights = [60, 80, 45, 90, 55, 75, 40, 85, 65, 50, 70, 95, 55, 80, 45, 70, 60, 85, 50, 75, 65, 90, 55, 70, 80, 45, 60, 75];
-                    const height = heights[i % heights.length];
+                    const baseHeights = [60, 80, 45, 90, 55, 75, 40, 85, 65, 50, 70, 95, 55, 80, 45, 70, 60, 85, 50, 75, 65, 90, 55, 70, 80, 45, 60, 75];
+                    const baseHeight = baseHeights[i % baseHeights.length];
                     
                     return (
                       <div
                         key={i}
-                        className={`w-[3px] rounded-full transition-all duration-100 ${
+                        className={`w-[3px] rounded-full origin-center ${
                           isPlayed 
                             ? isOwn ? 'bg-primary-foreground' : 'bg-primary'
                             : isOwn ? 'bg-primary-foreground/40' : 'bg-foreground/30'
-                        }`}
-                        style={{ height: `${height}%` }}
+                        } ${isPlaying ? 'waveform-bar-animate' : ''}`}
+                        style={{ 
+                          height: `${baseHeight}%`,
+                          animationDelay: `${(i % 7) * 70}ms`
+                        }}
                       />
                     );
                   })}
                 </div>
                 
-                {/* Duration */}
-                <div className="flex items-center gap-1">
-                  <span className={`text-xs ${isOwn ? 'text-primary-foreground/80' : 'text-muted-foreground'}`}>
-                    {audioPlayerState?.isPlaying && audioPlayerState?.currentTime != null
-                      ? formatAudioTime(audioPlayerState.currentTime)
-                      : audioPlayerState?.duration 
-                        ? formatAudioTime(audioPlayerState.duration)
-                        : '0:00'}
+                {/* Duration - shows current time / total duration */}
+                <div className="flex items-center gap-1.5">
+                  <span className={`text-xs font-medium tabular-nums ${isOwn ? 'text-primary-foreground/80' : 'text-muted-foreground'}`}>
+                    {formatAudioTime(audioPlayerState?.currentTime || 0)}
+                    {audioPlayerState?.duration ? ` / ${formatAudioTime(audioPlayerState.duration)}` : ''}
                   </span>
-                  <span className={`w-1.5 h-1.5 rounded-full ${isOwn ? 'bg-primary-foreground/60' : 'bg-primary/60'}`} />
+                  {audioPlayerState?.isPlaying && (
+                    <span className={`w-1.5 h-1.5 rounded-full animate-pulse ${isOwn ? 'bg-primary-foreground' : 'bg-primary'}`} />
+                  )}
                 </div>
               </div>
             </div>

@@ -78,6 +78,16 @@
     100% { background-position: 200% 0; }
   }
 
+  /* Audio waveform animation - bouncing bars */
+  @keyframes waveform-bounce {
+    0%, 100% { transform: scaleY(0.4); }
+    50% { transform: scaleY(1); }
+  }
+
+  .waveform-bar-animate {
+    animation: waveform-bounce 0.5s ease-in-out infinite;
+  }
+
   /* Premium glow effect */
   .glow {
     box-shadow: 0 0 20px hsl(var(--primary) / 0.3), 0 0 40px hsl(var(--primary) / 0.1);
