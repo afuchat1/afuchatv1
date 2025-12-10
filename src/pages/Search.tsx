@@ -1,16 +1,16 @@
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useRef } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/contexts/AuthContext';
-import { Card } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
-import { Search as SearchIcon, User, MessageSquare, TrendingUp, Users, Clock, X, Trash2 } from 'lucide-react';
+import { Search as SearchIcon, User, MessageSquare, Users, Clock, X, Trash2, MoreHorizontal } from 'lucide-react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { CustomLoader } from '@/components/ui/CustomLoader';
 import { toast } from 'sonner';
 import { useTranslation } from 'react-i18next';
 import { searchSchema } from '@/lib/validation';
+import { ScrollArea, ScrollBar } from '@/components/ui/scroll-area';
 
 const SEARCH_HISTORY_KEY = 'afuchat_search_history';
 const MAX_SEARCH_HISTORY = 10;
@@ -72,7 +72,6 @@ interface SearchResult {
     is_organization_verified?: boolean;
     avatar_url?: string;
   };
-  // Group-specific fields
   name?: string;
   description?: string;
   member_count?: number;
@@ -85,13 +84,13 @@ interface Trend {
 }
 
 const TwitterVerifiedBadge = ({ size = 'w-4 h-4' }: { size?: string }) => (
-  <svg viewBox="0 0 22 22" xmlns="http://www.w3.org/2000/svg" className={`${size} ml-1 fill-[#1d9bf0] flex-shrink-0`}>
+  <svg viewBox="0 0 22 22" xmlns="http://www.w3.org/2000/svg" className={`${size} ml-0.5 fill-[#1d9bf0] flex-shrink-0`}>
     <path d="M20.396 11c-.018-.646-.215-1.275-.57-1.816-.354-.54-.852-.972-1.438-1.246.223-.607.27-1.264.14-1.897-.131-.634-.437-1.218-.882-1.687-.47-.445-1.053-.75-1.687-.882-.633-.13-1.29-.083-1.897.14-.273-.587-.704-1.086-1.245-1.44S11.647 1.62 11 1.604c-.646.017-1.273.213-1.813.568s-.969.854-1.24 1.44c-.608-.223-1.267-.272-1.902-.14-.635.13-1.22.436-1.69.882-.445.47-.749 1.055-.878 1.688-.13.633-.08 1.29.144 1.896-.587.274-1.087.705-1.443 1.245-.356.54-.555 1.17-.574 1.817.02.647.218 1.276.574 1.817.356.54.856.972 1.443 1.245-.224.606-.274 1.263-.144 1.896.13.634.433 1.218.877 1.688.47.443 1.054.747 1.687.878.633.132 1.29.084 1.897-.136.274.586.705 1.084 1.246 1.439.54.354 1.17.551 1.816.569.647-.016 1.276-.213 1.817-.567s.972-.854 1.245-1.44c.604.239 1.266.296 1.903.164.636-.132 1.22-.447 1.68-.907.46-.46.776-1.044.908-1.681s.075-1.299-.165-1.903c.586-.274 1.084-.705 1.439-1.246.354-.54.551-1.17.569-1.816zM9.662 14.85l-3.429-3.428 1.293-1.302 2.072 2.072 4.4-4.794 1.347 1.246z" />
   </svg>
 );
 
 const GoldVerifiedBadge = ({ size = 'w-4 h-4' }: { size?: string }) => (
-  <svg viewBox="0 0 22 22" xmlns="http://www.w3.org/2000/svg" className={`${size} ml-1 fill-[#FFD43B] flex-shrink-0`}>
+  <svg viewBox="0 0 22 22" xmlns="http://www.w3.org/2000/svg" className={`${size} ml-0.5 fill-[#FFD43B] flex-shrink-0`}>
     <path d="M20.396 11c-.018-.646-.215-1.275-.57-1.816-.354-.54-.852-.972-1.438-1.246.223-.607.27-1.264.14-1.897-.131-.634-.437-1.218-.882-1.687-.47-.445-1.053-.75-1.687-.882-.633-.13-1.29-.083-1.897.14-.273-.587-.704-1.086-1.245-1.44S11.647 1.62 11 1.604c-.646.017-1.273.213-1.813.568s-.969.854-1.24 1.44c-.608-.223-1.267-.272-1.902-.14-.635.13-1.22.436-1.69.882-.445.47-.749 1.055-.878 1.688-.13.633-.08 1.29.144 1.896-.587.274-1.087.705-1.443 1.245-.356.54-.555 1.17-.574 1.817.02.647.218 1.276.574 1.817.356.54.856.972 1.443 1.245-.224.606-.274 1.263-.144 1.896.13.634.433 1.218.877 1.688.47.443 1.054.747 1.687.878.633.132 1.29.084 1.897-.136.274.586.705 1.084 1.246 1.439.54.354 1.17.551 1.816.569.647-.016 1.276-.213 1.817-.567s.972-.854 1.245-1.44c.604.239 1.266.296 1.903.164.636-.132 1.22-.447 1.68-.907.46-.46.776-1.044.908-1.681s.075-1.299-.165-1.903c.586-.274 1.084-.705 1.439-1.246.354-.54.551-1.17.569-1.816zM9.662 14.85l-3.429-3.428 1.293-1.302 2.072 2.072 4.4-4.794 1.347 1.246z" />
   </svg>
 );
@@ -102,9 +101,43 @@ const VerifiedBadge = ({ isVerified, isOrgVerified }: { isVerified?: boolean; is
   return null;
 };
 
-const SearchSkeleton = () => (
-  <div className="flex items-center justify-center min-h-[60vh]">
-    <CustomLoader size="md" text="Searching..." />
+const TABS = ['For You', 'Trending', 'News', 'Sports', 'Entertainment'];
+
+const formatPostCount = (count: number): string => {
+  if (count >= 1000000) return `${(count / 1000000).toFixed(1)}M posts`;
+  if (count >= 1000) return `${(count / 1000).toFixed(0)}K posts`;
+  return `${count} posts`;
+};
+
+const TrendingItem = ({ 
+  trend, 
+  index, 
+  category,
+  onClick 
+}: { 
+  trend: Trend; 
+  index: number;
+  category?: string;
+  onClick: () => void;
+}) => (
+  <div 
+    className="px-4 py-3 hover:bg-muted/50 transition-colors cursor-pointer flex justify-between items-start"
+    onClick={onClick}
+  >
+    <div className="flex-1 min-w-0">
+      <p className="text-[13px] text-muted-foreground">
+        {category || `${index + 1} · Trending`}
+      </p>
+      <p className="font-bold text-[15px] text-foreground mt-0.5">
+        {trend.topic.startsWith('#') ? trend.topic : trend.topic}
+      </p>
+      <p className="text-[13px] text-muted-foreground mt-0.5">
+        {formatPostCount(trend.post_count)}
+      </p>
+    </div>
+    <Button variant="ghost" size="icon" className="h-8 w-8 text-muted-foreground -mr-2">
+      <MoreHorizontal className="h-4 w-4" />
+    </Button>
   </div>
 );
 
@@ -119,7 +152,7 @@ const TrendingSection = ({ onTrendClick }: { onTrendClick: (topic: string) => vo
       try {
         const { data, error } = await supabase.rpc('get_trending_topics', {
           hours_ago: 24,
-          num_topics: 5,
+          num_topics: 10,
         });
 
         if (error) {
@@ -147,50 +180,33 @@ const TrendingSection = ({ onTrendClick }: { onTrendClick: (topic: string) => vo
 
   if (loading) {
     return (
-      <div className="space-y-3 p-4">
-        <h2 className="text-base font-bold text-foreground flex items-center mb-4">
-          <TrendingUp className="h-5 w-5 mr-2 text-primary" /> {t('search.trendingNow')}
-        </h2>
-        <div className="flex items-center justify-center py-8">
-          <CustomLoader size="sm" />
-        </div>
+      <div className="flex items-center justify-center py-12">
+        <CustomLoader size="sm" />
       </div>
     );
   }
 
   if (trends.length === 0) {
     return (
-      <div className="text-center text-muted-foreground py-8 text-sm">
+      <div className="text-center text-muted-foreground py-12 text-sm">
         {t('search.noTrends')}
       </div>
     );
   }
 
+  const categories = ['Trending', 'Politics · Trending', 'Entertainment · Trending', 'Sports · Trending', 'Technology · Trending'];
+
   return (
-    <div className="p-0 space-y-3">
-      <h2 className="text-base font-bold text-foreground flex items-center mb-4">
-        <TrendingUp className="h-5 w-5 mr-2 text-primary" /> {t('search.trendingNow')}
-      </h2>
-      <Card className="p-0 divide-y">
-        {trends.map((trend, index) => (
-          <div
-            key={index}
-            className="flex flex-col p-4 cursor-pointer hover:bg-muted/50 transition-colors"
-            onClick={() => onTrendClick(trend.topic)}
-          >
-            <div className="flex items-center text-sm font-medium text-muted-foreground">
-              <span className="text-base font-bold mr-2 text-primary/50">{index + 1}</span>
-              <span className="text-primary hover:underline font-semibold text-sm">{trend.topic}</span>
-            </div>
-            <p className="text-xs text-muted-foreground mt-1 ml-6">
-              {t('search.postsCount', { count: trend.post_count })}
-            </p>
-          </div>
-        ))}
-      </Card>
-      <div className="text-center text-xs text-muted-foreground pt-4">
-        {t('search.tapTopic')}
-      </div>
+    <div className="divide-y divide-border">
+      {trends.map((trend, index) => (
+        <TrendingItem
+          key={index}
+          trend={trend}
+          index={index}
+          category={categories[index % categories.length]}
+          onClick={() => onTrendClick(trend.topic)}
+        />
+      ))}
     </div>
   );
 };
@@ -227,44 +243,42 @@ const SearchHistorySection = ({
   if (history.length === 0) return null;
 
   return (
-    <div className="mb-6">
-      <div className="flex items-center justify-between mb-3">
-        <h2 className="text-base font-bold text-foreground flex items-center">
-          <Clock className="h-5 w-5 mr-2 text-muted-foreground" />
-          {t('search.recentSearches', 'Recent Searches')}
+    <div className="border-b border-border">
+      <div className="flex items-center justify-between px-4 py-3">
+        <h2 className="text-[15px] font-bold text-foreground">
+          {t('search.recentSearches', 'Recent')}
         </h2>
         <Button
           variant="ghost"
           size="sm"
           onClick={handleClearAll}
-          className="text-xs text-muted-foreground hover:text-destructive h-8 px-2"
+          className="text-xs text-primary hover:text-primary/80 h-auto p-0"
         >
-          <Trash2 className="h-4 w-4 mr-1" />
-          {t('search.clearAll', 'Clear All')}
+          {t('search.clearAll', 'Clear all')}
         </Button>
       </div>
-      <Card className="p-0 divide-y">
+      <div className="divide-y divide-border">
         {history.map((item, index) => (
           <div
             key={index}
-            className="flex items-center justify-between p-3 cursor-pointer hover:bg-muted/50 transition-colors"
+            className="flex items-center justify-between px-4 py-3 cursor-pointer hover:bg-muted/50 transition-colors"
             onClick={() => onHistoryClick(item)}
           >
             <div className="flex items-center gap-3">
-              <Clock className="h-4 w-4 text-muted-foreground" />
-              <span className="text-sm text-foreground">{item}</span>
+              <Clock className="h-5 w-5 text-muted-foreground" />
+              <span className="text-[15px] text-foreground">{item}</span>
             </div>
             <Button
               variant="ghost"
               size="icon"
-              className="h-8 w-8 text-muted-foreground hover:text-destructive"
+              className="h-8 w-8 text-muted-foreground hover:text-primary"
               onClick={(e) => handleRemove(item, e)}
             >
               <X className="h-4 w-4" />
             </Button>
           </div>
         ))}
-      </Card>
+      </div>
     </div>
   );
 };
@@ -278,9 +292,10 @@ const Search = () => {
   const [loading, setLoading] = useState(false);
   const [debouncedQuery, setDebouncedQuery] = useState('');
   const [historyKey, setHistoryKey] = useState(0);
+  const [activeTab, setActiveTab] = useState('For You');
   const navigate = useNavigate();
+  const inputRef = useRef<HTMLInputElement>(null);
 
-  // 🚨 NEW useEffect: Read query from URL on component mount
   useEffect(() => {
     const params = new URLSearchParams(location.search);
     const urlQuery = params.get('q') || '';
@@ -289,18 +304,15 @@ const Search = () => {
     }
   }, [location.search]);
 
-  // Debouncing logic remains the same
   useEffect(() => {
     const timer = setTimeout(() => setDebouncedQuery(query), 300);
     return () => clearTimeout(timer);
   }, [query]);
 
-  // Main search logic with AI web search
   const handleSearch = useCallback(async () => {
     const trimmedQuery = debouncedQuery.trim();
     if (!trimmedQuery) return;
     
-    // Validate search query
     try {
       searchSchema.parse(trimmedQuery);
     } catch (error: any) {
@@ -310,26 +322,20 @@ const Search = () => {
     }
 
     setLoading(true);
-
-    // Save to search history
     addToSearchHistory(trimmedQuery);
     setHistoryKey(prev => prev + 1);
-
-    // Update URL
     navigate(`?q=${encodeURIComponent(trimmedQuery)}`, { replace: true });
 
     const searchConfig = 'english'; 
     const searchTsQuery = trimmedQuery.replace(/ /g, ' | '); 
 
     try {
-      // Local search for users
       const { data: userData } = await supabase
         .from('profiles')
         .select('id, display_name, handle, bio, is_verified, is_organization_verified, is_private, avatar_url')
         .or(`display_name.ilike.%${trimmedQuery}%,handle.ilike.%${trimmedQuery}%`)
         .limit(5);
 
-      // Local search for posts
       const { data: postData } = await supabase
         .from('posts')
         .select(`
@@ -340,7 +346,6 @@ const Search = () => {
         .textSearch('content', searchTsQuery, { type: 'plain', config: searchConfig })
         .limit(10);
 
-      // Search for groups
       const { data: groupData } = await supabase
         .from('chats')
         .select('id, name, description, avatar_url')
@@ -348,12 +353,10 @@ const Search = () => {
         .or(`name.ilike.%${trimmedQuery}%,description.ilike.%${trimmedQuery}%`)
         .limit(8);
 
-      // Get member counts and check membership for groups
       let groupsWithMembership = groupData || [];
       if (groupData && groupData.length > 0) {
         const groupIds = groupData.map((g: any) => g.id);
         
-        // Get member counts for all groups
         const { data: memberCounts } = await supabase
           .from('chat_members')
           .select('chat_id')
@@ -364,7 +367,6 @@ const Search = () => {
           countMap.set(m.chat_id, (countMap.get(m.chat_id) || 0) + 1);
         });
 
-        // Check if current user is a member
         let memberGroupIds = new Set<string>();
         if (user) {
           const { data: userMemberships } = await supabase
@@ -415,9 +417,8 @@ const Search = () => {
     } finally {
       setLoading(false);
     }
-  }, [debouncedQuery, navigate]);
+  }, [debouncedQuery, navigate, user]);
   
-  // Trigger search when debouncedQuery changes
   useEffect(() => {
     if (debouncedQuery.trim()) {
       handleSearch();
@@ -429,8 +430,6 @@ const Search = () => {
     }
   }, [debouncedQuery, handleSearch, navigate, location.search]);
 
-  // Handler functions remain the same...
-
   const handleViewProfile = (userId: string) => {
     navigate(`/profile/${userId}`);
   };
@@ -440,7 +439,6 @@ const Search = () => {
   };
   
   const handleTrendClick = (topic: string) => {
-    // 🚨 NEW: Use setQuery, which triggers debouncing, which triggers handleSearch and URL update
     setQuery(topic); 
   };
 
@@ -457,10 +455,7 @@ const Search = () => {
         })
         .single();
 
-      if (error) {
-        console.error('Chat RPC error:', error);
-        throw error;
-      }
+      if (error) throw error;
 
       if (chatId) {
         navigate(`/chat/${chatId}`);
@@ -503,30 +498,64 @@ const Search = () => {
   const hasAnyResults = results.length > 0;
 
   return (
-    <div className="h-full flex flex-col">
-      <div className="p-4">
-        <div className="flex gap-2">
-          <Input
-            placeholder={t('search.placeholder')}
-            value={query}
-            onChange={(e) => setQuery(e.target.value)}
-            className="flex-1 rounded-full bg-muted/70 focus:bg-background h-10 px-4 text-sm"
-          />
-          <Button 
-            // 🚨 MODIFIED: Use the direct query state for the click handler
-            onClick={() => setDebouncedQuery(query)}
-            disabled={loading || !query.trim()} 
-            className="rounded-full h-10 w-10 p-0"
-          >
-            {loading ? <SearchIcon className="h-5 w-5 opacity-50" /> : <SearchIcon className="h-5 w-5" />}
-          </Button>
+    <div className="h-full flex flex-col bg-background">
+      {/* Search Header */}
+      <div className="sticky top-0 z-10 bg-background/95 backdrop-blur-sm border-b border-border">
+        <div className="flex items-center gap-3 px-4 py-2">
+          <div className="flex-1 relative">
+            <SearchIcon className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+            <Input
+              ref={inputRef}
+              placeholder={t('search.placeholder')}
+              value={query}
+              onChange={(e) => setQuery(e.target.value)}
+              className="w-full rounded-full bg-muted/70 border-0 focus-visible:ring-1 focus-visible:ring-primary h-10 pl-10 pr-4 text-[15px]"
+            />
+            {query && (
+              <Button
+                variant="ghost"
+                size="icon"
+                className="absolute right-1 top-1/2 -translate-y-1/2 h-8 w-8"
+                onClick={() => setQuery('')}
+              >
+                <X className="h-4 w-4" />
+              </Button>
+            )}
+          </div>
         </div>
+
+        {/* Tabs */}
+        {!isSearchActive && (
+          <ScrollArea className="w-full">
+            <div className="flex border-b border-border">
+              {TABS.map((tab) => (
+                <button
+                  key={tab}
+                  onClick={() => setActiveTab(tab)}
+                  className={`flex-shrink-0 px-4 py-3 text-[15px] font-medium transition-colors relative ${
+                    activeTab === tab 
+                      ? 'text-foreground' 
+                      : 'text-muted-foreground hover:text-foreground'
+                  }`}
+                >
+                  {tab}
+                  {activeTab === tab && (
+                    <div className="absolute bottom-0 left-1/2 -translate-x-1/2 w-14 h-1 bg-primary rounded-full" />
+                  )}
+                </button>
+              ))}
+            </div>
+            <ScrollBar orientation="horizontal" className="invisible" />
+          </ScrollArea>
+        )}
       </div>
 
-
-      <div className="flex-1 overflow-y-auto p-4">
+      {/* Content */}
+      <div className="flex-1 overflow-y-auto">
         {loading && isSearchActive ? (
-          <SearchSkeleton />
+          <div className="flex items-center justify-center min-h-[60vh]">
+            <CustomLoader size="md" text="Searching..." />
+          </div>
         ) : !isSearchActive ? (
           <>
             <SearchHistorySection 
@@ -538,201 +567,186 @@ const Search = () => {
             <TrendingSection onTrendClick={handleTrendClick} />
           </>
         ) : !hasAnyResults ? (
-          <div className="text-center text-muted-foreground py-8 text-sm">
+          <div className="text-center text-muted-foreground py-12 text-[15px]">
             {t('search.noResults', { query })}
           </div>
         ) : (
-          <div className="space-y-6">
+          <div className="divide-y divide-border">
+            {/* People Results */}
             {userResults.length > 0 && (
-              <section>
-                <h2 className="text-sm font-bold text-foreground mb-3 border-b pb-1">{t('search.people')} ({userResults.length})</h2>
-                <div className="space-y-3">
+              <div>
+                <h2 className="px-4 py-3 text-[20px] font-extrabold text-foreground">
+                  {t('search.people')}
+                </h2>
+                <div className="divide-y divide-border">
                   {userResults.map((result) => (
-                    <Card 
-                        key={result.id} 
-                        className="p-4 hover:shadow-xl transition-shadow cursor-pointer"
-                        onClick={() => handleViewProfile(result.id)}
+                    <div 
+                      key={result.id} 
+                      className="px-4 py-3 hover:bg-muted/50 transition-colors cursor-pointer"
+                      onClick={() => handleViewProfile(result.id)}
                     >
-                      <div className="flex items-center justify-between">
-                        <div className="flex items-center space-x-3 flex-1">
-                          <Avatar className="h-12 w-12 flex-shrink-0">
-                            <AvatarImage src={result.avatar_url || ''} alt={result.display_name} />
-                            <AvatarFallback className="bg-primary text-primary-foreground">
-                              {result.display_name?.charAt(0).toUpperCase() || <User className="h-5 w-5" />}
-                            </AvatarFallback>
-                          </Avatar>
-                          <div className="flex-1 min-w-0">
-                            <div className="flex items-center gap-1">
-                              <h3 className="font-semibold text-foreground truncate text-sm">
-                                {result.display_name}
-                              </h3>
-                              <VerifiedBadge isVerified={result.is_verified} isOrgVerified={result.is_organization_verified} />
-                            </div>
-                            <p className="text-xs text-muted-foreground truncate">@{result.handle}</p>
-                            {result.bio && (
-                              <p className="text-xs text-muted-foreground line-clamp-2 mt-1">{result.bio}</p>
-                            )}
+                      <div className="flex items-start gap-3">
+                        <Avatar className="h-10 w-10 flex-shrink-0">
+                          <AvatarImage src={result.avatar_url || ''} alt={result.display_name} />
+                          <AvatarFallback className="bg-muted text-muted-foreground">
+                            {result.display_name?.charAt(0).toUpperCase() || <User className="h-4 w-4" />}
+                          </AvatarFallback>
+                        </Avatar>
+                        <div className="flex-1 min-w-0">
+                          <div className="flex items-center gap-0.5">
+                            <span className="font-bold text-[15px] text-foreground truncate">
+                              {result.display_name}
+                            </span>
+                            <VerifiedBadge isVerified={result.is_verified} isOrgVerified={result.is_organization_verified} />
                           </div>
+                          <p className="text-[15px] text-muted-foreground truncate">@{result.handle}</p>
+                          {result.bio && (
+                            <p className="text-[15px] text-foreground line-clamp-2 mt-1">{result.bio}</p>
+                          )}
                         </div>
-                        <Button
-                          variant="ghost"
-                          size="sm"
-                          onClick={(e) => {
-                            e.stopPropagation(); 
-                            handleStartChat(result.id);
-                          }}
-                          disabled={result.is_private}
-                          className="ml-4 flex-shrink-0 text-xs"
-                        >
-                          <MessageSquare className="h-4 w-4 mr-1" />
-                          {t('profile.message')}
-                        </Button>
                       </div>
-                    </Card>
+                    </div>
                   ))}
-                 </div>
-              </section>
+                </div>
+              </div>
             )}
 
-
+            {/* Groups Results */}
             {groupResults.length > 0 && (
-              <section>
-                <h2 className="text-sm font-bold text-foreground mb-3 border-b pb-1">{t('search.groups')} ({groupResults.length})</h2>
-                <div className="space-y-3">
+              <div>
+                <h2 className="px-4 py-3 text-[20px] font-extrabold text-foreground">
+                  {t('search.groups')}
+                </h2>
+                <div className="divide-y divide-border">
                   {groupResults.map((result) => (
-                    <Card 
-                        key={result.id} 
-                        className="p-4 hover:shadow-xl transition-shadow cursor-pointer"
-                        onClick={() => {
-                          if (result.is_member) {
-                            navigate(`/chat/${result.id}`);
-                          }
-                        }}
+                    <div 
+                      key={result.id} 
+                      className="px-4 py-3 hover:bg-muted/50 transition-colors cursor-pointer"
+                      onClick={() => result.is_member && navigate(`/chat/${result.id}`)}
                     >
-                      <div className="flex items-center justify-between">
-                        <div className="flex items-center space-x-3 flex-1">
-                          <Avatar className="h-12 w-12 flex-shrink-0">
-                            <AvatarImage src={result.avatar_url || ''} alt={result.name} />
-                            <AvatarFallback className="bg-secondary text-muted-foreground">
-                              <Users className="h-5 w-5" />
-                            </AvatarFallback>
-                          </Avatar>
-                          <div className="flex-1 min-w-0">
-                            <h3 className="font-semibold text-foreground truncate text-sm">
+                      <div className="flex items-start gap-3">
+                        <Avatar className="h-10 w-10 flex-shrink-0">
+                          <AvatarImage src={result.avatar_url || ''} alt={result.name} />
+                          <AvatarFallback className="bg-muted text-muted-foreground">
+                            <Users className="h-4 w-4" />
+                          </AvatarFallback>
+                        </Avatar>
+                        <div className="flex-1 min-w-0">
+                          <div className="flex items-center justify-between">
+                            <span className="font-bold text-[15px] text-foreground truncate">
                               {result.name || 'Unnamed Group'}
-                            </h3>
-                            {result.description && (
-                              <p className="text-xs text-muted-foreground line-clamp-2 mt-1">{result.description}</p>
+                            </span>
+                            {result.is_member ? (
+                              <Button
+                                variant="outline"
+                                size="sm"
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  navigate(`/chat/${result.id}`);
+                                }}
+                                className="h-8 rounded-full text-sm font-bold"
+                              >
+                                Open
+                              </Button>
+                            ) : (
+                              <Button
+                                size="sm"
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  handleJoinGroup(result.id);
+                                }}
+                                className="h-8 rounded-full text-sm font-bold"
+                              >
+                                Join
+                              </Button>
                             )}
-                            <p className="text-xs text-muted-foreground mt-1">
-                              {result.member_count} {result.member_count === 1 ? 'member' : 'members'}
-                            </p>
                           </div>
+                          <p className="text-[13px] text-muted-foreground">
+                            {result.member_count} {result.member_count === 1 ? 'member' : 'members'}
+                          </p>
+                          {result.description && (
+                            <p className="text-[15px] text-foreground line-clamp-2 mt-1">{result.description}</p>
+                          )}
                         </div>
-                        {result.is_member ? (
-                          <Button
-                            variant="outline"
-                            size="sm"
-                            onClick={(e) => {
-                              e.stopPropagation();
-                              navigate(`/chat/${result.id}`);
-                            }}
-                            className="ml-4 flex-shrink-0 text-xs"
-                          >
-                            <MessageSquare className="h-4 w-4 mr-1" />
-                            Open
-                          </Button>
-                        ) : (
-                          <Button
-                            variant="default"
-                            size="sm"
-                            onClick={(e) => {
-                              e.stopPropagation();
-                              handleJoinGroup(result.id);
-                            }}
-                            className="ml-4 flex-shrink-0 text-xs"
-                          >
-                            Join
-                          </Button>
-                        )}
                       </div>
-                    </Card>
+                    </div>
                   ))}
-                 </div>
-              </section>
+                </div>
+              </div>
             )}
 
-
+            {/* Posts Results */}
             {postResults.length > 0 && (
-              <section>
-                <h2 className="text-sm font-bold text-foreground mb-3 border-b pb-1">{t('search.posts')} ({postResults.length})</h2>
-                <div className="space-y-3">
+              <div>
+                <h2 className="px-4 py-3 text-[20px] font-extrabold text-foreground">
+                  {t('search.posts')}
+                </h2>
+                <div className="divide-y divide-border">
                   {postResults.map((result) => (
-                    <Card
+                    <div
                       key={result.id}
-                      className="p-4 hover:shadow-xl transition-shadow cursor-pointer"
+                      className="px-4 py-3 hover:bg-muted/50 transition-colors cursor-pointer"
                       onClick={() => handleViewPost(result.id)}
                     >
-                      <div className="flex items-start space-x-3">
+                      <div className="flex items-start gap-3">
                         <Avatar className="h-10 w-10 flex-shrink-0">
                           <AvatarImage src={result.author_profiles?.avatar_url || ''} alt={result.author_profiles?.display_name} />
-                          <AvatarFallback className="bg-secondary text-muted-foreground">
+                          <AvatarFallback className="bg-muted text-muted-foreground">
                             {result.author_profiles?.display_name?.charAt(0).toUpperCase() || <User className="h-4 w-4" />}
                           </AvatarFallback>
                         </Avatar>
                         <div className="flex-1 min-w-0">
                           <div className="flex items-center gap-1 flex-wrap">
-                            <h4 className="font-semibold text-foreground truncate text-sm">
+                            <span className="font-bold text-[15px] text-foreground">
                               {result.author_profiles?.display_name}
-                            </h4>
+                            </span>
                             <VerifiedBadge
                               isVerified={result.author_profiles?.is_verified}
                               isOrgVerified={result.author_profiles?.is_organization_verified}
                             />
-                            <p className="text-xs text-muted-foreground truncate">
+                            <span className="text-[15px] text-muted-foreground">
                               @{result.author_profiles?.handle}
-                            </p>
-                            <span className="text-xs text-muted-foreground mx-1">·</span>
-                            <p className="text-xs text-muted-foreground flex-shrink-0">
+                            </span>
+                            <span className="text-muted-foreground">·</span>
+                            <span className="text-[15px] text-muted-foreground">
                               {result.created_at ? new Date(result.created_at).toLocaleDateString() : 'Unknown'}
-                            </p>
+                            </span>
                           </div>
-                          <p className="text-foreground text-sm mt-2 leading-relaxed line-clamp-3 whitespace-pre-wrap">
+                          <p className="text-[15px] text-foreground mt-1 leading-normal line-clamp-3 whitespace-pre-wrap">
                             {result.content}
                           </p>
-                          {/* Show post images - prioritize post_images table, fallback to image_url */}
                           {(result.post_images && result.post_images.length > 0) ? (
-                            <div className={`mt-3 grid gap-2 ${result.post_images.length === 1 ? 'grid-cols-1' : 'grid-cols-2'}`}>
+                            <div className={`mt-3 grid gap-0.5 rounded-2xl overflow-hidden border border-border ${result.post_images.length === 1 ? 'grid-cols-1' : 'grid-cols-2'}`}>
                               {result.post_images.slice(0, 4).map((img, idx) => (
-                                <div key={img.id} className="relative rounded-xl overflow-hidden">
+                                <div key={img.id} className="relative aspect-video">
                                   <img 
                                     src={img.image_url} 
                                     alt={`Post image ${idx + 1}`} 
-                                    className="w-full h-24 object-cover"
+                                    className="w-full h-full object-cover"
                                   />
                                   {result.post_images && result.post_images.length > 4 && idx === 3 && (
                                     <div className="absolute inset-0 bg-black/50 flex items-center justify-center">
-                                      <span className="text-white font-bold">+{result.post_images.length - 4}</span>
+                                      <span className="text-white font-bold text-lg">+{result.post_images.length - 4}</span>
                                     </div>
                                   )}
                                 </div>
                               ))}
                             </div>
                           ) : result.image_url ? (
-                            <div className="mt-3 rounded-xl overflow-hidden">
+                            <div className="mt-3 rounded-2xl overflow-hidden border border-border">
                               <img 
                                 src={result.image_url} 
                                 alt="Post image" 
-                                className="w-full h-auto max-h-48 object-cover rounded-xl"
+                                className="w-full h-auto max-h-72 object-cover"
                               />
                             </div>
                           ) : null}
                         </div>
                       </div>
-                    </Card>
+                    </div>
                   ))}
                 </div>
-              </section>
+              </div>
             )}
           </div>
         )}
