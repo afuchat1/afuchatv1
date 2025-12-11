@@ -40,6 +40,7 @@ import {
   UserPlus,
   LogOut,
   Unlink,
+  Banknote,
 } from 'lucide-react';
 import { VerifiedBadge } from './VerifiedBadge';
 import { usePremiumStatus } from '@/hooks/usePremiumStatus';
@@ -267,6 +268,7 @@ export function ProfileDrawer({ trigger }: ProfileDrawerProps) {
     { icon: MessageSquare, label: 'Chats', path: '/chats', requiresAuth: true },
     { icon: Gift, label: 'Gifts', path: '/gifts' },
     { icon: Wallet, label: 'Wallet', path: '/wallet', requiresAuth: true },
+    { icon: Banknote, label: 'Creator Earnings', path: '/creator-earnings', badge: '🇺🇬', requiresAuth: true },
     { icon: Store, label: 'Shop', path: '/shop' },
     { icon: Grid3x3, label: 'Mini Programs', path: '/mini-programs' },
   ];
