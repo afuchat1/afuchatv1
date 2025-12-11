@@ -1,9 +1,8 @@
-import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetClose } from '@/components/ui/sheet';
-import { Eye, Heart, MessageCircle, TrendingUp, Calendar, BarChart3, Ban, Gift, AlertTriangle, X } from 'lucide-react';
+import { Sheet, SheetContent, SheetHeader, SheetTitle } from '@/components/ui/sheet';
+import { Eye, Heart, MessageCircle, TrendingUp, Calendar, BarChart3, Ban, Gift, AlertTriangle } from 'lucide-react';
 import { Progress } from '@/components/ui/progress';
 import { format } from 'date-fns';
 import { ScrollArea } from '@/components/ui/scroll-area';
-import { Button } from '@/components/ui/button';
 interface EngagementDetailsSheetProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
@@ -92,24 +91,13 @@ export function EngagementDetailsSheet({ open, onOpenChange, type, post, isEligi
       <SheetContent 
         side="bottom" 
         className="h-auto max-h-[80vh] overflow-hidden"
-        onPointerDownOutside={(e) => e.preventDefault()}
-        onInteractOutside={(e) => e.preventDefault()}
+        onOpenChange={onOpenChange}
       >
-        <SheetHeader className="relative">
+        <SheetHeader>
           <SheetTitle className="flex items-center gap-2">
             {getIcon()}
             {getTitle()}
           </SheetTitle>
-          <SheetClose asChild>
-            <Button
-              variant="ghost"
-              size="icon"
-              className="absolute right-0 top-0 h-8 w-8 rounded-full"
-            >
-              <X className="h-4 w-4" />
-              <span className="sr-only">Close</span>
-            </Button>
-          </SheetClose>
         </SheetHeader>
 
         <ScrollArea className="h-[calc(80vh-80px)] pr-4">
