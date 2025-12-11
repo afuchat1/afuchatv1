@@ -503,7 +503,7 @@ export function ProfileDrawer({ trigger }: ProfileDrawerProps) {
 
     {/* Accounts Bottom Sheet */}
     <Drawer open={accountsDrawerOpen} onOpenChange={setAccountsDrawerOpen}>
-      <DrawerContent className="max-h-[80vh] z-[60]" overlayClassName="z-[60]">
+      <DrawerContent className="max-h-[80vh] z-[150]" overlayClassName="z-[150]">
         <DrawerHeader className="text-left">
           <DrawerTitle className="text-xl font-bold">Accounts</DrawerTitle>
         </DrawerHeader>
