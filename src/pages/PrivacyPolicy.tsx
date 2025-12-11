@@ -77,6 +77,11 @@ const PrivacyPolicy = () => {
             <p className="text-foreground/90 leading-relaxed mb-4">
               We process your information to comply with legal obligations, respond to legal processes and government requests, protect our rights and property, and resolve disputes and enforce agreements.
             </p>
+
+            <h3 className="text-xl font-semibold mb-3 mt-6">Creator Earnings Program</h3>
+            <p className="text-foreground/90 leading-relaxed mb-4">
+              If you participate in our Creator Earnings program, we collect and process engagement data (views, likes, replies) on your posts to calculate your share of daily earnings. We also collect your mobile money phone number and network provider for processing withdrawals. This financial data is handled securely and used solely for payment processing purposes.
+            </p>
           </section>
 
           <section className="mb-8">

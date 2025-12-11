@@ -15,6 +15,7 @@ import { PageHeader } from '@/components/PageHeader';
 import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger } from '@/components/ui/sheet';
 import { Progress } from '@/components/ui/progress';
 import { EngagementDetailsSheet } from '@/components/earnings/EngagementDetailsSheet';
+import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '@/components/ui/accordion';
 
 interface Eligibility {
   eligible: boolean;
@@ -863,6 +864,41 @@ export default function CreatorEarnings() {
             </p>
           </CardContent>
         </Card>
+
+        {/* Creator Earnings Terms */}
+        <Card>
+          <CardHeader className="pb-2">
+            <CardTitle className="text-base flex items-center gap-2">
+              <AlertCircle className="h-4 w-4" />
+              Terms & Conditions
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            <Accordion type="single" collapsible className="w-full">
+              <AccordionItem value="terms" className="border-none">
+                <AccordionTrigger className="text-xs text-muted-foreground py-2 hover:no-underline">
+                  <div className="flex items-center gap-1">
+                    Read Creator Earnings Terms
+                  </div>
+                </AccordionTrigger>
+                <AccordionContent>
+                  <div className="text-xs text-muted-foreground space-y-2 p-3 bg-muted/30 rounded-lg">
+                    <p><strong>1. Eligibility:</strong> You must have at least 10 followers and 500+ weekly views across your posts to qualify for earnings. Eligibility is checked daily.</p>
+                    <p><strong>2. Daily Earnings Only:</strong> Earnings are calculated based on TODAY's engagement only. Past engagement from previous days cannot be retroactively credited.</p>
+                    <p><strong>3. No Cheating:</strong> We do not reward fake engagement, bot interactions, self-likes, engagement farming, or any fraudulent activity. Violators will be permanently banned.</p>
+                    <p><strong>4. Verification:</strong> All engagement is verified before earnings are credited. Suspicious activity will result in earnings being withheld or reversed.</p>
+                    <p><strong>5. Withdrawal:</strong> Minimum withdrawal is 5,000 UGX. Withdrawals are only available on weekends (Saturday & Sunday) via MTN or Airtel Mobile Money. A 10% platform fee is applied.</p>
+                    <p><strong>6. Approval:</strong> All withdrawal requests are reviewed by our team. We reserve the right to reject or delay withdrawals for suspicious accounts.</p>
+                    <p><strong>7. Changes:</strong> AfuChat reserves the right to modify, suspend, or terminate the Creator Earnings program, its eligibility criteria, and payout amounts at any time without prior notice.</p>
+                    <p><strong>8. No Guarantees:</strong> Earnings depend on your share of the daily pool relative to other creators. There is no guaranteed minimum earning amount.</p>
+                    <p><strong>9. Tax Responsibility:</strong> You are solely responsible for any taxes applicable to your earnings. AfuChat does not provide tax advice.</p>
+                    <p><strong>10. Geographic Restriction:</strong> This program is currently available only to creators in Uganda with valid Ugandan mobile money numbers.</p>
+                  </div>
+                </AccordionContent>
+              </AccordionItem>
+            </Accordion>
+          </CardContent>
+        </Card>
       </div>
 
       {/* Engagement Details Sheet */}
@@ -871,6 +907,7 @@ export default function CreatorEarnings() {
         onOpenChange={setDetailsSheetOpen}
         type={detailsType}
         post={selectedPost}
+        isEligible={eligibility?.eligible || false}
       />
     </div>
   );

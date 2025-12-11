@@ -120,6 +120,26 @@ const TermsOfUse = () => {
           </section>
 
           <section className="mb-8">
+            <h2 className="text-2xl font-semibold mb-4">Creator Earnings Program</h2>
+            <p className="text-foreground/90 leading-relaxed mb-4">
+              AfuChat offers a Creator Earnings program that allows eligible content creators in Uganda to earn real money (UGX) based on daily engagement on their posts. Participation in this program is subject to the following terms:
+            </p>
+            <ul className="list-disc list-inside text-foreground/90 leading-relaxed mb-4 ml-4">
+              <li><strong>Eligibility:</strong> You must have at least 10 followers and 500+ weekly views to qualify. Eligibility is checked daily.</li>
+              <li><strong>Daily Calculation:</strong> Earnings are calculated based on TODAY's engagement only (views, likes, replies). Past engagement cannot be retroactively credited.</li>
+              <li><strong>No Fraud:</strong> Fake engagement, bot interactions, self-likes, engagement farming, or any fraudulent activity will result in permanent ban and forfeiture of earnings.</li>
+              <li><strong>Withdrawals:</strong> Minimum withdrawal is 5,000 UGX, available only on weekends via MTN or Airtel Mobile Money. A 10% platform fee applies.</li>
+              <li><strong>Team Approval:</strong> All withdrawals are reviewed by our team. We may reject or delay suspicious requests.</li>
+              <li><strong>No Guarantees:</strong> Earnings depend on your share of the daily pool. There is no guaranteed minimum.</li>
+              <li><strong>Tax Responsibility:</strong> You are responsible for any applicable taxes on your earnings.</li>
+              <li><strong>Program Changes:</strong> We reserve the right to modify, suspend, or terminate the program at any time without notice.</li>
+            </ul>
+            <p className="text-foreground/90 leading-relaxed mb-4">
+              By participating in the Creator Earnings program, you agree to these terms and acknowledge that missed earnings due to ineligibility cannot be recovered.
+            </p>
+          </section>
+
+          <section className="mb-8">
             <h2 className="text-2xl font-semibold mb-4">Prohibited Conduct</h2>
             <p className="text-foreground/90 leading-relaxed mb-4">
               In addition to content restrictions, you agree not to:

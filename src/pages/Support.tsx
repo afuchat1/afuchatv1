@@ -197,6 +197,14 @@ const Support = () => {
       answer: "The Shop offers exclusive items you can purchase with XP: profile accessories, special themes, avatar customizations, and limited-edition items. Some items are featured or on discount. Purchased items appear in your inventory and can be equipped or used."
     },
     {
+      question: "How does Creator Earnings work?",
+      answer: "Creator Earnings is a program for Ugandan creators to earn real money (UGX) from their content engagement. 5,000 UGX is distributed daily among eligible creators based on today's views, likes, and replies. To be eligible, you need 10+ followers and 500+ weekly views. Withdraw to MTN or Airtel Money on weekends. Note: Only today's engagement counts - past engagement cannot be credited retroactively."
+    },
+    {
+      question: "Why didn't I receive my Creator Earnings?",
+      answer: "Earnings are only credited if you're eligible at the time of engagement. You must have 10+ followers and 500+ weekly views. If you weren't eligible when engagement happened, those earnings are missed and cannot be credited retroactively. Become eligible as soon as possible to start earning from new engagement."
+    },
+    {
       question: "Can I download my data?",
       answer: "Yes! You have the right to download a copy of your data. Contact support@afuchat.com with 'Data Export Request' in the subject line. We'll provide a complete export of your posts, messages, profile data, and activity within 30 days as required by data protection laws."
     },
