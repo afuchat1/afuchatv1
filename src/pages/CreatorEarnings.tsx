@@ -851,7 +851,7 @@ export default function CreatorEarnings() {
             </div>
             <p className="text-xs text-muted-foreground mt-2">
               {isAdmin 
-                ? 'Admin: No limits • No fee • Anytime withdrawal'
+                ? 'Admin: No limits • Anytime • 10% fee'
                 : eligibility?.eligible 
                   ? 'Minimum withdrawal: 5,000 UGX • Weekends only • 10% fee'
                   : 'Earnings will be credited once you become eligible'}

@@ -3511,10 +3511,19 @@ export type Database = {
         Args: { p_notes?: string; p_request_id: string }
         Returns: Json
       }
-      request_creator_withdrawal: {
-        Args: { p_mobile_network: string; p_phone_number: string }
-        Returns: Json
-      }
+      request_creator_withdrawal:
+        | {
+            Args: {
+              p_amount_ugx: number
+              p_mobile_network: string
+              p_phone_number: string
+            }
+            Returns: Json
+          }
+        | {
+            Args: { p_mobile_network: string; p_phone_number: string }
+            Returns: Json
+          }
       rotate_featured_items: { Args: never; Returns: undefined }
       send_gift: {
         Args: { p_gift_id: string; p_message?: string; p_receiver_id: string }
