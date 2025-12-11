@@ -906,101 +906,106 @@ export default function CreatorEarnings() {
                         Withdraw Now
                       </Button>
                     </SheetTrigger>
-                    <SheetContent side="bottom" className="h-auto max-h-[70vh]">
-                      <SheetHeader>
+                    <SheetContent side="bottom" className="h-[85vh] flex flex-col" onOpenAutoFocus={(e) => e.preventDefault()}>
+                      <SheetHeader className="flex-shrink-0 px-6 pt-2">
                         <SheetTitle className="flex items-center gap-2">
                           <Phone className="h-5 w-5" />
                           Withdraw to Mobile Money
                         </SheetTitle>
                       </SheetHeader>
-                      <div className="space-y-4 py-4">
-                        <div className="bg-green-500/10 border-green-500/20 border rounded-lg p-3">
-                          <div className="flex items-center gap-2 text-green-600 font-medium">
-                            <CheckCircle className="h-4 w-4" />
-                            <span>Withdrawals are open!</span>
-                          </div>
-                          {isWeekendNow && (
-                            <p className="text-xs text-muted-foreground mt-1">
-                              Window closes in: {formatCountdownUnit(countdown.hours)}:{formatCountdownUnit(countdown.minutes)}:{formatCountdownUnit(countdown.seconds)}
-                            </p>
-                          )}
-                        </div>
-
-                        <div className="space-y-2">
-                          <Label>Amount to Withdraw (UGX)</Label>
-                          <Input
-                            type="number"
-                            placeholder={isAdmin ? "Enter amount" : "Min: 5,000 UGX"}
-                            value={withdrawAmount}
-                            onChange={(e) => setWithdrawAmount(e.target.value)}
-                          />
-                          <div className="flex justify-between text-xs text-muted-foreground">
-                            <span>Available: {(balance || 0).toLocaleString()} UGX</span>
-                            <button 
-                              type="button"
-                              className="text-primary hover:underline"
-                              onClick={() => setWithdrawAmount(String(balance || 0))}
-                            >
-                              Withdraw All
-                            </button>
-                          </div>
-                          {withdrawAmount && parseInt(withdrawAmount) > 0 && (
-                            <div className="bg-muted/50 rounded-lg p-2 text-sm">
-                              <div className="flex justify-between">
-                                <span>Amount:</span>
-                                <span>{parseInt(withdrawAmount).toLocaleString()} UGX</span>
-                              </div>
-                              <div className="flex justify-between text-muted-foreground">
-                                <span>Fee (10%):</span>
-                                <span>-{Math.ceil(parseInt(withdrawAmount) * 0.1).toLocaleString()} UGX</span>
-                              </div>
-                              <div className="flex justify-between font-medium text-green-600 border-t border-border pt-1 mt-1">
-                                <span>You'll receive:</span>
-                                <span>{(parseInt(withdrawAmount) - Math.ceil(parseInt(withdrawAmount) * 0.1)).toLocaleString()} UGX</span>
-                              </div>
+                      <div className="flex-1 overflow-y-auto px-6 pb-safe">
+                        <div className="space-y-4 py-4 pb-8">
+                          <div className="bg-green-500/10 border-green-500/20 border rounded-lg p-3">
+                            <div className="flex items-center gap-2 text-green-600 font-medium">
+                              <CheckCircle className="h-4 w-4" />
+                              <span>Withdrawals are open!</span>
                             </div>
-                          )}
+                            {isWeekendNow && (
+                              <p className="text-xs text-muted-foreground mt-1">
+                                Window closes in: {formatCountdownUnit(countdown.hours)}:{formatCountdownUnit(countdown.minutes)}:{formatCountdownUnit(countdown.seconds)}
+                              </p>
+                            )}
+                          </div>
+
+                          <div className="space-y-2">
+                            <Label>Amount to Withdraw (UGX)</Label>
+                            <Input
+                              type="number"
+                              inputMode="numeric"
+                              placeholder={isAdmin ? "Enter amount" : "Min: 5,000 UGX"}
+                              value={withdrawAmount}
+                              onChange={(e) => setWithdrawAmount(e.target.value)}
+                            />
+                            <div className="flex justify-between text-xs text-muted-foreground">
+                              <span>Available: {(balance || 0).toLocaleString()} UGX</span>
+                              <button 
+                                type="button"
+                                className="text-primary hover:underline"
+                                onClick={() => setWithdrawAmount(String(balance || 0))}
+                              >
+                                Withdraw All
+                              </button>
+                            </div>
+                            {withdrawAmount && parseInt(withdrawAmount) > 0 && (
+                              <div className="bg-muted/50 rounded-lg p-2 text-sm">
+                                <div className="flex justify-between">
+                                  <span>Amount:</span>
+                                  <span>{parseInt(withdrawAmount).toLocaleString()} UGX</span>
+                                </div>
+                                <div className="flex justify-between text-muted-foreground">
+                                  <span>Fee (10%):</span>
+                                  <span>-{Math.ceil(parseInt(withdrawAmount) * 0.1).toLocaleString()} UGX</span>
+                                </div>
+                                <div className="flex justify-between font-medium text-green-600 border-t border-border pt-1 mt-1">
+                                  <span>You'll receive:</span>
+                                  <span>{(parseInt(withdrawAmount) - Math.ceil(parseInt(withdrawAmount) * 0.1)).toLocaleString()} UGX</span>
+                                </div>
+                              </div>
+                            )}
+                          </div>
+
+                          <div className="space-y-2">
+                            <Label>Mobile Network</Label>
+                            <Select value={network} onValueChange={setNetwork}>
+                              <SelectTrigger>
+                                <SelectValue placeholder="Select network" />
+                              </SelectTrigger>
+                              <SelectContent>
+                                <SelectItem value="MTN">MTN Mobile Money</SelectItem>
+                                <SelectItem value="Airtel">Airtel Money</SelectItem>
+                              </SelectContent>
+                            </Select>
+                          </div>
+
+                          <div className="space-y-2">
+                            <Label>Phone Number</Label>
+                            <Input
+                              type="tel"
+                              inputMode="tel"
+                              placeholder="07XXXXXXXX"
+                              value={phoneNumber}
+                              onChange={(e) => setPhoneNumber(e.target.value)}
+                            />
+                          </div>
+
+                          <Button 
+                            className="w-full" 
+                            onClick={handleWithdraw}
+                            disabled={
+                              withdrawing || 
+                              !withdrawAmount || 
+                              parseInt(withdrawAmount) <= 0 ||
+                              parseInt(withdrawAmount) > (balance || 0) ||
+                              (!isAdmin && parseInt(withdrawAmount) < 5000)
+                            }
+                          >
+                            {withdrawing ? 'Processing...' : `Withdraw ${withdrawAmount ? parseInt(withdrawAmount).toLocaleString() : 0} UGX`}
+                          </Button>
+
+                          <p className="text-xs text-muted-foreground text-center pb-4">
+                            {isAdmin ? 'No minimum • ' : 'Minimum: 5,000 UGX • '}10% platform fee will be deducted
+                          </p>
                         </div>
-
-                        <div className="space-y-2">
-                          <Label>Mobile Network</Label>
-                          <Select value={network} onValueChange={setNetwork}>
-                            <SelectTrigger>
-                              <SelectValue placeholder="Select network" />
-                            </SelectTrigger>
-                            <SelectContent>
-                              <SelectItem value="MTN">MTN Mobile Money</SelectItem>
-                              <SelectItem value="Airtel">Airtel Money</SelectItem>
-                            </SelectContent>
-                          </Select>
-                        </div>
-
-                        <div className="space-y-2">
-                          <Label>Phone Number</Label>
-                          <Input
-                            placeholder="07XXXXXXXX"
-                            value={phoneNumber}
-                            onChange={(e) => setPhoneNumber(e.target.value)}
-                          />
-                        </div>
-
-                        <Button 
-                          className="w-full" 
-                          onClick={handleWithdraw}
-                          disabled={
-                            withdrawing || 
-                            !withdrawAmount || 
-                            parseInt(withdrawAmount) <= 0 ||
-                            parseInt(withdrawAmount) > (balance || 0) ||
-                            (!isAdmin && parseInt(withdrawAmount) < 5000)
-                          }
-                        >
-                          {withdrawing ? 'Processing...' : `Withdraw ${withdrawAmount ? parseInt(withdrawAmount).toLocaleString() : 0} UGX`}
-                        </Button>
-
-                        <p className="text-xs text-muted-foreground text-center">
-                          {isAdmin ? 'No minimum • ' : 'Minimum: 5,000 UGX • '}10% platform fee will be deducted
-                        </p>
                       </div>
                     </SheetContent>
                   </Sheet>
