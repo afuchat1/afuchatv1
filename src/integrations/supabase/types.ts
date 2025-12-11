@@ -3343,6 +3343,7 @@ export type Database = {
         }
         Returns: Json
       }
+      credit_daily_creator_earnings: { Args: never; Returns: Json }
       distribute_daily_creator_rewards: { Args: never; Returns: Json }
       expire_subscriptions: { Args: never; Returns: number }
       get_daily_engagement: {
