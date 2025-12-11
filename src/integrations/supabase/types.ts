@@ -2238,6 +2238,7 @@ export type Database = {
           last_login_date: string | null
           last_seen: string | null
           login_streak: number | null
+          missed_earnings_total: number | null
           phone_number: string | null
           profile_completion_rewarded: boolean | null
           show_balance: boolean | null
@@ -2275,6 +2276,7 @@ export type Database = {
           last_login_date?: string | null
           last_seen?: string | null
           login_streak?: number | null
+          missed_earnings_total?: number | null
           phone_number?: string | null
           profile_completion_rewarded?: boolean | null
           show_balance?: boolean | null
@@ -2312,6 +2314,7 @@ export type Database = {
           last_login_date?: string | null
           last_seen?: string | null
           login_streak?: number | null
+          missed_earnings_total?: number | null
           phone_number?: string | null
           profile_completion_rewarded?: boolean | null
           show_balance?: boolean | null
@@ -3381,6 +3384,7 @@ export type Database = {
           user_id: string
         }[]
       }
+      get_pool_status: { Args: never; Returns: Json }
       get_protected_profile_fields: {
         Args: { p_user_id: string }
         Returns: {
