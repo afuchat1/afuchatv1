@@ -10,6 +10,7 @@ import { ListGiftDialog } from '@/components/marketplace/ListGiftDialog';
 import { Badge } from '@/components/ui/badge';
 import { Card } from '@/components/ui/card';
 import { PremiumGate } from '@/components/PremiumGate';
+import { PageHeader } from '@/components/PageHeader';
 
 interface MyListing {
   id: string;
@@ -125,26 +126,17 @@ export default function Marketplace() {
       />
 
       <div className="min-h-screen bg-background pb-24 lg:pb-4">
-        {/* Header */}
-        <div className="sticky top-0 z-10 bg-background/95 backdrop-blur border-b border-border">
-          <div className="max-w-7xl mx-auto px-4 py-4">
-            <div className="flex items-center justify-between">
-              <div className="flex items-center gap-3">
-                <div className="p-2 bg-primary/10 rounded-lg">
-                  <Package className="h-6 w-6 text-primary" />
-                </div>
-                <div>
-                  <h1 className="text-2xl font-bold">My Listings</h1>
-                  <p className="text-sm text-muted-foreground">Manage your marketplace gifts</p>
-                </div>
-              </div>
-              <Button onClick={() => setListDialogOpen(true)}>
-                <Plus className="h-4 w-4 mr-2" />
-                List Gift
-              </Button>
-            </div>
-          </div>
-        </div>
+        <PageHeader 
+          title="My Listings" 
+          subtitle="Manage your marketplace gifts"
+          icon={<Package className="h-5 w-5 text-primary" />}
+          rightContent={
+            <Button onClick={() => setListDialogOpen(true)}>
+              <Plus className="h-4 w-4 mr-2" />
+              List Gift
+            </Button>
+          }
+        />
 
         {/* Content */}
         <div className="max-w-7xl mx-auto px-4 py-6 pb-24 lg:pb-6">

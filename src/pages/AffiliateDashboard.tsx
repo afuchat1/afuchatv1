@@ -5,11 +5,11 @@ import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Separator } from '@/components/ui/separator';
 import { Badge } from '@/components/ui/badge';
-import { ArrowLeft, Building2, TrendingUp, DollarSign, Calendar, AlertCircle, ExternalLink } from 'lucide-react';
+import { Building2, TrendingUp, DollarSign, Calendar, AlertCircle, ExternalLink, Users } from 'lucide-react';
 import { toast } from 'sonner';
 import { supabase } from '@/integrations/supabase/client';
-import Logo from '@/components/Logo';
 import { format } from 'date-fns';
+import { PageHeader } from '@/components/PageHeader';
 import {
   AlertDialog,
   AlertDialogAction,
@@ -151,34 +151,15 @@ const AffiliateDashboard = () => {
 
   return (
     <div className="min-h-screen bg-background">
-      {/* Header */}
-      <header className="sticky top-0 z-50 w-full border-b border-border bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
-        <div className="container max-w-2xl mx-auto px-4 sm:px-6">
-          <div className="flex h-14 sm:h-16 items-center justify-between">
-            <Button
-              variant="ghost"
-              size="icon"
-              onClick={() => navigate('/settings')}
-              className="shrink-0"
-            >
-              <ArrowLeft className="h-5 w-5" />
-            </Button>
-            <div className="absolute left-1/2 -translate-x-1/2">
-              <Logo size="sm" />
-            </div>
-            <div className="w-10" />
-          </div>
-        </div>
-      </header>
+      <PageHeader 
+        title="Affiliate Dashboard" 
+        subtitle="Manage your affiliate partnership"
+        icon={<Users className="h-5 w-5 text-primary" />}
+      />
 
       {/* Main Content */}
       <main className="container max-w-2xl mx-auto px-4 sm:px-6 py-6 pb-24">
         <div className="space-y-6">
-          {/* Header */}
-          <div>
-            <h1 className="text-2xl sm:text-3xl font-bold">Affiliate Dashboard</h1>
-            <p className="text-muted-foreground mt-1">Manage your affiliate partnership</p>
-          </div>
 
           {/* Business Info Card */}
           <Card className="p-6">

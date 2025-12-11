@@ -1,32 +1,16 @@
 import { useNavigate } from 'react-router-dom';
-import { Button } from '@/components/ui/button';
-import { ArrowLeft } from 'lucide-react';
-import Logo from '@/components/Logo';
+import { Shield } from 'lucide-react';
+import { PageHeader } from '@/components/PageHeader';
 
 const PrivacyPolicy = () => {
   const navigate = useNavigate();
 
   return (
     <div className="min-h-screen bg-background select-none">
-      {/* Header */}
-      <header className="sticky top-0 z-50 w-full border-b border-border bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
-        <div className="container max-w-4xl mx-auto px-4 sm:px-6">
-          <div className="flex h-14 sm:h-16 items-center justify-between">
-            <Button
-              variant="ghost"
-              size="icon"
-              onClick={() => navigate(-1)}
-              className="shrink-0"
-            >
-              <ArrowLeft className="h-5 w-5" />
-            </Button>
-            <div className="absolute left-1/2 -translate-x-1/2">
-              <Logo size="sm" />
-            </div>
-            <div className="w-10" />
-          </div>
-        </div>
-      </header>
+      <PageHeader 
+        title="Privacy Policy" 
+        icon={<Shield className="h-5 w-5 text-primary" />}
+      />
 
       {/* Main Content */}
       <main className="container max-w-4xl mx-auto px-4 sm:px-6 py-8 pb-24">

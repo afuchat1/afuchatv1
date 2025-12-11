@@ -10,11 +10,11 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
-import { ArrowLeft, Users, TrendingUp, DollarSign, UserCheck, Clock, CheckCircle, XCircle } from 'lucide-react';
+import { Users, TrendingUp, DollarSign, UserCheck, Clock, CheckCircle, XCircle, Briefcase } from 'lucide-react';
 import { Skeleton } from '@/components/ui/skeleton';
 import { toast } from 'sonner';
 import { supabase } from '@/integrations/supabase/client';
-import Logo from '@/components/Logo';
+import { PageHeader } from '@/components/PageHeader';
 import {
   AlertDialog,
   AlertDialogAction,
@@ -214,21 +214,13 @@ const BusinessDashboard = () => {
 
   return (
     <div className="min-h-screen bg-background">
-      <div className="max-w-6xl mx-auto px-4 py-8">
-        <Button
-          variant="ghost"
-          onClick={() => navigate('/')}
-          className="mb-6"
-        >
-          <ArrowLeft className="mr-2 h-4 w-4" />
-          Back to Feed
-        </Button>
+      <PageHeader 
+        title="Business Dashboard" 
+        subtitle="Manage your affiliates and track business performance"
+        icon={<Briefcase className="h-5 w-5 text-primary" />}
+      />
 
-        <div className="mb-8">
-          <Logo />
-          <h1 className="text-3xl font-bold mt-4">Business Dashboard</h1>
-          <p className="text-muted-foreground">Manage your affiliates and track business performance</p>
-        </div>
+      <div className="max-w-6xl mx-auto px-4 py-8">
 
         {/* Stats Cards */}
         <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-8">
