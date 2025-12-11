@@ -172,15 +172,19 @@ const Chats = ({ isEmbedded = false }: ChatsProps) => {
         const [allMessages, allUnreadCounts] = await Promise.all([
           supabase
             .from('messages')
-            .select('chat_id, encrypted_content, attachment_type, audio_url, sent_at, sender_id, read_at')
+            .select('chat_id, encrypted_content, attachment_type, audio_url, sent_at, sender_id')
             .in('chat_id', chatIds)
             .order('sent_at', { ascending: false }),
+          // Check message_status for read receipts instead of messages.read_at
           supabase
             .from('messages')
-            .select('chat_id, id')
+            .select(`
+              chat_id, 
+              id,
+              message_status!left(read_at, user_id)
+            `)
             .in('chat_id', chatIds)
             .neq('sender_id', user.id)
-            .is('read_at', null)
         ]);
 
         const messagesByChat = new Map<string, any>();
@@ -192,7 +196,12 @@ const Chats = ({ isEmbedded = false }: ChatsProps) => {
 
         const unreadByChat = new Map<string, number>();
         allUnreadCounts.data?.forEach(msg => {
-          unreadByChat.set(msg.chat_id, (unreadByChat.get(msg.chat_id) || 0) + 1);
+          // Check if current user has read status for this message
+          const userReadStatus = msg.message_status?.find((s: any) => s.user_id === user.id);
+          const isUnread = !userReadStatus || !userReadStatus.read_at;
+          if (isUnread) {
+            unreadByChat.set(msg.chat_id, (unreadByChat.get(msg.chat_id) || 0) + 1);
+          }
         });
 
         const validChats: Chat[] = [];
