@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react';
 import { useAuth } from '@/contexts/AuthContext';
 import { supabase } from '@/integrations/supabase/client';
 import { useQuery } from '@tanstack/react-query';
-import { Wallet, TrendingUp, Eye, Heart, Phone, AlertCircle, CheckCircle, Clock, Ban, Timer } from 'lucide-react';
+import { Wallet, TrendingUp, Eye, Heart, Phone, AlertCircle, CheckCircle, Clock, Ban, Timer, BarChart3, Trophy, MessageCircle } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
@@ -13,6 +13,7 @@ import { toast } from 'sonner';
 import { format } from 'date-fns';
 import { PageHeader } from '@/components/PageHeader';
 import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger } from '@/components/ui/sheet';
+import { Progress } from '@/components/ui/progress';
 
 interface Eligibility {
   eligible: boolean;
@@ -47,6 +48,16 @@ interface CountdownTime {
   hours: number;
   minutes: number;
   seconds: number;
+}
+
+interface TopPost {
+  id: string;
+  content: string;
+  view_count: number;
+  likes_count: number;
+  replies_count: number;
+  created_at: string;
+  engagement_score: number;
 }
 
 export default function CreatorEarnings() {
@@ -165,6 +176,54 @@ export default function CreatorEarnings() {
         .limit(10);
       if (error) throw error;
       return data as Withdrawal[];
+    },
+    enabled: !!user?.id
+  });
+
+  // Get top performing posts
+  const { data: topPosts, isLoading: topPostsLoading } = useQuery({
+    queryKey: ['creator-top-posts', user?.id],
+    queryFn: async () => {
+      // Get posts with views and likes counts
+      const { data: posts, error: postsError } = await supabase
+        .from('posts')
+        .select('id, content, view_count, created_at')
+        .eq('author_id', user?.id)
+        .order('view_count', { ascending: false })
+        .limit(10);
+      
+      if (postsError) throw postsError;
+      if (!posts || posts.length === 0) return [];
+
+      // Get likes and replies counts for each post
+      const postsWithEngagement = await Promise.all(
+        posts.map(async (post) => {
+          const [likesResult, repliesResult] = await Promise.all([
+            supabase
+              .from('post_acknowledgments')
+              .select('id', { count: 'exact', head: true })
+              .eq('post_id', post.id),
+            supabase
+              .from('post_replies')
+              .select('id', { count: 'exact', head: true })
+              .eq('post_id', post.id)
+          ]);
+
+          const likes_count = likesResult.count || 0;
+          const replies_count = repliesResult.count || 0;
+          const engagement_score = (post.view_count * 1) + (likes_count * 3) + (replies_count * 5);
+
+          return {
+            ...post,
+            likes_count,
+            replies_count,
+            engagement_score
+          } as TopPost;
+        })
+      );
+
+      // Sort by engagement score
+      return postsWithEngagement.sort((a, b) => b.engagement_score - a.engagement_score);
     },
     enabled: !!user?.id
   });
@@ -398,6 +457,89 @@ export default function CreatorEarnings() {
                 </div>
               )}
             </div>
+          </CardContent>
+        </Card>
+
+        {/* Top Performing Posts Analysis */}
+        <Card>
+          <CardHeader className="pb-2">
+            <CardTitle className="text-base flex items-center gap-2">
+              <BarChart3 className="h-4 w-4" />
+              Post Performance Analysis
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            {topPostsLoading ? (
+              <div className="space-y-3">
+                <Skeleton className="h-16 w-full" />
+                <Skeleton className="h-16 w-full" />
+                <Skeleton className="h-16 w-full" />
+              </div>
+            ) : topPosts && topPosts.length > 0 ? (
+              <div className="space-y-3">
+                {topPosts.slice(0, 5).map((post, index) => {
+                  const maxScore = topPosts[0]?.engagement_score || 1;
+                  const scorePercent = (post.engagement_score / maxScore) * 100;
+                  
+                  return (
+                    <div key={post.id} className="space-y-2">
+                      <div className="flex items-start gap-3">
+                        <div className={`flex-shrink-0 w-8 h-8 rounded-full flex items-center justify-center text-sm font-bold ${
+                          index === 0 ? 'bg-yellow-500 text-yellow-950' :
+                          index === 1 ? 'bg-gray-300 text-gray-700' :
+                          index === 2 ? 'bg-amber-600 text-amber-50' :
+                          'bg-muted text-muted-foreground'
+                        }`}>
+                          {index === 0 ? <Trophy className="h-4 w-4" /> : index + 1}
+                        </div>
+                        <div className="flex-1 min-w-0">
+                          <p className="text-sm line-clamp-2">
+                            {post.content.slice(0, 80)}{post.content.length > 80 ? '...' : ''}
+                          </p>
+                          <div className="flex items-center gap-3 mt-1 text-xs text-muted-foreground">
+                            <span className="flex items-center gap-1">
+                              <Eye className="h-3 w-3" /> {post.view_count}
+                            </span>
+                            <span className="flex items-center gap-1">
+                              <Heart className="h-3 w-3" /> {post.likes_count}
+                            </span>
+                            <span className="flex items-center gap-1">
+                              <MessageCircle className="h-3 w-3" /> {post.replies_count}
+                            </span>
+                          </div>
+                        </div>
+                      </div>
+                      <div className="flex items-center gap-2">
+                        <Progress value={scorePercent} className="h-2 flex-1" />
+                        <span className="text-xs font-medium text-primary min-w-[60px] text-right">
+                          {post.engagement_score.toLocaleString()} pts
+                        </span>
+                      </div>
+                    </div>
+                  );
+                })}
+                
+                {/* Score Legend */}
+                <div className="mt-4 p-3 bg-muted/50 rounded-lg">
+                  <p className="text-xs font-medium mb-2">Engagement Score Calculation:</p>
+                  <div className="flex flex-wrap gap-3 text-xs text-muted-foreground">
+                    <span className="flex items-center gap-1">
+                      <Eye className="h-3 w-3" /> Views × 1
+                    </span>
+                    <span className="flex items-center gap-1">
+                      <Heart className="h-3 w-3" /> Likes × 3
+                    </span>
+                    <span className="flex items-center gap-1">
+                      <MessageCircle className="h-3 w-3" /> Replies × 5
+                    </span>
+                  </div>
+                </div>
+              </div>
+            ) : (
+              <p className="text-sm text-muted-foreground text-center py-4">
+                No posts yet. Start creating content to see performance analysis!
+              </p>
+            )}
           </CardContent>
         </Card>
 
