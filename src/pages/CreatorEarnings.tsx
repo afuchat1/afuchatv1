@@ -76,17 +76,19 @@ export default function CreatorEarnings() {
   const [withdrawSheetOpen, setWithdrawSheetOpen] = useState(false);
   const [countdown, setCountdown] = useState<CountdownTime>({ days: 0, hours: 0, minutes: 0, seconds: 0 });
   const [isWeekendNow, setIsWeekendNow] = useState(false);
+  const [isPoolActive, setIsPoolActive] = useState(false);
+  const [poolCountdown, setPoolCountdown] = useState<CountdownTime>({ days: 0, hours: 0, minutes: 0, seconds: 0 });
   const [selectedPost, setSelectedPost] = useState<TopPost | null>(null);
   const [detailsType, setDetailsType] = useState<'views' | 'likes' | 'replies' | 'total'>('total');
   const [detailsSheetOpen, setDetailsSheetOpen] = useState(false);
 
-  // Check user's country
+  // Check user's country and missed earnings
   const { data: userProfile } = useQuery({
-    queryKey: ['user-country', user?.id],
+    queryKey: ['user-profile-earnings', user?.id],
     queryFn: async () => {
       const { data, error } = await supabase
         .from('profiles')
-        .select('country')
+        .select('country, missed_earnings_total')
         .eq('id', user?.id)
         .single();
       if (error) throw error;
@@ -96,8 +98,9 @@ export default function CreatorEarnings() {
   });
 
   const isUgandan = userProfile?.country?.toLowerCase() === 'uganda' || userProfile?.country === 'UG';
+  const missedEarningsTotal = userProfile?.missed_earnings_total || 0;
 
-  // Calculate countdown to next weekend or end of weekend
+  // Calculate countdown to pool end (8pm Uganda time) and weekend
   useEffect(() => {
     const calculateCountdown = () => {
       const now = new Date();
@@ -105,23 +108,59 @@ export default function CreatorEarnings() {
       const isWeekend = day === 0 || day === 6;
       setIsWeekendNow(isWeekend);
 
-      let targetDate: Date;
+      // Calculate Uganda time (UTC+3)
+      const ugandaOffset = 3 * 60; // Uganda is UTC+3
+      const localOffset = now.getTimezoneOffset();
+      const ugandaNow = new Date(now.getTime() + (ugandaOffset + localOffset) * 60 * 1000);
+      const ugandaHour = ugandaNow.getHours();
 
+      // Pool is active between 8am (8) and 8pm (20) Uganda time
+      const poolActive = ugandaHour >= 8 && ugandaHour < 20;
+      setIsPoolActive(poolActive);
+
+      // Calculate countdown to 8pm Uganda time (pool end/credit time)
+      let poolEndTarget: Date;
+      if (ugandaHour < 8) {
+        // Before 8am - countdown to 8am (pool start)
+        poolEndTarget = new Date(ugandaNow);
+        poolEndTarget.setHours(8, 0, 0, 0);
+      } else if (ugandaHour < 20) {
+        // During pool (8am-8pm) - countdown to 8pm
+        poolEndTarget = new Date(ugandaNow);
+        poolEndTarget.setHours(20, 0, 0, 0);
+      } else {
+        // After 8pm - countdown to 8am tomorrow
+        poolEndTarget = new Date(ugandaNow);
+        poolEndTarget.setDate(poolEndTarget.getDate() + 1);
+        poolEndTarget.setHours(8, 0, 0, 0);
+      }
+
+      // Convert back to local time for diff calculation
+      const poolEndLocal = new Date(poolEndTarget.getTime() - (ugandaOffset + localOffset) * 60 * 1000);
+      const poolDiff = poolEndLocal.getTime() - now.getTime();
+
+      if (poolDiff > 0) {
+        const pHours = Math.floor(poolDiff / (1000 * 60 * 60));
+        const pMinutes = Math.floor((poolDiff % (1000 * 60 * 60)) / (1000 * 60));
+        const pSeconds = Math.floor((poolDiff % (1000 * 60)) / 1000);
+        setPoolCountdown({ days: 0, hours: pHours, minutes: pMinutes, seconds: pSeconds });
+      } else {
+        setPoolCountdown({ days: 0, hours: 0, minutes: 0, seconds: 0 });
+      }
+
+      // Weekend countdown for withdrawals
+      let targetDate: Date;
       if (isWeekend) {
-        // Weekend active - countdown to Sunday midnight (end of weekend)
         if (day === 6) {
-          // Saturday - target is end of Sunday (Monday 00:00)
           targetDate = new Date(now);
           targetDate.setDate(now.getDate() + 2);
           targetDate.setHours(0, 0, 0, 0);
         } else {
-          // Sunday - target is Monday 00:00
           targetDate = new Date(now);
           targetDate.setDate(now.getDate() + 1);
           targetDate.setHours(0, 0, 0, 0);
         }
       } else {
-        // Weekday - countdown to Saturday 00:00
         const daysUntilSaturday = (6 - day + 7) % 7 || 7;
         targetDate = new Date(now);
         targetDate.setDate(now.getDate() + daysUntilSaturday);
@@ -129,18 +168,15 @@ export default function CreatorEarnings() {
       }
 
       const diff = targetDate.getTime() - now.getTime();
-      
-      if (diff <= 0) {
+      if (diff > 0) {
+        const days = Math.floor(diff / (1000 * 60 * 60 * 24));
+        const hours = Math.floor((diff % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
+        const minutes = Math.floor((diff % (1000 * 60 * 60)) / (1000 * 60));
+        const seconds = Math.floor((diff % (1000 * 60)) / 1000);
+        setCountdown({ days, hours, minutes, seconds });
+      } else {
         setCountdown({ days: 0, hours: 0, minutes: 0, seconds: 0 });
-        return;
       }
-
-      const days = Math.floor(diff / (1000 * 60 * 60 * 24));
-      const hours = Math.floor((diff % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
-      const minutes = Math.floor((diff % (1000 * 60 * 60)) / (1000 * 60));
-      const seconds = Math.floor((diff % (1000 * 60)) / 1000);
-
-      setCountdown({ days, hours, minutes, seconds });
     };
 
     calculateCountdown();
@@ -497,6 +533,33 @@ export default function CreatorEarnings() {
           </CardContent>
         </Card>
 
+        {/* Pool Status & Timer */}
+        <Card className={`border-2 ${isPoolActive ? 'border-green-500/50 bg-green-500/5' : 'border-muted'}`}>
+          <CardContent className="pt-4">
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-2">
+                <Timer className={`h-5 w-5 ${isPoolActive ? 'text-green-500' : 'text-muted-foreground'}`} />
+                <div>
+                  <p className="text-sm font-medium">
+                    {isPoolActive ? 'Pool Active' : 'Pool Closed'}
+                  </p>
+                  <p className="text-xs text-muted-foreground">
+                    Daily 8am - 8pm (Uganda Time)
+                  </p>
+                </div>
+              </div>
+              <div className="text-right">
+                <p className="text-lg font-bold font-mono">
+                  {String(poolCountdown.hours).padStart(2, '0')}:{String(poolCountdown.minutes).padStart(2, '0')}:{String(poolCountdown.seconds).padStart(2, '0')}
+                </p>
+                <p className="text-xs text-muted-foreground">
+                  {isPoolActive ? 'Until credit time' : 'Until pool opens'}
+                </p>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+
         {/* Today's Live Potential Earnings - Shows real-time earnings from leaderboard */}
         <Card className="border-2 border-dashed border-primary/30 bg-gradient-to-br from-primary/5 to-transparent">
           <CardHeader className="pb-2">
@@ -545,12 +608,12 @@ export default function CreatorEarnings() {
                 </div>
               )}
               
-              <div className="p-2 bg-yellow-500/10 border border-yellow-500/20 rounded-lg">
-                <p className="text-xs text-yellow-700 dark:text-yellow-400 flex items-center gap-1">
+              <div className={`p-2 rounded-lg ${eligibility?.eligible ? 'bg-green-500/10 border border-green-500/20' : 'bg-yellow-500/10 border border-yellow-500/20'}`}>
+                <p className={`text-xs flex items-center gap-1 ${eligibility?.eligible ? 'text-green-700 dark:text-green-400' : 'text-yellow-700 dark:text-yellow-400'}`}>
                   <Clock className="h-3 w-3" />
                   {eligibility?.eligible 
-                    ? 'This amount will be credited to your balance at midnight if you remain eligible'
-                    : 'Not credited - become eligible to receive this at midnight'}
+                    ? 'This amount will be credited to your balance at 8pm if you remain eligible'
+                    : 'Not credited - become eligible to receive this at 8pm'}
                 </p>
               </div>
               
@@ -560,6 +623,24 @@ export default function CreatorEarnings() {
             </div>
           </CardContent>
         </Card>
+
+        {/* Missed Earnings for Non-Eligible Users */}
+        {!eligibility?.eligible && missedEarningsTotal > 0 && (
+          <Card className="bg-gradient-to-br from-red-500/10 to-orange-500/5 border-red-500/30">
+            <CardContent className="pt-4">
+              <div className="flex items-center gap-3">
+                <Ban className="h-8 w-8 text-red-500/70" />
+                <div>
+                  <p className="text-sm font-medium text-red-600 dark:text-red-400">Total Missed Earnings</p>
+                  <p className="text-2xl font-bold text-red-500">{missedEarningsTotal.toLocaleString()} UGX</p>
+                  <p className="text-xs text-muted-foreground mt-1">
+                    You could have earned this if you were eligible. Meet the requirements to stop missing out!
+                  </p>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+        )}
 
         {/* Daily Leaderboard - Live Rankings */}
         <Card>
