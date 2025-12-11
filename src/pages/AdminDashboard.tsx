@@ -4,13 +4,23 @@ import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/contexts/AuthContext';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Skeleton } from '@/components/ui/skeleton';
-import { Users, MessageSquare, Package, Activity, ArrowLeft, Shield, Gift, Coins, TrendingUp, Database, Globe, Briefcase } from 'lucide-react';
+import { 
+  Users, MessageSquare, Package, Activity, Shield, Gift, Coins, 
+  TrendingUp, Globe, Briefcase, Wallet, AlertTriangle, Eye, 
+  Heart, UserPlus, FileText, Image, Gamepad2, RefreshCw
+} from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Badge } from '@/components/ui/badge';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { toast } from 'sonner';
 import { getCountryFlag } from '@/lib/countryFlags';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { AdminAnalyticsCharts } from '@/components/admin/AdminAnalyticsCharts';
+import { AdminUserManagement } from '@/components/admin/AdminUserManagement';
+import { AdminWithdrawalsPanel } from '@/components/admin/AdminWithdrawalsPanel';
+import { AdminReportsPanel } from '@/components/admin/AdminReportsPanel';
+import { PageHeader } from '@/components/PageHeader';
 
 interface DashboardStats {
   totalUsers: number;
@@ -23,6 +33,15 @@ interface DashboardStats {
   totalVerifiedUsers: number;
   totalStories: number;
   totalGroups: number;
+  totalFollows: number;
+  totalPostViews: number;
+  totalLikes: number;
+  totalReplies: number;
+  totalTips: number;
+  totalRedEnvelopes: number;
+  totalReferrals: number;
+  totalBlockedUsers: number;
+  totalGameScores: number;
 }
 
 const AdminDashboard = () => {
@@ -31,7 +50,9 @@ const AdminDashboard = () => {
   const [loading, setLoading] = useState(true);
   const [hasAdminPrivileges, setHasAdminPrivileges] = useState(false);
   const [stats, setStats] = useState<DashboardStats | null>(null);
-  const [activeTab, setActiveTab] = useState('overview');
+  const [activeTab, setActiveTab] = useState('analytics');
+  const [timeRange, setTimeRange] = useState<'week' | 'month' | 'year'>('week');
+  const [refreshing, setRefreshing] = useState(false);
 
   // Detailed data states
   const [users, setUsers] = useState<any[]>([]);
@@ -42,6 +63,13 @@ const AdminDashboard = () => {
   const [acoinTransactions, setAcoinTransactions] = useState<any[]>([]);
   const [subscriptions, setSubscriptions] = useState<any[]>([]);
   const [stories, setStories] = useState<any[]>([]);
+  const [follows, setFollows] = useState<any[]>([]);
+  const [postViews, setPostViews] = useState<any[]>([]);
+  const [tips, setTips] = useState<any[]>([]);
+  const [redEnvelopes, setRedEnvelopes] = useState<any[]>([]);
+  const [referrals, setReferrals] = useState<any[]>([]);
+  const [blockedUsers, setBlockedUsers] = useState<any[]>([]);
+  const [gameScores, setGameScores] = useState<any[]>([]);
 
   useEffect(() => {
     if (authLoading) return;
@@ -56,7 +84,6 @@ const AdminDashboard = () => {
 
   const checkAdminStatusAndLoadData = async (userId: string) => {
     try {
-      // Check admin status
       const { data, error } = await supabase
         .from('user_roles')
         .select('role')
@@ -67,17 +94,7 @@ const AdminDashboard = () => {
       setHasAdminPrivileges(isAdmin);
 
       if (isAdmin) {
-        await Promise.all([
-          fetchStats(),
-          fetchUsers(),
-          fetchMessages(),
-          fetchChats(),
-          fetchPosts(),
-          fetchGiftTransactions(),
-          fetchAcoinTransactions(),
-          fetchSubscriptions(),
-          fetchStories(),
-        ]);
+        await loadAllData();
       }
     } catch (error) {
       console.error('Error loading admin data:', error);
@@ -85,6 +102,34 @@ const AdminDashboard = () => {
     } finally {
       setLoading(false);
     }
+  };
+
+  const loadAllData = async () => {
+    await Promise.all([
+      fetchStats(),
+      fetchUsers(),
+      fetchMessages(),
+      fetchChats(),
+      fetchPosts(),
+      fetchGiftTransactions(),
+      fetchAcoinTransactions(),
+      fetchSubscriptions(),
+      fetchStories(),
+      fetchFollows(),
+      fetchPostViews(),
+      fetchTips(),
+      fetchRedEnvelopes(),
+      fetchReferrals(),
+      fetchBlockedUsers(),
+      fetchGameScores(),
+    ]);
+  };
+
+  const handleRefresh = async () => {
+    setRefreshing(true);
+    await loadAllData();
+    setRefreshing(false);
+    toast.success('Data refreshed');
   };
 
   const fetchStats = async () => {
@@ -100,6 +145,15 @@ const AdminDashboard = () => {
         verifiedCount,
         storiesCount,
         groupsCount,
+        followsCount,
+        postViewsCount,
+        likesCount,
+        repliesCount,
+        tipsCount,
+        redEnvelopesCount,
+        referralsCount,
+        blockedCount,
+        gameScoresCount,
       ] = await Promise.all([
         supabase.from('profiles').select('*', { count: 'exact', head: true }),
         supabase.from('messages').select('*', { count: 'exact', head: true }),
@@ -107,10 +161,19 @@ const AdminDashboard = () => {
         supabase.from('posts').select('*', { count: 'exact', head: true }),
         supabase.from('gift_transactions').select('*', { count: 'exact', head: true }),
         supabase.from('acoin_transactions').select('*', { count: 'exact', head: true }),
-        supabase.from('subscription_plans').select('user_id', { count: 'exact', head: true }).not('expires_at', 'lt', new Date().toISOString()),
+        supabase.from('user_subscriptions').select('*', { count: 'exact', head: true }).eq('is_active', true),
         supabase.from('profiles').select('*', { count: 'exact', head: true }).eq('is_verified', true),
         supabase.from('stories').select('*', { count: 'exact', head: true }),
         supabase.from('chats').select('*', { count: 'exact', head: true }).eq('is_group', true),
+        supabase.from('follows').select('*', { count: 'exact', head: true }),
+        supabase.from('post_views').select('*', { count: 'exact', head: true }),
+        supabase.from('post_acknowledgments').select('*', { count: 'exact', head: true }),
+        supabase.from('post_replies').select('*', { count: 'exact', head: true }),
+        supabase.from('tips').select('*', { count: 'exact', head: true }),
+        supabase.from('red_envelopes').select('*', { count: 'exact', head: true }),
+        supabase.from('referrals').select('*', { count: 'exact', head: true }),
+        supabase.from('blocked_users').select('*', { count: 'exact', head: true }),
+        supabase.from('game_scores').select('*', { count: 'exact', head: true }),
       ]);
 
       setStats({
@@ -124,6 +187,15 @@ const AdminDashboard = () => {
         totalVerifiedUsers: verifiedCount.count || 0,
         totalStories: storiesCount.count || 0,
         totalGroups: groupsCount.count || 0,
+        totalFollows: followsCount.count || 0,
+        totalPostViews: postViewsCount.count || 0,
+        totalLikes: likesCount.count || 0,
+        totalReplies: repliesCount.count || 0,
+        totalTips: tipsCount.count || 0,
+        totalRedEnvelopes: redEnvelopesCount.count || 0,
+        totalReferrals: referralsCount.count || 0,
+        totalBlockedUsers: blockedCount.count || 0,
+        totalGameScores: gameScoresCount.count || 0,
       });
     } catch (error) {
       console.error('Error fetching stats:', error);
@@ -132,13 +204,11 @@ const AdminDashboard = () => {
 
   const fetchUsers = async () => {
     try {
-      const { data, error } = await supabase
+      const { data } = await supabase
         .from('profiles')
         .select('id, display_name, handle, phone_number, country, avatar_url, xp, acoin, is_verified, is_admin, created_at')
         .order('created_at', { ascending: false })
-        .limit(100);
-
-      if (error) throw error;
+        .limit(200);
       setUsers(data || []);
     } catch (error) {
       console.error('Error fetching users:', error);
@@ -147,13 +217,11 @@ const AdminDashboard = () => {
 
   const fetchMessages = async () => {
     try {
-      const { data, error } = await supabase
+      const { data } = await supabase
         .from('messages')
         .select('id, encrypted_content, sender_id, chat_id, sent_at, profiles!messages_sender_id_fkey(display_name, handle)')
         .order('sent_at', { ascending: false })
-        .limit(50);
-
-      if (error) throw error;
+        .limit(100);
       setMessages(data || []);
     } catch (error) {
       console.error('Error fetching messages:', error);
@@ -162,13 +230,11 @@ const AdminDashboard = () => {
 
   const fetchChats = async () => {
     try {
-      const { data, error } = await supabase
+      const { data } = await supabase
         .from('chats')
         .select('id, name, is_group, created_at, created_by, profiles!chats_created_by_fkey(display_name, handle)')
         .order('created_at', { ascending: false })
-        .limit(50);
-
-      if (error) throw error;
+        .limit(100);
       setChats(data || []);
     } catch (error) {
       console.error('Error fetching chats:', error);
@@ -177,13 +243,11 @@ const AdminDashboard = () => {
 
   const fetchPosts = async () => {
     try {
-      const { data, error } = await supabase
+      const { data } = await supabase
         .from('posts')
         .select('id, content, author_id, view_count, created_at, profiles!posts_author_id_fkey(display_name, handle)')
         .order('created_at', { ascending: false })
-        .limit(50);
-
-      if (error) throw error;
+        .limit(100);
       setPosts(data || []);
     } catch (error) {
       console.error('Error fetching posts:', error);
@@ -192,13 +256,11 @@ const AdminDashboard = () => {
 
   const fetchGiftTransactions = async () => {
     try {
-      const { data, error } = await supabase
+      const { data } = await supabase
         .from('gift_transactions')
         .select('id, gift_id, sender_id, receiver_id, xp_cost, message, created_at, gifts(name, emoji)')
         .order('created_at', { ascending: false })
-        .limit(50);
-
-      if (error) throw error;
+        .limit(100);
       setGiftTransactions(data || []);
     } catch (error) {
       console.error('Error fetching gift transactions:', error);
@@ -207,13 +269,11 @@ const AdminDashboard = () => {
 
   const fetchAcoinTransactions = async () => {
     try {
-      const { data, error } = await supabase
+      const { data } = await supabase
         .from('acoin_transactions')
-        .select('id, user_id, transaction_type, amount, created_at, profiles(display_name, handle)')
+        .select('id, user_id, transaction_type, amount, created_at')
         .order('created_at', { ascending: false })
-        .limit(50);
-
-      if (error) throw error;
+        .limit(100);
       setAcoinTransactions(data || []);
     } catch (error) {
       console.error('Error fetching acoin transactions:', error);
@@ -222,14 +282,11 @@ const AdminDashboard = () => {
 
   const fetchSubscriptions = async () => {
     try {
-      const { data, error } = await supabase
-        .from('subscription_plans')
-        .select('id, user_id, plan_name, price, starts_at, expires_at, profiles(display_name, handle)')
-        .not('expires_at', 'lt', new Date().toISOString())
-        .order('starts_at', { ascending: false })
-        .limit(50);
-
-      if (error) throw error;
+      const { data } = await supabase
+        .from('user_subscriptions')
+        .select('id, user_id, plan_id, started_at, expires_at, is_active, profiles(display_name, handle)')
+        .order('started_at', { ascending: false })
+        .limit(100);
       setSubscriptions(data || []);
     } catch (error) {
       console.error('Error fetching subscriptions:', error);
@@ -238,16 +295,105 @@ const AdminDashboard = () => {
 
   const fetchStories = async () => {
     try {
-      const { data, error } = await supabase
+      const { data } = await supabase
         .from('stories')
         .select('id, user_id, media_type, view_count, created_at, expires_at, profiles(display_name, handle)')
         .order('created_at', { ascending: false })
-        .limit(50);
-
-      if (error) throw error;
+        .limit(100);
       setStories(data || []);
     } catch (error) {
       console.error('Error fetching stories:', error);
+    }
+  };
+
+  const fetchFollows = async () => {
+    try {
+      const { data } = await supabase
+        .from('follows')
+        .select('id, follower_id, following_id, created_at')
+        .order('created_at', { ascending: false })
+        .limit(200);
+      setFollows(data || []);
+    } catch (error) {
+      console.error('Error fetching follows:', error);
+    }
+  };
+
+  const fetchPostViews = async () => {
+    try {
+      const { data } = await supabase
+        .from('post_views')
+        .select('id, post_id, viewer_id, viewed_at')
+        .order('viewed_at', { ascending: false })
+        .limit(200);
+      setPostViews(data || []);
+    } catch (error) {
+      console.error('Error fetching post views:', error);
+    }
+  };
+
+  const fetchTips = async () => {
+    try {
+      const { data } = await supabase
+        .from('tips')
+        .select('id, sender_id, receiver_id, xp_amount, created_at')
+        .order('created_at', { ascending: false })
+        .limit(100);
+      setTips(data || []);
+    } catch (error) {
+      console.error('Error fetching tips:', error);
+    }
+  };
+
+  const fetchRedEnvelopes = async () => {
+    try {
+      const { data } = await supabase
+        .from('red_envelopes')
+        .select('id, sender_id, total_amount, remaining_amount, created_at, expires_at')
+        .order('created_at', { ascending: false })
+        .limit(100);
+      setRedEnvelopes(data || []);
+    } catch (error) {
+      console.error('Error fetching red envelopes:', error);
+    }
+  };
+
+  const fetchReferrals = async () => {
+    try {
+      const { data } = await supabase
+        .from('referrals')
+        .select('id, referrer_id, referred_id, rewarded, created_at')
+        .order('created_at', { ascending: false })
+        .limit(100);
+      setReferrals(data || []);
+    } catch (error) {
+      console.error('Error fetching referrals:', error);
+    }
+  };
+
+  const fetchBlockedUsers = async () => {
+    try {
+      const { data } = await supabase
+        .from('blocked_users')
+        .select('id, blocker_id, blocked_id, reason, blocked_at')
+        .order('blocked_at', { ascending: false })
+        .limit(100);
+      setBlockedUsers(data || []);
+    } catch (error) {
+      console.error('Error fetching blocked users:', error);
+    }
+  };
+
+  const fetchGameScores = async () => {
+    try {
+      const { data } = await supabase
+        .from('game_scores')
+        .select('id, user_id, game_type, score, difficulty, created_at, profiles(display_name, handle)')
+        .order('created_at', { ascending: false })
+        .limit(100);
+      setGameScores(data || []);
+    } catch (error) {
+      console.error('Error fetching game scores:', error);
     }
   };
 
@@ -257,9 +403,9 @@ const AdminDashboard = () => {
     return (
       <div className="min-h-screen bg-background p-4 max-w-7xl mx-auto">
         <Skeleton className="h-10 w-48 mb-6" />
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
-          {[...Array(8)].map((_, i) => (
-            <Skeleton key={i} className="h-32" />
+        <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-4 mb-6">
+          {[...Array(10)].map((_, i) => (
+            <Skeleton key={i} className="h-24" />
           ))}
         </div>
         <Skeleton className="h-96" />
@@ -271,14 +417,9 @@ const AdminDashboard = () => {
     return (
       <div className="min-h-screen bg-background p-4 md:p-8 flex flex-col items-center pt-20">
         <div className="w-full max-w-4xl">
-          <div className="flex items-center gap-4 mb-6">
-            <Button variant="ghost" size="icon" onClick={() => navigate(-1)}>
-              <ArrowLeft className="h-5 w-5" />
-            </Button>
-            <h1 className="text-2xl font-bold">Admin Dashboard</h1>
-          </div>
+          <PageHeader title="Admin Dashboard" />
           
-          <Card className="border-l-4 border-red-500">
+          <Card className="border-l-4 border-red-500 mt-4">
             <CardHeader>
               <CardTitle className="flex items-center gap-3">
                 <Shield className="h-6 w-6 text-red-500" />
@@ -304,278 +445,240 @@ const AdminDashboard = () => {
   }
 
   return (
-    <div className="min-h-screen bg-background">
+    <div className="min-h-screen bg-background pb-20">
       <div className="container mx-auto px-4 py-6 max-w-7xl">
-        <div className="flex items-center justify-between mb-6">
-          <div className="flex items-center gap-4">
-            <Button variant="ghost" size="icon" onClick={() => navigate(-1)}>
-              <ArrowLeft className="h-5 w-5" />
-            </Button>
-            <div>
-              <h1 className="text-3xl font-bold">Admin Dashboard</h1>
-              <p className="text-muted-foreground">Complete platform overview and management</p>
-            </div>
+        <div className="flex items-center justify-between mb-6 flex-wrap gap-4">
+          <div>
+            <h1 className="text-3xl font-black">Admin Dashboard</h1>
+            <p className="text-muted-foreground">Complete platform control and analytics</p>
           </div>
-          <Button
-            onClick={() => navigate('/business-dashboard')}
-            className="gap-2"
-          >
-            <Briefcase className="h-4 w-4" />
-            Business Dashboard
-          </Button>
+          <div className="flex items-center gap-2">
+            <Select value={timeRange} onValueChange={(v: any) => setTimeRange(v)}>
+              <SelectTrigger className="w-32">
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="week">Last 7 Days</SelectItem>
+                <SelectItem value="month">Last 30 Days</SelectItem>
+                <SelectItem value="year">Last Year</SelectItem>
+              </SelectContent>
+            </Select>
+            <Button variant="outline" size="icon" onClick={handleRefresh} disabled={refreshing}>
+              <RefreshCw className={`h-4 w-4 ${refreshing ? 'animate-spin' : ''}`} />
+            </Button>
+            <Button onClick={() => navigate('/business-dashboard')} className="gap-2">
+              <Briefcase className="h-4 w-4" />
+              Business
+            </Button>
+          </div>
         </div>
 
         {/* Stats Overview */}
         {stats && (
-          <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-4 mb-6">
+          <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-3 mb-6">
             <Card>
-              <CardHeader className="pb-2">
-                <CardTitle className="text-sm font-medium flex items-center gap-2">
-                  <Users className="h-4 w-4" />
-                  Total Users
+              <CardHeader className="pb-1 pt-3 px-3">
+                <CardTitle className="text-xs font-medium flex items-center gap-1.5">
+                  <Users className="h-3.5 w-3.5 text-primary" />
+                  Users
                 </CardTitle>
               </CardHeader>
-              <CardContent>
-                <div className="text-2xl font-bold">{stats.totalUsers}</div>
-                <p className="text-xs text-muted-foreground">
-                  {stats.totalVerifiedUsers} verified
-                </p>
+              <CardContent className="px-3 pb-3">
+                <div className="text-xl font-bold">{stats.totalUsers.toLocaleString()}</div>
+                <p className="text-xs text-muted-foreground">{stats.totalVerifiedUsers} verified</p>
               </CardContent>
             </Card>
 
             <Card>
-              <CardHeader className="pb-2">
-                <CardTitle className="text-sm font-medium flex items-center gap-2">
-                  <MessageSquare className="h-4 w-4" />
+              <CardHeader className="pb-1 pt-3 px-3">
+                <CardTitle className="text-xs font-medium flex items-center gap-1.5">
+                  <MessageSquare className="h-3.5 w-3.5 text-blue-500" />
                   Messages
                 </CardTitle>
               </CardHeader>
-              <CardContent>
-                <div className="text-2xl font-bold">{stats.totalMessages}</div>
-                <p className="text-xs text-muted-foreground">
-                  {stats.totalChats} chats
-                </p>
+              <CardContent className="px-3 pb-3">
+                <div className="text-xl font-bold">{stats.totalMessages.toLocaleString()}</div>
+                <p className="text-xs text-muted-foreground">{stats.totalChats} chats</p>
               </CardContent>
             </Card>
 
             <Card>
-              <CardHeader className="pb-2">
-                <CardTitle className="text-sm font-medium flex items-center gap-2">
-                  <Package className="h-4 w-4" />
+              <CardHeader className="pb-1 pt-3 px-3">
+                <CardTitle className="text-xs font-medium flex items-center gap-1.5">
+                  <Package className="h-3.5 w-3.5 text-green-500" />
                   Posts
                 </CardTitle>
               </CardHeader>
-              <CardContent>
-                <div className="text-2xl font-bold">{stats.totalPosts}</div>
-                <p className="text-xs text-muted-foreground">
-                  {stats.totalStories} stories
-                </p>
+              <CardContent className="px-3 pb-3">
+                <div className="text-xl font-bold">{stats.totalPosts.toLocaleString()}</div>
+                <p className="text-xs text-muted-foreground">{stats.totalReplies} replies</p>
               </CardContent>
             </Card>
 
             <Card>
-              <CardHeader className="pb-2">
-                <CardTitle className="text-sm font-medium flex items-center gap-2">
-                  <Gift className="h-4 w-4" />
-                  Gift Transactions
+              <CardHeader className="pb-1 pt-3 px-3">
+                <CardTitle className="text-xs font-medium flex items-center gap-1.5">
+                  <Eye className="h-3.5 w-3.5 text-purple-500" />
+                  Post Views
                 </CardTitle>
               </CardHeader>
-              <CardContent>
-                <div className="text-2xl font-bold">{stats.totalGiftTransactions}</div>
-                <p className="text-xs text-muted-foreground">All time</p>
+              <CardContent className="px-3 pb-3">
+                <div className="text-xl font-bold">{stats.totalPostViews.toLocaleString()}</div>
               </CardContent>
             </Card>
 
             <Card>
-              <CardHeader className="pb-2">
-                <CardTitle className="text-sm font-medium flex items-center gap-2">
-                  <Coins className="h-4 w-4" />
-                  ACoin Transactions
+              <CardHeader className="pb-1 pt-3 px-3">
+                <CardTitle className="text-xs font-medium flex items-center gap-1.5">
+                  <Heart className="h-3.5 w-3.5 text-red-500" />
+                  Likes
                 </CardTitle>
               </CardHeader>
-              <CardContent>
-                <div className="text-2xl font-bold">{stats.totalAcoinTransactions}</div>
-                <p className="text-xs text-muted-foreground">
-                  {stats.totalPremiumUsers} premium
-                </p>
+              <CardContent className="px-3 pb-3">
+                <div className="text-xl font-bold">{stats.totalLikes.toLocaleString()}</div>
+              </CardContent>
+            </Card>
+
+            <Card>
+              <CardHeader className="pb-1 pt-3 px-3">
+                <CardTitle className="text-xs font-medium flex items-center gap-1.5">
+                  <Gift className="h-3.5 w-3.5 text-yellow-500" />
+                  Gifts Sent
+                </CardTitle>
+              </CardHeader>
+              <CardContent className="px-3 pb-3">
+                <div className="text-xl font-bold">{stats.totalGiftTransactions.toLocaleString()}</div>
+              </CardContent>
+            </Card>
+
+            <Card>
+              <CardHeader className="pb-1 pt-3 px-3">
+                <CardTitle className="text-xs font-medium flex items-center gap-1.5">
+                  <Coins className="h-3.5 w-3.5 text-amber-500" />
+                  ACoin Txns
+                </CardTitle>
+              </CardHeader>
+              <CardContent className="px-3 pb-3">
+                <div className="text-xl font-bold">{stats.totalAcoinTransactions.toLocaleString()}</div>
+                <p className="text-xs text-muted-foreground">{stats.totalPremiumUsers} premium</p>
+              </CardContent>
+            </Card>
+
+            <Card>
+              <CardHeader className="pb-1 pt-3 px-3">
+                <CardTitle className="text-xs font-medium flex items-center gap-1.5">
+                  <UserPlus className="h-3.5 w-3.5 text-cyan-500" />
+                  Follows
+                </CardTitle>
+              </CardHeader>
+              <CardContent className="px-3 pb-3">
+                <div className="text-xl font-bold">{stats.totalFollows.toLocaleString()}</div>
+              </CardContent>
+            </Card>
+
+            <Card>
+              <CardHeader className="pb-1 pt-3 px-3">
+                <CardTitle className="text-xs font-medium flex items-center gap-1.5">
+                  <Image className="h-3.5 w-3.5 text-pink-500" />
+                  Stories
+                </CardTitle>
+              </CardHeader>
+              <CardContent className="px-3 pb-3">
+                <div className="text-xl font-bold">{stats.totalStories.toLocaleString()}</div>
+                <p className="text-xs text-muted-foreground">{stats.totalGroups} groups</p>
+              </CardContent>
+            </Card>
+
+            <Card>
+              <CardHeader className="pb-1 pt-3 px-3">
+                <CardTitle className="text-xs font-medium flex items-center gap-1.5">
+                  <Gamepad2 className="h-3.5 w-3.5 text-indigo-500" />
+                  Game Scores
+                </CardTitle>
+              </CardHeader>
+              <CardContent className="px-3 pb-3">
+                <div className="text-xl font-bold">{stats.totalGameScores.toLocaleString()}</div>
               </CardContent>
             </Card>
           </div>
         )}
 
-        {/* Detailed Data Tabs */}
+        {/* Main Tabs */}
         <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
-          <TabsList className="grid grid-cols-4 lg:grid-cols-8 gap-2 h-auto">
-            <TabsTrigger value="overview">Overview</TabsTrigger>
-            <TabsTrigger value="users">Users</TabsTrigger>
-            <TabsTrigger value="messages">Messages</TabsTrigger>
-            <TabsTrigger value="chats">Chats</TabsTrigger>
-            <TabsTrigger value="posts">Posts</TabsTrigger>
-            <TabsTrigger value="gifts">Gifts</TabsTrigger>
-            <TabsTrigger value="acoin">ACoin</TabsTrigger>
-            <TabsTrigger value="subscriptions">Premium</TabsTrigger>
+          <TabsList className="flex flex-wrap h-auto gap-1 bg-muted/50 p-1">
+            <TabsTrigger value="analytics" className="text-xs">Analytics</TabsTrigger>
+            <TabsTrigger value="users" className="text-xs">Users</TabsTrigger>
+            <TabsTrigger value="withdrawals" className="text-xs">Withdrawals</TabsTrigger>
+            <TabsTrigger value="reports" className="text-xs">Reports</TabsTrigger>
+            <TabsTrigger value="posts" className="text-xs">Posts</TabsTrigger>
+            <TabsTrigger value="messages" className="text-xs">Messages</TabsTrigger>
+            <TabsTrigger value="gifts" className="text-xs">Gifts</TabsTrigger>
+            <TabsTrigger value="premium" className="text-xs">Premium</TabsTrigger>
+            <TabsTrigger value="games" className="text-xs">Games</TabsTrigger>
           </TabsList>
 
-          <TabsContent value="overview" className="space-y-4">
+          <TabsContent value="analytics" className="mt-6">
+            <AdminAnalyticsCharts 
+              data={{
+                users,
+                posts,
+                messages,
+                giftTransactions,
+                acoinTransactions,
+                follows,
+                postViews,
+              }}
+              timeRange={timeRange}
+            />
+          </TabsContent>
+
+          <TabsContent value="users" className="mt-6">
             <Card>
               <CardHeader>
-                <CardTitle>Platform Activity Overview</CardTitle>
-                <CardDescription>Real-time statistics across all features</CardDescription>
+                <CardTitle>User Management ({users.length})</CardTitle>
+                <CardDescription>Full control over all platform users</CardDescription>
               </CardHeader>
               <CardContent>
-                <div className="space-y-4">
-                  <div className="flex items-center justify-between p-4 bg-muted rounded-lg">
-                    <div className="flex items-center gap-3">
-                      <Globe className="h-5 w-5 text-primary" />
-                      <div>
-                        <p className="font-semibold">Groups</p>
-                        <p className="text-sm text-muted-foreground">Active group chats</p>
-                      </div>
-                    </div>
-                    <Badge variant="secondary">{stats?.totalGroups || 0}</Badge>
-                  </div>
-                  
-                  <div className="flex items-center justify-between p-4 bg-muted rounded-lg">
-                    <div className="flex items-center gap-3">
-                      <Activity className="h-5 w-5 text-primary" />
-                      <div>
-                        <p className="font-semibold">Stories</p>
-                        <p className="text-sm text-muted-foreground">Active stories</p>
-                      </div>
-                    </div>
-                    <Badge variant="secondary">{stats?.totalStories || 0}</Badge>
-                  </div>
-                </div>
+                <AdminUserManagement users={users} onRefresh={fetchUsers} />
               </CardContent>
             </Card>
           </TabsContent>
 
-          <TabsContent value="users" className="space-y-4">
+          <TabsContent value="withdrawals" className="mt-6">
             <Card>
               <CardHeader>
-                <CardTitle>Users ({users.length})</CardTitle>
-                <CardDescription>All registered platform users with complete data</CardDescription>
+                <CardTitle className="flex items-center gap-2">
+                  <Wallet className="h-5 w-5" />
+                  Creator Withdrawals
+                </CardTitle>
+                <CardDescription>Manage withdrawal requests from creators</CardDescription>
               </CardHeader>
               <CardContent>
-                <div className="overflow-x-auto">
-                  <Table>
-                    <TableHeader>
-                      <TableRow>
-                        <TableHead>User</TableHead>
-                        <TableHead>Handle</TableHead>
-                        <TableHead>Phone</TableHead>
-                        <TableHead>Country</TableHead>
-                        <TableHead>Nexa</TableHead>
-                        <TableHead>ACoin</TableHead>
-                        <TableHead>Status</TableHead>
-                        <TableHead>Joined</TableHead>
-                      </TableRow>
-                    </TableHeader>
-                    <TableBody>
-                      {users.map((user) => (
-                        <TableRow key={user.id}>
-                          <TableCell className="font-medium">{user.display_name}</TableCell>
-                          <TableCell>@{user.handle}</TableCell>
-                          <TableCell>{user.phone_number || 'N/A'}</TableCell>
-                          <TableCell>
-                            {user.country ? (
-                              <div className="flex items-center gap-1.5">
-                                <span className="text-lg">{getCountryFlag(user.country)}</span>
-                                <span>{user.country}</span>
-                              </div>
-                            ) : 'N/A'}
-                          </TableCell>
-                          <TableCell>{user.xp}</TableCell>
-                          <TableCell>{user.acoin}</TableCell>
-                          <TableCell>
-                            {user.is_verified && <Badge variant="secondary">Verified</Badge>}
-                            {user.is_admin && <Badge>Admin</Badge>}
-                          </TableCell>
-                          <TableCell className="text-xs">{formatDate(user.created_at)}</TableCell>
-                        </TableRow>
-                      ))}
-                    </TableBody>
-                  </Table>
-                </div>
+                <AdminWithdrawalsPanel />
               </CardContent>
             </Card>
           </TabsContent>
 
-          <TabsContent value="messages" className="space-y-4">
+          <TabsContent value="reports" className="mt-6">
             <Card>
               <CardHeader>
-                <CardTitle>Recent Messages ({messages.length})</CardTitle>
-                <CardDescription>Latest platform messages</CardDescription>
+                <CardTitle className="flex items-center gap-2">
+                  <AlertTriangle className="h-5 w-5 text-yellow-500" />
+                  Reports & Moderation
+                </CardTitle>
+                <CardDescription>Review and manage user reports</CardDescription>
               </CardHeader>
               <CardContent>
-                <div className="overflow-x-auto">
-                  <Table>
-                    <TableHeader>
-                      <TableRow>
-                        <TableHead>Sender</TableHead>
-                        <TableHead>Content</TableHead>
-                        <TableHead>Chat ID</TableHead>
-                        <TableHead>Sent At</TableHead>
-                      </TableRow>
-                    </TableHeader>
-                    <TableBody>
-                      {messages.map((msg: any) => (
-                        <TableRow key={msg.id}>
-                          <TableCell>{msg.profiles?.display_name || 'Unknown'}</TableCell>
-                          <TableCell className="max-w-xs truncate">{msg.encrypted_content}</TableCell>
-                          <TableCell className="text-xs">{msg.chat_id.substring(0, 8)}...</TableCell>
-                          <TableCell className="text-xs">{formatDate(msg.sent_at)}</TableCell>
-                        </TableRow>
-                      ))}
-                    </TableBody>
-                  </Table>
-                </div>
+                <AdminReportsPanel />
               </CardContent>
             </Card>
           </TabsContent>
 
-          <TabsContent value="chats" className="space-y-4">
-            <Card>
-              <CardHeader>
-                <CardTitle>Chats ({chats.length})</CardTitle>
-                <CardDescription>All chats and groups</CardDescription>
-              </CardHeader>
-              <CardContent>
-                <div className="overflow-x-auto">
-                  <Table>
-                    <TableHeader>
-                      <TableRow>
-                        <TableHead>Name</TableHead>
-                        <TableHead>Type</TableHead>
-                        <TableHead>Created By</TableHead>
-                        <TableHead>Created At</TableHead>
-                      </TableRow>
-                    </TableHeader>
-                    <TableBody>
-                      {chats.map((chat: any) => (
-                        <TableRow key={chat.id}>
-                          <TableCell>{chat.name || 'Direct Chat'}</TableCell>
-                          <TableCell>
-                            <Badge variant={chat.is_group ? 'default' : 'secondary'}>
-                              {chat.is_group ? 'Group' : 'Direct'}
-                            </Badge>
-                          </TableCell>
-                          <TableCell>{chat.profiles?.display_name || 'Unknown'}</TableCell>
-                          <TableCell className="text-xs">{formatDate(chat.created_at)}</TableCell>
-                        </TableRow>
-                      ))}
-                    </TableBody>
-                  </Table>
-                </div>
-              </CardContent>
-            </Card>
-          </TabsContent>
-
-          <TabsContent value="posts" className="space-y-4">
+          <TabsContent value="posts" className="mt-6">
             <Card>
               <CardHeader>
                 <CardTitle>Posts ({posts.length})</CardTitle>
-                <CardDescription>Latest platform posts</CardDescription>
+                <CardDescription>All platform posts</CardDescription>
               </CardHeader>
               <CardContent>
                 <div className="overflow-x-auto">
@@ -585,16 +688,18 @@ const AdminDashboard = () => {
                         <TableHead>Author</TableHead>
                         <TableHead>Content</TableHead>
                         <TableHead>Views</TableHead>
-                        <TableHead>Created At</TableHead>
+                        <TableHead>Created</TableHead>
                       </TableRow>
                     </TableHeader>
                     <TableBody>
                       {posts.map((post: any) => (
                         <TableRow key={post.id}>
-                          <TableCell>{post.profiles?.display_name || 'Unknown'}</TableCell>
-                          <TableCell className="max-w-md truncate">{post.content}</TableCell>
-                          <TableCell>{post.view_count}</TableCell>
-                          <TableCell className="text-xs">{formatDate(post.created_at)}</TableCell>
+                          <TableCell className="font-medium">
+                            @{post.profiles?.handle || 'unknown'}
+                          </TableCell>
+                          <TableCell className="max-w-[300px] truncate">{post.content}</TableCell>
+                          <TableCell>{post.view_count?.toLocaleString() || 0}</TableCell>
+                          <TableCell className="text-xs text-muted-foreground">{formatDate(post.created_at)}</TableCell>
                         </TableRow>
                       ))}
                     </TableBody>
@@ -604,11 +709,44 @@ const AdminDashboard = () => {
             </Card>
           </TabsContent>
 
-          <TabsContent value="gifts" className="space-y-4">
+          <TabsContent value="messages" className="mt-6">
+            <Card>
+              <CardHeader>
+                <CardTitle>Messages ({messages.length})</CardTitle>
+                <CardDescription>Recent platform messages</CardDescription>
+              </CardHeader>
+              <CardContent>
+                <div className="overflow-x-auto">
+                  <Table>
+                    <TableHeader>
+                      <TableRow>
+                        <TableHead>Sender</TableHead>
+                        <TableHead>Content</TableHead>
+                        <TableHead>Sent</TableHead>
+                      </TableRow>
+                    </TableHeader>
+                    <TableBody>
+                      {messages.map((msg: any) => (
+                        <TableRow key={msg.id}>
+                          <TableCell className="font-medium">
+                            @{msg.profiles?.handle || 'unknown'}
+                          </TableCell>
+                          <TableCell className="max-w-[300px] truncate">{msg.encrypted_content}</TableCell>
+                          <TableCell className="text-xs text-muted-foreground">{formatDate(msg.sent_at)}</TableCell>
+                        </TableRow>
+                      ))}
+                    </TableBody>
+                  </Table>
+                </div>
+              </CardContent>
+            </Card>
+          </TabsContent>
+
+          <TabsContent value="gifts" className="mt-6">
             <Card>
               <CardHeader>
                 <CardTitle>Gift Transactions ({giftTransactions.length})</CardTitle>
-                <CardDescription>Recent gift exchanges</CardDescription>
+                <CardDescription>All gift transactions</CardDescription>
               </CardHeader>
               <CardContent>
                 <div className="overflow-x-auto">
@@ -616,24 +754,23 @@ const AdminDashboard = () => {
                     <TableHeader>
                       <TableRow>
                         <TableHead>Gift</TableHead>
-                        <TableHead>Sender ID</TableHead>
-                        <TableHead>Receiver ID</TableHead>
-                        <TableHead>Cost (Nexa)</TableHead>
+                        <TableHead>Cost</TableHead>
                         <TableHead>Message</TableHead>
-                        <TableHead>Sent At</TableHead>
+                        <TableHead>Date</TableHead>
                       </TableRow>
                     </TableHeader>
                     <TableBody>
                       {giftTransactions.map((txn: any) => (
                         <TableRow key={txn.id}>
                           <TableCell>
-                            {txn.gifts?.emoji} {txn.gifts?.name}
+                            <span className="flex items-center gap-2">
+                              <span>{txn.gifts?.emoji}</span>
+                              <span>{txn.gifts?.name}</span>
+                            </span>
                           </TableCell>
-                          <TableCell className="text-xs">{txn.sender_id.substring(0, 8)}...</TableCell>
-                          <TableCell className="text-xs">{txn.receiver_id.substring(0, 8)}...</TableCell>
-                          <TableCell>{txn.xp_cost}</TableCell>
-                          <TableCell className="max-w-xs truncate">{txn.message || 'No message'}</TableCell>
-                          <TableCell className="text-xs">{formatDate(txn.created_at)}</TableCell>
+                          <TableCell>{txn.xp_cost} Nexa</TableCell>
+                          <TableCell className="max-w-[200px] truncate">{txn.message || '-'}</TableCell>
+                          <TableCell className="text-xs text-muted-foreground">{formatDate(txn.created_at)}</TableCell>
                         </TableRow>
                       ))}
                     </TableBody>
@@ -643,11 +780,11 @@ const AdminDashboard = () => {
             </Card>
           </TabsContent>
 
-          <TabsContent value="acoin" className="space-y-4">
+          <TabsContent value="premium" className="mt-6">
             <Card>
               <CardHeader>
-                <CardTitle>ACoin Transactions ({acoinTransactions.length})</CardTitle>
-                <CardDescription>Recent ACoin activities</CardDescription>
+                <CardTitle>Premium Subscriptions ({subscriptions.length})</CardTitle>
+                <CardDescription>Active premium subscribers</CardDescription>
               </CardHeader>
               <CardContent>
                 <div className="overflow-x-auto">
@@ -655,43 +792,7 @@ const AdminDashboard = () => {
                     <TableHeader>
                       <TableRow>
                         <TableHead>User</TableHead>
-                        <TableHead>Type</TableHead>
-                        <TableHead>Amount</TableHead>
-                        <TableHead>Date</TableHead>
-                      </TableRow>
-                    </TableHeader>
-                    <TableBody>
-                      {acoinTransactions.map((txn: any) => (
-                        <TableRow key={txn.id}>
-                          <TableCell>{txn.profiles?.display_name || 'Unknown'}</TableCell>
-                          <TableCell>
-                            <Badge variant="secondary">{txn.transaction_type}</Badge>
-                          </TableCell>
-                          <TableCell className="font-semibold">{txn.amount}</TableCell>
-                          <TableCell className="text-xs">{formatDate(txn.created_at)}</TableCell>
-                        </TableRow>
-                      ))}
-                    </TableBody>
-                  </Table>
-                </div>
-              </CardContent>
-            </Card>
-          </TabsContent>
-
-          <TabsContent value="subscriptions" className="space-y-4">
-            <Card>
-              <CardHeader>
-                <CardTitle>Active Subscriptions ({subscriptions.length})</CardTitle>
-                <CardDescription>Users with premium access</CardDescription>
-              </CardHeader>
-              <CardContent>
-                <div className="overflow-x-auto">
-                  <Table>
-                    <TableHeader>
-                      <TableRow>
-                        <TableHead>User</TableHead>
-                        <TableHead>Plan</TableHead>
-                        <TableHead>Price</TableHead>
+                        <TableHead>Status</TableHead>
                         <TableHead>Started</TableHead>
                         <TableHead>Expires</TableHead>
                       </TableRow>
@@ -699,13 +800,57 @@ const AdminDashboard = () => {
                     <TableBody>
                       {subscriptions.map((sub: any) => (
                         <TableRow key={sub.id}>
-                          <TableCell>{sub.profiles?.display_name || 'Unknown'}</TableCell>
-                          <TableCell>
-                            <Badge>{sub.plan_name}</Badge>
+                          <TableCell className="font-medium">
+                            @{sub.profiles?.handle || 'unknown'}
                           </TableCell>
-                          <TableCell>{sub.price} ACoin</TableCell>
-                          <TableCell className="text-xs">{formatDate(sub.starts_at)}</TableCell>
-                          <TableCell className="text-xs">{formatDate(sub.expires_at)}</TableCell>
+                          <TableCell>
+                            {sub.is_active ? (
+                              <Badge className="bg-green-500">Active</Badge>
+                            ) : (
+                              <Badge variant="secondary">Inactive</Badge>
+                            )}
+                          </TableCell>
+                          <TableCell className="text-xs text-muted-foreground">{formatDate(sub.started_at)}</TableCell>
+                          <TableCell className="text-xs text-muted-foreground">{formatDate(sub.expires_at)}</TableCell>
+                        </TableRow>
+                      ))}
+                    </TableBody>
+                  </Table>
+                </div>
+              </CardContent>
+            </Card>
+          </TabsContent>
+
+          <TabsContent value="games" className="mt-6">
+            <Card>
+              <CardHeader>
+                <CardTitle>Game Scores ({gameScores.length})</CardTitle>
+                <CardDescription>All game scores and leaderboard data</CardDescription>
+              </CardHeader>
+              <CardContent>
+                <div className="overflow-x-auto">
+                  <Table>
+                    <TableHeader>
+                      <TableRow>
+                        <TableHead>Player</TableHead>
+                        <TableHead>Game</TableHead>
+                        <TableHead>Score</TableHead>
+                        <TableHead>Difficulty</TableHead>
+                        <TableHead>Date</TableHead>
+                      </TableRow>
+                    </TableHeader>
+                    <TableBody>
+                      {gameScores.map((score: any) => (
+                        <TableRow key={score.id}>
+                          <TableCell className="font-medium">
+                            @{score.profiles?.handle || 'unknown'}
+                          </TableCell>
+                          <TableCell>{score.game_type}</TableCell>
+                          <TableCell className="font-bold">{score.score}</TableCell>
+                          <TableCell>
+                            <Badge variant="outline">{score.difficulty}</Badge>
+                          </TableCell>
+                          <TableCell className="text-xs text-muted-foreground">{formatDate(score.created_at)}</TableCell>
                         </TableRow>
                       ))}
                     </TableBody>
