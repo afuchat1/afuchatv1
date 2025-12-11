@@ -378,15 +378,13 @@ export default function CreatorEarnings() {
             <CardTitle className="text-base">How It Works</CardTitle>
           </CardHeader>
           <CardContent className="space-y-2 text-sm text-muted-foreground">
-            <p>🇺🇬 <strong>Uganda creators only</strong></p>
-            <p>👥 <strong>10+ followers</strong> required</p>
-            <p>👀 <strong>500+ views</strong> in the past week</p>
-            <p>💰 <strong>5,000 UGX</strong> distributed daily automatically</p>
-            <p>📊 Share is weighted by your daily engagement (views + likes)</p>
-            <p>📅 Withdrawals available <strong>weekends only</strong></p>
-            <p>💵 Minimum withdrawal: <strong>5,000 UGX</strong></p>
-            <p>💸 <strong>10% fee</strong> on all withdrawals</p>
-            <p>✅ Admin approval required for withdrawals</p>
+            <p>🇺🇬 Available for <strong>Uganda creators</strong></p>
+            <p>💰 <strong>5,000 UGX</strong> distributed daily to active creators</p>
+            <p>📊 Earnings based on your engagement (views + likes)</p>
+            <p>💵 Withdraw to <strong>MTN or Airtel Money</strong></p>
+            <p className="text-xs pt-2">
+              Questions? Ask <strong>AfuAI</strong> for full program details
+            </p>
           </CardContent>
         </Card>
       </div>
