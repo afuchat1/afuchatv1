@@ -5,10 +5,10 @@ import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { toast } from 'sonner';
-import { Crown, Check, Coins, Calendar, Sparkles, ArrowLeft, Gift } from 'lucide-react';
+import { Crown, Check, Coins, Calendar, Sparkles, Gift } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { Separator } from '@/components/ui/separator';
-
+import { PageHeader } from '@/components/PageHeader';
 interface SubscriptionPlan {
   id: string;
   name: string;
@@ -157,25 +157,10 @@ export default function Premium() {
 
   return (
     <div className="min-h-screen bg-background">
-      {/* Header */}
-      <div className="sticky top-0 z-50 bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60 border-b">
-        <div className="container max-w-6xl mx-auto px-4 h-14 flex items-center gap-4">
-          <Button
-            variant="ghost"
-            size="icon"
-            onClick={() => navigate(-1)}
-            className="rounded-full"
-          >
-            <ArrowLeft className="h-5 w-5" />
-          </Button>
-          <div className="flex-1">
-            <h1 className="text-xl font-bold flex items-center gap-2">
-              <Crown className="h-5 w-5 text-primary" />
-              Premium Subscription
-            </h1>
-          </div>
-        </div>
-      </div>
+      <PageHeader 
+        title="Premium" 
+        icon={<Crown className="h-5 w-5 text-primary" />}
+      />
 
       <div className="container max-w-6xl mx-auto px-4 py-8">
         {/* ACoin Balance Card */}
