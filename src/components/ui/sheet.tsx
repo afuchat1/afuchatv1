@@ -93,7 +93,11 @@ const SheetContent = React.forwardRef<React.ElementRef<typeof SheetPrimitive.Con
             whileTap={{ scaleX: 0.95 }}
           />
         </div>
-        <div className="flex-1 min-h-0 overflow-y-auto overflow-x-hidden px-6 pb-6" style={{ WebkitOverflowScrolling: 'touch' }}>
+        <div 
+          className="flex-1 min-h-0 overflow-y-auto overflow-x-hidden px-6 pb-6 overscroll-contain" 
+          style={{ WebkitOverflowScrolling: 'touch' }}
+          onTouchMove={(e) => e.stopPropagation()}
+        >
           {children}
         </div>
       </motion.div>

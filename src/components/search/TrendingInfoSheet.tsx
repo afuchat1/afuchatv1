@@ -74,19 +74,15 @@ export const TrendingInfoSheet = ({
 
   return (
     <Sheet open={open} onOpenChange={onOpenChange}>
-      <SheetContent side="bottom" className="h-auto max-h-[70vh] rounded-t-3xl bg-background/95 backdrop-blur-xl border-t border-border/50 p-0 flex flex-col">
-        <SheetHeader className="text-left p-6 pb-4 flex-shrink-0">
+      <SheetContent side="bottom" className="h-auto max-h-[70vh] rounded-t-3xl bg-background/95 backdrop-blur-xl border-t border-border/50">
+        <SheetHeader className="text-left pb-4">
           <SheetTitle className="flex items-center gap-2 text-xl">
             <TrendingUp className="h-5 w-5 text-primary" />
             {trend.topic}
           </SheetTitle>
         </SheetHeader>
 
-        <div 
-          className="space-y-6 overflow-y-auto overscroll-contain flex-1 px-6 pb-6"
-          onTouchMove={(e) => e.stopPropagation()}
-          style={{ WebkitOverflowScrolling: 'touch' }}
-        >
+        <div className="space-y-6">
           {/* Stats */}
           <div className="flex items-center gap-6">
             <div className="flex items-center gap-2">
