@@ -51,7 +51,7 @@ const AdminDashboard = () => {
   const [hasAdminPrivileges, setHasAdminPrivileges] = useState(false);
   const [stats, setStats] = useState<DashboardStats | null>(null);
   const [activeTab, setActiveTab] = useState('analytics');
-  const [timeRange, setTimeRange] = useState<'week' | 'month' | 'year'>('week');
+  const [timeRange, setTimeRange] = useState<'today' | 'week' | 'month' | 'year'>('week');
   const [refreshing, setRefreshing] = useState(false);
 
   // Detailed data states
@@ -70,6 +70,10 @@ const AdminDashboard = () => {
   const [referrals, setReferrals] = useState<any[]>([]);
   const [blockedUsers, setBlockedUsers] = useState<any[]>([]);
   const [gameScores, setGameScores] = useState<any[]>([]);
+  const [likes, setLikes] = useState<any[]>([]);
+  const [replies, setReplies] = useState<any[]>([]);
+  const [userReports, setUserReports] = useState<any[]>([]);
+  const [messageReports, setMessageReports] = useState<any[]>([]);
 
   useEffect(() => {
     if (authLoading) return;
@@ -122,6 +126,10 @@ const AdminDashboard = () => {
       fetchReferrals(),
       fetchBlockedUsers(),
       fetchGameScores(),
+      fetchLikes(),
+      fetchReplies(),
+      fetchUserReports(),
+      fetchMessageReports(),
     ]);
   };
 
@@ -397,6 +405,58 @@ const AdminDashboard = () => {
     }
   };
 
+  const fetchLikes = async () => {
+    try {
+      const { data } = await supabase
+        .from('post_acknowledgments')
+        .select('id, post_id, user_id, created_at')
+        .order('created_at', { ascending: false })
+        .limit(200);
+      setLikes(data || []);
+    } catch (error) {
+      console.error('Error fetching likes:', error);
+    }
+  };
+
+  const fetchReplies = async () => {
+    try {
+      const { data } = await supabase
+        .from('post_replies')
+        .select('id, post_id, author_id, created_at')
+        .order('created_at', { ascending: false })
+        .limit(200);
+      setReplies(data || []);
+    } catch (error) {
+      console.error('Error fetching replies:', error);
+    }
+  };
+
+  const fetchUserReports = async () => {
+    try {
+      const { data } = await supabase
+        .from('user_reports')
+        .select('id, reporter_id, reported_user_id, reason, status, created_at')
+        .order('created_at', { ascending: false })
+        .limit(100);
+      setUserReports(data || []);
+    } catch (error) {
+      console.error('Error fetching user reports:', error);
+    }
+  };
+
+  const fetchMessageReports = async () => {
+    try {
+      const { data } = await supabase
+        .from('message_reports')
+        .select('id, reporter_id, message_id, reason, status, created_at')
+        .order('created_at', { ascending: false })
+        .limit(100);
+      setMessageReports(data || []);
+    } catch (error) {
+      console.error('Error fetching message reports:', error);
+    }
+  };
+
   const formatDate = (date: string) => new Date(date).toLocaleString();
 
   if (loading) {
@@ -458,6 +518,7 @@ const AdminDashboard = () => {
                 <SelectValue />
               </SelectTrigger>
               <SelectContent>
+                <SelectItem value="today">Today</SelectItem>
                 <SelectItem value="week">Last 7 Days</SelectItem>
                 <SelectItem value="month">Last 30 Days</SelectItem>
                 <SelectItem value="year">Last Year</SelectItem>
@@ -627,6 +688,16 @@ const AdminDashboard = () => {
                 acoinTransactions,
                 follows,
                 postViews,
+                stories,
+                tips,
+                redEnvelopes,
+                referrals,
+                gameScores,
+                likes,
+                replies,
+                subscriptions,
+                userReports,
+                messageReports,
               }}
               timeRange={timeRange}
             />
