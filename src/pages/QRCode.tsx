@@ -1,17 +1,15 @@
-import { useNavigate } from 'react-router-dom';
 import { useAuth } from '@/contexts/AuthContext';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { ArrowLeft, Download, Share2, QrCode as QrCodeIcon } from 'lucide-react';
-import Logo from '@/components/Logo';
+import { Download, Share2, QrCode as QrCodeIcon } from 'lucide-react';
 import { QRCodeSVG } from 'qrcode.react';
 import { toast } from 'sonner';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
+import { PageHeader } from '@/components/PageHeader';
 
 const QRCode = () => {
-  const navigate = useNavigate();
   const { user } = useAuth();
 
   const { data: profile } = useQuery({
@@ -87,35 +85,14 @@ const QRCode = () => {
 
   return (
     <div className="min-h-screen bg-background">
-      {/* Header */}
-      <header className="sticky top-0 z-50 w-full border-b border-border bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
-        <div className="container max-w-4xl mx-auto px-4 sm:px-6">
-          <div className="flex h-14 sm:h-16 items-center justify-between">
-            <Button
-              variant="ghost"
-              size="icon"
-              onClick={() => navigate(-1)}
-              className="shrink-0"
-            >
-              <ArrowLeft className="h-5 w-5" />
-            </Button>
-            <div className="absolute left-1/2 -translate-x-1/2">
-              <Logo size="sm" />
-            </div>
-            <div className="w-10" />
-          </div>
-        </div>
-      </header>
+      <PageHeader 
+        title="My QR Code" 
+        subtitle="Share your profile"
+        icon={<QrCodeIcon className="h-5 w-5 text-primary" />}
+      />
 
       {/* Main Content */}
       <main className="container max-w-md mx-auto px-4 sm:px-6 py-8 pb-24">
-        <div className="flex items-center gap-3 mb-8">
-          <QrCodeIcon className="h-8 w-8 text-primary" />
-          <div>
-            <h1 className="text-3xl font-bold">My QR Code</h1>
-            <p className="text-muted-foreground">Share your profile</p>
-          </div>
-        </div>
 
         <Card>
           <CardHeader className="text-center">
