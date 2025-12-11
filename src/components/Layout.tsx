@@ -131,17 +131,26 @@ const Layout = ({ children }: LayoutProps) => {
 
         const chatIds = memberChats.map(c => c.chat_id);
         
-        // Get messages that are unread (read_at is null) and not sent by current user
-        const { data: unreadMessages } = await supabase
+        // Get messages with their read status from message_status table
+        const { data: messagesWithStatus } = await supabase
           .from('messages')
-          .select('chat_id')
+          .select(`
+            chat_id,
+            id,
+            message_status!left(read_at, user_id)
+          `)
           .in('chat_id', chatIds)
-          .neq('sender_id', user.id)
-          .is('read_at', null);
+          .neq('sender_id', user.id);
         
-        // Count unique chats with unread messages
-        const uniqueChats = new Set(unreadMessages?.map(m => m.chat_id) || []);
-        setUnreadChats(uniqueChats.size);
+        // Count unique chats with unread messages (no read_at for current user)
+        const unreadChatIds = new Set<string>();
+        messagesWithStatus?.forEach(msg => {
+          const userReadStatus = msg.message_status?.find((s: any) => s.user_id === user.id);
+          if (!userReadStatus || !userReadStatus.read_at) {
+            unreadChatIds.add(msg.chat_id);
+          }
+        });
+        setUnreadChats(unreadChatIds.size);
       };
       fetchUnreadChatsCount();
 
@@ -165,6 +174,13 @@ const Layout = ({ children }: LayoutProps) => {
           event: '*',
           schema: 'public',
           table: 'messages',
+        }, () => {
+          fetchUnreadChatsCount();
+        })
+        .on('postgres_changes', {
+          event: '*',
+          schema: 'public',
+          table: 'message_status',
         }, () => {
           fetchUnreadChatsCount();
         })
