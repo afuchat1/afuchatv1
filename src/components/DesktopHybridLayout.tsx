@@ -5,7 +5,7 @@ import { useAccountMode } from '@/contexts/AccountModeContext';
 import { 
   Home, MessageSquare, Search, Bell, User, Settings, Shield, 
   BarChart3, Grid3x3, Bot, ShoppingBag, Wallet, Send, Gift, 
-  Image as ImageIcon, Hash, TrendingUp, Menu, X, Plus
+  Image as ImageIcon, Hash, TrendingUp, Menu, X, Plus, DollarSign
 } from 'lucide-react';
 import Logo from '@/components/Logo';
 import NotificationIcon from '@/components/nav/NotificationIcon';
@@ -110,6 +110,7 @@ export const DesktopHybridLayout = ({ children }: DesktopHybridLayoutProps) => {
 
   const featureItems = [
     { path: '/ai-chat', icon: Bot, label: 'AI Chat', requiresAuth: true },
+    { path: '/creator-earnings', icon: DollarSign, label: 'Creator Earnings', requiresAuth: true },
     { path: '/shop', icon: ShoppingBag, label: 'Shop' },
     { path: '/wallet', icon: Wallet, label: 'Wallet', requiresAuth: true },
     { path: '/transfer', icon: Send, label: 'Transfer', requiresAuth: true },
