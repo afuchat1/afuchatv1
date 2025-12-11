@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react';
 import { useAuth } from '@/contexts/AuthContext';
 import { supabase } from '@/integrations/supabase/client';
 import { useQuery } from '@tanstack/react-query';
-import { Wallet, TrendingUp, Eye, Heart, Phone, AlertCircle, CheckCircle, Clock, Ban, Timer, BarChart3, Trophy, MessageCircle } from 'lucide-react';
+import { Wallet, TrendingUp, Eye, Heart, Phone, AlertCircle, CheckCircle, Clock, Ban, Timer, BarChart3, Trophy, MessageCircle, Gift, ChevronRight } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
@@ -14,6 +14,7 @@ import { format } from 'date-fns';
 import { PageHeader } from '@/components/PageHeader';
 import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger } from '@/components/ui/sheet';
 import { Progress } from '@/components/ui/progress';
+import { EngagementDetailsSheet } from '@/components/earnings/EngagementDetailsSheet';
 
 interface Eligibility {
   eligible: boolean;
@@ -50,7 +51,7 @@ interface CountdownTime {
   seconds: number;
 }
 
-interface TopPost {
+export interface TopPost {
   id: string;
   content: string;
   view_count: number;
@@ -74,6 +75,9 @@ export default function CreatorEarnings() {
   const [withdrawSheetOpen, setWithdrawSheetOpen] = useState(false);
   const [countdown, setCountdown] = useState<CountdownTime>({ days: 0, hours: 0, minutes: 0, seconds: 0 });
   const [isWeekendNow, setIsWeekendNow] = useState(false);
+  const [selectedPost, setSelectedPost] = useState<TopPost | null>(null);
+  const [detailsType, setDetailsType] = useState<'views' | 'likes' | 'replies' | 'total'>('total');
+  const [detailsSheetOpen, setDetailsSheetOpen] = useState(false);
 
   // Calculate countdown to next weekend or end of weekend
   useEffect(() => {
@@ -403,130 +407,164 @@ export default function CreatorEarnings() {
           </CardContent>
         </Card>
 
-        {/* Balance Card with Withdraw Button */}
-        <Card className="bg-gradient-to-br from-primary/10 to-primary/5">
+        {/* Potential Earnings Banner for Non-Eligible Users */}
+        {!eligibility?.eligible && topPosts && topPosts.length > 0 && (
+          <Card className="bg-gradient-to-br from-yellow-500/20 to-orange-500/10 border-yellow-500/30">
+            <CardContent className="pt-6">
+              <div className="flex items-start gap-3">
+                <Gift className="h-8 w-8 text-yellow-600 flex-shrink-0" />
+                <div className="flex-1">
+                  <p className="font-semibold text-yellow-700 dark:text-yellow-400">You Could Have Earned</p>
+                  <p className="text-3xl font-bold text-yellow-600 dark:text-yellow-500">
+                    ~{topPosts.reduce((sum, p) => sum + (p.engagement_score > 0 ? Math.round((p.engagement_score / Math.max(topPosts.reduce((s, pt) => s + pt.engagement_score, 0), 100)) * 5000) : 0), 0).toLocaleString()} UGX
+                  </p>
+                  <p className="text-sm text-muted-foreground mt-1">
+                    Based on today's engagement. Become eligible to start earning!
+                  </p>
+                </div>
+              </div>
+              <div className="mt-4 p-3 bg-background/50 rounded-lg">
+                <p className="text-xs text-muted-foreground">
+                  📊 Your posts are generating engagement but you're not eligible yet. 
+                  Get <strong>10+ followers</strong> and <strong>500+ weekly views</strong> to unlock earnings.
+                </p>
+              </div>
+            </CardContent>
+          </Card>
+        )}
+
+        {/* Balance Card with Withdraw Button - Only for Eligible Users */}
+        <Card className={eligibility?.eligible ? "bg-gradient-to-br from-primary/10 to-primary/5" : "bg-muted/30"}>
           <CardContent className="pt-6">
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-sm text-muted-foreground">Available Balance</p>
-                <p className="text-3xl font-bold">{(balance || 0).toLocaleString()} UGX</p>
+                <p className="text-sm text-muted-foreground">
+                  {eligibility?.eligible ? 'Available Balance' : 'Potential Balance (Not Credited)'}
+                </p>
+                <p className={`text-3xl font-bold ${eligibility?.eligible ? '' : 'text-muted-foreground'}`}>
+                  {eligibility?.eligible ? (balance || 0).toLocaleString() : '---'} UGX
+                </p>
               </div>
-              <Wallet className="h-10 w-10 text-primary opacity-50" />
+              <Wallet className={`h-10 w-10 ${eligibility?.eligible ? 'text-primary' : 'text-muted-foreground'} opacity-50`} />
             </div>
             <p className="text-xs text-muted-foreground mt-2">
-              Minimum withdrawal: 5,000 UGX • Weekends only • 10% fee
+              {eligibility?.eligible 
+                ? 'Minimum withdrawal: 5,000 UGX • Weekends only • 10% fee'
+                : 'Earnings will be credited once you become eligible'}
             </p>
 
-            {/* Withdraw Button with Countdown - Visible to all */}
-            <div className="mt-4">
-              {isWeekendNow ? (
-                <Sheet open={withdrawSheetOpen} onOpenChange={setWithdrawSheetOpen}>
-                  <SheetTrigger asChild>
-                    <Button 
-                      className="w-full bg-green-600 hover:bg-green-700 disabled:bg-green-600/50" 
-                      size="lg"
-                      disabled={!eligibility?.eligible || (balance || 0) < 5000}
-                    >
-                      <Wallet className="h-5 w-5 mr-2" />
-                      {eligibility?.eligible ? 'Withdraw Now' : 'Withdraw (Not Eligible)'}
-                    </Button>
-                  </SheetTrigger>
-                  <SheetContent side="bottom" className="h-auto max-h-[70vh]">
-                    <SheetHeader>
-                      <SheetTitle className="flex items-center gap-2">
-                        <Phone className="h-5 w-5" />
-                        Withdraw to Mobile Money
-                      </SheetTitle>
-                    </SheetHeader>
-                    <div className="space-y-4 py-4">
-                      <div className="bg-green-500/10 border border-green-500/20 rounded-lg p-3">
-                        <div className="flex items-center gap-2 text-green-600 font-medium">
-                          <CheckCircle className="h-4 w-4" />
-                          <span>Withdrawals are open!</span>
+            {/* Withdraw Button with Countdown - Only for Eligible Users */}
+            {eligibility?.eligible && (
+              <div className="mt-4">
+                {isWeekendNow ? (
+                  <Sheet open={withdrawSheetOpen} onOpenChange={setWithdrawSheetOpen}>
+                    <SheetTrigger asChild>
+                      <Button 
+                        className="w-full bg-green-600 hover:bg-green-700 disabled:bg-green-600/50" 
+                        size="lg"
+                        disabled={(balance || 0) < 5000}
+                      >
+                        <Wallet className="h-5 w-5 mr-2" />
+                        Withdraw Now
+                      </Button>
+                    </SheetTrigger>
+                    <SheetContent side="bottom" className="h-auto max-h-[70vh]">
+                      <SheetHeader>
+                        <SheetTitle className="flex items-center gap-2">
+                          <Phone className="h-5 w-5" />
+                          Withdraw to Mobile Money
+                        </SheetTitle>
+                      </SheetHeader>
+                      <div className="space-y-4 py-4">
+                        <div className="bg-green-500/10 border border-green-500/20 rounded-lg p-3">
+                          <div className="flex items-center gap-2 text-green-600 font-medium">
+                            <CheckCircle className="h-4 w-4" />
+                            <span>Withdrawals are open!</span>
+                          </div>
+                          <p className="text-xs text-muted-foreground mt-1">
+                            Window closes in: {formatCountdownUnit(countdown.hours)}:{formatCountdownUnit(countdown.minutes)}:{formatCountdownUnit(countdown.seconds)}
+                          </p>
                         </div>
-                        <p className="text-xs text-muted-foreground mt-1">
-                          Window closes in: {formatCountdownUnit(countdown.hours)}:{formatCountdownUnit(countdown.minutes)}:{formatCountdownUnit(countdown.seconds)}
+
+                        <div className="space-y-2">
+                          <Label>Mobile Network</Label>
+                          <Select value={network} onValueChange={setNetwork}>
+                            <SelectTrigger>
+                              <SelectValue placeholder="Select network" />
+                            </SelectTrigger>
+                            <SelectContent>
+                              <SelectItem value="MTN">MTN Mobile Money</SelectItem>
+                              <SelectItem value="Airtel">Airtel Money</SelectItem>
+                            </SelectContent>
+                          </Select>
+                        </div>
+
+                        <div className="space-y-2">
+                          <Label>Phone Number</Label>
+                          <Input
+                            placeholder="07XXXXXXXX"
+                            value={phoneNumber}
+                            onChange={(e) => setPhoneNumber(e.target.value)}
+                          />
+                        </div>
+
+                        <Button 
+                          className="w-full" 
+                          onClick={handleWithdraw}
+                          disabled={(balance || 0) < 5000 || withdrawing}
+                        >
+                          {withdrawing ? 'Processing...' : `Withdraw ${(balance || 0).toLocaleString()} UGX`}
+                        </Button>
+
+                        <p className="text-xs text-muted-foreground text-center">
+                          10% platform fee will be deducted
                         </p>
                       </div>
-
-                      <div className="space-y-2">
-                        <Label>Mobile Network</Label>
-                        <Select value={network} onValueChange={setNetwork}>
-                          <SelectTrigger>
-                            <SelectValue placeholder="Select network" />
-                          </SelectTrigger>
-                          <SelectContent>
-                            <SelectItem value="MTN">MTN Mobile Money</SelectItem>
-                            <SelectItem value="Airtel">Airtel Money</SelectItem>
-                          </SelectContent>
-                        </Select>
+                    </SheetContent>
+                  </Sheet>
+                ) : (
+                  <div className="space-y-3">
+                    <Button 
+                      className="w-full" 
+                      size="lg" 
+                      disabled 
+                      variant="secondary"
+                    >
+                      <Timer className="h-5 w-5 mr-2" />
+                      Withdraw (Opens Weekend)
+                    </Button>
+                    
+                    {/* Countdown Display */}
+                    <div className="bg-muted/50 rounded-lg p-4">
+                      <p className="text-xs text-muted-foreground text-center mb-2">
+                        Opens in
+                      </p>
+                      <div className="flex justify-center gap-2">
+                        <div className="bg-background rounded-lg px-3 py-2 min-w-[60px] text-center">
+                          <p className="text-xl font-bold">{formatCountdownUnit(countdown.days)}</p>
+                          <p className="text-xs text-muted-foreground">Days</p>
+                        </div>
+                        <div className="bg-background rounded-lg px-3 py-2 min-w-[60px] text-center">
+                          <p className="text-xl font-bold">{formatCountdownUnit(countdown.hours)}</p>
+                          <p className="text-xs text-muted-foreground">Hours</p>
+                        </div>
+                        <div className="bg-background rounded-lg px-3 py-2 min-w-[60px] text-center">
+                          <p className="text-xl font-bold">{formatCountdownUnit(countdown.minutes)}</p>
+                          <p className="text-xs text-muted-foreground">Mins</p>
+                        </div>
+                        <div className="bg-background rounded-lg px-3 py-2 min-w-[60px] text-center">
+                          <p className="text-xl font-bold">{formatCountdownUnit(countdown.seconds)}</p>
+                          <p className="text-xs text-muted-foreground">Secs</p>
+                        </div>
                       </div>
-
-                      <div className="space-y-2">
-                        <Label>Phone Number</Label>
-                        <Input
-                          placeholder="07XXXXXXXX"
-                          value={phoneNumber}
-                          onChange={(e) => setPhoneNumber(e.target.value)}
-                        />
-                      </div>
-
-                      <Button 
-                        className="w-full" 
-                        onClick={handleWithdraw}
-                        disabled={(balance || 0) < 5000 || withdrawing}
-                      >
-                        {withdrawing ? 'Processing...' : `Withdraw ${(balance || 0).toLocaleString()} UGX`}
-                      </Button>
-
-                      <p className="text-xs text-muted-foreground text-center">
-                        10% platform fee will be deducted
+                      <p className="text-xs text-muted-foreground text-center mt-2">
+                        Available Saturday & Sunday only
                       </p>
                     </div>
-                  </SheetContent>
-                </Sheet>
-              ) : (
-                <div className="space-y-3">
-                  <Button 
-                    className="w-full" 
-                    size="lg" 
-                    disabled 
-                    variant="secondary"
-                  >
-                    <Timer className="h-5 w-5 mr-2" />
-                    {eligibility?.eligible ? 'Withdraw (Opens Weekend)' : 'Withdraw (Not Eligible)'}
-                  </Button>
-                  
-                  {/* Countdown Display */}
-                  <div className="bg-muted/50 rounded-lg p-4">
-                    <p className="text-xs text-muted-foreground text-center mb-2">
-                      Opens in
-                    </p>
-                    <div className="flex justify-center gap-2">
-                      <div className="bg-background rounded-lg px-3 py-2 min-w-[60px] text-center">
-                        <p className="text-xl font-bold">{formatCountdownUnit(countdown.days)}</p>
-                        <p className="text-xs text-muted-foreground">Days</p>
-                      </div>
-                      <div className="bg-background rounded-lg px-3 py-2 min-w-[60px] text-center">
-                        <p className="text-xl font-bold">{formatCountdownUnit(countdown.hours)}</p>
-                        <p className="text-xs text-muted-foreground">Hours</p>
-                      </div>
-                      <div className="bg-background rounded-lg px-3 py-2 min-w-[60px] text-center">
-                        <p className="text-xl font-bold">{formatCountdownUnit(countdown.minutes)}</p>
-                        <p className="text-xs text-muted-foreground">Mins</p>
-                      </div>
-                      <div className="bg-background rounded-lg px-3 py-2 min-w-[60px] text-center">
-                        <p className="text-xl font-bold">{formatCountdownUnit(countdown.seconds)}</p>
-                        <p className="text-xs text-muted-foreground">Secs</p>
-                      </div>
-                    </div>
-                    <p className="text-xs text-muted-foreground text-center mt-2">
-                      Available Saturday & Sunday only
-                    </p>
                   </div>
-                </div>
-              )}
-            </div>
+                )}
+              </div>
+            )}
           </CardContent>
         </Card>
 
@@ -579,36 +617,104 @@ export default function CreatorEarnings() {
                         </div>
                       </div>
 
-                      {/* Total Stats (All-time) */}
-                      <div className="bg-background/50 rounded-lg p-2">
-                        <p className="text-xs font-medium text-muted-foreground mb-1">Total (All-time)</p>
-                        <div className="flex items-center gap-3 text-xs">
-                          <span className="flex items-center gap-1">
+                      {/* Total Stats (All-time) - Clickable */}
+                      <div 
+                        className="bg-background/50 rounded-lg p-2 cursor-pointer hover:bg-background/80 transition-colors"
+                        onClick={() => {
+                          setSelectedPost(post);
+                          setDetailsType('total');
+                          setDetailsSheetOpen(true);
+                        }}
+                      >
+                        <div className="flex items-center justify-between">
+                          <p className="text-xs font-medium text-muted-foreground">Total (All-time)</p>
+                          <ChevronRight className="h-3 w-3 text-muted-foreground" />
+                        </div>
+                        <div className="flex items-center gap-3 text-xs mt-1">
+                          <button 
+                            className="flex items-center gap-1 hover:text-blue-500 transition-colors"
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              setSelectedPost(post);
+                              setDetailsType('views');
+                              setDetailsSheetOpen(true);
+                            }}
+                          >
                             <Eye className="h-3 w-3" /> {post.total_views.toLocaleString()}
-                          </span>
-                          <span className="flex items-center gap-1">
+                          </button>
+                          <button 
+                            className="flex items-center gap-1 hover:text-red-500 transition-colors"
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              setSelectedPost(post);
+                              setDetailsType('likes');
+                              setDetailsSheetOpen(true);
+                            }}
+                          >
                             <Heart className="h-3 w-3" /> {post.total_likes.toLocaleString()}
-                          </span>
-                          <span className="flex items-center gap-1">
+                          </button>
+                          <button 
+                            className="flex items-center gap-1 hover:text-green-500 transition-colors"
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              setSelectedPost(post);
+                              setDetailsType('replies');
+                              setDetailsSheetOpen(true);
+                            }}
+                          >
                             <MessageCircle className="h-3 w-3" /> {post.total_replies.toLocaleString()}
-                          </span>
+                          </button>
                         </div>
                       </div>
 
-                      {/* Today's Stats */}
+                      {/* Today's Stats - Clickable */}
                       {post.engagement_score > 0 && (
-                        <div className="bg-green-500/10 rounded-lg p-2">
-                          <p className="text-xs font-medium text-green-600 mb-1">Today's Activity</p>
-                          <div className="flex items-center gap-3 text-xs text-green-700">
-                            <span className="flex items-center gap-1">
+                        <div 
+                          className="bg-green-500/10 rounded-lg p-2 cursor-pointer hover:bg-green-500/20 transition-colors"
+                          onClick={() => {
+                            setSelectedPost(post);
+                            setDetailsType('total');
+                            setDetailsSheetOpen(true);
+                          }}
+                        >
+                          <div className="flex items-center justify-between">
+                            <p className="text-xs font-medium text-green-600">Today's Activity</p>
+                            <ChevronRight className="h-3 w-3 text-green-600" />
+                          </div>
+                          <div className="flex items-center gap-3 text-xs text-green-700 mt-1">
+                            <button 
+                              className="flex items-center gap-1 hover:text-green-800 transition-colors"
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                setSelectedPost(post);
+                                setDetailsType('views');
+                                setDetailsSheetOpen(true);
+                              }}
+                            >
                               <Eye className="h-3 w-3" /> +{post.view_count}
-                            </span>
-                            <span className="flex items-center gap-1">
+                            </button>
+                            <button 
+                              className="flex items-center gap-1 hover:text-green-800 transition-colors"
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                setSelectedPost(post);
+                                setDetailsType('likes');
+                                setDetailsSheetOpen(true);
+                              }}
+                            >
                               <Heart className="h-3 w-3" /> +{post.likes_count}
-                            </span>
-                            <span className="flex items-center gap-1">
+                            </button>
+                            <button 
+                              className="flex items-center gap-1 hover:text-green-800 transition-colors"
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                setSelectedPost(post);
+                                setDetailsType('replies');
+                                setDetailsSheetOpen(true);
+                              }}
+                            >
                               <MessageCircle className="h-3 w-3" /> +{post.replies_count}
-                            </span>
+                            </button>
                           </div>
                         </div>
                       )}
@@ -622,13 +728,23 @@ export default function CreatorEarnings() {
                       </div>
 
                       {/* Estimated Total Earnings */}
-                      <div className="flex items-center justify-between pt-2 border-t border-border/50">
+                      <div 
+                        className="flex items-center justify-between pt-2 border-t border-border/50 cursor-pointer hover:bg-muted/30 -mx-3 px-3 pb-1 rounded-b-lg transition-colors"
+                        onClick={() => {
+                          setSelectedPost(post);
+                          setDetailsType('total');
+                          setDetailsSheetOpen(true);
+                        }}
+                      >
                         <span className="text-xs text-muted-foreground">
                           Est. Total Earned
                         </span>
-                        <span className="text-base font-bold text-green-600">
-                          ~{post.estimated_total_earnings.toLocaleString()} UGX
-                        </span>
+                        <div className="flex items-center gap-1">
+                          <span className="text-base font-bold text-green-600">
+                            ~{post.estimated_total_earnings.toLocaleString()} UGX
+                          </span>
+                          <ChevronRight className="h-4 w-4 text-muted-foreground" />
+                        </div>
                       </div>
                     </div>
                   );
@@ -748,6 +864,14 @@ export default function CreatorEarnings() {
           </CardContent>
         </Card>
       </div>
+
+      {/* Engagement Details Sheet */}
+      <EngagementDetailsSheet
+        open={detailsSheetOpen}
+        onOpenChange={setDetailsSheetOpen}
+        type={detailsType}
+        post={selectedPost}
+      />
     </div>
   );
 }
