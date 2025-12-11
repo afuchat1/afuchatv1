@@ -1,8 +1,8 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useAuth } from '@/contexts/AuthContext';
 import { supabase } from '@/integrations/supabase/client';
 import { useQuery } from '@tanstack/react-query';
-import { Wallet, TrendingUp, Eye, Heart, Phone, AlertCircle, CheckCircle, Clock, Ban } from 'lucide-react';
+import { Wallet, TrendingUp, Eye, Heart, Phone, AlertCircle, CheckCircle, Clock, Ban, Timer } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
@@ -12,6 +12,7 @@ import { Skeleton } from '@/components/ui/skeleton';
 import { toast } from 'sonner';
 import { format } from 'date-fns';
 import { PageHeader } from '@/components/PageHeader';
+import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger } from '@/components/ui/sheet';
 
 interface Eligibility {
   eligible: boolean;
@@ -41,11 +42,72 @@ interface Withdrawal {
   processed_at: string | null;
 }
 
+interface CountdownTime {
+  days: number;
+  hours: number;
+  minutes: number;
+  seconds: number;
+}
+
 export default function CreatorEarnings() {
   const { user } = useAuth();
   const [phoneNumber, setPhoneNumber] = useState('');
   const [network, setNetwork] = useState<string>('');
   const [withdrawing, setWithdrawing] = useState(false);
+  const [withdrawSheetOpen, setWithdrawSheetOpen] = useState(false);
+  const [countdown, setCountdown] = useState<CountdownTime>({ days: 0, hours: 0, minutes: 0, seconds: 0 });
+  const [isWeekendNow, setIsWeekendNow] = useState(false);
+
+  // Calculate countdown to next weekend or end of weekend
+  useEffect(() => {
+    const calculateCountdown = () => {
+      const now = new Date();
+      const day = now.getDay(); // 0 = Sunday, 6 = Saturday
+      const isWeekend = day === 0 || day === 6;
+      setIsWeekendNow(isWeekend);
+
+      let targetDate: Date;
+
+      if (isWeekend) {
+        // Weekend active - countdown to Sunday midnight (end of weekend)
+        if (day === 6) {
+          // Saturday - target is end of Sunday (Monday 00:00)
+          targetDate = new Date(now);
+          targetDate.setDate(now.getDate() + 2);
+          targetDate.setHours(0, 0, 0, 0);
+        } else {
+          // Sunday - target is Monday 00:00
+          targetDate = new Date(now);
+          targetDate.setDate(now.getDate() + 1);
+          targetDate.setHours(0, 0, 0, 0);
+        }
+      } else {
+        // Weekday - countdown to Saturday 00:00
+        const daysUntilSaturday = (6 - day + 7) % 7 || 7;
+        targetDate = new Date(now);
+        targetDate.setDate(now.getDate() + daysUntilSaturday);
+        targetDate.setHours(0, 0, 0, 0);
+      }
+
+      const diff = targetDate.getTime() - now.getTime();
+      
+      if (diff <= 0) {
+        setCountdown({ days: 0, hours: 0, minutes: 0, seconds: 0 });
+        return;
+      }
+
+      const days = Math.floor(diff / (1000 * 60 * 60 * 24));
+      const hours = Math.floor((diff % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
+      const minutes = Math.floor((diff % (1000 * 60 * 60)) / (1000 * 60));
+      const seconds = Math.floor((diff % (1000 * 60)) / 1000);
+
+      setCountdown({ days, hours, minutes, seconds });
+    };
+
+    calculateCountdown();
+    const interval = setInterval(calculateCountdown, 1000);
+    return () => clearInterval(interval);
+  }, []);
 
   // Check eligibility
   const { data: eligibility, isLoading: eligibilityLoading } = useQuery({
@@ -127,6 +189,7 @@ export default function CreatorEarnings() {
         toast.success(`Withdrawal request submitted! Net: ${result.net_amount?.toLocaleString()} UGX (Fee: ${result.fee?.toLocaleString()} UGX)`);
         setPhoneNumber('');
         setNetwork('');
+        setWithdrawSheetOpen(false);
         refetchBalance();
         refetchWithdrawals();
       } else {
@@ -152,10 +215,7 @@ export default function CreatorEarnings() {
     }
   };
 
-  const isWeekend = () => {
-    const day = new Date().getDay();
-    return day === 0 || day === 6;
-  };
+  const formatCountdownUnit = (value: number) => value.toString().padStart(2, '0');
 
   if (!user) {
     return (
@@ -214,7 +274,7 @@ export default function CreatorEarnings() {
           </CardContent>
         </Card>
 
-        {/* Balance Card */}
+        {/* Balance Card with Withdraw Button */}
         <Card className="bg-gradient-to-br from-primary/10 to-primary/5">
           <CardContent className="pt-6">
             <div className="flex items-center justify-between">
@@ -227,59 +287,112 @@ export default function CreatorEarnings() {
             <p className="text-xs text-muted-foreground mt-2">
               Minimum withdrawal: 5,000 UGX • Weekends only • 10% fee
             </p>
+
+            {/* Withdraw Button with Countdown */}
+            {eligibility?.eligible && (
+              <div className="mt-4">
+                {isWeekendNow ? (
+                  <Sheet open={withdrawSheetOpen} onOpenChange={setWithdrawSheetOpen}>
+                    <SheetTrigger asChild>
+                      <Button className="w-full bg-green-600 hover:bg-green-700" size="lg">
+                        <Wallet className="h-5 w-5 mr-2" />
+                        Withdraw Now
+                      </Button>
+                    </SheetTrigger>
+                    <SheetContent side="bottom" className="h-auto max-h-[70vh]">
+                      <SheetHeader>
+                        <SheetTitle className="flex items-center gap-2">
+                          <Phone className="h-5 w-5" />
+                          Withdraw to Mobile Money
+                        </SheetTitle>
+                      </SheetHeader>
+                      <div className="space-y-4 py-4">
+                        <div className="bg-green-500/10 border border-green-500/20 rounded-lg p-3">
+                          <div className="flex items-center gap-2 text-green-600 font-medium">
+                            <CheckCircle className="h-4 w-4" />
+                            <span>Withdrawals are open!</span>
+                          </div>
+                          <p className="text-xs text-muted-foreground mt-1">
+                            Window closes in: {formatCountdownUnit(countdown.hours)}:{formatCountdownUnit(countdown.minutes)}:{formatCountdownUnit(countdown.seconds)}
+                          </p>
+                        </div>
+
+                        <div className="space-y-2">
+                          <Label>Mobile Network</Label>
+                          <Select value={network} onValueChange={setNetwork}>
+                            <SelectTrigger>
+                              <SelectValue placeholder="Select network" />
+                            </SelectTrigger>
+                            <SelectContent>
+                              <SelectItem value="MTN">MTN Mobile Money</SelectItem>
+                              <SelectItem value="Airtel">Airtel Money</SelectItem>
+                            </SelectContent>
+                          </Select>
+                        </div>
+
+                        <div className="space-y-2">
+                          <Label>Phone Number</Label>
+                          <Input
+                            placeholder="07XXXXXXXX"
+                            value={phoneNumber}
+                            onChange={(e) => setPhoneNumber(e.target.value)}
+                          />
+                        </div>
+
+                        <Button 
+                          className="w-full" 
+                          onClick={handleWithdraw}
+                          disabled={(balance || 0) < 5000 || withdrawing}
+                        >
+                          {withdrawing ? 'Processing...' : `Withdraw ${(balance || 0).toLocaleString()} UGX`}
+                        </Button>
+
+                        <p className="text-xs text-muted-foreground text-center">
+                          10% platform fee will be deducted
+                        </p>
+                      </div>
+                    </SheetContent>
+                  </Sheet>
+                ) : (
+                  <div className="space-y-3">
+                    <Button className="w-full" size="lg" disabled variant="secondary">
+                      <Timer className="h-5 w-5 mr-2" />
+                      Withdraw (Opens on Weekend)
+                    </Button>
+                    
+                    {/* Countdown Display */}
+                    <div className="bg-muted/50 rounded-lg p-4">
+                      <p className="text-xs text-muted-foreground text-center mb-2">
+                        Opens in
+                      </p>
+                      <div className="flex justify-center gap-2">
+                        <div className="bg-background rounded-lg px-3 py-2 min-w-[60px] text-center">
+                          <p className="text-xl font-bold">{formatCountdownUnit(countdown.days)}</p>
+                          <p className="text-xs text-muted-foreground">Days</p>
+                        </div>
+                        <div className="bg-background rounded-lg px-3 py-2 min-w-[60px] text-center">
+                          <p className="text-xl font-bold">{formatCountdownUnit(countdown.hours)}</p>
+                          <p className="text-xs text-muted-foreground">Hours</p>
+                        </div>
+                        <div className="bg-background rounded-lg px-3 py-2 min-w-[60px] text-center">
+                          <p className="text-xl font-bold">{formatCountdownUnit(countdown.minutes)}</p>
+                          <p className="text-xs text-muted-foreground">Mins</p>
+                        </div>
+                        <div className="bg-background rounded-lg px-3 py-2 min-w-[60px] text-center">
+                          <p className="text-xl font-bold">{formatCountdownUnit(countdown.seconds)}</p>
+                          <p className="text-xs text-muted-foreground">Secs</p>
+                        </div>
+                      </div>
+                      <p className="text-xs text-muted-foreground text-center mt-2">
+                        Available Saturday & Sunday only
+                      </p>
+                    </div>
+                  </div>
+                )}
+              </div>
+            )}
           </CardContent>
         </Card>
-
-        {/* Withdraw Section */}
-        {eligibility?.eligible && (
-          <Card>
-            <CardHeader className="pb-2">
-              <CardTitle className="text-base flex items-center gap-2">
-                <Phone className="h-4 w-4" />
-                Withdraw to Mobile Money
-              </CardTitle>
-            </CardHeader>
-            <CardContent className="space-y-4">
-              {!isWeekend() && (
-                <div className="bg-yellow-500/10 border border-yellow-500/20 rounded-lg p-3 text-sm">
-                  <p className="text-yellow-600 font-medium">Withdrawals available on weekends only</p>
-                  <p className="text-muted-foreground text-xs mt-1">Come back on Saturday or Sunday</p>
-                </div>
-              )}
-              
-              <div className="space-y-2">
-                <Label>Mobile Network</Label>
-                <Select value={network} onValueChange={setNetwork} disabled={!isWeekend()}>
-                  <SelectTrigger>
-                    <SelectValue placeholder="Select network" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="MTN">MTN Mobile Money</SelectItem>
-                    <SelectItem value="Airtel">Airtel Money</SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
-
-              <div className="space-y-2">
-                <Label>Phone Number</Label>
-                <Input
-                  placeholder="07XXXXXXXX"
-                  value={phoneNumber}
-                  onChange={(e) => setPhoneNumber(e.target.value)}
-                  disabled={!isWeekend()}
-                />
-              </div>
-
-              <Button 
-                className="w-full" 
-                onClick={handleWithdraw}
-                disabled={!isWeekend() || (balance || 0) < 5000 || withdrawing}
-              >
-                {withdrawing ? 'Processing...' : `Withdraw ${(balance || 0).toLocaleString()} UGX`}
-              </Button>
-            </CardContent>
-          </Card>
-        )}
 
         {/* Recent Earnings */}
         <Card>
