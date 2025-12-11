@@ -288,109 +288,116 @@ export default function CreatorEarnings() {
               Minimum withdrawal: 5,000 UGX • Weekends only • 10% fee
             </p>
 
-            {/* Withdraw Button with Countdown */}
-            {eligibility?.eligible && (
-              <div className="mt-4">
-                {isWeekendNow ? (
-                  <Sheet open={withdrawSheetOpen} onOpenChange={setWithdrawSheetOpen}>
-                    <SheetTrigger asChild>
-                      <Button className="w-full bg-green-600 hover:bg-green-700" size="lg">
-                        <Wallet className="h-5 w-5 mr-2" />
-                        Withdraw Now
-                      </Button>
-                    </SheetTrigger>
-                    <SheetContent side="bottom" className="h-auto max-h-[70vh]">
-                      <SheetHeader>
-                        <SheetTitle className="flex items-center gap-2">
-                          <Phone className="h-5 w-5" />
-                          Withdraw to Mobile Money
-                        </SheetTitle>
-                      </SheetHeader>
-                      <div className="space-y-4 py-4">
-                        <div className="bg-green-500/10 border border-green-500/20 rounded-lg p-3">
-                          <div className="flex items-center gap-2 text-green-600 font-medium">
-                            <CheckCircle className="h-4 w-4" />
-                            <span>Withdrawals are open!</span>
-                          </div>
-                          <p className="text-xs text-muted-foreground mt-1">
-                            Window closes in: {formatCountdownUnit(countdown.hours)}:{formatCountdownUnit(countdown.minutes)}:{formatCountdownUnit(countdown.seconds)}
-                          </p>
+            {/* Withdraw Button with Countdown - Visible to all */}
+            <div className="mt-4">
+              {isWeekendNow ? (
+                <Sheet open={withdrawSheetOpen} onOpenChange={setWithdrawSheetOpen}>
+                  <SheetTrigger asChild>
+                    <Button 
+                      className="w-full bg-green-600 hover:bg-green-700 disabled:bg-green-600/50" 
+                      size="lg"
+                      disabled={!eligibility?.eligible || (balance || 0) < 5000}
+                    >
+                      <Wallet className="h-5 w-5 mr-2" />
+                      {eligibility?.eligible ? 'Withdraw Now' : 'Withdraw (Not Eligible)'}
+                    </Button>
+                  </SheetTrigger>
+                  <SheetContent side="bottom" className="h-auto max-h-[70vh]">
+                    <SheetHeader>
+                      <SheetTitle className="flex items-center gap-2">
+                        <Phone className="h-5 w-5" />
+                        Withdraw to Mobile Money
+                      </SheetTitle>
+                    </SheetHeader>
+                    <div className="space-y-4 py-4">
+                      <div className="bg-green-500/10 border border-green-500/20 rounded-lg p-3">
+                        <div className="flex items-center gap-2 text-green-600 font-medium">
+                          <CheckCircle className="h-4 w-4" />
+                          <span>Withdrawals are open!</span>
                         </div>
-
-                        <div className="space-y-2">
-                          <Label>Mobile Network</Label>
-                          <Select value={network} onValueChange={setNetwork}>
-                            <SelectTrigger>
-                              <SelectValue placeholder="Select network" />
-                            </SelectTrigger>
-                            <SelectContent>
-                              <SelectItem value="MTN">MTN Mobile Money</SelectItem>
-                              <SelectItem value="Airtel">Airtel Money</SelectItem>
-                            </SelectContent>
-                          </Select>
-                        </div>
-
-                        <div className="space-y-2">
-                          <Label>Phone Number</Label>
-                          <Input
-                            placeholder="07XXXXXXXX"
-                            value={phoneNumber}
-                            onChange={(e) => setPhoneNumber(e.target.value)}
-                          />
-                        </div>
-
-                        <Button 
-                          className="w-full" 
-                          onClick={handleWithdraw}
-                          disabled={(balance || 0) < 5000 || withdrawing}
-                        >
-                          {withdrawing ? 'Processing...' : `Withdraw ${(balance || 0).toLocaleString()} UGX`}
-                        </Button>
-
-                        <p className="text-xs text-muted-foreground text-center">
-                          10% platform fee will be deducted
+                        <p className="text-xs text-muted-foreground mt-1">
+                          Window closes in: {formatCountdownUnit(countdown.hours)}:{formatCountdownUnit(countdown.minutes)}:{formatCountdownUnit(countdown.seconds)}
                         </p>
                       </div>
-                    </SheetContent>
-                  </Sheet>
-                ) : (
-                  <div className="space-y-3">
-                    <Button className="w-full" size="lg" disabled variant="secondary">
-                      <Timer className="h-5 w-5 mr-2" />
-                      Withdraw (Opens on Weekend)
-                    </Button>
-                    
-                    {/* Countdown Display */}
-                    <div className="bg-muted/50 rounded-lg p-4">
-                      <p className="text-xs text-muted-foreground text-center mb-2">
-                        Opens in
-                      </p>
-                      <div className="flex justify-center gap-2">
-                        <div className="bg-background rounded-lg px-3 py-2 min-w-[60px] text-center">
-                          <p className="text-xl font-bold">{formatCountdownUnit(countdown.days)}</p>
-                          <p className="text-xs text-muted-foreground">Days</p>
-                        </div>
-                        <div className="bg-background rounded-lg px-3 py-2 min-w-[60px] text-center">
-                          <p className="text-xl font-bold">{formatCountdownUnit(countdown.hours)}</p>
-                          <p className="text-xs text-muted-foreground">Hours</p>
-                        </div>
-                        <div className="bg-background rounded-lg px-3 py-2 min-w-[60px] text-center">
-                          <p className="text-xl font-bold">{formatCountdownUnit(countdown.minutes)}</p>
-                          <p className="text-xs text-muted-foreground">Mins</p>
-                        </div>
-                        <div className="bg-background rounded-lg px-3 py-2 min-w-[60px] text-center">
-                          <p className="text-xl font-bold">{formatCountdownUnit(countdown.seconds)}</p>
-                          <p className="text-xs text-muted-foreground">Secs</p>
-                        </div>
+
+                      <div className="space-y-2">
+                        <Label>Mobile Network</Label>
+                        <Select value={network} onValueChange={setNetwork}>
+                          <SelectTrigger>
+                            <SelectValue placeholder="Select network" />
+                          </SelectTrigger>
+                          <SelectContent>
+                            <SelectItem value="MTN">MTN Mobile Money</SelectItem>
+                            <SelectItem value="Airtel">Airtel Money</SelectItem>
+                          </SelectContent>
+                        </Select>
                       </div>
-                      <p className="text-xs text-muted-foreground text-center mt-2">
-                        Available Saturday & Sunday only
+
+                      <div className="space-y-2">
+                        <Label>Phone Number</Label>
+                        <Input
+                          placeholder="07XXXXXXXX"
+                          value={phoneNumber}
+                          onChange={(e) => setPhoneNumber(e.target.value)}
+                        />
+                      </div>
+
+                      <Button 
+                        className="w-full" 
+                        onClick={handleWithdraw}
+                        disabled={(balance || 0) < 5000 || withdrawing}
+                      >
+                        {withdrawing ? 'Processing...' : `Withdraw ${(balance || 0).toLocaleString()} UGX`}
+                      </Button>
+
+                      <p className="text-xs text-muted-foreground text-center">
+                        10% platform fee will be deducted
                       </p>
                     </div>
+                  </SheetContent>
+                </Sheet>
+              ) : (
+                <div className="space-y-3">
+                  <Button 
+                    className="w-full" 
+                    size="lg" 
+                    disabled 
+                    variant="secondary"
+                  >
+                    <Timer className="h-5 w-5 mr-2" />
+                    {eligibility?.eligible ? 'Withdraw (Opens Weekend)' : 'Withdraw (Not Eligible)'}
+                  </Button>
+                  
+                  {/* Countdown Display */}
+                  <div className="bg-muted/50 rounded-lg p-4">
+                    <p className="text-xs text-muted-foreground text-center mb-2">
+                      Opens in
+                    </p>
+                    <div className="flex justify-center gap-2">
+                      <div className="bg-background rounded-lg px-3 py-2 min-w-[60px] text-center">
+                        <p className="text-xl font-bold">{formatCountdownUnit(countdown.days)}</p>
+                        <p className="text-xs text-muted-foreground">Days</p>
+                      </div>
+                      <div className="bg-background rounded-lg px-3 py-2 min-w-[60px] text-center">
+                        <p className="text-xl font-bold">{formatCountdownUnit(countdown.hours)}</p>
+                        <p className="text-xs text-muted-foreground">Hours</p>
+                      </div>
+                      <div className="bg-background rounded-lg px-3 py-2 min-w-[60px] text-center">
+                        <p className="text-xl font-bold">{formatCountdownUnit(countdown.minutes)}</p>
+                        <p className="text-xs text-muted-foreground">Mins</p>
+                      </div>
+                      <div className="bg-background rounded-lg px-3 py-2 min-w-[60px] text-center">
+                        <p className="text-xl font-bold">{formatCountdownUnit(countdown.seconds)}</p>
+                        <p className="text-xs text-muted-foreground">Secs</p>
+                      </div>
+                    </div>
+                    <p className="text-xs text-muted-foreground text-center mt-2">
+                      Available Saturday & Sunday only
+                    </p>
                   </div>
-                )}
-              </div>
-            )}
+                </div>
+              )}
+            </div>
           </CardContent>
         </Card>
 
