@@ -1,7 +1,7 @@
 import { useEffect, useState, useRef } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/contexts/AuthContext';
-import { Search, Users, Check } from 'lucide-react';
+import { Search, Users, Check, CheckCheck } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { CustomLoader } from '@/components/ui/CustomLoader';
 import NewChatDialog from '@/components/ui/NewChatDialog';
@@ -34,6 +34,8 @@ interface Chat {
   is_muted?: boolean;
   is_pinned?: boolean;
   is_read?: boolean;
+  last_message_sent_by_me?: boolean;
+  last_message_read_by_receiver?: boolean;
 }
 
 const formatTime = (isoString: string) => {
@@ -172,7 +174,15 @@ const Chats = ({ isEmbedded = false }: ChatsProps) => {
         const [allMessages, allUnreadCounts] = await Promise.all([
           supabase
             .from('messages')
-            .select('chat_id, encrypted_content, attachment_type, audio_url, sent_at, sender_id')
+            .select(`
+              chat_id, 
+              encrypted_content, 
+              attachment_type, 
+              audio_url, 
+              sent_at, 
+              sender_id,
+              message_status!left(read_at, user_id)
+            `)
             .in('chat_id', chatIds)
             .order('sent_at', { ascending: false }),
           // Check message_status for read receipts instead of messages.read_at
@@ -217,12 +227,26 @@ const Chats = ({ isEmbedded = false }: ChatsProps) => {
           const lastMessage = messagesByChat.get(chatId);
           const unreadCount = unreadByChat.get(chatId) || 0;
 
+          // Check if last message was sent by current user and read by receiver
+          const lastMessageSentByMe = lastMessage?.sender_id === user.id;
+          let lastMessageReadByReceiver = false;
+          
+          if (lastMessageSentByMe && lastMessage?.message_status) {
+            // Check if any other user has read the message
+            const otherUserReadStatus = lastMessage.message_status.find(
+              (s: any) => s.user_id !== user.id && s.read_at
+            );
+            lastMessageReadByReceiver = !!otherUserReadStatus;
+          }
+
           let chatData: Chat = {
             ...member.chats,
             last_message_content: '',
             updated_at: lastMessage?.sent_at || member.chats.updated_at,
             is_read: lastMessage ? (lastMessage.sender_id === user.id || !!lastMessage.read_at) : true,
-            unread_count: unreadCount
+            unread_count: unreadCount,
+            last_message_sent_by_me: lastMessageSentByMe,
+            last_message_read_by_receiver: lastMessageReadByReceiver
           };
 
           if (lastMessage) {
@@ -467,8 +491,12 @@ const Chats = ({ isEmbedded = false }: ChatsProps) => {
                         {chat.unread_count > 99 ? '99+' : chat.unread_count}
                       </span>
                     </div>
-                  ) : chat.is_read ? (
-                    <Check className="h-4 w-4 text-primary" />
+                  ) : chat.last_message_sent_by_me ? (
+                    chat.last_message_read_by_receiver ? (
+                      <CheckCheck className="h-4 w-4 text-primary" />
+                    ) : (
+                      <Check className="h-4 w-4 text-muted-foreground" />
+                    )
                   ) : null}
                 </div>
               </div>
