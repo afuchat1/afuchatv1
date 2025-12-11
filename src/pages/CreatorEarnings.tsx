@@ -296,16 +296,14 @@ export default function CreatorEarnings() {
   // Get current user's real-time earnings from the leaderboard
   const currentUserLeaderboardEntry = dailyLeaderboard?.find(p => p.user_id === user?.id);
 
-  // Get earnings history (past days - credited)
+  // Get earnings history (all days including today)
   const { data: earnings, isLoading: earningsLoading } = useQuery({
     queryKey: ['creator-earnings', user?.id],
     queryFn: async () => {
-      const today = new Date().toISOString().split('T')[0];
       const { data, error } = await supabase
         .from('creator_earnings')
         .select('*')
         .eq('user_id', user?.id)
-        .lt('earned_date', today) // Only past days (credited earnings)
         .order('earned_date', { ascending: false })
         .limit(30);
       if (error) throw error;
