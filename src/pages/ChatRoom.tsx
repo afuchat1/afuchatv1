@@ -418,6 +418,14 @@ const ChatRoom = ({ isEmbedded = false }: ChatRoomProps) => {
             // Mark as delivered and read if we're the recipient
             if (user && payload.new.sender_id !== user.id) {
               const now = new Date().toISOString();
+              
+              // Update messages.read_at directly for unread count consistency
+              await supabase
+                .from('messages')
+                .update({ read_at: now })
+                .eq('id', payload.new.id);
+              
+              // Also update message_status for detailed read receipts
               await supabase
                 .from('message_status')
                 .upsert(
@@ -642,7 +650,14 @@ const ChatRoom = ({ isEmbedded = false }: ChatRoomProps) => {
 
     const now = new Date().toISOString();
 
-    // Use upsert to avoid duplicate key errors
+    // Update messages.read_at directly for unread count consistency
+    await supabase
+      .from('messages')
+      .update({ read_at: now })
+      .in('id', messageIds)
+      .is('read_at', null);
+
+    // Also update message_status for detailed read receipts
     for (const messageId of messageIds) {
       await supabase
         .from('message_status')
