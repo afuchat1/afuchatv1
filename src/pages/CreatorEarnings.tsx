@@ -74,6 +74,7 @@ export default function CreatorEarnings() {
   const { user } = useAuth();
   const [phoneNumber, setPhoneNumber] = useState('');
   const [network, setNetwork] = useState<string>('');
+  const [withdrawAmount, setWithdrawAmount] = useState<string>('');
   const [withdrawing, setWithdrawing] = useState(false);
   const [withdrawSheetOpen, setWithdrawSheetOpen] = useState(false);
   const [countdown, setCountdown] = useState<CountdownTime>({ days: 0, hours: 0, minutes: 0, seconds: 0 });
@@ -446,6 +447,22 @@ export default function CreatorEarnings() {
       return;
     }
 
+    const amount = parseInt(withdrawAmount) || 0;
+    if (amount <= 0) {
+      toast.error('Please enter a valid withdrawal amount');
+      return;
+    }
+
+    if (!isAdmin && amount < 5000) {
+      toast.error('Minimum withdrawal amount is 5,000 UGX');
+      return;
+    }
+
+    if (amount > (balance || 0)) {
+      toast.error('Insufficient balance');
+      return;
+    }
+
     setWithdrawing(true);
     try {
       // Save payment info for future use
@@ -458,6 +475,7 @@ export default function CreatorEarnings() {
         .eq('id', user?.id);
 
       const { data, error } = await supabase.rpc('request_creator_withdrawal', {
+        p_amount_ugx: amount,
         p_phone_number: phoneNumber,
         p_mobile_network: network
       });
@@ -468,10 +486,11 @@ export default function CreatorEarnings() {
       if (result.success) {
         toast.success(`Withdrawal request submitted! Net: ${result.net_amount?.toLocaleString()} UGX (Fee: ${result.fee?.toLocaleString()} UGX)`);
         setWithdrawSheetOpen(false);
+        setWithdrawAmount('');
         refetchBalance();
         refetchWithdrawals();
       } else {
-        toast.error(result.error || 'Failed to request withdrawal');
+        toast.error(result.error || result.message || 'Failed to request withdrawal');
       }
     } catch (error: any) {
       toast.error(error.message || 'Failed to request withdrawal');
@@ -908,6 +927,42 @@ export default function CreatorEarnings() {
                         </div>
 
                         <div className="space-y-2">
+                          <Label>Amount to Withdraw (UGX)</Label>
+                          <Input
+                            type="number"
+                            placeholder={isAdmin ? "Enter amount" : "Min: 5,000 UGX"}
+                            value={withdrawAmount}
+                            onChange={(e) => setWithdrawAmount(e.target.value)}
+                          />
+                          <div className="flex justify-between text-xs text-muted-foreground">
+                            <span>Available: {(balance || 0).toLocaleString()} UGX</span>
+                            <button 
+                              type="button"
+                              className="text-primary hover:underline"
+                              onClick={() => setWithdrawAmount(String(balance || 0))}
+                            >
+                              Withdraw All
+                            </button>
+                          </div>
+                          {withdrawAmount && parseInt(withdrawAmount) > 0 && (
+                            <div className="bg-muted/50 rounded-lg p-2 text-sm">
+                              <div className="flex justify-between">
+                                <span>Amount:</span>
+                                <span>{parseInt(withdrawAmount).toLocaleString()} UGX</span>
+                              </div>
+                              <div className="flex justify-between text-muted-foreground">
+                                <span>Fee (10%):</span>
+                                <span>-{Math.ceil(parseInt(withdrawAmount) * 0.1).toLocaleString()} UGX</span>
+                              </div>
+                              <div className="flex justify-between font-medium text-green-600 border-t border-border pt-1 mt-1">
+                                <span>You'll receive:</span>
+                                <span>{(parseInt(withdrawAmount) - Math.ceil(parseInt(withdrawAmount) * 0.1)).toLocaleString()} UGX</span>
+                              </div>
+                            </div>
+                          )}
+                        </div>
+
+                        <div className="space-y-2">
                           <Label>Mobile Network</Label>
                           <Select value={network} onValueChange={setNetwork}>
                             <SelectTrigger>
@@ -932,13 +987,19 @@ export default function CreatorEarnings() {
                         <Button 
                           className="w-full" 
                           onClick={handleWithdraw}
-                          disabled={isAdmin ? ((balance || 0) <= 0 || withdrawing) : ((balance || 0) < 5000 || withdrawing)}
+                          disabled={
+                            withdrawing || 
+                            !withdrawAmount || 
+                            parseInt(withdrawAmount) <= 0 ||
+                            parseInt(withdrawAmount) > (balance || 0) ||
+                            (!isAdmin && parseInt(withdrawAmount) < 5000)
+                          }
                         >
-                          {withdrawing ? 'Processing...' : `Withdraw ${(balance || 0).toLocaleString()} UGX`}
+                          {withdrawing ? 'Processing...' : `Withdraw ${withdrawAmount ? parseInt(withdrawAmount).toLocaleString() : 0} UGX`}
                         </Button>
 
                         <p className="text-xs text-muted-foreground text-center">
-                          10% platform fee will be deducted
+                          {isAdmin ? 'No minimum • ' : 'Minimum: 5,000 UGX • '}10% platform fee will be deducted
                         </p>
                       </div>
                     </SheetContent>
