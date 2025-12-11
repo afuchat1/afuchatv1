@@ -194,35 +194,25 @@ export default function CreatorEarnings() {
     refetchInterval: 30000 // Refresh every 30 seconds for live updates
   });
 
-  // Get today's leaderboard - all participants ranked by engagement
+  // Get today's leaderboard - REAL-TIME from all users' actual post engagement
   const { data: dailyLeaderboard } = useQuery({
-    queryKey: ['creator-daily-leaderboard', new Date().toDateString()],
+    queryKey: ['daily-engagement-leaderboard', new Date().toDateString()],
     queryFn: async () => {
-      const today = new Date().toISOString().split('T')[0];
-      const { data, error } = await supabase
-        .from('creator_earnings')
-        .select(`
-          user_id,
-          amount_ugx,
-          engagement_score,
-          views_count,
-          likes_count,
-          profiles!inner(display_name, handle, avatar_url)
-        `)
-        .eq('earned_date', today)
-        .order('engagement_score', { ascending: false })
-        .limit(50);
+      const { data, error } = await supabase.rpc('get_daily_engagement_leaderboard');
       if (error) throw error;
       return data as Array<{
         user_id: string;
-        amount_ugx: number;
-        engagement_score: number;
+        display_name: string;
+        handle: string;
+        avatar_url: string | null;
         views_count: number;
         likes_count: number;
-        profiles: { display_name: string; handle: string; avatar_url: string | null };
+        replies_count: number;
+        engagement_score: number;
+        potential_earnings: number;
       }>;
     },
-    refetchInterval: 30000 // Live updates
+    refetchInterval: 30000 // Live updates every 30 seconds
   });
 
   // Get earnings history (past days - credited)
@@ -594,11 +584,11 @@ export default function CreatorEarnings() {
                       
                       {/* Avatar */}
                       <div className="w-8 h-8 rounded-full bg-muted overflow-hidden flex-shrink-0">
-                        {participant.profiles.avatar_url ? (
-                          <img src={participant.profiles.avatar_url} alt="" className="w-full h-full object-cover" />
+                        {participant.avatar_url ? (
+                          <img src={participant.avatar_url} alt="" className="w-full h-full object-cover" />
                         ) : (
                           <div className="w-full h-full flex items-center justify-center text-xs font-bold">
-                            {participant.profiles.display_name?.charAt(0) || '?'}
+                            {participant.display_name?.charAt(0) || '?'}
                           </div>
                         )}
                       </div>
@@ -606,19 +596,19 @@ export default function CreatorEarnings() {
                       {/* Name & Handle */}
                       <div className="flex-1 min-w-0">
                         <p className={`font-medium text-sm truncate ${isCurrentUser ? 'text-primary' : ''}`}>
-                          {participant.profiles.display_name?.length > 12 
-                            ? participant.profiles.display_name.slice(0, 12) + '...' 
-                            : participant.profiles.display_name}
+                          {participant.display_name?.length > 12 
+                            ? participant.display_name.slice(0, 12) + '...' 
+                            : participant.display_name}
                           {isCurrentUser && <span className="text-xs text-muted-foreground ml-1">(You)</span>}
                         </p>
                         <p className="text-xs text-muted-foreground">
-                          Score: {participant.engagement_score}
+                          👁 {participant.views_count} • ❤️ {participant.likes_count} • 💬 {participant.replies_count}
                         </p>
                       </div>
                       
                       {/* Earnings */}
                       <div className="text-right">
-                        <p className="font-bold text-sm text-primary">{participant.amount_ugx.toLocaleString()}</p>
+                        <p className="font-bold text-sm text-primary">{participant.potential_earnings.toLocaleString()}</p>
                         <p className="text-xs text-muted-foreground">UGX</p>
                       </div>
                     </div>
