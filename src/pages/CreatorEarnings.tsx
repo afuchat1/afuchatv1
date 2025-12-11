@@ -194,6 +194,37 @@ export default function CreatorEarnings() {
     refetchInterval: 30000 // Refresh every 30 seconds for live updates
   });
 
+  // Get today's leaderboard - all participants ranked by engagement
+  const { data: dailyLeaderboard } = useQuery({
+    queryKey: ['creator-daily-leaderboard', new Date().toDateString()],
+    queryFn: async () => {
+      const today = new Date().toISOString().split('T')[0];
+      const { data, error } = await supabase
+        .from('creator_earnings')
+        .select(`
+          user_id,
+          amount_ugx,
+          engagement_score,
+          views_count,
+          likes_count,
+          profiles!inner(display_name, handle, avatar_url)
+        `)
+        .eq('earned_date', today)
+        .order('engagement_score', { ascending: false })
+        .limit(50);
+      if (error) throw error;
+      return data as Array<{
+        user_id: string;
+        amount_ugx: number;
+        engagement_score: number;
+        views_count: number;
+        likes_count: number;
+        profiles: { display_name: string; handle: string; avatar_url: string | null };
+      }>;
+    },
+    refetchInterval: 30000 // Live updates
+  });
+
   // Get earnings history (past days - credited)
   const { data: earnings, isLoading: earningsLoading } = useQuery({
     queryKey: ['creator-earnings', user?.id],
@@ -518,9 +549,91 @@ export default function CreatorEarnings() {
               </div>
               
               <p className="text-xs text-muted-foreground">
-                💡 Rates: 1 UGX per view, 2 UGX per like. Amount may change as others earn.
+                💡 Pool: 5,000 UGX shared proportionally. More engagement = bigger share.
               </p>
             </div>
+          </CardContent>
+        </Card>
+
+        {/* Daily Leaderboard - Live Rankings */}
+        <Card>
+          <CardHeader className="pb-2">
+            <CardTitle className="text-base flex items-center gap-2">
+              <Trophy className="h-4 w-4 text-yellow-500" />
+              Today's Leaderboard
+              <span className="text-xs font-normal text-muted-foreground ml-auto">Live Rankings</span>
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            {!dailyLeaderboard || dailyLeaderboard.length === 0 ? (
+              <div className="text-center py-6 text-muted-foreground">
+                <Trophy className="h-8 w-8 mx-auto mb-2 opacity-30" />
+                <p className="text-sm">No participants yet today</p>
+                <p className="text-xs">Be the first to get engagement!</p>
+              </div>
+            ) : (
+              <div className="space-y-2">
+                {dailyLeaderboard.map((participant, index) => {
+                  const isCurrentUser = participant.user_id === user?.id;
+                  const rank = index + 1;
+                  const medalColor = rank === 1 ? 'text-yellow-500' : rank === 2 ? 'text-gray-400' : rank === 3 ? 'text-amber-600' : 'text-muted-foreground';
+                  
+                  return (
+                    <div 
+                      key={participant.user_id}
+                      className={`flex items-center gap-3 p-2 rounded-lg ${isCurrentUser ? 'bg-primary/10 border border-primary/30' : 'bg-muted/30'}`}
+                    >
+                      {/* Rank */}
+                      <div className={`w-6 h-6 flex items-center justify-center font-bold text-sm ${medalColor}`}>
+                        {rank <= 3 ? (
+                          <Trophy className="h-4 w-4" />
+                        ) : (
+                          `#${rank}`
+                        )}
+                      </div>
+                      
+                      {/* Avatar */}
+                      <div className="w-8 h-8 rounded-full bg-muted overflow-hidden flex-shrink-0">
+                        {participant.profiles.avatar_url ? (
+                          <img src={participant.profiles.avatar_url} alt="" className="w-full h-full object-cover" />
+                        ) : (
+                          <div className="w-full h-full flex items-center justify-center text-xs font-bold">
+                            {participant.profiles.display_name?.charAt(0) || '?'}
+                          </div>
+                        )}
+                      </div>
+                      
+                      {/* Name & Handle */}
+                      <div className="flex-1 min-w-0">
+                        <p className={`font-medium text-sm truncate ${isCurrentUser ? 'text-primary' : ''}`}>
+                          {participant.profiles.display_name?.length > 12 
+                            ? participant.profiles.display_name.slice(0, 12) + '...' 
+                            : participant.profiles.display_name}
+                          {isCurrentUser && <span className="text-xs text-muted-foreground ml-1">(You)</span>}
+                        </p>
+                        <p className="text-xs text-muted-foreground">
+                          Score: {participant.engagement_score}
+                        </p>
+                      </div>
+                      
+                      {/* Earnings */}
+                      <div className="text-right">
+                        <p className="font-bold text-sm text-primary">{participant.amount_ugx.toLocaleString()}</p>
+                        <p className="text-xs text-muted-foreground">UGX</p>
+                      </div>
+                    </div>
+                  );
+                })}
+                
+                {/* Pool Info */}
+                <div className="pt-2 border-t border-border mt-3">
+                  <div className="flex justify-between text-xs text-muted-foreground">
+                    <span>Daily Pool: 5,000 UGX</span>
+                    <span>Participants: {dailyLeaderboard.length}</span>
+                  </div>
+                </div>
+              </div>
+            )}
           </CardContent>
         </Card>
 
