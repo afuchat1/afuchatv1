@@ -465,7 +465,7 @@ export default function CreatorEarnings() {
           <CardHeader className="pb-2">
             <CardTitle className="text-base flex items-center gap-2">
               <BarChart3 className="h-4 w-4" />
-              Post Performance Analysis
+              Post Performance & Earnings
             </CardTitle>
           </CardHeader>
           <CardContent>
@@ -476,65 +476,94 @@ export default function CreatorEarnings() {
                 <Skeleton className="h-16 w-full" />
               </div>
             ) : topPosts && topPosts.length > 0 ? (
-              <div className="space-y-3">
-                {topPosts.slice(0, 5).map((post, index) => {
-                  const maxScore = topPosts[0]?.engagement_score || 1;
-                  const scorePercent = (post.engagement_score / maxScore) * 100;
-                  
-                  return (
-                    <div key={post.id} className="space-y-2">
-                      <div className="flex items-start gap-3">
-                        <div className={`flex-shrink-0 w-8 h-8 rounded-full flex items-center justify-center text-sm font-bold ${
-                          index === 0 ? 'bg-yellow-500 text-yellow-950' :
-                          index === 1 ? 'bg-gray-300 text-gray-700' :
-                          index === 2 ? 'bg-amber-600 text-amber-50' :
-                          'bg-muted text-muted-foreground'
-                        }`}>
-                          {index === 0 ? <Trophy className="h-4 w-4" /> : index + 1}
-                        </div>
-                        <div className="flex-1 min-w-0">
-                          <p className="text-sm line-clamp-2">
-                            {post.content.slice(0, 80)}{post.content.length > 80 ? '...' : ''}
-                          </p>
-                          <div className="flex items-center gap-3 mt-1 text-xs text-muted-foreground">
-                            <span className="flex items-center gap-1">
-                              <Eye className="h-3 w-3" /> {post.view_count}
+              (() => {
+                // Calculate total engagement score for earnings distribution
+                const totalEngagement = topPosts.reduce((sum, post) => sum + post.engagement_score, 0);
+                const dailyPool = 5000; // Daily UGX pool
+                
+                return (
+                  <div className="space-y-3">
+                    {/* Earnings Distribution Info */}
+                    <div className="bg-primary/10 border border-primary/20 rounded-lg p-3 mb-4">
+                      <p className="text-xs text-muted-foreground">
+                        Earnings are based on <strong>engagement share</strong>. Higher engagement = bigger share of the daily {dailyPool.toLocaleString()} UGX pool.
+                      </p>
+                    </div>
+
+                    {topPosts.slice(0, 5).map((post, index) => {
+                      const maxScore = topPosts[0]?.engagement_score || 1;
+                      const scorePercent = (post.engagement_score / maxScore) * 100;
+                      const engagementShare = totalEngagement > 0 ? (post.engagement_score / totalEngagement) * 100 : 0;
+                      const estimatedEarning = totalEngagement > 0 ? Math.round((post.engagement_score / totalEngagement) * dailyPool) : 0;
+                      
+                      return (
+                        <div key={post.id} className="space-y-2 p-3 bg-muted/30 rounded-lg">
+                          <div className="flex items-start gap-3">
+                            <div className={`flex-shrink-0 w-8 h-8 rounded-full flex items-center justify-center text-sm font-bold ${
+                              index === 0 ? 'bg-yellow-500 text-yellow-950' :
+                              index === 1 ? 'bg-gray-300 text-gray-700' :
+                              index === 2 ? 'bg-amber-600 text-amber-50' :
+                              'bg-muted text-muted-foreground'
+                            }`}>
+                              {index === 0 ? <Trophy className="h-4 w-4" /> : index + 1}
+                            </div>
+                            <div className="flex-1 min-w-0">
+                              <p className="text-sm line-clamp-2">
+                                {post.content.slice(0, 80)}{post.content.length > 80 ? '...' : ''}
+                              </p>
+                              <div className="flex items-center gap-3 mt-1 text-xs text-muted-foreground">
+                                <span className="flex items-center gap-1">
+                                  <Eye className="h-3 w-3" /> {post.view_count}
+                                </span>
+                                <span className="flex items-center gap-1">
+                                  <Heart className="h-3 w-3" /> {post.likes_count}
+                                </span>
+                                <span className="flex items-center gap-1">
+                                  <MessageCircle className="h-3 w-3" /> {post.replies_count}
+                                </span>
+                              </div>
+                            </div>
+                          </div>
+                          <div className="flex items-center gap-2">
+                            <Progress value={scorePercent} className="h-2 flex-1" />
+                            <span className="text-xs font-medium text-primary min-w-[60px] text-right">
+                              {post.engagement_score.toLocaleString()} pts
                             </span>
-                            <span className="flex items-center gap-1">
-                              <Heart className="h-3 w-3" /> {post.likes_count}
+                          </div>
+                          {/* Estimated Earnings from this post */}
+                          <div className="flex items-center justify-between pt-1 border-t border-border/50">
+                            <span className="text-xs text-muted-foreground">
+                              Share: {engagementShare.toFixed(1)}%
                             </span>
-                            <span className="flex items-center gap-1">
-                              <MessageCircle className="h-3 w-3" /> {post.replies_count}
+                            <span className="text-sm font-bold text-green-600">
+                              ~{estimatedEarning.toLocaleString()} UGX/day
                             </span>
                           </div>
                         </div>
-                      </div>
-                      <div className="flex items-center gap-2">
-                        <Progress value={scorePercent} className="h-2 flex-1" />
-                        <span className="text-xs font-medium text-primary min-w-[60px] text-right">
-                          {post.engagement_score.toLocaleString()} pts
+                      );
+                    })}
+                    
+                    {/* Score Legend */}
+                    <div className="mt-4 p-3 bg-muted/50 rounded-lg">
+                      <p className="text-xs font-medium mb-2">Engagement Score = Earnings Power</p>
+                      <div className="flex flex-wrap gap-3 text-xs text-muted-foreground">
+                        <span className="flex items-center gap-1">
+                          <Eye className="h-3 w-3" /> Views × 1
+                        </span>
+                        <span className="flex items-center gap-1">
+                          <Heart className="h-3 w-3" /> Likes × 3
+                        </span>
+                        <span className="flex items-center gap-1">
+                          <MessageCircle className="h-3 w-3" /> Replies × 5
                         </span>
                       </div>
+                      <p className="text-xs text-muted-foreground mt-2">
+                        💡 More engagement = Higher share of daily earnings pool
+                      </p>
                     </div>
-                  );
-                })}
-                
-                {/* Score Legend */}
-                <div className="mt-4 p-3 bg-muted/50 rounded-lg">
-                  <p className="text-xs font-medium mb-2">Engagement Score Calculation:</p>
-                  <div className="flex flex-wrap gap-3 text-xs text-muted-foreground">
-                    <span className="flex items-center gap-1">
-                      <Eye className="h-3 w-3" /> Views × 1
-                    </span>
-                    <span className="flex items-center gap-1">
-                      <Heart className="h-3 w-3" /> Likes × 3
-                    </span>
-                    <span className="flex items-center gap-1">
-                      <MessageCircle className="h-3 w-3" /> Replies × 5
-                    </span>
                   </div>
-                </div>
-              </div>
+                );
+              })()
             ) : (
               <p className="text-sm text-muted-foreground text-center py-4">
                 No posts yet. Start creating content to see performance analysis!
