@@ -337,7 +337,7 @@ ${platformInfo}
 - Eligibility: Uganda account, 10+ followers, 500+ weekly views
 - Distribution: Daily automatic based on engagement (views + likes)
 - Withdrawals: Mobile Money (MTN/Airtel), minimum 5,000 UGX, weekends only
-- 10% platform fee on withdrawals, admin approval required
+- 10% platform fee on withdrawals, team approval required
 
 **GIFTS & MARKETPLACE:**
 - Gifts: /gifts - Browse and send virtual gifts to users
@@ -381,12 +381,6 @@ ${platformInfo}
 - Red Envelope: /red-envelope/:id - Claim red envelope rewards
 - Only premium users can create red envelopes
 - Non-premium users limited to 1 claim per day
-
-**ADMIN (Admins Only):**
-- Admin Dashboard: /admin - Platform administration
-- Verification Requests: /admin/verification-requests - Review verification
-- Creator Withdrawals: /admin/creator-withdrawals - Approve/reject withdrawals
-- Affiliate Requests: /admin/affiliate-requests - Review affiliate applications
 
 **INSTALL & PWA:**
 - Install: /install - Install AfuChat as a mobile app
