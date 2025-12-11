@@ -87,13 +87,13 @@ export default function CreatorEarnings() {
   const { isPremium } = usePremiumStatus();
   const navigate = useNavigate();
 
-  // Check user's country, missed earnings, privacy setting, and admin status
+  // Check user's country, missed earnings, privacy setting, admin status, and saved payment info
   const { data: userProfile, refetch: refetchProfile } = useQuery({
     queryKey: ['user-profile-earnings', user?.id],
     queryFn: async () => {
       const { data, error } = await supabase
         .from('profiles')
-        .select('country, missed_earnings_total, hide_on_leaderboard, is_admin')
+        .select('country, missed_earnings_total, hide_on_leaderboard, is_admin, withdrawal_phone, withdrawal_network')
         .eq('id', user?.id)
         .single();
       if (error) throw error;
@@ -101,6 +101,16 @@ export default function CreatorEarnings() {
     },
     enabled: !!user?.id
   });
+
+  // Load saved payment info when profile loads
+  useEffect(() => {
+    if (userProfile?.withdrawal_phone && !phoneNumber) {
+      setPhoneNumber(userProfile.withdrawal_phone);
+    }
+    if (userProfile?.withdrawal_network && !network) {
+      setNetwork(userProfile.withdrawal_network);
+    }
+  }, [userProfile]);
 
   const isUgandan = userProfile?.country?.toLowerCase() === 'uganda' || userProfile?.country === 'UG';
   const missedEarningsTotal = userProfile?.missed_earnings_total || 0;
@@ -440,6 +450,15 @@ export default function CreatorEarnings() {
 
     setWithdrawing(true);
     try {
+      // Save payment info for future use
+      await supabase
+        .from('profiles')
+        .update({ 
+          withdrawal_phone: phoneNumber, 
+          withdrawal_network: network 
+        })
+        .eq('id', user?.id);
+
       const { data, error } = await supabase.rpc('request_creator_withdrawal', {
         p_phone_number: phoneNumber,
         p_mobile_network: network
@@ -450,8 +469,6 @@ export default function CreatorEarnings() {
       const result = data as unknown as { success: boolean; message?: string; error?: string; net_amount?: number; fee?: number };
       if (result.success) {
         toast.success(`Withdrawal request submitted! Net: ${result.net_amount?.toLocaleString()} UGX (Fee: ${result.fee?.toLocaleString()} UGX)`);
-        setPhoneNumber('');
-        setNetwork('');
         setWithdrawSheetOpen(false);
         refetchBalance();
         refetchWithdrawals();
@@ -850,11 +867,9 @@ export default function CreatorEarnings() {
               <Wallet className={`h-10 w-10 ${(eligibility?.eligible || isAdmin) ? 'text-primary' : 'text-muted-foreground'} opacity-50`} />
             </div>
             <p className="text-xs text-muted-foreground mt-2">
-              {isAdmin 
-                ? 'Admin: No limits • Anytime • 10% fee'
-                : eligibility?.eligible 
-                  ? 'Minimum withdrawal: 5,000 UGX • Weekends only • 10% fee'
-                  : 'Earnings will be credited once you become eligible'}
+              {eligibility?.eligible || isAdmin
+                ? 'Minimum withdrawal: 5,000 UGX • Weekends only • 10% fee'
+                : 'Earnings will be credited once you become eligible'}
             </p>
 
             {/* Withdraw Button - Admins can withdraw anytime, others only on weekends */}
@@ -869,7 +884,7 @@ export default function CreatorEarnings() {
                         disabled={isAdmin ? (balance || 0) <= 0 : (balance || 0) < 5000}
                       >
                         <Wallet className="h-5 w-5 mr-2" />
-                        Withdraw Now {isAdmin && !isWeekendNow && '(Admin)'}
+                        Withdraw Now
                       </Button>
                     </SheetTrigger>
                     <SheetContent side="bottom" className="h-auto max-h-[70vh]">
@@ -880,19 +895,14 @@ export default function CreatorEarnings() {
                         </SheetTitle>
                       </SheetHeader>
                       <div className="space-y-4 py-4">
-                        <div className={`${isAdmin ? 'bg-primary/10 border-primary/20' : 'bg-green-500/10 border-green-500/20'} border rounded-lg p-3`}>
-                          <div className={`flex items-center gap-2 ${isAdmin ? 'text-primary' : 'text-green-600'} font-medium`}>
+                        <div className="bg-green-500/10 border-green-500/20 border rounded-lg p-3">
+                          <div className="flex items-center gap-2 text-green-600 font-medium">
                             <CheckCircle className="h-4 w-4" />
-                            <span>{isAdmin ? 'Admin Withdrawal (No Limits)' : 'Withdrawals are open!'}</span>
+                            <span>Withdrawals are open!</span>
                           </div>
-                          {!isAdmin && (
+                          {isWeekendNow && (
                             <p className="text-xs text-muted-foreground mt-1">
                               Window closes in: {formatCountdownUnit(countdown.hours)}:{formatCountdownUnit(countdown.minutes)}:{formatCountdownUnit(countdown.seconds)}
-                            </p>
-                          )}
-                          {isAdmin && (
-                            <p className="text-xs text-muted-foreground mt-1">
-                              No minimum • No maximum • No fee • Auto-approved
                             </p>
                           )}
                         </div>
@@ -928,7 +938,7 @@ export default function CreatorEarnings() {
                         </Button>
 
                         <p className="text-xs text-muted-foreground text-center">
-                          {isAdmin ? 'No platform fee for admins' : '10% platform fee will be deducted'}
+                          10% platform fee will be deducted
                         </p>
                       </div>
                     </SheetContent>

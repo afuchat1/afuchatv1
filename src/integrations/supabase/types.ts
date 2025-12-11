@@ -2247,6 +2247,8 @@ export type Database = {
           show_read_receipts: boolean | null
           updated_at: string | null
           website_url: string | null
+          withdrawal_network: string | null
+          withdrawal_phone: string | null
           xp: number
         }
         Insert: {
@@ -2286,6 +2288,8 @@ export type Database = {
           show_read_receipts?: boolean | null
           updated_at?: string | null
           website_url?: string | null
+          withdrawal_network?: string | null
+          withdrawal_phone?: string | null
           xp?: number
         }
         Update: {
@@ -2325,6 +2329,8 @@ export type Database = {
           show_read_receipts?: boolean | null
           updated_at?: string | null
           website_url?: string | null
+          withdrawal_network?: string | null
+          withdrawal_phone?: string | null
           xp?: number
         }
         Relationships: [
