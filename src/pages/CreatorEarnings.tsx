@@ -180,50 +180,71 @@ export default function CreatorEarnings() {
     enabled: !!user?.id
   });
 
-  // Get top performing posts
+  // Get top performing posts - DAILY engagement only to prevent cheating
   const { data: topPosts, isLoading: topPostsLoading } = useQuery({
-    queryKey: ['creator-top-posts', user?.id],
+    queryKey: ['creator-top-posts', user?.id, new Date().toDateString()], // Refresh daily
     queryFn: async () => {
-      // Get posts with views and likes counts
+      // Get today's date range (UTC)
+      const today = new Date();
+      const startOfDay = new Date(today.getFullYear(), today.getMonth(), today.getDate()).toISOString();
+      const endOfDay = new Date(today.getFullYear(), today.getMonth(), today.getDate() + 1).toISOString();
+      
+      // Get user's posts
       const { data: posts, error: postsError } = await supabase
         .from('posts')
-        .select('id, content, view_count, created_at')
+        .select('id, content, created_at')
         .eq('author_id', user?.id)
-        .order('view_count', { ascending: false })
-        .limit(10);
+        .limit(20);
       
       if (postsError) throw postsError;
       if (!posts || posts.length === 0) return [];
 
-      // Get likes and replies counts for each post
+      // Get TODAY's engagement only for each post
       const postsWithEngagement = await Promise.all(
         posts.map(async (post) => {
-          const [likesResult, repliesResult] = await Promise.all([
+          const [viewsResult, likesResult, repliesResult] = await Promise.all([
+            // Today's views only
+            supabase
+              .from('post_views')
+              .select('id', { count: 'exact', head: true })
+              .eq('post_id', post.id)
+              .gte('viewed_at', startOfDay)
+              .lt('viewed_at', endOfDay),
+            // Today's likes only
             supabase
               .from('post_acknowledgments')
               .select('id', { count: 'exact', head: true })
-              .eq('post_id', post.id),
+              .eq('post_id', post.id)
+              .gte('created_at', startOfDay)
+              .lt('created_at', endOfDay),
+            // Today's replies only
             supabase
               .from('post_replies')
               .select('id', { count: 'exact', head: true })
               .eq('post_id', post.id)
+              .gte('created_at', startOfDay)
+              .lt('created_at', endOfDay)
           ]);
 
-          const likes_count = likesResult.count || 0;
-          const replies_count = repliesResult.count || 0;
-          const engagement_score = (post.view_count * 1) + (likes_count * 3) + (replies_count * 5);
+          const daily_views = viewsResult.count || 0;
+          const daily_likes = likesResult.count || 0;
+          const daily_replies = repliesResult.count || 0;
+          const engagement_score = (daily_views * 1) + (daily_likes * 3) + (daily_replies * 5);
 
           return {
             ...post,
-            likes_count,
-            replies_count,
+            view_count: daily_views,
+            likes_count: daily_likes,
+            replies_count: daily_replies,
             engagement_score
           } as TopPost;
         })
       );
 
-      // Sort by engagement score
-      return postsWithEngagement.sort((a, b) => b.engagement_score - a.engagement_score);
+      // Filter posts with engagement and sort by score
+      return postsWithEngagement
+        .filter(post => post.engagement_score > 0)
+        .sort((a, b) => b.engagement_score - a.engagement_score);
     },
     enabled: !!user?.id
   });
@@ -460,12 +481,12 @@ export default function CreatorEarnings() {
           </CardContent>
         </Card>
 
-        {/* Top Performing Posts Analysis */}
+        {/* Top Performing Posts Analysis - TODAY ONLY */}
         <Card>
           <CardHeader className="pb-2">
             <CardTitle className="text-base flex items-center gap-2">
               <BarChart3 className="h-4 w-4" />
-              Post Performance & Earnings
+              Today's Post Performance
             </CardTitle>
           </CardHeader>
           <CardContent>
@@ -486,7 +507,7 @@ export default function CreatorEarnings() {
                     {/* Earnings Distribution Info */}
                     <div className="bg-primary/10 border border-primary/20 rounded-lg p-3 mb-4">
                       <p className="text-xs text-muted-foreground">
-                        Earnings are based on <strong>engagement share</strong>. Higher engagement = bigger share of the daily {dailyPool.toLocaleString()} UGX pool.
+                        📅 <strong>Today's engagement only</strong> — Views, likes & replies earned TODAY determine your share of the {dailyPool.toLocaleString()} UGX daily pool. Historical stats don't count.
                       </p>
                     </div>
 
@@ -545,20 +566,20 @@ export default function CreatorEarnings() {
                     
                     {/* Score Legend */}
                     <div className="mt-4 p-3 bg-muted/50 rounded-lg">
-                      <p className="text-xs font-medium mb-2">Engagement Score = Earnings Power</p>
+                      <p className="text-xs font-medium mb-2">Today's Engagement Score Formula</p>
                       <div className="flex flex-wrap gap-3 text-xs text-muted-foreground">
                         <span className="flex items-center gap-1">
-                          <Eye className="h-3 w-3" /> Views × 1
+                          <Eye className="h-3 w-3" /> Today's Views × 1
                         </span>
                         <span className="flex items-center gap-1">
-                          <Heart className="h-3 w-3" /> Likes × 3
+                          <Heart className="h-3 w-3" /> Today's Likes × 3
                         </span>
                         <span className="flex items-center gap-1">
-                          <MessageCircle className="h-3 w-3" /> Replies × 5
+                          <MessageCircle className="h-3 w-3" /> Today's Replies × 5
                         </span>
                       </div>
                       <p className="text-xs text-muted-foreground mt-2">
-                        💡 More engagement = Higher share of daily earnings pool
+                        ⚡ Resets daily at midnight — Only today's activity counts!
                       </p>
                     </div>
                   </div>
@@ -566,7 +587,7 @@ export default function CreatorEarnings() {
               })()
             ) : (
               <p className="text-sm text-muted-foreground text-center py-4">
-                No posts yet. Start creating content to see performance analysis!
+                No engagement today yet. Posts with views, likes, or replies today will appear here!
               </p>
             )}
           </CardContent>
@@ -659,7 +680,8 @@ export default function CreatorEarnings() {
           <CardContent className="space-y-2 text-sm text-muted-foreground">
             <p>🇺🇬 Available for <strong>Uganda creators</strong></p>
             <p>💰 <strong>5,000 UGX</strong> distributed daily to active creators</p>
-            <p>📊 Earnings based on your engagement (views + likes)</p>
+            <p>📊 Earnings based on <strong>today's engagement only</strong> (views + likes + replies)</p>
+            <p>🔄 Engagement resets daily at midnight — no cheating with old posts!</p>
             <p>💵 Withdraw to <strong>MTN or Airtel Money</strong></p>
             <p className="text-xs pt-2">
               Questions? Ask <strong>AfuAI</strong> for full program details
