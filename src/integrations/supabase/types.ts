@@ -2227,6 +2227,7 @@ export type Database = {
           handle: string
           hide_followers_list: boolean | null
           hide_following_list: boolean | null
+          hide_on_leaderboard: boolean | null
           id: string
           is_admin: boolean | null
           is_affiliate: boolean | null
@@ -2265,6 +2266,7 @@ export type Database = {
           handle: string
           hide_followers_list?: boolean | null
           hide_following_list?: boolean | null
+          hide_on_leaderboard?: boolean | null
           id: string
           is_admin?: boolean | null
           is_affiliate?: boolean | null
@@ -2303,6 +2305,7 @@ export type Database = {
           handle?: string
           hide_followers_list?: boolean | null
           hide_following_list?: boolean | null
+          hide_on_leaderboard?: boolean | null
           id?: string
           is_admin?: boolean | null
           is_affiliate?: boolean | null
@@ -3360,6 +3363,7 @@ export type Database = {
           display_name: string
           engagement_score: number
           handle: string
+          hide_on_leaderboard: boolean
           likes_count: number
           potential_earnings: number
           replies_count: number

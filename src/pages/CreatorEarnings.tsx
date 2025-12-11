@@ -2,7 +2,7 @@ import { useState, useEffect, useCallback } from 'react';
 import { useAuth } from '@/contexts/AuthContext';
 import { supabase } from '@/integrations/supabase/client';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
-import { Wallet, TrendingUp, Eye, Heart, Phone, AlertCircle, CheckCircle, Clock, Ban, Timer, BarChart3, Trophy, MessageCircle, Gift, ChevronRight } from 'lucide-react';
+import { Wallet, TrendingUp, Eye, Heart, Phone, AlertCircle, CheckCircle, Clock, Ban, Timer, BarChart3, Trophy, MessageCircle, Gift, ChevronRight, EyeOff, Crown, User } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
@@ -16,7 +16,9 @@ import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger } from '@/co
 import { Progress } from '@/components/ui/progress';
 import { EngagementDetailsSheet } from '@/components/earnings/EngagementDetailsSheet';
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '@/components/ui/accordion';
-
+import { Switch } from '@/components/ui/switch';
+import { usePremiumStatus } from '@/hooks/usePremiumStatus';
+import { useNavigate } from 'react-router-dom';
 interface Eligibility {
   eligible: boolean;
   reason?: string;
@@ -82,13 +84,16 @@ export default function CreatorEarnings() {
   const [detailsType, setDetailsType] = useState<'views' | 'likes' | 'replies' | 'total'>('total');
   const [detailsSheetOpen, setDetailsSheetOpen] = useState(false);
 
-  // Check user's country and missed earnings
-  const { data: userProfile } = useQuery({
+  const { isPremium } = usePremiumStatus();
+  const navigate = useNavigate();
+
+  // Check user's country, missed earnings, and privacy setting
+  const { data: userProfile, refetch: refetchProfile } = useQuery({
     queryKey: ['user-profile-earnings', user?.id],
     queryFn: async () => {
       const { data, error } = await supabase
         .from('profiles')
-        .select('country, missed_earnings_total')
+        .select('country, missed_earnings_total, hide_on_leaderboard')
         .eq('id', user?.id)
         .single();
       if (error) throw error;
@@ -99,6 +104,28 @@ export default function CreatorEarnings() {
 
   const isUgandan = userProfile?.country?.toLowerCase() === 'uganda' || userProfile?.country === 'UG';
   const missedEarningsTotal = userProfile?.missed_earnings_total || 0;
+  const hideOnLeaderboard = userProfile?.hide_on_leaderboard || false;
+
+  // Toggle privacy setting
+  const handlePrivacyToggle = async (enabled: boolean) => {
+    if (!isPremium) {
+      toast.error('This feature is for Premium users only');
+      return;
+    }
+    
+    try {
+      const { error } = await supabase
+        .from('profiles')
+        .update({ hide_on_leaderboard: enabled })
+        .eq('id', user?.id);
+      
+      if (error) throw error;
+      toast.success(enabled ? 'Your identity is now hidden on the leaderboard' : 'Your identity is now visible on the leaderboard');
+      refetchProfile();
+    } catch (error: any) {
+      toast.error('Failed to update privacy setting');
+    }
+  };
 
   // Calculate countdown to pool end (8pm Uganda time) and weekend
   useEffect(() => {
@@ -244,6 +271,7 @@ export default function CreatorEarnings() {
         display_name: string;
         handle: string;
         avatar_url: string | null;
+        hide_on_leaderboard: boolean;
         views_count: number;
         likes_count: number;
         replies_count: number;
@@ -652,6 +680,37 @@ export default function CreatorEarnings() {
             </CardTitle>
           </CardHeader>
           <CardContent>
+            {/* Privacy Toggle for current user */}
+            <div className="mb-4 p-3 bg-muted/30 rounded-lg">
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-2">
+                  <EyeOff className="h-4 w-4 text-muted-foreground" />
+                  <div>
+                    <p className="text-sm font-medium">Hide My Identity</p>
+                    <p className="text-xs text-muted-foreground">Appear anonymous on the leaderboard</p>
+                  </div>
+                </div>
+                <div className="flex items-center gap-2">
+                  {!isPremium && (
+                    <Button 
+                      variant="ghost" 
+                      size="sm" 
+                      className="h-6 px-2 text-xs text-yellow-600"
+                      onClick={() => navigate('/premium')}
+                    >
+                      <Crown className="h-3 w-3 mr-1" />
+                      Premium
+                    </Button>
+                  )}
+                  <Switch
+                    checked={hideOnLeaderboard}
+                    onCheckedChange={handlePrivacyToggle}
+                    disabled={!isPremium}
+                  />
+                </div>
+              </div>
+            </div>
+
             {!dailyLeaderboard || dailyLeaderboard.length === 0 ? (
               <div className="text-center py-6 text-muted-foreground">
                 <Trophy className="h-8 w-8 mx-auto mb-2 opacity-30" />
@@ -664,6 +723,7 @@ export default function CreatorEarnings() {
                   const isCurrentUser = participant.user_id === user?.id;
                   const rank = index + 1;
                   const medalColor = rank === 1 ? 'text-yellow-500' : rank === 2 ? 'text-gray-400' : rank === 3 ? 'text-amber-600' : 'text-muted-foreground';
+                  const isHidden = participant.hide_on_leaderboard && !isCurrentUser;
                   
                   return (
                     <div 
@@ -681,7 +741,11 @@ export default function CreatorEarnings() {
                       
                       {/* Avatar */}
                       <div className="w-8 h-8 rounded-full bg-muted overflow-hidden flex-shrink-0">
-                        {participant.avatar_url ? (
+                        {isHidden ? (
+                          <div className="w-full h-full flex items-center justify-center bg-muted">
+                            <User className="h-4 w-4 text-muted-foreground" />
+                          </div>
+                        ) : participant.avatar_url ? (
                           <img src={participant.avatar_url} alt="" className="w-full h-full object-cover" />
                         ) : (
                           <div className="w-full h-full flex items-center justify-center text-xs font-bold">
@@ -693,10 +757,23 @@ export default function CreatorEarnings() {
                       {/* Name & Handle */}
                       <div className="flex-1 min-w-0">
                         <p className={`font-medium text-sm truncate ${isCurrentUser ? 'text-primary' : ''}`}>
-                          {participant.display_name?.length > 12 
-                            ? participant.display_name.slice(0, 12) + '...' 
-                            : participant.display_name}
-                          {isCurrentUser && <span className="text-xs text-muted-foreground ml-1">(You)</span>}
+                          {isHidden ? (
+                            <span className="text-muted-foreground italic flex items-center gap-1">
+                              <EyeOff className="h-3 w-3" />
+                              Hidden User
+                            </span>
+                          ) : (
+                            <>
+                              {participant.display_name?.length > 12 
+                                ? participant.display_name.slice(0, 12) + '...' 
+                                : participant.display_name}
+                              {isCurrentUser && (
+                                <span className="text-xs text-muted-foreground ml-1">
+                                  (You{participant.hide_on_leaderboard ? ' - Hidden' : ''})
+                                </span>
+                              )}
+                            </>
+                          )}
                         </p>
                         <p className="text-xs text-muted-foreground">
                           👁 {participant.views_count} • ❤️ {participant.likes_count} • 💬 {participant.replies_count}
