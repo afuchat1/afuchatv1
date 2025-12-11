@@ -117,7 +117,7 @@ export const MessageActionsSheet = ({
   return (
     <>
       <Sheet open={open} onOpenChange={onOpenChange}>
-        <SheetContent side="bottom" className="rounded-t-3xl max-h-[85vh] overflow-y-auto">
+        <SheetContent side="bottom" className="rounded-t-3xl h-auto max-h-[60vh] overflow-y-auto bg-background/95 backdrop-blur-xl border-t border-border/50 p-6">
           <SheetHeader className="pb-4">
             <SheetTitle className="text-xl font-bold">Message Actions</SheetTitle>
           </SheetHeader>

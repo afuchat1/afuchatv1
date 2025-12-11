@@ -106,7 +106,7 @@ const UserActionsSheet = ({
       <Sheet open={isOpen} onOpenChange={onClose}>
         <SheetContent 
           side="bottom" 
-          className="max-h-[85vh] rounded-t-3xl bg-background/95 backdrop-blur-xl border-t border-border/50 p-6"
+          className="h-auto max-h-[45vh] rounded-t-3xl bg-background/95 backdrop-blur-xl border-t border-border/50 p-6"
         >
           <SheetHeader className="text-left mb-6">
             <SheetTitle className="text-xl font-bold">@{userHandle}</SheetTitle>

@@ -52,7 +52,7 @@ export const GiftPreviewModal = ({ gift, open, onOpenChange, onSendGift }: GiftP
 
   return (
     <Sheet open={open} onOpenChange={onOpenChange}>
-      <SheetContent side="bottom" className="max-h-[90vh] overflow-y-auto p-0 bg-gradient-to-b from-background via-background to-primary/10" onOpenChange={onOpenChange}>
+      <SheetContent side="bottom" className="h-auto max-h-[85vh] overflow-y-auto p-0 rounded-t-3xl bg-gradient-to-b from-background via-background to-primary/10" onOpenChange={onOpenChange}>
         <div className="relative">
           {/* 3D Preview Section */}
           <div className="relative h-96 flex items-center justify-center p-8 perspective-1000">

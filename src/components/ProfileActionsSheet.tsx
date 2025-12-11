@@ -23,7 +23,7 @@ const ProfileActionsSheet = ({ isOpen, onClose, onLogout, onEditProfile }: Profi
     <Sheet open={isOpen} onOpenChange={onClose}>
       <SheetContent 
         side="bottom" 
-        className="max-h-[85vh] rounded-t-3xl bg-background/95 backdrop-blur-xl border-t border-border/50 p-6"
+        className="h-auto max-h-[40vh] rounded-t-3xl bg-background/95 backdrop-blur-xl border-t border-border/50 p-6"
       >
         <div className="space-y-3">
           <SheetClose asChild>

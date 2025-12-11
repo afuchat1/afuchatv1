@@ -74,7 +74,7 @@ export const TrendingInfoSheet = ({
 
   return (
     <Sheet open={open} onOpenChange={onOpenChange}>
-      <SheetContent side="bottom" className="rounded-t-[20px] max-h-[80vh]">
+      <SheetContent side="bottom" className="h-auto max-h-[70vh] rounded-t-3xl bg-background/95 backdrop-blur-xl border-t border-border/50 p-6">
         <SheetHeader className="text-left pb-4">
           <SheetTitle className="flex items-center gap-2 text-xl">
             <TrendingUp className="h-5 w-5 text-primary" />

@@ -121,7 +121,7 @@ export const PinnedGiftDetailSheet = ({ giftId, open, onOpenChange }: PinnedGift
 
   return (
     <Sheet open={open} onOpenChange={onOpenChange}>
-      <SheetContent side="bottom" className="max-h-[85vh] rounded-t-3xl bg-background/95 backdrop-blur-xl border-t border-border/50 p-6 overflow-y-auto">
+      <SheetContent side="bottom" className="h-auto max-h-[80vh] rounded-t-3xl bg-background/95 backdrop-blur-xl border-t border-border/50 p-6 overflow-y-auto">
         <SheetHeader className="sr-only">
           <SheetTitle>Gift Details</SheetTitle>
         </SheetHeader>

@@ -250,7 +250,7 @@ const PostActionsSheet: React.FC<PostActionsSheetProps> = ({ post, user, navigat
             
             <SheetContent 
                 side="bottom" 
-                className="h-auto max-h-[80vh] rounded-t-xl p-0 overflow-y-auto bg-background"
+                className="h-auto max-h-[70vh] rounded-t-xl p-0 overflow-y-auto bg-background"
             >
                 {renderDragHandle()}
                 

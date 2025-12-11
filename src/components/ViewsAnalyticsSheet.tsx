@@ -116,7 +116,7 @@ export const ViewsAnalyticsSheet = ({
   if (!isPostOwner) {
     return (
       <Sheet open={isOpen} onOpenChange={onClose}>
-        <SheetContent side="bottom" className="max-h-[50vh] rounded-t-3xl bg-background/95 backdrop-blur-xl border-t border-border/50 p-6">
+        <SheetContent side="bottom" className="h-auto max-h-[50vh] rounded-t-3xl bg-background/95 backdrop-blur-xl border-t border-border/50 p-6">
           <SheetHeader className="pb-6">
             <SheetTitle className="text-2xl font-bold flex items-center gap-2">
               <TrendingUp className="h-5 w-5 text-primary" />
@@ -141,7 +141,7 @@ export const ViewsAnalyticsSheet = ({
 
   return (
     <Sheet open={isOpen} onOpenChange={onClose}>
-      <SheetContent side="bottom" className="max-h-[85vh] rounded-t-3xl bg-background/95 backdrop-blur-xl border-t border-border/50 p-6 overflow-y-auto">
+      <SheetContent side="bottom" className="h-auto max-h-[75vh] rounded-t-3xl bg-background/95 backdrop-blur-xl border-t border-border/50 p-6 overflow-y-auto">
         <SheetHeader className="pb-6">
           <SheetTitle className="text-2xl font-bold flex items-center gap-2">
             <TrendingUp className="h-5 w-5 text-primary" />
