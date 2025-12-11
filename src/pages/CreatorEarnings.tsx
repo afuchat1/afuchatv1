@@ -58,6 +58,12 @@ interface TopPost {
   replies_count: number;
   created_at: string;
   engagement_score: number;
+  total_views: number;
+  total_likes: number;
+  total_replies: number;
+  total_engagement_score: number;
+  days_active: number;
+  estimated_total_earnings: number;
 }
 
 export default function CreatorEarnings() {
@@ -192,17 +198,23 @@ export default function CreatorEarnings() {
       // Get user's posts
       const { data: posts, error: postsError } = await supabase
         .from('posts')
-        .select('id, content, created_at')
+        .select('id, content, created_at, view_count')
         .eq('author_id', user?.id)
-        .limit(20);
+        .order('created_at', { ascending: false })
+        .limit(50);
       
       if (postsError) throw postsError;
       if (!posts || posts.length === 0) return [];
 
-      // Get TODAY's engagement only for each post
+      const dailyPool = 5000; // UGX daily pool
+
+      // Get BOTH daily and all-time engagement for each post
       const postsWithEngagement = await Promise.all(
         posts.map(async (post) => {
-          const [viewsResult, likesResult, repliesResult] = await Promise.all([
+          const [
+            todayViewsResult, todayLikesResult, todayRepliesResult,
+            totalLikesResult, totalRepliesResult
+          ] = await Promise.all([
             // Today's views only
             supabase
               .from('post_views')
@@ -223,28 +235,65 @@ export default function CreatorEarnings() {
               .select('id', { count: 'exact', head: true })
               .eq('post_id', post.id)
               .gte('created_at', startOfDay)
-              .lt('created_at', endOfDay)
+              .lt('created_at', endOfDay),
+            // ALL-TIME likes
+            supabase
+              .from('post_acknowledgments')
+              .select('id', { count: 'exact', head: true })
+              .eq('post_id', post.id),
+            // ALL-TIME replies
+            supabase
+              .from('post_replies')
+              .select('id', { count: 'exact', head: true })
+              .eq('post_id', post.id)
           ]);
 
-          const daily_views = viewsResult.count || 0;
-          const daily_likes = likesResult.count || 0;
-          const daily_replies = repliesResult.count || 0;
-          const engagement_score = (daily_views * 1) + (daily_likes * 3) + (daily_replies * 5);
+          // Today's stats (for daily earnings)
+          const daily_views = todayViewsResult.count || 0;
+          const daily_likes = todayLikesResult.count || 0;
+          const daily_replies = todayRepliesResult.count || 0;
+          const daily_engagement_score = (daily_views * 1) + (daily_likes * 3) + (daily_replies * 5);
+
+          // All-time stats (for total earnings estimate)
+          const total_views = post.view_count || 0;
+          const total_likes = totalLikesResult.count || 0;
+          const total_replies = totalRepliesResult.count || 0;
+          const total_engagement_score = (total_views * 1) + (total_likes * 3) + (total_replies * 5);
+
+          // Calculate days since post was created
+          const createdDate = new Date(post.created_at);
+          const daysActive = Math.max(1, Math.ceil((today.getTime() - createdDate.getTime()) / (1000 * 60 * 60 * 24)));
+
+          // Estimate total earnings (assuming consistent daily share)
+          // This is an estimate: (avg daily score / assumed pool share) * days active
+          const avgDailyScore = total_engagement_score / daysActive;
+          const estimatedDailyEarning = Math.round((avgDailyScore / Math.max(avgDailyScore * 10, 100)) * dailyPool * 0.1); // Conservative estimate
+          const estimated_total_earnings = estimatedDailyEarning * daysActive;
 
           return {
-            ...post,
+            id: post.id,
+            content: post.content,
+            created_at: post.created_at,
+            // Today's stats
             view_count: daily_views,
             likes_count: daily_likes,
             replies_count: daily_replies,
-            engagement_score
+            engagement_score: daily_engagement_score,
+            // All-time stats
+            total_views,
+            total_likes,
+            total_replies,
+            total_engagement_score,
+            days_active: daysActive,
+            estimated_total_earnings
           } as TopPost;
         })
       );
 
-      // Filter posts with engagement and sort by score
+      // Sort by total engagement score (best performing posts on top)
       return postsWithEngagement
-        .filter(post => post.engagement_score > 0)
-        .sort((a, b) => b.engagement_score - a.engagement_score);
+        .filter(post => post.total_engagement_score > 0)
+        .sort((a, b) => b.total_engagement_score - a.total_engagement_score);
     },
     enabled: !!user?.id
   });
@@ -481,113 +530,123 @@ export default function CreatorEarnings() {
           </CardContent>
         </Card>
 
-        {/* Top Performing Posts Analysis - TODAY ONLY */}
+        {/* Post Performance & Total Earnings */}
         <Card>
           <CardHeader className="pb-2">
             <CardTitle className="text-base flex items-center gap-2">
               <BarChart3 className="h-4 w-4" />
-              Today's Post Performance
+              Post Earnings Analysis
             </CardTitle>
           </CardHeader>
           <CardContent>
             {topPostsLoading ? (
               <div className="space-y-3">
-                <Skeleton className="h-16 w-full" />
-                <Skeleton className="h-16 w-full" />
-                <Skeleton className="h-16 w-full" />
+                <Skeleton className="h-20 w-full" />
+                <Skeleton className="h-20 w-full" />
+                <Skeleton className="h-20 w-full" />
               </div>
             ) : topPosts && topPosts.length > 0 ? (
-              (() => {
-                // Calculate total engagement score for earnings distribution
-                const totalEngagement = topPosts.reduce((sum, post) => sum + post.engagement_score, 0);
-                const dailyPool = 5000; // Daily UGX pool
-                
-                return (
-                  <div className="space-y-3">
-                    {/* Earnings Distribution Info */}
-                    <div className="bg-primary/10 border border-primary/20 rounded-lg p-3 mb-4">
-                      <p className="text-xs text-muted-foreground">
-                        📅 <strong>Today's engagement only</strong> — Views, likes & replies earned TODAY determine your share of the {dailyPool.toLocaleString()} UGX daily pool. Historical stats don't count.
-                      </p>
-                    </div>
+              <div className="space-y-3">
+                {/* Info Box */}
+                <div className="bg-primary/10 border border-primary/20 rounded-lg p-3 mb-4">
+                  <p className="text-xs text-muted-foreground">
+                    📊 <strong>Ranked by total earnings</strong> — Posts with highest lifetime engagement are on top. Daily payouts are still based on TODAY's engagement only.
+                  </p>
+                </div>
 
-                    {topPosts.slice(0, 5).map((post, index) => {
-                      const maxScore = topPosts[0]?.engagement_score || 1;
-                      const scorePercent = (post.engagement_score / maxScore) * 100;
-                      const engagementShare = totalEngagement > 0 ? (post.engagement_score / totalEngagement) * 100 : 0;
-                      const estimatedEarning = totalEngagement > 0 ? Math.round((post.engagement_score / totalEngagement) * dailyPool) : 0;
-                      
-                      return (
-                        <div key={post.id} className="space-y-2 p-3 bg-muted/30 rounded-lg">
-                          <div className="flex items-start gap-3">
-                            <div className={`flex-shrink-0 w-8 h-8 rounded-full flex items-center justify-center text-sm font-bold ${
-                              index === 0 ? 'bg-yellow-500 text-yellow-950' :
-                              index === 1 ? 'bg-gray-300 text-gray-700' :
-                              index === 2 ? 'bg-amber-600 text-amber-50' :
-                              'bg-muted text-muted-foreground'
-                            }`}>
-                              {index === 0 ? <Trophy className="h-4 w-4" /> : index + 1}
-                            </div>
-                            <div className="flex-1 min-w-0">
-                              <p className="text-sm line-clamp-2">
-                                {post.content.slice(0, 80)}{post.content.length > 80 ? '...' : ''}
-                              </p>
-                              <div className="flex items-center gap-3 mt-1 text-xs text-muted-foreground">
-                                <span className="flex items-center gap-1">
-                                  <Eye className="h-3 w-3" /> {post.view_count}
-                                </span>
-                                <span className="flex items-center gap-1">
-                                  <Heart className="h-3 w-3" /> {post.likes_count}
-                                </span>
-                                <span className="flex items-center gap-1">
-                                  <MessageCircle className="h-3 w-3" /> {post.replies_count}
-                                </span>
-                              </div>
-                            </div>
-                          </div>
-                          <div className="flex items-center gap-2">
-                            <Progress value={scorePercent} className="h-2 flex-1" />
-                            <span className="text-xs font-medium text-primary min-w-[60px] text-right">
-                              {post.engagement_score.toLocaleString()} pts
+                {topPosts.slice(0, 10).map((post, index) => {
+                  const maxScore = topPosts[0]?.total_engagement_score || 1;
+                  const scorePercent = (post.total_engagement_score / maxScore) * 100;
+                  
+                  return (
+                    <div key={post.id} className="space-y-2 p-3 bg-muted/30 rounded-lg">
+                      <div className="flex items-start gap-3">
+                        <div className={`flex-shrink-0 w-8 h-8 rounded-full flex items-center justify-center text-sm font-bold ${
+                          index === 0 ? 'bg-yellow-500 text-yellow-950' :
+                          index === 1 ? 'bg-gray-300 text-gray-700' :
+                          index === 2 ? 'bg-amber-600 text-amber-50' :
+                          'bg-muted text-muted-foreground'
+                        }`}>
+                          {index === 0 ? <Trophy className="h-4 w-4" /> : index + 1}
+                        </div>
+                        <div className="flex-1 min-w-0">
+                          <p className="text-sm line-clamp-2">
+                            {post.content.slice(0, 80)}{post.content.length > 80 ? '...' : ''}
+                          </p>
+                          <p className="text-xs text-muted-foreground mt-1">
+                            {post.days_active} day{post.days_active !== 1 ? 's' : ''} active
+                          </p>
+                        </div>
+                      </div>
+
+                      {/* Total Stats (All-time) */}
+                      <div className="bg-background/50 rounded-lg p-2">
+                        <p className="text-xs font-medium text-muted-foreground mb-1">Total (All-time)</p>
+                        <div className="flex items-center gap-3 text-xs">
+                          <span className="flex items-center gap-1">
+                            <Eye className="h-3 w-3" /> {post.total_views.toLocaleString()}
+                          </span>
+                          <span className="flex items-center gap-1">
+                            <Heart className="h-3 w-3" /> {post.total_likes.toLocaleString()}
+                          </span>
+                          <span className="flex items-center gap-1">
+                            <MessageCircle className="h-3 w-3" /> {post.total_replies.toLocaleString()}
+                          </span>
+                        </div>
+                      </div>
+
+                      {/* Today's Stats */}
+                      {post.engagement_score > 0 && (
+                        <div className="bg-green-500/10 rounded-lg p-2">
+                          <p className="text-xs font-medium text-green-600 mb-1">Today's Activity</p>
+                          <div className="flex items-center gap-3 text-xs text-green-700">
+                            <span className="flex items-center gap-1">
+                              <Eye className="h-3 w-3" /> +{post.view_count}
                             </span>
-                          </div>
-                          {/* Estimated Earnings from this post */}
-                          <div className="flex items-center justify-between pt-1 border-t border-border/50">
-                            <span className="text-xs text-muted-foreground">
-                              Share: {engagementShare.toFixed(1)}%
+                            <span className="flex items-center gap-1">
+                              <Heart className="h-3 w-3" /> +{post.likes_count}
                             </span>
-                            <span className="text-sm font-bold text-green-600">
-                              ~{estimatedEarning.toLocaleString()} UGX/day
+                            <span className="flex items-center gap-1">
+                              <MessageCircle className="h-3 w-3" /> +{post.replies_count}
                             </span>
                           </div>
                         </div>
-                      );
-                    })}
-                    
-                    {/* Score Legend */}
-                    <div className="mt-4 p-3 bg-muted/50 rounded-lg">
-                      <p className="text-xs font-medium mb-2">Today's Engagement Score Formula</p>
-                      <div className="flex flex-wrap gap-3 text-xs text-muted-foreground">
-                        <span className="flex items-center gap-1">
-                          <Eye className="h-3 w-3" /> Today's Views × 1
-                        </span>
-                        <span className="flex items-center gap-1">
-                          <Heart className="h-3 w-3" /> Today's Likes × 3
-                        </span>
-                        <span className="flex items-center gap-1">
-                          <MessageCircle className="h-3 w-3" /> Today's Replies × 5
+                      )}
+
+                      {/* Progress Bar */}
+                      <div className="flex items-center gap-2">
+                        <Progress value={scorePercent} className="h-2 flex-1" />
+                        <span className="text-xs font-medium text-primary min-w-[70px] text-right">
+                          {post.total_engagement_score.toLocaleString()} pts
                         </span>
                       </div>
-                      <p className="text-xs text-muted-foreground mt-2">
-                        ⚡ Resets daily at midnight — Only today's activity counts!
-                      </p>
+
+                      {/* Estimated Total Earnings */}
+                      <div className="flex items-center justify-between pt-2 border-t border-border/50">
+                        <span className="text-xs text-muted-foreground">
+                          Est. Total Earned
+                        </span>
+                        <span className="text-base font-bold text-green-600">
+                          ~{post.estimated_total_earnings.toLocaleString()} UGX
+                        </span>
+                      </div>
                     </div>
+                  );
+                })}
+                
+                {/* Info Legend */}
+                <div className="mt-4 p-3 bg-muted/50 rounded-lg">
+                  <p className="text-xs font-medium mb-2">How Earnings Work</p>
+                  <div className="space-y-1 text-xs text-muted-foreground">
+                    <p>📅 <strong>Daily payouts:</strong> Based only on TODAY's engagement (no cheating)</p>
+                    <p>📊 <strong>Total estimated:</strong> Cumulative earnings since post was created</p>
+                    <p>⚡ Score = Views×1 + Likes×3 + Replies×5</p>
                   </div>
-                );
-              })()
+                </div>
+              </div>
             ) : (
               <p className="text-sm text-muted-foreground text-center py-4">
-                No engagement today yet. Posts with views, likes, or replies today will appear here!
+                No posts with engagement yet. Create content to see earnings analysis!
               </p>
             )}
           </CardContent>
