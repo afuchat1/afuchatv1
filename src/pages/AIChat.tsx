@@ -10,6 +10,54 @@ import { toast } from 'sonner';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { PremiumGate } from '@/components/PremiumGate';
 import { parseRichText } from '@/lib/richTextUtils';
+import { Link } from 'react-router-dom';
+
+// Parse AI responses to convert page paths into clickable links
+const parseAIResponse = (content: string): React.ReactNode => {
+  // Map of page paths to friendly names
+  const pageNames: Record<string, string> = {
+    '/support': 'Support',
+    '/privacy': 'Privacy Policy',
+    '/terms': 'Terms of Use',
+    '/premium': 'Premium',
+    '/home': 'Home',
+    '/feed': 'Feed',
+    '/chats': 'Messages',
+    '/notifications': 'Notifications',
+    '/search': 'Search',
+    '/settings': 'Settings',
+    '/profile': 'Profile',
+    '/wallet': 'Wallet',
+    '/gifts': 'Gifts',
+    '/games': 'Games',
+    '/moments': 'Moments',
+    '/creator-earnings': 'Creator Earnings',
+    '/auth/signin': 'Sign In',
+    '/auth/signup': 'Sign Up',
+  };
+
+  // Regex to find page paths like /support, /privacy, etc.
+  const pathRegex = /(\/[a-z\-\/]+)/gi;
+  
+  const parts = content.split(pathRegex);
+  
+  return parts.map((part, index) => {
+    const lowerPart = part.toLowerCase();
+    if (pageNames[lowerPart]) {
+      return (
+        <Link
+          key={index}
+          to={lowerPart}
+          className="text-primary hover:underline font-medium"
+        >
+          {pageNames[lowerPart]}
+        </Link>
+      );
+    }
+    // Apply rich text parsing to non-link parts
+    return <span key={index}>{parseRichText(part)}</span>;
+  });
+};
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { ProfileDrawer } from '@/components/ProfileDrawer';
 
@@ -229,7 +277,7 @@ const AIChat: React.FC = () => {
                     }`}
                   >
                     <div className="text-[15px] whitespace-pre-wrap select-text leading-[22px]">
-                      {parseRichText(msg.content)}
+                      {msg.role === 'assistant' ? parseAIResponse(msg.content) : parseRichText(msg.content)}
                     </div>
                     <div className="flex items-center justify-between mt-2">
                       <p className="text-[13px] opacity-70">
