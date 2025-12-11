@@ -3350,6 +3350,20 @@ export type Database = {
         Args: { p_date?: string; p_user_id: string }
         Returns: Json
       }
+      get_daily_engagement_leaderboard: {
+        Args: never
+        Returns: {
+          avatar_url: string
+          display_name: string
+          engagement_score: number
+          handle: string
+          likes_count: number
+          potential_earnings: number
+          replies_count: number
+          user_id: string
+          views_count: number
+        }[]
+      }
       get_gift_price: { Args: { p_gift_id: string }; Returns: number }
       get_or_create_chat: { Args: { other_user_id: string }; Returns: string }
       get_pending_withdrawals: {
