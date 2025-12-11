@@ -5,10 +5,14 @@ import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { toast } from 'sonner';
-import { Crown, Check, Coins, Calendar, Sparkles, Gift } from 'lucide-react';
+import { 
+  Crown, Check, Coins, Calendar, Sparkles, Gift, Users, Radio, 
+  MessageSquare, Image, Ban, Eye, Palette, Shield, Star, Zap
+} from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { Separator } from '@/components/ui/separator';
 import { PageHeader } from '@/components/PageHeader';
+
 interface SubscriptionPlan {
   id: string;
   name: string;
@@ -31,6 +35,93 @@ interface UserSubscription {
     duration_days: number;
   };
 }
+
+const premiumBenefits = [
+  {
+    icon: Shield,
+    title: 'Verified Badge',
+    description: 'Get the coveted verified checkmark on your profile',
+    color: 'text-primary'
+  },
+  {
+    icon: Crown,
+    title: 'Premium Badge',
+    description: 'Show your premium status with an exclusive badge',
+    color: 'text-yellow-500'
+  },
+  {
+    icon: Ban,
+    title: 'Ad-Free Experience',
+    description: 'Browse the platform without any advertisements',
+    color: 'text-green-500'
+  },
+  {
+    icon: Image,
+    title: 'Create Stories',
+    description: 'Share 24-hour stories with your followers',
+    color: 'text-pink-500'
+  },
+  {
+    icon: Users,
+    title: 'Create Groups',
+    description: 'Create and manage group chats with friends',
+    color: 'text-blue-500'
+  },
+  {
+    icon: Radio,
+    title: 'Create Channels',
+    description: 'Broadcast to unlimited subscribers with channels',
+    color: 'text-purple-500'
+  },
+  {
+    icon: Gift,
+    title: 'Gift Marketplace',
+    description: 'Buy and sell rare collectible gifts',
+    color: 'text-orange-500'
+  },
+  {
+    icon: MessageSquare,
+    title: 'Create Red Envelopes',
+    description: 'Send Nexa gifts to multiple friends at once',
+    color: 'text-red-500'
+  },
+  {
+    icon: Zap,
+    title: 'Unlimited Red Envelope Claims',
+    description: 'Claim unlimited red envelopes daily (non-premium: 1/day)',
+    color: 'text-amber-500'
+  },
+  {
+    icon: Star,
+    title: 'Pin 3 Gifts',
+    description: 'Pin up to 3 rare gifts on your profile (non-premium: 1)',
+    color: 'text-cyan-500'
+  },
+  {
+    icon: Sparkles,
+    title: 'AI Post Analysis',
+    description: 'Get AI-powered insights on any post',
+    color: 'text-indigo-500'
+  },
+  {
+    icon: Palette,
+    title: 'AI Chat Themes',
+    description: 'Generate custom AI themes and wallpapers for chats',
+    color: 'text-teal-500'
+  },
+  {
+    icon: Eye,
+    title: 'Leaderboard Privacy',
+    description: 'Hide your identity on the creator earnings leaderboard',
+    color: 'text-slate-500'
+  },
+  {
+    icon: MessageSquare,
+    title: 'AfuAI Chat Assistant',
+    description: 'Chat with AfuAI for help and insights anytime',
+    color: 'text-primary'
+  },
+];
 
 export default function Premium() {
   const { user } = useAuth();
@@ -156,7 +247,7 @@ export default function Premium() {
   }
 
   return (
-    <div className="min-h-screen bg-background">
+    <div className="min-h-screen bg-background pb-20">
       <PageHeader 
         title="Premium" 
         icon={<Crown className="h-5 w-5 text-primary" />}
@@ -165,7 +256,7 @@ export default function Premium() {
       <div className="container max-w-6xl mx-auto px-4 py-8">
         {/* ACoin Balance Card */}
         <Card className="p-6 mb-8 bg-gradient-to-br from-primary/10 via-background to-background">
-          <div className="flex items-center justify-between">
+          <div className="flex items-center justify-between flex-wrap gap-4">
             <div className="flex items-center gap-3">
               <div className="p-3 bg-primary/20 rounded-full">
                 <Coins className="h-6 w-6 text-primary" />
@@ -333,76 +424,27 @@ export default function Premium() {
           })}
         </div>
 
-        {/* Info Section */}
-        <Card className="p-6 mt-8 bg-muted/30">
-          <h3 className="font-semibold mb-4 flex items-center gap-2">
-            <Sparkles className="h-5 w-5 text-primary" />
-            Premium Features
+        {/* All Premium Benefits Section */}
+        <Card className="p-6 mt-8">
+          <h3 className="font-bold text-xl mb-6 flex items-center gap-2">
+            <Crown className="h-6 w-6 text-primary" />
+            All Premium Benefits
           </h3>
-          <div className="grid md:grid-cols-2 gap-4">
-            <div className="space-y-3">
-              <div className="flex items-start gap-3">
-                <div className="p-2 bg-primary/10 rounded-lg">
-                  <Crown className="h-5 w-5 text-primary" />
+          <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-4">
+            {premiumBenefits.map((benefit, index) => (
+              <div 
+                key={index}
+                className="flex items-start gap-3 p-4 rounded-lg bg-muted/30 hover:bg-muted/50 transition-colors"
+              >
+                <div className={`p-2 bg-background rounded-lg ${benefit.color}`}>
+                  <benefit.icon className="h-5 w-5" />
                 </div>
-                <div>
-                  <p className="font-medium">Verified Badge</p>
-                  <p className="text-sm text-muted-foreground">Get the coveted verified checkmark</p>
-                </div>
-              </div>
-              
-              <div className="flex items-start gap-3">
-                <div className="p-2 bg-primary/10 rounded-lg">
-                  <Gift className="h-5 w-5 text-primary" />
-                </div>
-                <div>
-                  <p className="font-medium">Gift Marketplace</p>
-                  <p className="text-sm text-muted-foreground">Buy and sell rare gifts</p>
+                <div className="flex-1 min-w-0">
+                  <p className="font-medium">{benefit.title}</p>
+                  <p className="text-xs text-muted-foreground">{benefit.description}</p>
                 </div>
               </div>
-              
-              <div className="flex items-start gap-3">
-                <div className="p-2 bg-primary/10 rounded-lg">
-                  <Sparkles className="h-5 w-5 text-primary" />
-                </div>
-                <div>
-                  <p className="font-medium">Stories & Moments</p>
-                  <p className="text-sm text-muted-foreground">Share 24-hour stories with followers</p>
-                </div>
-              </div>
-            </div>
-            
-            <div className="space-y-3">
-              <div className="flex items-start gap-3">
-                <div className="p-2 bg-primary/10 rounded-lg">
-                  <Calendar className="h-5 w-5 text-primary" />
-                </div>
-                <div>
-                  <p className="font-medium">Red Envelopes</p>
-                  <p className="text-sm text-muted-foreground">Send Nexa gifts to multiple friends</p>
-                </div>
-              </div>
-              
-              <div className="flex items-start gap-3">
-                <div className="p-2 bg-primary/10 rounded-lg">
-                  <Sparkles className="h-5 w-5 text-primary" />
-                </div>
-                <div>
-                  <p className="font-medium">AI Chat Assistant</p>
-                  <p className="text-sm text-muted-foreground">Chat with AfuAI for help and insights</p>
-                </div>
-              </div>
-              
-              <div className="flex items-start gap-3">
-                <div className="p-2 bg-primary/10 rounded-lg">
-                  <Crown className="h-5 w-5 text-primary" />
-                </div>
-                <div>
-                  <p className="font-medium">Premium Badge</p>
-                  <p className="text-sm text-muted-foreground">Show your premium status on your profile</p>
-                </div>
-              </div>
-            </div>
+            ))}
           </div>
         </Card>
         
@@ -426,7 +468,7 @@ export default function Premium() {
             </li>
             <li className="flex items-start gap-2">
               <span className="font-bold text-foreground">4.</span>
-              <span>Enjoy premium features throughout your subscription period</span>
+              <span>Enjoy all premium features throughout your subscription period</span>
             </li>
           </ul>
         </Card>

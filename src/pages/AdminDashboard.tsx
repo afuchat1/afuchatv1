@@ -20,6 +20,7 @@ import { AdminAnalyticsCharts } from '@/components/admin/AdminAnalyticsCharts';
 import { AdminUserManagement } from '@/components/admin/AdminUserManagement';
 import { AdminWithdrawalsPanel } from '@/components/admin/AdminWithdrawalsPanel';
 import { AdminReportsPanel } from '@/components/admin/AdminReportsPanel';
+import { AdminGroupChannelVerification } from '@/components/admin/AdminGroupChannelVerification';
 import { PageHeader } from '@/components/PageHeader';
 
 interface DashboardStats {
@@ -671,6 +672,7 @@ const AdminDashboard = () => {
             <TabsTrigger value="users" className="text-xs">Users</TabsTrigger>
             <TabsTrigger value="withdrawals" className="text-xs">Withdrawals</TabsTrigger>
             <TabsTrigger value="reports" className="text-xs">Reports</TabsTrigger>
+            <TabsTrigger value="groups" className="text-xs">Groups/Channels</TabsTrigger>
             <TabsTrigger value="posts" className="text-xs">Posts</TabsTrigger>
             <TabsTrigger value="messages" className="text-xs">Messages</TabsTrigger>
             <TabsTrigger value="gifts" className="text-xs">Gifts</TabsTrigger>
@@ -743,6 +745,10 @@ const AdminDashboard = () => {
                 <AdminReportsPanel />
               </CardContent>
             </Card>
+          </TabsContent>
+
+          <TabsContent value="groups" className="mt-6">
+            <AdminGroupChannelVerification />
           </TabsContent>
 
           <TabsContent value="posts" className="mt-6">
