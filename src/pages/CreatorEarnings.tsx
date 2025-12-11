@@ -80,6 +80,23 @@ export default function CreatorEarnings() {
   const [detailsType, setDetailsType] = useState<'views' | 'likes' | 'replies' | 'total'>('total');
   const [detailsSheetOpen, setDetailsSheetOpen] = useState(false);
 
+  // Check user's country
+  const { data: userProfile } = useQuery({
+    queryKey: ['user-country', user?.id],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from('profiles')
+        .select('country')
+        .eq('id', user?.id)
+        .single();
+      if (error) throw error;
+      return data;
+    },
+    enabled: !!user?.id
+  });
+
+  const isUgandan = userProfile?.country?.toLowerCase() === 'uganda' || userProfile?.country === 'UG';
+
   // Calculate countdown to next weekend or end of weekend
   useEffect(() => {
     const calculateCountdown = () => {
@@ -360,8 +377,33 @@ export default function CreatorEarnings() {
   }
 
   return (
-    <div className="h-full flex flex-col bg-background">
+    <div className="h-full flex flex-col bg-background relative">
       <PageHeader title="Creator Earnings" subtitle="Daily 5,000 UGX Giveaway" />
+
+      {/* Country Restriction Overlay for non-Ugandan users */}
+      {!isUgandan && userProfile && (
+        <div className="absolute inset-0 z-50 bg-background/80 backdrop-blur-sm flex items-center justify-center">
+          <Card className="mx-4 max-w-md">
+            <CardContent className="pt-6 text-center space-y-4">
+              <div className="w-16 h-16 rounded-full bg-muted flex items-center justify-center mx-auto">
+                <Ban className="h-8 w-8 text-muted-foreground" />
+              </div>
+              <div>
+                <h3 className="text-lg font-bold">Region Restricted</h3>
+                <p className="text-muted-foreground text-sm mt-2">
+                  Creator Earnings is currently only available for users in Uganda. 
+                  This program rewards Ugandan content creators with daily UGX payouts.
+                </p>
+              </div>
+              <div className="p-3 bg-muted/50 rounded-lg">
+                <p className="text-xs text-muted-foreground">
+                  🌍 We're working to expand to more regions. Stay tuned for updates!
+                </p>
+              </div>
+            </CardContent>
+          </Card>
+        </div>
+      )}
 
       <div className="flex-1 overflow-y-auto p-4 space-y-4">
         {/* Eligibility Status */}
