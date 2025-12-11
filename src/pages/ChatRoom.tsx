@@ -133,8 +133,12 @@ const formatLastSeen = (isoString: string): string => {
   return date.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
 };
 
+interface ChatRoomProps {
+  isEmbedded?: boolean;
+}
+
 // ChatRoom component
-const ChatRoom = () => {
+const ChatRoom = ({ isEmbedded = false }: ChatRoomProps) => {
   const { chatId } = useParams();
   const { user } = useAuth();
   const navigate = useNavigate();
@@ -1239,7 +1243,7 @@ const ChatRoom = () => {
 
   if (loading) {
     return (
-      <div className="flex-1 flex items-center justify-center bg-background min-h-screen">
+      <div className={`flex-1 flex items-center justify-center bg-background ${isEmbedded ? 'h-full' : 'min-h-screen'}`}>
         <CustomLoader size="lg" text="Loading chat..." />
       </div>
     );
@@ -1247,17 +1251,19 @@ const ChatRoom = () => {
 
   return (
     <TooltipProvider delayDuration={200}>
-      <div className="fixed inset-0 flex flex-col bg-background" style={{ overflow: 'hidden' }}>
+      <div className={`flex flex-col bg-background ${isEmbedded ? 'h-full relative' : 'fixed inset-0'}`} style={{ overflow: 'hidden' }}>
         {/* X-style Header - Clean and minimal */}
         <header className="flex-shrink-0 flex items-center gap-3 px-3 py-3 bg-background border-b border-border z-10 pt-[env(safe-area-inset-top)]">
-          <Button
-            variant="ghost"
-            size="icon"
-            className="h-9 w-9 rounded-full hover:bg-muted/50"
-            onClick={handleBack}
-          >
-            <ArrowLeft className="h-5 w-5" />
-          </Button>
+          {!isEmbedded && (
+            <Button
+              variant="ghost"
+              size="icon"
+              className="h-9 w-9 rounded-full hover:bg-muted/50"
+              onClick={handleBack}
+            >
+              <ArrowLeft className="h-5 w-5" />
+            </Button>
+          )}
           
           <div 
             className="flex items-center gap-3 flex-1 min-w-0 cursor-pointer"
