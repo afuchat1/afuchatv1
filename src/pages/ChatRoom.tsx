@@ -99,6 +99,7 @@ interface RedEnvelope {
 interface ChatInfo {
   name: string | null;
   is_group: boolean;
+  is_channel?: boolean;
   description: string | null;
   avatar_url: string | null;
   created_by: string | null;
@@ -543,7 +544,7 @@ const ChatRoom = ({ isEmbedded = false }: ChatRoomProps) => {
   const fetchChatInfo = async () => {
     const { data } = await supabase
       .from('chats')
-      .select('name, is_group, description, avatar_url, created_by')
+      .select('name, is_group, is_channel, description, avatar_url, created_by')
       .eq('id', chatId)
       .single();
     
@@ -1201,18 +1202,22 @@ const ChatRoom = ({ isEmbedded = false }: ChatRoomProps) => {
     
     setIsJoining(true);
     try {
-      const { error } = await supabase
-        .from('chat_members')
-        .insert({
-          chat_id: chatId,
-          user_id: user.id,
-          is_admin: false
+      // Use RPC to handle rejoin with admin rights restoration for creators
+      const { data: isCreator, error } = await supabase
+        .rpc('rejoin_group_with_admin_check', {
+          _user_id: user.id,
+          _chat_id: chatId
         });
 
       if (error) throw error;
 
       toast.success(t('chat.joinedGroup'));
       setIsMember(true);
+      
+      // If user is the original creator, they get admin back
+      if (isCreator) {
+        setIsGroupAdmin(true);
+      }
       
       // Refresh chat info
       await fetchChatInfo();
@@ -1532,7 +1537,8 @@ const ChatRoom = ({ isEmbedded = false }: ChatRoomProps) => {
         )}
 
         {/* Input: X-style - Fixed at bottom */}
-        {isMember && (
+        {/* For channels, only admins can send messages */}
+        {isMember && (!chatInfo?.is_channel || isGroupAdmin) && (
           <div className="flex-shrink-0 bg-background border-t border-border px-3 py-3 pb-[env(safe-area-inset-bottom)]">
             <input
               ref={fileInputRef}
@@ -1652,6 +1658,13 @@ const ChatRoom = ({ isEmbedded = false }: ChatRoomProps) => {
                 </>
               )}
             </form>
+          </div>
+        )}
+
+        {/* Channel subscriber notice */}
+        {isMember && chatInfo?.is_channel && !isGroupAdmin && (
+          <div className="flex-shrink-0 bg-muted/50 border-t border-border px-4 py-3 text-center">
+            <p className="text-sm text-muted-foreground">Only channel admins can send messages</p>
           </div>
         )}
       </div>

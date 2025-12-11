@@ -117,16 +117,16 @@ export const GroupSettingsSheet = ({ isOpen, onClose, chatId, isAdmin }: GroupSe
     try {
       const fileExt = file.name.split('.').pop();
       const fileName = `${chatId}-${Date.now()}.${fileExt}`;
-      const filePath = `group-avatars/${fileName}`;
+      const filePath = `${fileName}`;
 
       const { error: uploadError } = await supabase.storage
-        .from('avatars')
-        .upload(filePath, file);
+        .from('group-avatars')
+        .upload(filePath, file, { upsert: true });
 
       if (uploadError) throw uploadError;
 
       const { data: { publicUrl } } = supabase.storage
-        .from('avatars')
+        .from('group-avatars')
         .getPublicUrl(filePath);
 
       setAvatarUrl(publicUrl);

@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { MessageCirclePlus, Users, X, Pencil } from 'lucide-react';
+import { MessageCirclePlus, Users, X, Pencil, Radio } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { motion, AnimatePresence } from 'framer-motion';
 
@@ -13,12 +13,14 @@ interface ChatFabAction {
 interface ChatFloatingActionButtonProps {
   onNewChat: () => void;
   onCreateGroup: () => void;
+  onCreateChannel?: () => void;
   isVisible?: boolean;
 }
 
 const ChatFloatingActionButton = ({ 
   onNewChat, 
-  onCreateGroup, 
+  onCreateGroup,
+  onCreateChannel,
   isVisible = true 
 }: ChatFloatingActionButtonProps) => {
   const [isOpen, setIsOpen] = useState(false);
@@ -39,6 +41,11 @@ const ChatFloatingActionButton = ({
       label: 'New Group',
       onClick: () => handleActionClick(onCreateGroup),
     },
+    ...(onCreateChannel ? [{
+      icon: <Radio className="h-5 w-5" />,
+      label: 'New Channel',
+      onClick: () => handleActionClick(onCreateChannel),
+    }] : []),
   ];
 
   return (

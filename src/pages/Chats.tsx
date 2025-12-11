@@ -6,6 +6,7 @@ import { useNavigate } from 'react-router-dom';
 import { CustomLoader } from '@/components/ui/CustomLoader';
 import NewChatDialog from '@/components/ui/NewChatDialog';
 import { CreateGroupDialog } from '@/components/chat/CreateGroupDialog';
+import { CreateChannelDialog } from '@/components/chat/CreateChannelDialog';
 import ChatFloatingActionButton from '@/components/chat/ChatFloatingActionButton';
 import { toast } from 'sonner';
 import { ChatSettingsSheet } from '@/components/chat/ChatSettingsSheet';
@@ -71,6 +72,7 @@ const Chats = ({ isEmbedded = false }: ChatsProps) => {
   const [loading, setLoading] = useState(true);
   const [isNewChatDialogOpen, setIsNewChatDialogOpen] = useState(false);
   const [isCreateGroupDialogOpen, setIsCreateGroupDialogOpen] = useState(false);
+  const [isCreateChannelDialogOpen, setIsCreateChannelDialogOpen] = useState(false);
   const [isSettingsOpen, setIsSettingsOpen] = useState(false);
   const [showFab, setShowFab] = useState(true);
   const [isStoriesExpanded, setIsStoriesExpanded] = useState(false);
@@ -515,6 +517,7 @@ const Chats = ({ isEmbedded = false }: ChatsProps) => {
       <ChatFloatingActionButton
         onNewChat={() => setIsNewChatDialogOpen(true)}
         onCreateGroup={() => setIsCreateGroupDialogOpen(true)}
+        onCreateChannel={() => setIsCreateChannelDialogOpen(true)}
         isVisible={showFab}
       />
 
@@ -529,6 +532,15 @@ const Chats = ({ isEmbedded = false }: ChatsProps) => {
         onGroupCreated={(groupId) => {
           navigate(`/chat/${groupId}`);
           toast.success('Group created! Add members to get started.');
+        }}
+      />
+
+      <CreateChannelDialog
+        isOpen={isCreateChannelDialogOpen}
+        onClose={() => setIsCreateChannelDialogOpen(false)}
+        onChannelCreated={(channelId) => {
+          navigate(`/chat/${channelId}`);
+          toast.success('Channel created!');
         }}
       />
 

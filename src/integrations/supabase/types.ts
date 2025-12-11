@@ -618,6 +618,7 @@ export type Database = {
           description: string | null
           id: string
           is_archived: boolean | null
+          is_channel: boolean | null
           is_favorite: boolean | null
           is_group: boolean | null
           is_pinned: boolean | null
@@ -635,6 +636,7 @@ export type Database = {
           description?: string | null
           id?: string
           is_archived?: boolean | null
+          is_channel?: boolean | null
           is_favorite?: boolean | null
           is_group?: boolean | null
           is_pinned?: boolean | null
@@ -652,6 +654,7 @@ export type Database = {
           description?: string | null
           id?: string
           is_archived?: boolean | null
+          is_channel?: boolean | null
           is_favorite?: boolean | null
           is_group?: boolean | null
           is_pinned?: boolean | null
@@ -3476,6 +3479,10 @@ export type Database = {
         Args: { _chat_id: string; _user_id: string }
         Returns: boolean
       }
+      is_group_creator: {
+        Args: { _chat_id: string; _user_id: string }
+        Returns: boolean
+      }
       is_own_profile: { Args: { profile_id: string }; Returns: boolean }
       is_premium_user: { Args: { p_user_id: string }; Returns: boolean }
       is_user_blocked: {
@@ -3516,6 +3523,10 @@ export type Database = {
       reject_affiliate_by_business: {
         Args: { p_notes?: string; p_request_id: string }
         Returns: Json
+      }
+      rejoin_group_with_admin_check: {
+        Args: { _chat_id: string; _user_id: string }
+        Returns: boolean
       }
       request_creator_withdrawal:
         | {

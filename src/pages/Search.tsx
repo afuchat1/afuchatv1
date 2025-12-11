@@ -761,12 +761,11 @@ const Search = () => {
     }
 
     try {
+      // Use RPC to handle rejoin with admin rights restoration for creators
       const { error } = await supabase
-        .from('chat_members')
-        .insert({
-          chat_id: groupId,
-          user_id: user.id,
-          is_admin: false,
+        .rpc('rejoin_group_with_admin_check', {
+          _user_id: user.id,
+          _chat_id: groupId
         });
 
       if (error) throw error;
