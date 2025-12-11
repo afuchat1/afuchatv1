@@ -176,24 +176,6 @@ export default function CreatorEarnings() {
     enabled: !!user?.id
   });
 
-  // Get today's potential earnings (uncredited - live)
-  const { data: todaysPotentialEarning, refetch: refetchTodaysEarning } = useQuery({
-    queryKey: ['creator-today-potential', user?.id, new Date().toDateString()],
-    queryFn: async () => {
-      const today = new Date().toISOString().split('T')[0];
-      const { data, error } = await supabase
-        .from('creator_earnings')
-        .select('*')
-        .eq('user_id', user?.id)
-        .eq('earned_date', today)
-        .single();
-      if (error && error.code !== 'PGRST116') throw error; // PGRST116 = no rows
-      return data as Earning | null;
-    },
-    enabled: !!user?.id,
-    refetchInterval: 30000 // Refresh every 30 seconds for live updates
-  });
-
   // Get today's leaderboard - REAL-TIME from all users' actual post engagement
   const { data: dailyLeaderboard } = useQuery({
     queryKey: ['daily-engagement-leaderboard', new Date().toDateString()],
@@ -214,6 +196,9 @@ export default function CreatorEarnings() {
     },
     refetchInterval: 30000 // Live updates every 30 seconds
   });
+
+  // Get current user's real-time earnings from the leaderboard
+  const currentUserLeaderboardEntry = dailyLeaderboard?.find(p => p.user_id === user?.id);
 
   // Get earnings history (past days - credited)
   const { data: earnings, isLoading: earningsLoading } = useQuery({
@@ -491,12 +476,12 @@ export default function CreatorEarnings() {
           </CardContent>
         </Card>
 
-        {/* Today's Live Potential Earnings - Shows uncredited earnings */}
+        {/* Today's Live Potential Earnings - Shows real-time earnings from leaderboard */}
         <Card className="border-2 border-dashed border-primary/30 bg-gradient-to-br from-primary/5 to-transparent">
           <CardHeader className="pb-2">
             <CardTitle className="text-base flex items-center gap-2">
               <TrendingUp className="h-4 w-4 text-primary" />
-              Today's Potential Earnings
+              Your Today's Earnings
               <span className="text-xs font-normal text-muted-foreground ml-auto">Live</span>
             </CardTitle>
           </CardHeader>
@@ -504,28 +489,38 @@ export default function CreatorEarnings() {
             <div className="space-y-3">
               <div className="flex items-end gap-2">
                 <p className="text-4xl font-bold text-primary">
-                  {todaysPotentialEarning?.amount_ugx?.toLocaleString() || '0'}
+                  {currentUserLeaderboardEntry?.potential_earnings?.toLocaleString() || '0'}
                 </p>
                 <span className="text-lg text-muted-foreground mb-1">UGX</span>
               </div>
               
-              {todaysPotentialEarning && (
-                <div className="grid grid-cols-3 gap-2 text-center">
+              {currentUserLeaderboardEntry ? (
+                <div className="grid grid-cols-4 gap-2 text-center">
                   <div className="bg-background/50 rounded-lg p-2">
                     <Eye className="h-4 w-4 mx-auto text-blue-500" />
-                    <p className="text-sm font-medium">{todaysPotentialEarning.views_count}</p>
+                    <p className="text-sm font-medium">{currentUserLeaderboardEntry.views_count}</p>
                     <p className="text-xs text-muted-foreground">Views</p>
                   </div>
                   <div className="bg-background/50 rounded-lg p-2">
                     <Heart className="h-4 w-4 mx-auto text-red-500" />
-                    <p className="text-sm font-medium">{todaysPotentialEarning.likes_count}</p>
+                    <p className="text-sm font-medium">{currentUserLeaderboardEntry.likes_count}</p>
                     <p className="text-xs text-muted-foreground">Likes</p>
                   </div>
                   <div className="bg-background/50 rounded-lg p-2">
+                    <MessageCircle className="h-4 w-4 mx-auto text-purple-500" />
+                    <p className="text-sm font-medium">{currentUserLeaderboardEntry.replies_count}</p>
+                    <p className="text-xs text-muted-foreground">Replies</p>
+                  </div>
+                  <div className="bg-background/50 rounded-lg p-2">
                     <BarChart3 className="h-4 w-4 mx-auto text-green-500" />
-                    <p className="text-sm font-medium">{todaysPotentialEarning.engagement_score}</p>
+                    <p className="text-sm font-medium">{currentUserLeaderboardEntry.engagement_score}</p>
                     <p className="text-xs text-muted-foreground">Score</p>
                   </div>
+                </div>
+              ) : (
+                <div className="text-center py-4 text-muted-foreground">
+                  <p className="text-sm">No engagement on your posts yet today</p>
+                  <p className="text-xs">Get views, likes, or replies to join the leaderboard!</p>
                 </div>
               )}
               
