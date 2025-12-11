@@ -58,7 +58,11 @@ const formatTime = (isoString: string) => {
 
 type FilterTab = 'all' | 'unread' | 'groups' | 'requests';
 
-const Chats = () => {
+interface ChatsProps {
+  isEmbedded?: boolean;
+}
+
+const Chats = ({ isEmbedded = false }: ChatsProps) => {
   const { user } = useAuth();
   const navigate = useNavigate();
   const [chats, setChats] = useState<Chat[]>([]);
@@ -341,7 +345,7 @@ const Chats = () => {
   ];
 
   return (
-    <div className="h-screen flex flex-col bg-background relative overflow-hidden">
+    <div className={`flex flex-col bg-background relative overflow-hidden ${isEmbedded ? 'h-full' : 'h-screen'}`}>
       {/* Stories Header */}
       <ChatStoriesHeader 
         isExpanded={isStoriesExpanded}

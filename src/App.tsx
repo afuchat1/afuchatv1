@@ -32,8 +32,7 @@ import CompleteProfile from "./pages/CompleteProfile";
 // Lazy load other pages
 const ForgotPassword = lazy(() => import("./pages/auth/ForgotPassword"));
 const ResetPassword = lazy(() => import("./pages/auth/ResetPassword"));
-const ChatsPage = lazy(() => import("./pages/Chats"));
-const ChatRoom = lazy(() => import("./pages/ChatRoom"));
+const DesktopChats = lazy(() => import("./pages/DesktopChats"));
 const SearchPage = lazy(() => import("./pages/Search"));
 const ShopPage = lazy(() => import("./pages/Shop"));
 const Marketplace = lazy(() => import("./pages/Marketplace"));
@@ -148,8 +147,8 @@ const AppRoutes = () => {
       <Route path="/auth/signup" element={<SignUp />} />
       <Route path="/auth/forgot-password" element={<ForgotPassword />} />
       <Route path="/auth/reset-password" element={<ResetPassword />} />
-      <Route path="/chats" element={<Layout><ChatsPage /></Layout>} />
-      <Route path="/chat/:chatId" element={<Layout><ChatRoom /></Layout>} />
+      <Route path="/chats" element={<Layout><DesktopChats /></Layout>} />
+      <Route path="/chat/:chatId" element={<Layout><DesktopChats /></Layout>} />
       <Route path="/search" element={<Layout><SearchPage /></Layout>} />
       <Route path="/shop" element={<Layout><ShopPage /></Layout>} />
       <Route path="/marketplace" element={<Layout><Marketplace /></Layout>} />
