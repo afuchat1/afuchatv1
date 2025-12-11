@@ -44,7 +44,7 @@ const ReportPostSheet = ({ isOpen, onClose, onReport, isReporting = false }: Rep
     <Sheet open={isOpen} onOpenChange={onClose}>
       <SheetContent 
         side="bottom" 
-        className="max-h-[85vh] rounded-t-3xl bg-background/95 backdrop-blur-xl border-t border-border/50 p-6 overflow-y-auto"
+        className="h-auto max-h-[80vh] rounded-t-3xl bg-background/95 backdrop-blur-xl border-t border-border/50 p-6 overflow-y-auto"
       >
           <SheetHeader className="text-left space-y-3 mb-6">
             <SheetTitle className="text-2xl font-bold">Report Post</SheetTitle>

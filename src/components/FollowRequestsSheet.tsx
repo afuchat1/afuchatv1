@@ -141,7 +141,7 @@ export const FollowRequestsSheet = ({ open, onOpenChange }: FollowRequestsSheetP
 
   return (
     <Sheet open={open} onOpenChange={onOpenChange}>
-      <SheetContent side="bottom" className="max-h-[85vh] rounded-t-3xl bg-background/95 backdrop-blur-xl border-t border-border/50 p-6">
+      <SheetContent side="bottom" className="h-auto max-h-[70vh] rounded-t-3xl bg-background/95 backdrop-blur-xl border-t border-border/50 p-6">
         <SheetHeader className="text-left mb-6">
           <SheetTitle className="text-2xl font-bold flex items-center gap-2">
             <UserPlus className="h-6 w-6 text-primary" />

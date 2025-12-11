@@ -168,7 +168,7 @@ export const GiftDetailSheet = ({ giftId, open, onOpenChange, recipientId, recip
     <Sheet open={open} onOpenChange={onOpenChange}>
       <SheetContent 
         side="bottom" 
-        className="max-h-[85vh] flex flex-col rounded-t-3xl bg-background/95 backdrop-blur-xl border-t border-border/50 p-0"
+        className="h-auto max-h-[80vh] flex flex-col rounded-t-3xl bg-background/95 backdrop-blur-xl border-t border-border/50 p-0"
       >
         {loading || !gift || !stats ? (
           <div className="space-y-6 p-6">

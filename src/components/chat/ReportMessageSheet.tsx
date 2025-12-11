@@ -70,7 +70,7 @@ const ReportMessageSheet = ({ isOpen, onClose, messageId, messageContent }: Repo
     <Sheet open={isOpen} onOpenChange={onClose}>
       <SheetContent 
         side="bottom" 
-        className="max-h-[85vh] rounded-t-3xl bg-background/95 backdrop-blur-xl border-t border-border/50 p-6 overflow-y-auto"
+        className="h-auto max-h-[75vh] rounded-t-3xl bg-background/95 backdrop-blur-xl border-t border-border/50 p-6 overflow-y-auto"
       >
         <SheetHeader className="text-left space-y-3 mb-6">
           <SheetTitle className="text-2xl font-bold">Report Message</SheetTitle>

@@ -24,7 +24,7 @@ const DeletePostSheet = ({ isOpen, onClose, onConfirm, isDeleting = false }: Del
     <Sheet open={isOpen} onOpenChange={onClose}>
       <SheetContent 
         side="bottom" 
-        className="max-h-[85vh] rounded-t-3xl bg-background/95 backdrop-blur-xl border-t border-border/50 p-6"
+        className="h-auto max-h-[50vh] rounded-t-3xl bg-background/95 backdrop-blur-xl border-t border-border/50 p-6"
       >
           <SheetHeader className="text-left space-y-3 mb-6">
             <SheetTitle className="text-2xl font-bold">{t('feed.deletePost')}</SheetTitle>
