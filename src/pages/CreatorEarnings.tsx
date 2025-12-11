@@ -1358,11 +1358,13 @@ export default function CreatorEarnings() {
             </AccordionTrigger>
             <AccordionContent className="px-4 pb-4 space-y-4">
               <div className="space-y-2 text-sm text-muted-foreground">
-                <p>🇺🇬 Available for <strong>Uganda creators</strong></p>
-                <p>💰 <strong>5,000 UGX</strong> distributed daily to active creators</p>
-                <p>📊 Earnings based on <strong>today's engagement only</strong> (views + likes + replies)</p>
-                <p>🔄 Engagement resets daily at midnight — no cheating with old posts!</p>
-                <p>💵 Withdraw to <strong>MTN or Airtel Money</strong></p>
+                <p>🇺🇬 Available for <strong>Uganda creators</strong> only</p>
+                <p>💰 <strong>5,000 UGX</strong> daily pool distributed among active creators</p>
+                <p>⏰ Pool operates <strong>8 AM - 8 PM Uganda Time</strong> (UTC+3)</p>
+                <p>📊 Earnings based on <strong>today's engagement only</strong> (views×1 + likes×3 + replies×5)</p>
+                <p>🔄 Engagement resets daily — no retroactive credits for past days!</p>
+                <p>💵 Withdraw custom amounts to <strong>MTN or Airtel Money</strong></p>
+                <p>📱 Payment info saved for quick future withdrawals</p>
                 <p className="text-xs pt-2">
                   Questions? Ask <strong>AfuAI</strong> for full program details
                 </p>
@@ -1374,16 +1376,21 @@ export default function CreatorEarnings() {
                   Terms & Conditions
                 </p>
                 <div className="text-xs text-muted-foreground space-y-2 p-3 bg-muted/30 rounded-lg">
-                  <p><strong>1. Eligibility:</strong> You must have at least 10 followers and 500+ weekly views across your posts to qualify for earnings. Eligibility is checked daily.</p>
-                  <p><strong>2. Daily Earnings Only:</strong> Earnings are calculated based on TODAY's engagement only. Past engagement from previous days cannot be retroactively credited.</p>
-                  <p><strong>3. No Cheating:</strong> We do not reward fake engagement, bot interactions, self-likes, engagement farming, or any fraudulent activity. Violators will be permanently banned.</p>
-                  <p><strong>4. Verification:</strong> All engagement is verified before earnings are credited. Suspicious activity will result in earnings being withheld or reversed.</p>
-                  <p><strong>5. Withdrawal:</strong> Minimum withdrawal is 5,000 UGX. Withdrawals are only available on weekends (Saturday & Sunday) via MTN or Airtel Mobile Money. A 10% platform fee is applied.</p>
-                  <p><strong>6. Approval:</strong> All withdrawal requests are reviewed by our team. We reserve the right to reject or delay withdrawals for suspicious accounts.</p>
-                  <p><strong>7. Changes:</strong> AfuChat reserves the right to modify, suspend, or terminate the Creator Earnings program, its eligibility criteria, and payout amounts at any time without prior notice.</p>
-                  <p><strong>8. No Guarantees:</strong> Earnings depend on your share of the daily pool relative to other creators. There is no guaranteed minimum earning amount.</p>
-                  <p><strong>9. Tax Responsibility:</strong> You are solely responsible for any taxes applicable to your earnings. AfuChat does not provide tax advice.</p>
-                  <p><strong>10. Geographic Restriction:</strong> This program is currently available only to creators in Uganda with valid Ugandan mobile money numbers.</p>
+                  <p><strong>1. Eligibility:</strong> You must have at least 10 followers and 500+ weekly views (50 for admins) across your posts to qualify for earnings. Eligibility is checked at credit time (8 PM).</p>
+                  <p><strong>2. Pool Hours:</strong> The earning pool is active from 8 AM to 8 PM Uganda Time (UTC+3). Engagement outside these hours does not count toward daily earnings.</p>
+                  <p><strong>3. Daily Earnings Only:</strong> Earnings are calculated based on TODAY's engagement only during pool hours. Past engagement cannot be retroactively credited. If you become eligible after pool closes, today's earnings are lost.</p>
+                  <p><strong>4. Scoring Formula:</strong> Engagement score = Views×1 + Likes×3 + Replies×5. Your share of the 5,000 UGX pool is proportional to your engagement score relative to all other creators.</p>
+                  <p><strong>5. No Cheating:</strong> Fake engagement, bot interactions, self-likes, engagement farming, or any fraudulent activity will result in permanent ban. All engagement is verified.</p>
+                  <p><strong>6. Withdrawal Rules:</strong> Minimum withdrawal is 5,000 UGX. You can withdraw any amount up to your balance. Withdrawals available on weekends only (Saturday & Sunday) via MTN or Airtel Mobile Money.</p>
+                  <p><strong>7. Platform Fee:</strong> A 10% platform fee is deducted from all withdrawals. This applies to all users including admins.</p>
+                  <p><strong>8. Payment Info:</strong> Your phone number and mobile network are saved after your first withdrawal for faster future transactions.</p>
+                  <p><strong>9. Approval Process:</strong> All withdrawal requests are reviewed by our team within 24-48 hours. We reserve the right to reject or delay withdrawals for suspicious accounts.</p>
+                  <p><strong>10. No Guarantees:</strong> Earnings depend on your proportional share of the daily pool. More creators = smaller individual earnings. There is no guaranteed minimum earning amount.</p>
+                  <p><strong>11. Missed Earnings:</strong> If you are ineligible at 8 PM credit time, your potential earnings for that day are permanently lost and added to your "Missed Earnings" total.</p>
+                  <p><strong>12. Changes:</strong> AfuChat reserves the right to modify, suspend, or terminate the Creator Earnings program, eligibility criteria, pool amounts, and fee structure at any time without prior notice.</p>
+                  <p><strong>13. Tax Responsibility:</strong> You are solely responsible for any taxes applicable to your earnings. AfuChat does not provide tax advice or withhold taxes.</p>
+                  <p><strong>14. Geographic Restriction:</strong> This program is currently available only to creators in Uganda with valid Ugandan mobile money numbers.</p>
+                  <p><strong>15. Privacy:</strong> Premium users can hide their identity on the leaderboard while still earning. Non-premium users appear publicly.</p>
                 </div>
               </div>
             </AccordionContent>

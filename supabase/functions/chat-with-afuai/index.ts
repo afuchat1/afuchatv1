@@ -66,6 +66,33 @@ async function fetchUserContext(supabase: any, userId: string) {
       .order('created_at', { ascending: false })
       .limit(20);
 
+    // Get user's creator earnings data
+    const { data: creatorEarnings } = await supabase
+      .from('creator_earnings')
+      .select('*')
+      .eq('user_id', userId)
+      .order('earned_date', { ascending: false })
+      .limit(10);
+
+    // Get user's pending/completed withdrawals
+    const { data: withdrawals } = await supabase
+      .from('creator_withdrawals')
+      .select('*')
+      .eq('user_id', userId)
+      .order('requested_at', { ascending: false })
+      .limit(5);
+
+    // Calculate weekly views for eligibility check
+    const oneWeekAgo = new Date();
+    oneWeekAgo.setDate(oneWeekAgo.getDate() - 7);
+    const { data: weeklyPosts } = await supabase
+      .from('posts')
+      .select('view_count')
+      .eq('author_id', userId)
+      .gte('created_at', oneWeekAgo.toISOString());
+    
+    const weeklyViews = weeklyPosts?.reduce((sum: number, p: any) => sum + (p.view_count || 0), 0) || 0;
+
     return {
       profile,
       recentPosts,
@@ -74,7 +101,10 @@ async function fetchUserContext(supabase: any, userId: string) {
       giftsReceived,
       subscription,
       achievements,
-      activityLog
+      activityLog,
+      creatorEarnings,
+      withdrawals,
+      weeklyViews
     };
   } catch (error) {
     console.error('Error fetching user context:', error);
@@ -243,14 +273,38 @@ CURRENT USER INFORMATION:
 - Country: ${userContext.profile.country || 'Unknown'}
 - Nexa (XP) Balance: ${userContext.profile.xp}
 - ACoin Balance: ${userContext.profile.acoin || 0}
+- Available Balance (UGX): ${userContext.profile.available_balance_ugx || 0} UGX
 - Current Grade: ${userContext.profile.current_grade || 'Newcomer'}
 - Login Streak: ${userContext.profile.login_streak || 0} days
 - Is Verified: ${userContext.profile.is_verified ? 'Yes' : 'No'}
 - Is Premium: ${userContext.subscription ? 'Yes (' + (userContext.subscription.subscription_plans?.name || 'Active') + ')' : 'No'}
+- Is Admin: ${userContext.profile.is_admin ? 'Yes' : 'No'}
 - Followers: ${userContext.followerCount}
 - Following: ${userContext.followingCount}
+- Weekly Views: ${userContext.weeklyViews || 0}
 - Is Business Account: ${userContext.profile.is_business_mode ? 'Yes' : 'No'}
 - Is Affiliate: ${userContext.profile.is_affiliate ? 'Yes' : 'No'}
+- Missed Earnings Total: ${userContext.profile.missed_earnings_total || 0} UGX
+` : '';
+
+  // Creator earnings eligibility check
+  const isUganda = userContext?.profile?.country?.toLowerCase() === 'uganda' || userContext?.profile?.country?.toLowerCase() === 'ug';
+  const isEligibleCreator = isUganda && (userContext?.followerCount >= 10) && (userContext?.weeklyViews >= (userContext?.profile?.is_admin ? 50 : 500));
+  
+  const creatorEarningsInfo = userContext?.profile ? `
+CREATOR EARNINGS STATUS:
+- Country: ${userContext.profile.country || 'Unknown'} ${isUganda ? '✅ Uganda - Eligible region' : '❌ Not in Uganda - Not eligible for creator program'}
+- Followers: ${userContext.followerCount} ${userContext.followerCount >= 10 ? '✅' : '❌ Need 10+'}
+- Weekly Views: ${userContext.weeklyViews || 0} ${(userContext.weeklyViews >= (userContext.profile.is_admin ? 50 : 500)) ? '✅' : `❌ Need ${userContext.profile.is_admin ? '50' : '500'}+`}
+- Overall Eligibility: ${isEligibleCreator ? '✅ ELIGIBLE for daily earnings pool' : '❌ NOT ELIGIBLE - see requirements above'}
+- Available Balance: ${userContext.profile.available_balance_ugx || 0} UGX
+- Total Missed Earnings: ${userContext.profile.missed_earnings_total || 0} UGX
+${userContext.creatorEarnings?.length > 0 ? `
+RECENT EARNINGS:
+${userContext.creatorEarnings.slice(0, 5).map((e: any) => `- ${e.earned_date}: ${e.amount_ugx} UGX (${e.views_count} views, ${e.likes_count} likes)`).join('\n')}` : '- No earnings yet'}
+${userContext.withdrawals?.length > 0 ? `
+RECENT WITHDRAWALS:
+${userContext.withdrawals.slice(0, 3).map((w: any) => `- ${w.amount_ugx} UGX via ${w.mobile_network} to ${w.phone_number} - Status: ${w.status}`).join('\n')}` : '- No withdrawals yet'}
 ` : '';
 
   const recentActivity = userContext?.recentPosts?.length > 0 ? `
@@ -305,6 +359,7 @@ ${platformContext.gifts?.slice(0, 10).map((g: any) => `- ${g.emoji} ${g.name} ($
 You have PERSISTENT MEMORY that lasts 7 days. Use your memories to personalize responses and remember what users told you previously.
 
 ${userInfo}
+${creatorEarningsInfo}
 ${recentActivity}
 ${achievementsInfo}
 ${giftsInfo}
@@ -332,12 +387,21 @@ ${platformInfo}
 - Transfer: /transfer - Send Nexa/ACoin to other users
 - Financial Hub: /financial-hub - Complete financial overview
 
-**CREATOR EARNINGS PROGRAM (Uganda Only):**
-- Creator Earnings: /creator-earnings - Daily 5,000 UGX giveaway for Ugandan creators
-- Eligibility: Uganda account, 10+ followers, 500+ weekly views
-- Distribution: Daily automatic based on engagement (views + likes)
-- Withdrawals: Mobile Money (MTN/Airtel), minimum 5,000 UGX, weekends only
-- 10% platform fee on withdrawals, team approval required
+**CREATOR EARNINGS PROGRAM (Uganda Only) - DETAILED:**
+- Page: /creator-earnings - Daily 5,000 UGX pool for Ugandan creators
+- Pool Hours: 8 AM - 8 PM Uganda Time (UTC+3) - engagement only counts during these hours
+- Eligibility Requirements: Uganda country, 10+ followers, 500+ weekly views (50 views for admins)
+- Engagement Scoring: Views×1 + Likes×3 + Replies×5 = engagement score
+- Distribution: Pool split proportionally based on engagement scores at 8 PM
+- Missed Earnings: If ineligible at 8 PM, that day's earnings are permanently lost
+- Withdrawals: Custom amount (min 5,000 UGX for regular users, no min for admins)
+- Withdrawal Timing: Weekends only for regular users, anytime for admins
+- Payment Methods: MTN Mobile Money or Airtel Money
+- Platform Fee: 10% on all withdrawals (applies to everyone including admins)
+- Payment Info: Saved after first withdrawal for faster future transactions
+- Approval: All withdrawals reviewed by team within 24-48 hours
+- Privacy: Premium users can hide identity on leaderboard while still earning
+- Leaderboard: Live daily rankings showing all participants and earnings
 
 **GIFTS & MARKETPLACE:**
 - Gifts: /gifts - Browse and send virtual gifts to users
