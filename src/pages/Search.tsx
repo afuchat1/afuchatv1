@@ -3,11 +3,12 @@ import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/contexts/AuthContext';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
-import { Search as SearchIcon, User, MessageSquare, Users, Clock, X, Trash2, MoreHorizontal, Hash, Radio } from 'lucide-react';
+import { Search as SearchIcon, User, MessageSquare, Users, Clock, X, Trash2, MoreHorizontal, Hash, Radio, Crown, Lock } from 'lucide-react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { CustomLoader } from '@/components/ui/CustomLoader';
 import { toast } from 'sonner';
+import { usePremiumStatus } from '@/hooks/usePremiumStatus';
 import { useTranslation } from 'react-i18next';
 import { searchSchema } from '@/lib/validation';
 import { ScrollArea, ScrollBar } from '@/components/ui/scroll-area';
@@ -122,7 +123,9 @@ const GoldVerifiedBadge = ({ size = 'w-4 h-4' }: { size?: string }) => (
 );
 
 const TABS = ['For You', 'Trending', 'News', 'Sports', 'Entertainment'] as const;
+const SEARCH_RESULT_TABS = ['All', 'People', 'Communities', 'Posts', 'Messages'] as const;
 type TabType = typeof TABS[number];
+type SearchResultTabType = typeof SEARCH_RESULT_TABS[number];
 
 const formatPostCount = (count: number): string => {
   if (count >= 1000000) return `${(count / 1000000).toFixed(1)}M posts`;
@@ -565,6 +568,7 @@ const SearchHistorySection = ({
 const Search = () => {
   const { t } = useTranslation();
   const { user } = useAuth();
+  const { isPremium } = usePremiumStatus();
   const location = useLocation();
   const [query, setQuery] = useState('');
   const [results, setResults] = useState<SearchResult[]>([]);
@@ -572,6 +576,7 @@ const Search = () => {
   const [debouncedQuery, setDebouncedQuery] = useState('');
   const [historyKey, setHistoryKey] = useState(0);
   const [activeTab, setActiveTab] = useState<TabType>('For You');
+  const [activeResultTab, setActiveResultTab] = useState<SearchResultTabType>('All');
   const [userProfile, setUserProfile] = useState<{ avatar_url?: string | null; display_name?: string } | null>(null);
   const navigate = useNavigate();
   const inputRef = useRef<HTMLInputElement>(null);
@@ -834,6 +839,35 @@ const Search = () => {
   const messageResults = safeResults.filter(r => r.type === 'message');
   const hasAnyResults = safeResults.length > 0;
 
+  // Get filtered results based on active tab
+  const getFilteredResults = () => {
+    switch (activeResultTab) {
+      case 'People':
+        return { userResults, groupResults: [], postResults: [], messageResults: [] };
+      case 'Communities':
+        return { userResults: [], groupResults, postResults: [], messageResults: [] };
+      case 'Posts':
+        return { userResults: [], groupResults: [], postResults, messageResults: [] };
+      case 'Messages':
+        return { userResults: [], groupResults: [], postResults: [], messageResults };
+      default:
+        return { userResults, groupResults, postResults, messageResults };
+    }
+  };
+
+  const filteredResults = getFilteredResults();
+
+  // Get result counts for tabs
+  const getTabCount = (tab: SearchResultTabType) => {
+    switch (tab) {
+      case 'People': return userResults.length;
+      case 'Communities': return groupResults.length;
+      case 'Posts': return postResults.length;
+      case 'Messages': return messageResults.length;
+      default: return safeResults.length;
+    }
+  };
+
   return (
     <div className="h-full flex flex-col bg-background">
       {/* Search Header */}
@@ -873,7 +907,7 @@ const Search = () => {
           </div>
         </div>
 
-        {/* Tabs */}
+        {/* Category Tabs - shown when no search */}
         {!isSearchActive && (
           <ScrollArea className="w-full">
             <div className="flex border-b border-border">
@@ -893,6 +927,53 @@ const Search = () => {
                   )}
                 </button>
               ))}
+            </div>
+            <ScrollBar orientation="horizontal" className="invisible" />
+          </ScrollArea>
+        )}
+
+        {/* Search Result Category Tabs - shown when searching */}
+        {isSearchActive && hasAnyResults && (
+          <ScrollArea className="w-full">
+            <div className="flex border-b border-border">
+              {SEARCH_RESULT_TABS.map((tab) => {
+                const count = getTabCount(tab);
+                const isMessagesTab = tab === 'Messages';
+                const isLocked = isMessagesTab && !isPremium;
+                
+                return (
+                  <button
+                    key={tab}
+                    onClick={() => {
+                      if (isLocked) {
+                        navigate('/premium');
+                        return;
+                      }
+                      setActiveResultTab(tab);
+                    }}
+                    className={`flex-shrink-0 px-4 py-3 text-[15px] font-medium transition-colors relative flex items-center gap-1.5 ${
+                      activeResultTab === tab 
+                        ? 'text-foreground' 
+                        : 'text-muted-foreground hover:text-foreground'
+                    } ${isLocked ? 'opacity-70' : ''}`}
+                  >
+                    {isLocked && <Lock className="h-3.5 w-3.5" />}
+                    {tab}
+                    {count > 0 && (
+                      <span className={`text-xs px-1.5 py-0.5 rounded-full ${
+                        activeResultTab === tab 
+                          ? 'bg-primary text-primary-foreground' 
+                          : 'bg-muted text-muted-foreground'
+                      }`}>
+                        {count}
+                      </span>
+                    )}
+                    {activeResultTab === tab && (
+                      <div className="absolute bottom-0 left-1/2 -translate-x-1/2 w-14 h-1 bg-primary rounded-full" />
+                    )}
+                  </button>
+                );
+              })}
             </div>
             <ScrollBar orientation="horizontal" className="invisible" />
           </ScrollArea>
@@ -931,13 +1012,14 @@ const Search = () => {
             
             <div className="divide-y divide-border">
             {/* People Results */}
-            {userResults.length > 0 && (
+            {filteredResults.userResults.length > 0 && (
               <div>
-                <h2 className="px-4 py-3 text-[20px] font-extrabold text-foreground">
+                <h2 className="px-4 py-3 text-[20px] font-extrabold text-foreground flex items-center gap-2">
+                  <User className="h-5 w-5 text-primary" />
                   {t('search.people')}
                 </h2>
                 <div className="divide-y divide-border">
-                  {userResults.map((result) => (
+                  {filteredResults.userResults.map((result) => (
                     <div 
                       key={result.id} 
                       className="px-4 py-3 hover:bg-muted/50 transition-colors cursor-pointer"
@@ -970,13 +1052,14 @@ const Search = () => {
             )}
 
             {/* Groups & Channels Results */}
-            {groupResults.length > 0 && (
+            {filteredResults.groupResults.length > 0 && (
               <div>
-                <h2 className="px-4 py-3 text-[20px] font-extrabold text-foreground">
-                  Groups & Channels
+                <h2 className="px-4 py-3 text-[20px] font-extrabold text-foreground flex items-center gap-2">
+                  <Users className="h-5 w-5 text-primary" />
+                  Communities
                 </h2>
                 <div className="divide-y divide-border">
-                  {groupResults.map((result) => (
+                  {filteredResults.groupResults.map((result) => (
                     <div 
                       key={result.id} 
                       className="px-4 py-3 hover:bg-muted/50 transition-colors cursor-pointer"
@@ -1042,13 +1125,14 @@ const Search = () => {
             )}
 
             {/* Posts Results */}
-            {postResults.length > 0 && (
+            {filteredResults.postResults.length > 0 && (
               <div>
-                <h2 className="px-4 py-3 text-[20px] font-extrabold text-foreground">
+                <h2 className="px-4 py-3 text-[20px] font-extrabold text-foreground flex items-center gap-2">
+                  <MessageSquare className="h-5 w-5 text-primary" />
                   {t('search.posts')}
                 </h2>
                 <div className="divide-y divide-border">
-                  {postResults.map((result) => (
+                  {filteredResults.postResults.map((result) => (
                     <div
                       key={result.id}
                       className="px-4 py-3 hover:bg-muted/50 transition-colors cursor-pointer"
@@ -1116,53 +1200,102 @@ const Search = () => {
               </div>
             )}
 
-            {/* Channel Messages Results */}
-            {messageResults.length > 0 && (
+            {/* Channel Messages Results - Premium Only */}
+            {activeResultTab === 'Messages' && (
               <div>
                 <h2 className="px-4 py-3 text-[20px] font-extrabold text-foreground flex items-center gap-2">
                   <Radio className="h-5 w-5 text-primary" />
                   Channel Messages
+                  <span className="text-xs px-2 py-0.5 rounded-full bg-gradient-to-r from-yellow-500 to-amber-500 text-white font-medium flex items-center gap-1">
+                    <Crown className="h-3 w-3" />
+                    Premium
+                  </span>
                 </h2>
-                <div className="divide-y divide-border">
-                  {messageResults.map((result) => (
-                    <div
-                      key={result.id}
-                      className="px-4 py-3 hover:bg-muted/50 transition-colors cursor-pointer"
-                      onClick={() => navigate(`/chat/${result.chat_id}`)}
+                
+                {!isPremium ? (
+                  <div className="px-4 py-8 text-center">
+                    <div className="w-16 h-16 rounded-full bg-gradient-to-br from-yellow-400 to-amber-500 flex items-center justify-center mx-auto mb-4">
+                      <Crown className="h-8 w-8 text-white" />
+                    </div>
+                    <h3 className="text-lg font-bold text-foreground mb-2">Premium Feature</h3>
+                    <p className="text-muted-foreground text-sm mb-4 max-w-xs mx-auto">
+                      Search through channel messages is available exclusively for premium subscribers.
+                    </p>
+                    <Button 
+                      onClick={() => navigate('/premium')}
+                      className="rounded-full bg-gradient-to-r from-yellow-500 to-amber-500 hover:from-yellow-600 hover:to-amber-600 text-white font-bold"
                     >
-                      <div className="flex items-start gap-3">
-                        <Avatar className="h-10 w-10 flex-shrink-0">
-                          <AvatarImage src={result.chat_avatar_url || ''} alt={result.chat_name} />
-                          <AvatarFallback className="bg-primary/10 text-primary">
-                            <Radio className="h-4 w-4" />
-                          </AvatarFallback>
-                        </Avatar>
-                        <div className="flex-1 min-w-0">
-                          <div className="flex items-center justify-between">
-                            <div className="flex items-center gap-1.5">
-                              <span className="font-bold text-[15px] text-foreground truncate">
-                                {result.chat_name}
-                              </span>
-                              <span className="text-[10px] px-1.5 py-0.5 rounded bg-primary/10 text-primary font-medium">
-                                Channel
+                      <Crown className="h-4 w-4 mr-2" />
+                      Upgrade to Premium
+                    </Button>
+                  </div>
+                ) : filteredResults.messageResults.length > 0 ? (
+                  <div className="divide-y divide-border">
+                    {filteredResults.messageResults.map((result) => (
+                      <div
+                        key={result.id}
+                        className="px-4 py-3 hover:bg-muted/50 transition-colors cursor-pointer"
+                        onClick={() => navigate(`/chat/${result.chat_id}`)}
+                      >
+                        <div className="flex items-start gap-3">
+                          <Avatar className="h-10 w-10 flex-shrink-0">
+                            <AvatarImage src={result.chat_avatar_url || ''} alt={result.chat_name} />
+                            <AvatarFallback className="bg-primary/10 text-primary">
+                              <Radio className="h-4 w-4" />
+                            </AvatarFallback>
+                          </Avatar>
+                          <div className="flex-1 min-w-0">
+                            <div className="flex items-center justify-between">
+                              <div className="flex items-center gap-1.5">
+                                <span className="font-bold text-[15px] text-foreground truncate">
+                                  {result.chat_name}
+                                </span>
+                                <span className="text-[10px] px-1.5 py-0.5 rounded bg-primary/10 text-primary font-medium">
+                                  Channel
+                                </span>
+                              </div>
+                              <span className="text-[13px] text-muted-foreground">
+                                {result.sent_at ? new Date(result.sent_at).toLocaleDateString() : ''}
                               </span>
                             </div>
-                            <span className="text-[13px] text-muted-foreground">
-                              {result.sent_at ? new Date(result.sent_at).toLocaleDateString() : ''}
-                            </span>
+                            <p className="text-[13px] text-muted-foreground mt-0.5">
+                              from {result.sender_name}
+                            </p>
+                            <p className="text-[15px] text-foreground mt-1 leading-normal line-clamp-2 whitespace-pre-wrap">
+                              {result.content}
+                            </p>
                           </div>
-                          <p className="text-[13px] text-muted-foreground mt-0.5">
-                            from {result.sender_name}
-                          </p>
-                          <p className="text-[15px] text-foreground mt-1 leading-normal line-clamp-2 whitespace-pre-wrap">
-                            {result.content}
-                          </p>
                         </div>
                       </div>
-                    </div>
-                  ))}
-                </div>
+                    ))}
+                  </div>
+                ) : (
+                  <div className="px-4 py-8 text-center text-muted-foreground text-sm">
+                    No channel messages found for "{query}"
+                  </div>
+                )}
               </div>
+            )}
+
+            {/* Show empty state for specific tabs */}
+            {activeResultTab !== 'All' && activeResultTab !== 'Messages' && (
+              <>
+                {activeResultTab === 'People' && filteredResults.userResults.length === 0 && (
+                  <div className="px-4 py-8 text-center text-muted-foreground text-sm">
+                    No people found for "{query}"
+                  </div>
+                )}
+                {activeResultTab === 'Communities' && filteredResults.groupResults.length === 0 && (
+                  <div className="px-4 py-8 text-center text-muted-foreground text-sm">
+                    No communities found for "{query}"
+                  </div>
+                )}
+                {activeResultTab === 'Posts' && filteredResults.postResults.length === 0 && (
+                  <div className="px-4 py-8 text-center text-muted-foreground text-sm">
+                    No posts found for "{query}"
+                  </div>
+                )}
+              </>
             )}
             </div>
           </div>
