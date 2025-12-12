@@ -88,6 +88,7 @@ interface SearchResult {
   member_count?: number;
   is_member?: boolean;
   group_verified?: boolean;
+  is_channel?: boolean;
 }
 
 interface Trend {
@@ -632,12 +633,13 @@ const Search = () => {
         .textSearch('content', searchTsQuery, { type: 'plain', config: searchConfig })
         .limit(10);
 
+      // Fetch groups and channels (publicly visible to all users)
       const { data: groupData } = await supabase
         .from('chats')
-        .select('id, name, description, avatar_url, is_verified')
-        .eq('is_group', true)
+        .select('id, name, description, avatar_url, is_verified, is_group, is_channel')
+        .or('is_group.eq.true,is_channel.eq.true')
         .or(`name.ilike.%${trimmedQuery}%,description.ilike.%${trimmedQuery}%`)
-        .limit(8);
+        .limit(10);
 
       let groupsWithMembership = groupData || [];
       if (groupData && groupData.length > 0) {
@@ -668,6 +670,7 @@ const Search = () => {
           is_member: memberGroupIds.has(g.id),
           member_count: countMap.get(g.id) || 0,
           is_verified: g.is_verified,
+          is_channel: g.is_channel,
         }));
       }
 
@@ -685,6 +688,7 @@ const Search = () => {
           member_count: g.member_count,
           is_member: g.is_member,
           group_verified: g.is_verified,
+          is_channel: g.is_channel,
         })),
         ...(postData || []).map((p: any) => ({
           type: 'post' as const,
@@ -920,18 +924,18 @@ const Search = () => {
               </div>
             )}
 
-            {/* Groups Results */}
+            {/* Groups & Channels Results */}
             {groupResults.length > 0 && (
               <div>
                 <h2 className="px-4 py-3 text-[20px] font-extrabold text-foreground">
-                  {t('search.groups')}
+                  Groups & Channels
                 </h2>
                 <div className="divide-y divide-border">
                   {groupResults.map((result) => (
                     <div 
                       key={result.id} 
                       className="px-4 py-3 hover:bg-muted/50 transition-colors cursor-pointer"
-                      onClick={() => result.is_member && navigate(`/chat/${result.id}`)}
+                      onClick={() => navigate(`/chat/${result.id}`)}
                     >
                       <div className="flex items-start gap-3">
                         <Avatar className="h-10 w-10 flex-shrink-0">
@@ -942,11 +946,16 @@ const Search = () => {
                         </Avatar>
                         <div className="flex-1 min-w-0">
                           <div className="flex items-center justify-between">
-                            <div className="flex items-center gap-0.5">
+                            <div className="flex items-center gap-1">
                               <span className="font-bold text-[15px] text-foreground truncate">
-                                {result.name || 'Unnamed Group'}
+                                {result.name || (result.is_channel ? 'Unnamed Channel' : 'Unnamed Group')}
                               </span>
                               {result.group_verified && <PlatformVerifiedBadge isVerified={true} size="sm" />}
+                              {result.is_channel && (
+                                <span className="text-[10px] px-1.5 py-0.5 rounded bg-primary/10 text-primary font-medium">
+                                  Channel
+                                </span>
+                              )}
                             </div>
                             {result.is_member ? (
                               <Button
@@ -969,12 +978,12 @@ const Search = () => {
                                 }}
                                 className="h-8 rounded-full text-sm font-bold"
                               >
-                                Join
+                                {result.is_channel ? 'Subscribe' : 'Join'}
                               </Button>
                             )}
                           </div>
                           <p className="text-[13px] text-muted-foreground">
-                            {result.member_count} {result.member_count === 1 ? 'member' : 'members'}
+                            {result.member_count} {result.is_channel ? (result.member_count === 1 ? 'subscriber' : 'subscribers') : (result.member_count === 1 ? 'member' : 'members')}
                           </p>
                           {result.description && (
                             <p className="text-[15px] text-foreground line-clamp-2 mt-1">{result.description}</p>

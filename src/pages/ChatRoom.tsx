@@ -7,7 +7,7 @@ import { Button } from '@/components/ui/button';
 import { TooltipProvider } from '@/components/ui/tooltip';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
 import { CustomLoader } from '@/components/ui/CustomLoader';
-import { ArrowLeft, Send, MoreVertical, MessageSquare, Mic, MicOff, Play, Pause, Volume2, X, Paperclip, Settings, LogOut, Trash2 } from 'lucide-react';
+import { ArrowLeft, Send, MoreVertical, MessageSquare, Mic, MicOff, Play, Pause, Volume2, X, Paperclip, Settings, LogOut, Trash2, Gift } from 'lucide-react';
 import { toast } from 'sonner';
 import { messageSchema } from '@/lib/validation';
 import { ChatRedEnvelope } from '@/components/chat/ChatRedEnvelope';
@@ -22,6 +22,7 @@ import { FileUploadPreview } from '@/components/chat/FileUploadPreview';
 import { UserAvatar } from '@/components/avatar/UserAvatar';
 import { VerifiedBadge } from '@/components/VerifiedBadge';
 import { useChatPreferences } from '@/hooks/useChatPreferences';
+import { SendGiftDialog } from '@/components/gifts/SendGiftDialog';
 
 interface ChatTheme {
   id: string;
@@ -1655,6 +1656,32 @@ const ChatRoom = ({ isEmbedded = false }: ChatRoomProps) => {
                   >
                     <Paperclip className="h-5 w-5 text-foreground" />
                   </Button>
+
+                  {/* Gift button - only for 1-on-1 chats */}
+                  {!chatInfo?.is_group && !chatInfo?.is_channel && otherUser && (
+                    <SendGiftDialog
+                      receiverId={otherUser.id}
+                      receiverName={otherUser.display_name}
+                      trigger={
+                        <Button
+                          type="button"
+                          variant="ghost"
+                          size="icon"
+                          className="h-10 w-10 rounded-full hover:bg-muted/50 flex-shrink-0"
+                        >
+                          <Gift className="h-5 w-5 text-primary" />
+                        </Button>
+                      }
+                    />
+                  )}
+
+                  {/* Red Envelope button - only for groups */}
+                  {chatInfo?.is_group && !chatInfo?.is_channel && (
+                    <SendRedEnvelopeDialog
+                      chatId={chatId!}
+                      onSuccess={fetchRedEnvelopes}
+                    />
+                  )}
                   
                   {/* Message input */}
                   <div className="flex-1 bg-muted/50 rounded-full flex items-center px-4">
