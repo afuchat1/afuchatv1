@@ -150,7 +150,7 @@ export const DesktopHybridLayout = ({ children }: DesktopHybridLayoutProps) => {
   };
 
   return (
-    <div className="min-h-screen bg-background select-none">
+    <div className="bg-background select-none">
       {/* Top Navigation Bar */}
       <header className="fixed top-0 left-0 right-0 h-16 bg-background/80 backdrop-blur-xl border-b border-border z-50">
         <div className="h-full px-4 flex items-center gap-4">
@@ -283,7 +283,7 @@ export const DesktopHybridLayout = ({ children }: DesktopHybridLayoutProps) => {
       {/* Main Content */}
       <main
         className={cn(
-          "pt-16 min-h-screen transition-all duration-300",
+          "pt-16 pb-8 transition-all duration-300",
           !sidebarCollapsed ? "ml-72" : "ml-0"
         )}
       >
