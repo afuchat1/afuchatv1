@@ -275,12 +275,12 @@ const Layout = ({ children }: LayoutProps) => {
   const isChatRoom = location.pathname.startsWith('/chat/');
 
   return (
-    <div className="bg-background select-none">
+    <div className="min-h-screen bg-background select-none overflow-y-auto">
       <InstallPromptBanner />
       <OfflineIndicator />
 
       {/* Main Content */}
-      <main className="pb-20">
+      <main className="pb-20 min-h-screen">
         <motion.div 
           initial={{ opacity: 0, y: 10 }}
           animate={{ opacity: 1, y: 0 }}

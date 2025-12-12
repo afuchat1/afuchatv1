@@ -280,12 +280,28 @@
   }
   
   html {
-    height: auto;
+    height: 100%;
+    overflow-y: scroll;
   }
   
   body {
-    min-height: 100vh;
-    overflow-y: auto;
+    min-height: 100%;
+    overflow-y: scroll !important;
+    overflow-x: hidden !important;
+  }
+
+  /* Ensure root element scrolls properly */
+  #root {
+    min-height: 100%;
+    overflow-y: visible;
+  }
+
+  /* Prevent injected iframes from blocking scrolling */
+  iframe[style*="display: none"],
+  iframe[width="0"],
+  iframe[height="0"] {
+    pointer-events: none !important;
+    position: absolute !important;
   }
 
   /* X/Twitter Style Typography System */
