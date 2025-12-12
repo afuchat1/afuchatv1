@@ -5,7 +5,6 @@ import { supabase } from '@/integrations/supabase/client';
 import Feed from './Feed';
 import NewPostModal from '@/components/ui/NewPostModal';
 import FloatingActionButton from '@/components/ui/FloatingActionButton';
-import Layout from '@/components/Layout';
 import { CustomLoader } from '@/components/ui/CustomLoader';
 import { ProfileCompletionBanner } from '@/components/ProfileCompletionBanner';
 import { GuestAuthBanner } from '@/components/GuestAuthBanner';
@@ -15,7 +14,7 @@ const Home = () => {
   const navigate = useNavigate();
   const [searchParams, setSearchParams] = useSearchParams();
   const [isPostModalOpen, setIsPostModalOpen] = useState(false);
-  const [checkingFollows, setCheckingFollows] = useState(!!user); // Only check for logged in users
+  const [checkingFollows, setCheckingFollows] = useState(!!user);
 
   useEffect(() => {
     if (user) {
@@ -69,7 +68,6 @@ const Home = () => {
     }
   };
 
-  // Show loading while checking auth or follows
   if (loading || (user && checkingFollows)) {
     return (
       <div className="flex items-center justify-center min-h-screen bg-background">
@@ -78,9 +76,9 @@ const Home = () => {
     );
   }
 
-  // All devices: Use unified Layout (handles DesktopHybridLayout for non-mobile)
+  // No Layout wrapper here - Layout is applied at router level in App.tsx
   return (
-    <Layout>
+    <>
       {user ? <ProfileCompletionBanner /> : <GuestAuthBanner />}
       <Feed />
       {user && <FloatingActionButton />}
@@ -90,7 +88,7 @@ const Home = () => {
           onClose={() => setIsPostModalOpen(false)}
         />
       )}
-    </Layout>
+    </>
   );
 };
 

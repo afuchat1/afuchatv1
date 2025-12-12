@@ -141,7 +141,7 @@ const AppRoutes = () => {
       <Route path="/" element={<Index />} />
       <Route path="/welcome" element={<Welcome />} />
       <Route path="/complete-profile" element={<CompleteProfile />} />
-      <Route path="/home" element={<Home />} />
+      <Route path="/home" element={<Layout><Home /></Layout>} />
       <Route path="/auth" element={<Welcome />} />
       <Route path="/auth/signin" element={<SignIn />} />
       <Route path="/auth/signup" element={<SignUp />} />
