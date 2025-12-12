@@ -74,44 +74,37 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
           const provider = session.user.app_metadata?.provider;
           const isOAuthProvider = provider && provider !== 'email';
           
-          if (isOAuthProvider) {
-            // Check if this user has a profile (meaning they signed up before)
-            const { data: profile, error } = await supabase
-              .from('profiles')
-              .select('id, created_at')
-              .eq('id', session.user.id)
-              .single();
+        if (isOAuthProvider) {
+            // Check for pending signup data - use localStorage (more reliable across OAuth redirects)
+            const pendingSignupData = localStorage.getItem('pendingSignupData');
             
             // Check if this is a brand new OAuth user by comparing timestamps
-            // If profile was just created (within last 10 seconds), it's a new user trying to login without signup
-            if (!error && profile) {
-              const profileCreatedAt = new Date(profile.created_at).getTime();
-              const userCreatedAt = new Date(session.user.created_at).getTime();
-              const now = Date.now();
-              
-              // If both profile and user were created within last 10 seconds, it's a new account
-              const isNewAccount = (now - profileCreatedAt < 10000) && (now - userCreatedAt < 10000);
-              
-              // Check for pending signup data - if exists, this is a legitimate signup flow
-              const pendingSignupData = sessionStorage.getItem('pendingSignupData');
-              
-              if (isNewAccount && !pendingSignupData) {
-                // Sign them out and redirect silently
+            const userCreatedAt = new Date(session.user.created_at).getTime();
+            const now = Date.now();
+            
+            // If user was created within last 30 seconds and no pending signup data, it's unauthorized OAuth login
+            const isNewAccount = (now - userCreatedAt < 30000);
+            
+            if (isNewAccount && !pendingSignupData) {
+              try {
+                // Sign them out silently
                 await supabase.auth.signOut();
                 
-                // Delete the auto-created profile
+                // Delete the auto-created profile (best effort)
                 await supabase.from('profiles').delete().eq('id', session.user.id);
-                
-                if (isMounted) {
-                  setSession(null);
-                  setUser(null);
-                  setLoading(false);
-                }
-                
-                // Redirect to signup silently
-                window.location.href = '/auth/signup';
-                return;
+              } catch {
+                // Ignore errors during cleanup
               }
+              
+              if (isMounted) {
+                setSession(null);
+                setUser(null);
+                setLoading(false);
+              }
+              
+              // Redirect to signup silently
+              window.location.href = '/auth/signup';
+              return;
             }
           }
         }
@@ -125,12 +118,13 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
           
           // Check for pending signup data from OAuth flow
           if (event === 'SIGNED_IN' && session) {
-            const pendingSignupData = sessionStorage.getItem('pendingSignupData');
+            // Use localStorage (more reliable across OAuth redirects)
+            const pendingSignupData = localStorage.getItem('pendingSignupData');
             
             if (pendingSignupData) {
               try {
                 const signupData = JSON.parse(pendingSignupData);
-                sessionStorage.removeItem('pendingSignupData');
+                localStorage.removeItem('pendingSignupData');
                 
                 // Build update object with only non-empty values
                 const updateData: Record<string, any> = {};

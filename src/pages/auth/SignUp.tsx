@@ -165,7 +165,7 @@ const SignUpContent = () => {
     }
   };
 
-  // Store signup data for OAuth flows using multiple methods for reliability
+  // Store signup data for OAuth flows using localStorage (persists across OAuth redirects)
   const storeSignupDataForOAuth = () => {
     const signupData = {
       country,
@@ -174,12 +174,11 @@ const SignUpContent = () => {
     };
     console.log('Storing signup data for OAuth:', signupData);
     
-    // Use localStorage
+    // Use localStorage (persists across OAuth redirects)
     localStorage.setItem('pendingSignupData', JSON.stringify(signupData));
     
-    // Also store referral code in a cookie (most reliable across OAuth redirects)
+    // Also store referral code in a cookie (backup for referral)
     if (referralCode) {
-      // Set cookie that expires in 1 hour
       document.cookie = `afuchat_referral=${referralCode}; path=/; max-age=3600; SameSite=Lax`;
       console.log('Stored referral code in cookie:', referralCode);
     }
