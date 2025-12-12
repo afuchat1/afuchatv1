@@ -220,7 +220,7 @@ const AIChat: React.FC = () => {
   }, [messages]);
 
   return (
-    <PremiumGate feature="AI Chat Assistant" showUpgrade={true}>
+    <PremiumGate feature="AI Chat Assistant" showUpgrade={true} requiredTier="platinum">
       <div className="flex flex-col h-full bg-background relative">
         {/* Header - Fixed at top */}
         <header className="fixed top-0 left-0 right-0 flex items-center justify-between px-4 py-3 border-b border-border bg-background z-40">

@@ -18,7 +18,8 @@ import { usePremiumStatus } from '@/hooks/usePremiumStatus';
 const RedEnvelope = () => {
   const navigate = useNavigate();
   const { user } = useAuth();
-  const { isPremium } = usePremiumStatus();
+  const { isPremium, tier, hasTierAccess } = usePremiumStatus();
+  const canCreateRedEnvelopes = hasTierAccess('platinum');
   const [totalAmount, setTotalAmount] = useState('');
   const [recipientCount, setRecipientCount] = useState('');
   const [message, setMessage] = useState('');
@@ -176,7 +177,7 @@ const RedEnvelope = () => {
 
           {/* Create Tab */}
           <TabsContent value="create" className="space-y-4">
-            {isPremium ? (
+            {canCreateRedEnvelopes ? (
               <Card>
                 <CardHeader>
                   <CardTitle>Create Red Envelope</CardTitle>
@@ -264,16 +265,19 @@ const RedEnvelope = () => {
                 <CardContent className="py-12 text-center space-y-4">
                   <Gift className="h-16 w-16 mx-auto text-red-500" />
                   <div>
-                    <h3 className="text-lg font-semibold">Premium Feature</h3>
+                    <h3 className="text-lg font-semibold">Platinum Feature</h3>
                     <p className="text-sm text-muted-foreground mt-1">
-                      Creating red envelopes is a premium feature. Upgrade to share Nexa with friends!
+                      Creating red envelopes requires a Platinum subscription.
+                      {tier !== 'none' && (
+                        <span className="block mt-1">Your current tier: <span className="font-medium">{tier.charAt(0).toUpperCase() + tier.slice(1)}</span></span>
+                      )}
                     </p>
                   </div>
                   <Button onClick={() => navigate('/premium')} className="bg-gradient-to-r from-primary to-primary/80">
-                    Upgrade to Premium
+                    {tier !== 'none' ? 'Upgrade to Platinum' : 'View Premium Plans'}
                   </Button>
                   <p className="text-xs text-muted-foreground">
-                    You can still claim red envelopes from others (1 per day)
+                    You can still claim red envelopes from others
                   </p>
                 </CardContent>
               </Card>

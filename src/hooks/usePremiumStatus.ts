@@ -2,21 +2,35 @@ import { useState, useEffect, useRef } from 'react';
 import { useAuth } from '@/contexts/AuthContext';
 import { supabase } from '@/integrations/supabase/client';
 
+export type SubscriptionTier = 'none' | 'silver' | 'gold' | 'platinum';
+
 // Cache key for premium status
 const PREMIUM_CACHE_KEY = 'afuchat_premium_status';
 
+// Tier hierarchy for comparison
+const tierOrder: SubscriptionTier[] = ['none', 'silver', 'gold', 'platinum'];
+
 // Global cache to prevent multiple subscriptions for same user
-const premiumStatusCache = new Map<string, { isPremium: boolean; expiresAt: string | null; timestamp: number }>();
+const premiumStatusCache = new Map<string, { 
+  isPremium: boolean; 
+  tier: SubscriptionTier;
+  expiresAt: string | null; 
+  timestamp: number 
+}>();
 const activeSubscriptions = new Map<string, ReturnType<typeof supabase.channel>>();
 
 // Get cached premium status synchronously to prevent ad flash
-const getCachedPremiumStatus = (userId?: string): { isPremium: boolean; expiresAt: string | null } | null => {
+const getCachedPremiumStatus = (userId?: string): { 
+  isPremium: boolean; 
+  tier: SubscriptionTier;
+  expiresAt: string | null 
+} | null => {
   if (!userId) return null;
   
   // Check memory cache first (faster)
   const memCached = premiumStatusCache.get(userId);
   if (memCached && Date.now() - memCached.timestamp < 60000) { // 1 minute memory cache
-    return { isPremium: memCached.isPremium, expiresAt: memCached.expiresAt };
+    return { isPremium: memCached.isPremium, tier: memCached.tier, expiresAt: memCached.expiresAt };
   }
   
   // Check session storage
@@ -24,12 +38,12 @@ const getCachedPremiumStatus = (userId?: string): { isPremium: boolean; expiresA
   try {
     const cached = sessionStorage.getItem(`${PREMIUM_CACHE_KEY}_${userId}`);
     if (cached) {
-      const { isPremium, expiresAt } = JSON.parse(cached);
+      const { isPremium, tier, expiresAt } = JSON.parse(cached);
       // Check if cached data is still valid
       if (expiresAt && new Date(expiresAt) > new Date()) {
         // Update memory cache
-        premiumStatusCache.set(userId, { isPremium, expiresAt, timestamp: Date.now() });
-        return { isPremium, expiresAt };
+        premiumStatusCache.set(userId, { isPremium, tier: tier || 'none', expiresAt, timestamp: Date.now() });
+        return { isPremium, tier: tier || 'none', expiresAt };
       }
     }
   } catch {
@@ -47,6 +61,7 @@ export const usePremiumStatus = (targetUserId?: string) => {
   // Initialize with cached value to prevent flash
   const cachedData = getCachedPremiumStatus(checkUserId);
   const [isPremium, setIsPremium] = useState(cachedData?.isPremium ?? false);
+  const [tier, setTier] = useState<SubscriptionTier>(cachedData?.tier ?? 'none');
   const [loading, setLoading] = useState(!cachedData);
   const [expiresAt, setExpiresAt] = useState<string | null>(cachedData?.expiresAt ?? null);
   
@@ -60,6 +75,7 @@ export const usePremiumStatus = (targetUserId?: string) => {
       if (!checkUserId) {
         if (isMountedRef.current) {
           setIsPremium(false);
+          setTier('none');
           setLoading(false);
         }
         return;
@@ -68,7 +84,13 @@ export const usePremiumStatus = (targetUserId?: string) => {
       try {
         const { data } = await supabase
           .from('user_subscriptions')
-          .select('expires_at, is_active')
+          .select(`
+            expires_at, 
+            is_active,
+            subscription_plans (
+              tier
+            )
+          `)
           .eq('user_id', checkUserId)
           .eq('is_active', true)
           .gt('expires_at', new Date().toISOString())
@@ -79,24 +101,39 @@ export const usePremiumStatus = (targetUserId?: string) => {
         if (!isMountedRef.current) return;
 
         if (data) {
+          const planTier = ((data.subscription_plans as any)?.tier || 'silver') as SubscriptionTier;
           setIsPremium(true);
+          setTier(planTier);
           setExpiresAt(data.expires_at);
           // Update both caches
-          premiumStatusCache.set(checkUserId, { isPremium: true, expiresAt: data.expires_at, timestamp: Date.now() });
+          premiumStatusCache.set(checkUserId, { 
+            isPremium: true, 
+            tier: planTier,
+            expiresAt: data.expires_at, 
+            timestamp: Date.now() 
+          });
           sessionStorage.setItem(`${PREMIUM_CACHE_KEY}_${checkUserId}`, JSON.stringify({
             isPremium: true,
+            tier: planTier,
             expiresAt: data.expires_at
           }));
         } else {
           setIsPremium(false);
+          setTier('none');
           setExpiresAt(null);
-          premiumStatusCache.set(checkUserId, { isPremium: false, expiresAt: null, timestamp: Date.now() });
+          premiumStatusCache.set(checkUserId, { 
+            isPremium: false, 
+            tier: 'none',
+            expiresAt: null, 
+            timestamp: Date.now() 
+          });
           sessionStorage.removeItem(`${PREMIUM_CACHE_KEY}_${checkUserId}`);
         }
       } catch (error) {
         console.error('Error checking premium status:', error);
         if (isMountedRef.current) {
           setIsPremium(false);
+          setTier('none');
         }
       } finally {
         if (isMountedRef.current) {
@@ -134,5 +171,18 @@ export const usePremiumStatus = (targetUserId?: string) => {
     };
   }, [checkUserId]);
 
-  return { isPremium, loading, expiresAt };
+  // Check if user's tier meets minimum requirement
+  const hasTierAccess = (minTier: SubscriptionTier): boolean => {
+    const userTierIndex = tierOrder.indexOf(tier);
+    const minTierIndex = tierOrder.indexOf(minTier);
+    return userTierIndex >= minTierIndex;
+  };
+
+  return { 
+    isPremium, 
+    tier,
+    loading, 
+    expiresAt,
+    hasTierAccess
+  };
 };

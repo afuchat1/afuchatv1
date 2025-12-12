@@ -119,7 +119,7 @@ export default function Marketplace() {
   }
 
   return (
-    <PremiumGate feature="Gift Marketplace" showUpgrade={true}>
+    <PremiumGate feature="Gift Marketplace" showUpgrade={true} requiredTier="platinum">
       <SEO 
         title="My Marketplace Listings"
         description="Manage your gift marketplace listings"

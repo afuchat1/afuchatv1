@@ -18,8 +18,17 @@ interface RedEnvelopeCardProps {
 export const RedEnvelopeCard = ({ envelope, onClaim }: RedEnvelopeCardProps) => {
   const { user } = useAuth();
   const [claiming, setClaiming] = useState(false);
-  const { isPremium } = usePremiumStatus();
+  const { isPremium, tier, hasTierAccess } = usePremiumStatus();
   const navigate = useNavigate();
+
+  // Get max claims per day based on tier
+  const getMaxDailyClaims = (): number => {
+    if (hasTierAccess('platinum')) return Infinity;
+    if (hasTierAccess('gold')) return 5;
+    if (hasTierAccess('silver')) return 1;
+    return 1;
+  };
+  const maxDailyClaims = getMaxDailyClaims();
 
   // Check if user has claimed this envelope
   const { data: hasClaimed } = useQuery({
@@ -37,7 +46,7 @@ export const RedEnvelopeCard = ({ envelope, onClaim }: RedEnvelopeCardProps) => 
     enabled: !!user?.id
   });
 
-  // Check if non-premium user has already claimed today
+  // Check claim count for today
   const { data: todayClaimCount } = useQuery({
     queryKey: ['daily_red_envelope_claims', user?.id],
     queryFn: async () => {
@@ -52,10 +61,10 @@ export const RedEnvelopeCard = ({ envelope, onClaim }: RedEnvelopeCardProps) => 
       
       return count || 0;
     },
-    enabled: !!user?.id && !isPremium
+    enabled: !!user?.id && maxDailyClaims !== Infinity
   });
 
-  const hasReachedDailyLimit = !isPremium && (todayClaimCount || 0) >= 1;
+  const hasReachedDailyLimit = maxDailyClaims !== Infinity && (todayClaimCount || 0) >= maxDailyClaims;
 
   const handleClaim = async () => {
     if (!user) {
@@ -68,14 +77,19 @@ export const RedEnvelopeCard = ({ envelope, onClaim }: RedEnvelopeCardProps) => 
       toast.error(
         <div className="space-y-2">
           <p className="font-semibold">Daily limit reached!</p>
-          <p className="text-sm">Non-premium users can only claim 1 red envelope per day.</p>
+          <p className="text-sm">
+            {tier === 'silver' && 'Silver tier: 1 claim per day.'}
+            {tier === 'gold' && 'Gold tier: 5 claims per day.'}
+            {tier === 'none' && 'Free tier: 1 claim per day.'}
+            {' '}Upgrade for more claims!
+          </p>
           <Button 
             size="sm" 
             className="w-full mt-2 bg-primary"
             onClick={() => navigate('/premium')}
           >
             <Crown className="mr-2 h-4 w-4" />
-            Upgrade to Premium
+            {tier === 'none' ? 'Get Premium' : 'Upgrade Tier'}
           </Button>
         </div>,
         { duration: 6000 }
@@ -198,10 +212,10 @@ export const RedEnvelopeCard = ({ envelope, onClaim }: RedEnvelopeCardProps) => 
                     onClick={handleClaim}
                   >
                     <Crown className="mr-2 h-4 w-4 text-amber-500" />
-                    Daily Limit Reached
+                    Daily Limit ({todayClaimCount}/{maxDailyClaims})
                   </Button>
                   <p className="text-xs text-center text-muted-foreground">
-                    Upgrade to Premium for unlimited claims
+                    {tier === 'platinum' ? '' : tier === 'gold' ? 'Upgrade to Platinum for unlimited' : 'Upgrade for more daily claims'}
                   </p>
                 </div>
               ) : (
