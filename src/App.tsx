@@ -9,6 +9,7 @@ import { AccountModeProvider } from "./contexts/AccountModeContext";
 import { ThemeProvider } from "./contexts/ThemeContext";
 import { SettingsProvider } from "./contexts/SettingsContext";
 import { SettingsSheet } from "./components/SettingsSheet";
+import { RequireCountry } from "./components/RequireCountry";
 
 import { useDailyLogin } from "./hooks/useDailyLogin";
 import { useLanguageSync } from "./hooks/useLanguageSync";
@@ -141,50 +142,50 @@ const AppRoutes = () => {
       <Route path="/" element={<Index />} />
       <Route path="/welcome" element={<Welcome />} />
       <Route path="/complete-profile" element={<CompleteProfile />} />
-      <Route path="/home" element={<Layout><Home /></Layout>} />
+      <Route path="/home" element={<RequireCountry><Layout><Home /></Layout></RequireCountry>} />
       <Route path="/auth" element={<Welcome />} />
       <Route path="/auth/signin" element={<SignIn />} />
       <Route path="/auth/signup" element={<SignUp />} />
       <Route path="/auth/forgot-password" element={<ForgotPassword />} />
       <Route path="/auth/reset-password" element={<ResetPassword />} />
-      <Route path="/chats" element={<Layout><DesktopChats /></Layout>} />
-      <Route path="/chat/:chatId" element={<Layout><DesktopChats /></Layout>} />
-      <Route path="/search" element={<Layout><SearchPage /></Layout>} />
+      <Route path="/chats" element={<RequireCountry><Layout><DesktopChats /></Layout></RequireCountry>} />
+      <Route path="/chat/:chatId" element={<RequireCountry><Layout><DesktopChats /></Layout></RequireCountry>} />
+      <Route path="/search" element={<RequireCountry><Layout><SearchPage /></Layout></RequireCountry>} />
       <Route path="/shop" element={<Layout><ShopPage /></Layout>} />
-      <Route path="/marketplace" element={<Layout><Marketplace /></Layout>} />
-      <Route path="/notifications" element={<Layout><Notifications /></Layout>} />
+      <Route path="/marketplace" element={<RequireCountry><Layout><Marketplace /></Layout></RequireCountry>} />
+      <Route path="/notifications" element={<RequireCountry><Layout><Notifications /></Layout></RequireCountry>} />
       <Route path="/post/:postId" element={<Layout><PostDetail /></Layout>} />
-      <Route path="/admin" element={<Layout><AdminDashboard /></Layout>} />
-      <Route path="/ai-chat" element={<Layout><AIChat /></Layout>} />
+      <Route path="/admin" element={<RequireCountry><Layout><AdminDashboard /></Layout></RequireCountry>} />
+      <Route path="/ai-chat" element={<RequireCountry><Layout><AIChat /></Layout></RequireCountry>} />
       <Route path="/install" element={<Install />} />
       <Route path="/support" element={<Support />} />
       <Route path="/leaderboard" element={<Layout><UnifiedLeaderboard /></Layout>} />
-      <Route path="/wallet" element={<Layout><FinancialHub /></Layout>} />
-      <Route path="/social" element={<Layout><SocialHub /></Layout>} />
+      <Route path="/wallet" element={<RequireCountry><Layout><FinancialHub /></Layout></RequireCountry>} />
+      <Route path="/social" element={<RequireCountry><Layout><SocialHub /></Layout></RequireCountry>} />
       <Route path="/gifts" element={<Layout><Gifts /></Layout>} />
       <Route path="/gifts/:id" element={<Layout><GiftDetail /></Layout>} />
-      <Route path="/premium" element={<Layout><Premium /></Layout>} />
-      <Route path="/creator-earnings" element={<Layout><CreatorEarnings /></Layout>} />
-      <Route path="/qr-code" element={<Layout><QRCode /></Layout>} />
-      <Route path="/settings" element={<Layout><Settings /></Layout>} />
-      <Route path="/security" element={<Layout><SecurityDashboard /></Layout>} />
-      <Route path="/change-password" element={<Layout><ChangePassword /></Layout>} />
+      <Route path="/premium" element={<RequireCountry><Layout><Premium /></Layout></RequireCountry>} />
+      <Route path="/creator-earnings" element={<RequireCountry><Layout><CreatorEarnings /></Layout></RequireCountry>} />
+      <Route path="/qr-code" element={<RequireCountry><Layout><QRCode /></Layout></RequireCountry>} />
+      <Route path="/settings" element={<RequireCountry><Layout><Settings /></Layout></RequireCountry>} />
+      <Route path="/security" element={<RequireCountry><Layout><SecurityDashboard /></Layout></RequireCountry>} />
+      <Route path="/change-password" element={<RequireCountry><Layout><ChangePassword /></Layout></RequireCountry>} />
       <Route path="/terms" element={<TermsOfUse />} />
       <Route path="/privacy" element={<PrivacyPolicy />} />
       <Route path="/suggested-users" element={<SuggestedUsers />} />
       <Route path="/trending" element={<Layout><TrendingHashtags /></Layout>} />
-      <Route path="/admin/affiliate-requests" element={<Layout><AdminAffiliateRequests /></Layout>} />
-      <Route path="/admin/creator-withdrawals" element={<Layout><AdminCreatorWithdrawals /></Layout>} />
-      <Route path="/admin/verification-requests" element={<Layout><AdminVerificationRequests /></Layout>} />
-      <Route path="/affiliate-request" element={<Layout><AffiliateRequest /></Layout>} />
-      <Route path="/affiliate-dashboard" element={<Layout><AffiliateDashboard /></Layout>} />
-      <Route path="/business/dashboard" element={<Layout><BusinessDashboard /></Layout>} />
-      <Route path="/moments" element={<Layout><Moments /></Layout>} />
+      <Route path="/admin/affiliate-requests" element={<RequireCountry><Layout><AdminAffiliateRequests /></Layout></RequireCountry>} />
+      <Route path="/admin/creator-withdrawals" element={<RequireCountry><Layout><AdminCreatorWithdrawals /></Layout></RequireCountry>} />
+      <Route path="/admin/verification-requests" element={<RequireCountry><Layout><AdminVerificationRequests /></Layout></RequireCountry>} />
+      <Route path="/affiliate-request" element={<RequireCountry><Layout><AffiliateRequest /></Layout></RequireCountry>} />
+      <Route path="/affiliate-dashboard" element={<RequireCountry><Layout><AffiliateDashboard /></Layout></RequireCountry>} />
+      <Route path="/business/dashboard" element={<RequireCountry><Layout><BusinessDashboard /></Layout></RequireCountry>} />
+      <Route path="/moments" element={<RequireCountry><Layout><Moments /></Layout></RequireCountry>} />
       <Route path="/mini-programs" element={<Layout><MiniPrograms /></Layout>} />
-      <Route path="/transfer" element={<Layout><Transfer /></Layout>} />
-      <Route path="/red-envelope" element={<Layout><RedEnvelope /></Layout>} />
-      <Route path="/developer-sdk" element={<Layout><DeveloperSDK /></Layout>} />
-      <Route path="/verification-request" element={<Layout><VerificationRequest /></Layout>} />
+      <Route path="/transfer" element={<RequireCountry><Layout><Transfer /></Layout></RequireCountry>} />
+      <Route path="/red-envelope" element={<RequireCountry><Layout><RedEnvelope /></Layout></RequireCountry>} />
+      <Route path="/developer-sdk" element={<RequireCountry><Layout><DeveloperSDK /></Layout></RequireCountry>} />
+      <Route path="/verification-request" element={<RequireCountry><Layout><VerificationRequest /></Layout></RequireCountry>} />
       <Route path="/games" element={<Layout><Games /></Layout>} />
       <Route path="/games/AfuArena" element={<AfuArena />} />
       <Route path="/game" element={<Layout><SimpleGame /></Layout>} />
@@ -208,13 +209,13 @@ const AppRoutes = () => {
 
       {/* Profile routes with @ prefix - these will show user not found if user doesn't exist */}
       <Route path="/@:userId" element={<Layout><Profile mustExist={true} /></Layout>} />
-      <Route path="/@:userId/edit" element={<Layout><EditProfile /></Layout>} />
+      <Route path="/@:userId/edit" element={<RequireCountry><Layout><EditProfile /></Layout></RequireCountry>} />
       <Route path="/@:userId/followers" element={<Layout><Followers /></Layout>} />
       <Route path="/@:userId/following" element={<Layout><Following /></Layout>} />
 
       {/* Profile routes without @ prefix - will fall through to 404 if not found */}
       <Route path="/:userId" element={<Layout><Profile mustExist={false} /></Layout>} />
-      <Route path="/:userId/edit" element={<Layout><EditProfile /></Layout>} />
+      <Route path="/:userId/edit" element={<RequireCountry><Layout><EditProfile /></Layout></RequireCountry>} />
       <Route path="/:userId/followers" element={<Layout><Followers /></Layout>} />
       <Route path="/:userId/following" element={<Layout><Following /></Layout>} />
 
