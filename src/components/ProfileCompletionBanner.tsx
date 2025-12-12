@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import { useAuth } from '@/contexts/AuthContext';
 import { supabase } from '@/integrations/supabase/client';
-import { X, AlertCircle, Sparkles } from 'lucide-react';
+import { X, Sparkles, MapPin } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { useNavigate } from 'react-router-dom';
 
@@ -11,17 +11,11 @@ export const ProfileCompletionBanner = () => {
   const [show, setShow] = useState(false);
   const [dismissed, setDismissed] = useState(false);
   const [userHandle, setUserHandle] = useState<string>('');
+  const [missingCountry, setMissingCountry] = useState(false);
 
   useEffect(() => {
-    // Check if previously dismissed in this session
-    const wasDismissed = sessionStorage.getItem('profileCompletionDismissed');
-    if (wasDismissed) {
-      setDismissed(true);
-      return;
-    }
-
     const checkProfile = async () => {
-      if (!user || dismissed) return;
+      if (!user) return;
 
       const { data: profile } = await supabase
         .from('profiles')
@@ -31,21 +25,41 @@ export const ProfileCompletionBanner = () => {
 
       if (profile) {
         setUserHandle(profile.handle);
-        // Show banner if any profile field is incomplete AND not already rewarded
-        const isIncomplete = !profile.phone_number || !profile.country || !profile.avatar_url || !profile.bio;
-        if (isIncomplete && !profile.profile_completion_rewarded) {
+        
+        // Check if country is missing - this is a required field that can't be dismissed
+        const hasNoCountry = !profile.country || profile.country.trim() === '';
+        setMissingCountry(hasNoCountry);
+        
+        if (hasNoCountry) {
+          // Country is required - always show and can't be dismissed
           setShow(true);
+          setDismissed(false);
+        } else {
+          // Check session dismissal for other incomplete fields
+          const wasDismissed = sessionStorage.getItem('profileCompletionDismissed');
+          if (wasDismissed) {
+            setDismissed(true);
+            return;
+          }
+          
+          // Show banner if any other profile field is incomplete AND not already rewarded
+          const isIncomplete = !profile.phone_number || !profile.avatar_url || !profile.bio;
+          if (isIncomplete && !profile.profile_completion_rewarded) {
+            setShow(true);
+          }
         }
       }
     };
 
     checkProfile();
-  }, [user, dismissed]);
+  }, [user]);
 
   const handleDismiss = () => {
+    // Can't dismiss if country is missing
+    if (missingCountry) return;
+    
     setDismissed(true);
     setShow(false);
-    // Use session storage so it reappears on next visit
     sessionStorage.setItem('profileCompletionDismissed', 'true');
   };
 
@@ -57,6 +71,37 @@ export const ProfileCompletionBanner = () => {
 
   if (!show) return null;
 
+  // Special urgent banner for missing country
+  if (missingCountry) {
+    return (
+      <div className="fixed top-0 left-0 right-0 z-[100] bg-gradient-to-r from-amber-500/20 via-orange-500/15 to-amber-500/20 border-b border-amber-500/40 backdrop-blur-sm">
+        <div className="flex items-center justify-between px-4 py-3 max-w-7xl mx-auto">
+          <div className="flex items-center gap-2.5 flex-1 min-w-0">
+            <div className="flex items-center justify-center w-8 h-8 rounded-full bg-amber-500/25 flex-shrink-0 animate-pulse">
+              <MapPin className="h-4 w-4 text-amber-600 dark:text-amber-400" />
+            </div>
+            <div className="min-w-0">
+              <p className="text-sm font-medium text-foreground">
+                Set your country to continue
+              </p>
+              <p className="text-xs text-muted-foreground truncate">
+                Your origin is required to use all features
+              </p>
+            </div>
+          </div>
+          <Button
+            size="sm"
+            onClick={handleComplete}
+            className="h-8 px-4 text-xs font-semibold bg-amber-600 hover:bg-amber-700 text-white flex-shrink-0"
+          >
+            Set Country
+          </Button>
+        </div>
+      </div>
+    );
+  }
+
+  // Regular profile completion banner
   return (
     <div className="fixed top-0 left-0 right-0 z-[100] bg-gradient-to-r from-primary/15 via-primary/10 to-primary/15 border-b border-primary/30 backdrop-blur-sm">
       <div className="flex items-center justify-between px-4 py-2.5 max-w-7xl mx-auto">
