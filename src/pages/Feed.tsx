@@ -2327,49 +2327,36 @@ const Feed = ({ defaultTab = 'foryou', guestMode = false }: FeedProps = {}) => {
         keywords="social feed, latest posts, trending topics, social media feed, viral content, user posts, trending hashtags, social updates, share posts, like and comment, follow friends, online feed, social stream, community posts, news feed"
       />
       
-      {/* Fixed Header - hides on scroll down */}
-      <div className={cn(
-        "fixed top-0 left-0 right-0 z-30 bg-background/95 backdrop-blur-md max-w-4xl mx-auto transition-all duration-300",
-        isScrollingDown ? "-translate-y-full opacity-0" : "translate-y-0 opacity-100"
-      )}>
-        <div className="flex items-center justify-between px-4 py-3">
-          <ProfileDrawer
-            trigger={
-              <button className="flex-shrink-0">
-                <Avatar className="h-8 w-8">
-                  <AvatarImage src={userProfile?.avatar_url || undefined} />
-                  <AvatarFallback className="bg-primary text-primary-foreground text-xs">
-                    {userProfile?.display_name?.charAt(0)?.toUpperCase() || 'U'}
-                  </AvatarFallback>
-                </Avatar>
-              </button>
-            }
-          />
-          <img src={platformLogo} alt="AfuChat" className="h-8 w-8" />
-          <div className="flex items-center gap-2">
-            <button
-              onClick={handleLoadNewPosts}
-              disabled={isRefreshing}
-              className="p-2 rounded-full hover:bg-muted transition-colors disabled:opacity-50"
-              aria-label="Refresh feed"
-            >
-              <RefreshCw className={`h-5 w-5 text-muted-foreground ${isRefreshing ? 'animate-spin' : ''}`} />
-            </button>
-            {premiumButton}
-          </div>
-        </div>
-      </div>
-
-      {/* Spacer for fixed header */}
-      <div className="h-14" />
-
       <Tabs value={activeTab} onValueChange={(v) => setActiveTab(v as 'foryou' | 'following')} className="w-full">
-        {/* Fixed Tabs - always visible at top */}
-        <div className={cn(
-          "fixed left-0 right-0 z-20 bg-background/95 backdrop-blur-md max-w-4xl mx-auto transition-all duration-300",
-          isScrollingDown ? "top-0" : "top-14",
-          lastScrollY > 50 ? "border-b border-border/30" : ""
-        )}>
+        {/* Sticky Header with Tabs */}
+        <div className="sticky top-0 z-30 bg-background/95 backdrop-blur-md border-b border-border/30">
+          <div className="flex items-center justify-between px-4 py-3">
+            <ProfileDrawer
+              trigger={
+                <button className="flex-shrink-0">
+                  <Avatar className="h-8 w-8">
+                    <AvatarImage src={userProfile?.avatar_url || undefined} />
+                    <AvatarFallback className="bg-primary text-primary-foreground text-xs">
+                      {userProfile?.display_name?.charAt(0)?.toUpperCase() || 'U'}
+                    </AvatarFallback>
+                  </Avatar>
+                </button>
+              }
+            />
+            <img src={platformLogo} alt="AfuChat" className="h-8 w-8" />
+            <div className="flex items-center gap-2">
+              <button
+                onClick={handleLoadNewPosts}
+                disabled={isRefreshing}
+                className="p-2 rounded-full hover:bg-muted transition-colors disabled:opacity-50"
+                aria-label="Refresh feed"
+              >
+                <RefreshCw className={`h-5 w-5 text-muted-foreground ${isRefreshing ? 'animate-spin' : ''}`} />
+              </button>
+              {premiumButton}
+            </div>
+          </div>
+
           {newPostsCount > 0 && (
             <button
               onClick={handleLoadNewPosts}
@@ -2378,6 +2365,7 @@ const Feed = ({ defaultTab = 'foryou', guestMode = false }: FeedProps = {}) => {
               <span>Show {newPostsCount} new {newPostsCount === 1 ? 'post' : 'posts'}</span>
             </button>
           )}
+
           <TabsList className="grid grid-cols-2 w-full h-12 rounded-none bg-transparent p-0">
             <TabsTrigger
               value="foryou"
@@ -2393,34 +2381,9 @@ const Feed = ({ defaultTab = 'foryou', guestMode = false }: FeedProps = {}) => {
             </TabsTrigger>
           </TabsList>
         </div>
-        
-        {/* Spacer for fixed tabs */}
-        <div className="h-12" />
-
-        {/* New posts indicator */}
-        <AnimatePresence>
-          {newPostsCount > 0 && (
-            <motion.div
-              initial={{ opacity: 0, y: -20 }}
-              animate={{ opacity: 1, y: 0 }}
-              exit={{ opacity: 0, y: -20 }}
-              className="fixed top-28 left-1/2 -translate-x-1/2 z-40"
-            >
-              <Button
-                onClick={handleLoadNewPosts}
-                size="sm"
-                className="rounded-full shadow-lg bg-primary text-primary-foreground hover:bg-primary/90 gap-2 px-4"
-              >
-                <RefreshCw className="h-4 w-4" />
-                {newPostsCount} new {newPostsCount === 1 ? 'post' : 'posts'}
-              </Button>
-            </motion.div>
-          )}
-        </AnimatePresence>
 
         {/* Content area */}
-        <div>
-              <TabsContent value={activeTab} className="m-0 -mt-px" ref={feedRef} forceMount>
+        <TabsContent value={activeTab} className="m-0" ref={feedRef} forceMount>
           {/* Adsterra Banner Ad */}
           <AdsterraBannerAd />
           
@@ -2486,8 +2449,7 @@ const Feed = ({ defaultTab = 'foryou', guestMode = false }: FeedProps = {}) => {
               )}
             </>
           )}
-              </TabsContent>
-        </div>
+        </TabsContent>
       </Tabs>
       
       {/* Delete Confirmation Sheet */}
