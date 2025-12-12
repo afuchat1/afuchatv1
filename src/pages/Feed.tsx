@@ -2371,7 +2371,7 @@ const Feed = ({ defaultTab = 'foryou', guestMode = false }: FeedProps = {}) => {
 
 
   return (
-    <div className="h-full flex flex-col max-w-4xl mx-auto">
+    <div className="max-w-4xl mx-auto pb-20">
       {/* Pull to refresh indicator */}
       <PullToRefreshIndicator 
         pullDistance={pullDistance} 
@@ -2421,7 +2421,7 @@ const Feed = ({ defaultTab = 'foryou', guestMode = false }: FeedProps = {}) => {
       {/* Spacer for fixed header */}
       <div className="h-14" />
 
-      <Tabs value={activeTab} onValueChange={(v) => setActiveTab(v as 'foryou' | 'following')} className="w-full flex-1">
+      <Tabs value={activeTab} onValueChange={(v) => setActiveTab(v as 'foryou' | 'following')} className="w-full">
         {/* Fixed Tabs - always visible at top */}
         <div className={cn(
           "fixed left-0 right-0 z-20 bg-background/95 backdrop-blur-md max-w-4xl mx-auto transition-all duration-300",
@@ -2477,9 +2477,8 @@ const Feed = ({ defaultTab = 'foryou', guestMode = false }: FeedProps = {}) => {
         </AnimatePresence>
 
         {/* Content area */}
-        <div className="flex-1">
-          <div>
-              <TabsContent value={activeTab} className="flex-1 m-0 -mt-px" ref={feedRef} forceMount>
+        <div>
+              <TabsContent value={activeTab} className="m-0 -mt-px" ref={feedRef} forceMount>
           {/* Adsterra Banner Ad */}
           <AdsterraBannerAd />
           
@@ -2546,7 +2545,6 @@ const Feed = ({ defaultTab = 'foryou', guestMode = false }: FeedProps = {}) => {
             </>
           )}
               </TabsContent>
-          </div>
         </div>
       </Tabs>
       
