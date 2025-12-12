@@ -2,7 +2,7 @@ import { useState, useEffect, useRef } from 'react';
 import { Sparkles, ChevronDown, ChevronUp } from 'lucide-react';
 import { CustomLoader } from '@/components/ui/CustomLoader';
 import { supabase } from '@/integrations/supabase/client';
-import { usePremiumStatus } from '@/hooks/usePremiumStatus';
+import { useSubscription } from '@/hooks/useSubscription';
 import { motion, AnimatePresence } from 'framer-motion';
 import { categorizeContent, ContentCategory } from '@/lib/contentCategorization';
 
@@ -41,7 +41,7 @@ const isWorthSummarizing = (content: string): boolean => {
 };
 
 export const AIPostSummary = ({ postContent, postId }: AIPostSummaryProps) => {
-  const { isPremium } = usePremiumStatus();
+  const { canUseAIPostAnalysis } = useSubscription();
   const [summary, setSummary] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
   const [expanded, setExpanded] = useState(true);
@@ -49,13 +49,15 @@ export const AIPostSummary = ({ postContent, postId }: AIPostSummaryProps) => {
   const checkedRef = useRef(false);
   const mountedRef = useRef(true);
 
+  const hasAccess = canUseAIPostAnalysis();
+
   useEffect(() => {
     mountedRef.current = true;
     return () => { mountedRef.current = false; };
   }, []);
 
   useEffect(() => {
-    if (!isPremium || checkedRef.current) return;
+    if (!hasAccess || checkedRef.current) return;
     checkedRef.current = true;
     
     const worthSummarizing = isWorthSummarizing(postContent);
@@ -65,7 +67,7 @@ export const AIPostSummary = ({ postContent, postId }: AIPostSummaryProps) => {
     if (worthSummarizing) {
       checkCachedSummary();
     }
-  }, [isPremium, postId]);
+  }, [hasAccess, postId]);
 
   const checkCachedSummary = async () => {
     const { data: existingSummary } = await supabase
@@ -116,7 +118,7 @@ export const AIPostSummary = ({ postContent, postId }: AIPostSummaryProps) => {
     }
   };
 
-  if (!isPremium || !shouldShow) return null;
+  if (!hasAccess || !shouldShow) return null;
 
   return (
     <div 

@@ -1,5 +1,5 @@
 import { ReactNode } from 'react';
-import { usePremiumStatus, SubscriptionTier } from '@/hooks/usePremiumStatus';
+import { useSubscription, SubscriptionTier } from '@/hooks/useSubscription';
 import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Crown, Lock, Sparkles } from 'lucide-react';
@@ -25,7 +25,7 @@ export const PremiumGate = ({
   showUpgrade = true,
   requiredTier = 'silver'
 }: PremiumGateProps) => {
-  const { isPremium, tier, loading, hasTierAccess } = usePremiumStatus();
+  const { tier, loading, hasTierAccess } = useSubscription();
   const navigate = useNavigate();
 
   if (loading) {

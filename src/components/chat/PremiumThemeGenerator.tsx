@@ -4,7 +4,9 @@ import { toast } from 'sonner';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { Sparkles, Loader2 } from 'lucide-react';
+import { Sparkles, Loader2, Crown } from 'lucide-react';
+import { useSubscription } from '@/hooks/useSubscription';
+import { useNavigate } from 'react-router-dom';
 import {
   Dialog,
   DialogContent,
@@ -23,9 +25,20 @@ export const PremiumThemeGenerator = ({ type, onGenerated }: PremiumThemeGenerat
   const [isOpen, setIsOpen] = useState(false);
   const [prompt, setPrompt] = useState('');
   const [generating, setGenerating] = useState(false);
+  const { hasTierAccess } = useSubscription();
+  const navigate = useNavigate();
   const AI_FEATURES_COMING_SOON = true;
 
+  // AI themes require platinum tier
+  const hasAccess = hasTierAccess('platinum');
+
   const handleGenerate = async () => {
+    if (!hasAccess) {
+      toast.error('Platinum subscription required for AI themes');
+      navigate('/premium');
+      return;
+    }
+
     if (AI_FEATURES_COMING_SOON) {
       toast.info('AI theme generation coming soon!');
       return;
@@ -67,6 +80,7 @@ export const PremiumThemeGenerator = ({ type, onGenerated }: PremiumThemeGenerat
     <Dialog open={isOpen} onOpenChange={setIsOpen}>
       <DialogTrigger asChild>
         <Button variant="outline" size="sm" className="gap-2">
+          {!hasAccess && <Crown className="h-4 w-4 text-amber-500" />}
           <Sparkles className="h-4 w-4" />
           Generate AI {type === 'theme' ? 'Theme' : 'Wallpaper'}
         </Button>
