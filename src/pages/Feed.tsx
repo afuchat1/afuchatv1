@@ -4,7 +4,7 @@ import { useNavigate, Link } from 'react-router-dom';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/contexts/AuthContext';
 import { toast } from 'sonner';
-import { MessageCircle, Heart, Send, Ellipsis, Gift, Eye, TrendingUp, Crown, RefreshCw, Users } from 'lucide-react';
+import { MessageCircle, Heart, Send, Ellipsis, Gift, Eye, TrendingUp, Crown, Users } from 'lucide-react';
 import { PullToRefreshIndicator } from '@/components/PullToRefreshIndicator';
 import { usePullToRefresh } from '@/hooks/usePullToRefresh';
 import platformLogo from '@/assets/platform-logo.png';
@@ -2244,8 +2244,12 @@ const Feed = ({ defaultTab = 'foryou', guestMode = false }: FeedProps = {}) => {
 
   // Pull to refresh - enhanced hook
   const handlePullRefresh = useCallback(async () => {
+    // Clear session seed to get fresh order
+    sessionStorage.removeItem('feedShuffleSeed');
     setCurrentPage(0);
     setHasMore(true);
+    setPosts([]);
+    setFollowingPosts([]);
     await fetchPosts(0, true);
   }, [fetchPosts]);
 
@@ -2313,13 +2317,6 @@ const Feed = ({ defaultTab = 'foryou', guestMode = false }: FeedProps = {}) => {
   const currentPosts = activeTab === 'foryou' ? posts : followingPosts;
   const adNativeIndex = currentPosts.length > 0 ? Math.min(9, currentPosts.length - 1) : -1;
 
-  const handleLoadNewPosts = async () => {
-    setNewPostsCount(0);
-    window.scrollTo({ top: 0, behavior: 'smooth' });
-    await manualRefresh();
-  };
-
-
   return (
     <div className="max-w-4xl mx-auto pb-20">
       {/* Pull to refresh indicator */}
@@ -2364,14 +2361,6 @@ const Feed = ({ defaultTab = 'foryou', guestMode = false }: FeedProps = {}) => {
               )}
               <img src={platformLogo} alt="AfuChat" className="h-8 w-8" />
               <div className="flex items-center gap-2">
-                <button
-                  onClick={handleLoadNewPosts}
-                  disabled={isRefreshing}
-                  className="p-2 rounded-full hover:bg-muted transition-colors disabled:opacity-50"
-                  aria-label="Refresh feed"
-                >
-                  <RefreshCw className={`h-5 w-5 text-muted-foreground ${isRefreshing ? 'animate-spin' : ''}`} />
-                </button>
                 {user && premiumButton}
               </div>
             </div>
