@@ -3,7 +3,7 @@ import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/contexts/AuthContext';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
-import { Search as SearchIcon, User, MessageSquare, Users, Clock, X, Trash2, MoreHorizontal, Hash } from 'lucide-react';
+import { Search as SearchIcon, User, MessageSquare, Users, Clock, X, Trash2, MoreHorizontal, Hash, Radio } from 'lucide-react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { CustomLoader } from '@/components/ui/CustomLoader';
@@ -62,7 +62,7 @@ interface PostImage {
 }
 
 interface SearchResult {
-  type: 'user' | 'post' | 'group';
+  type: 'user' | 'post' | 'group' | 'message';
   id: string;
   display_name?: string;
   handle?: string;
@@ -89,6 +89,13 @@ interface SearchResult {
   is_member?: boolean;
   group_verified?: boolean;
   is_channel?: boolean;
+  // Message-specific fields
+  chat_id?: string;
+  chat_name?: string;
+  chat_avatar_url?: string;
+  sender_name?: string;
+  sender_avatar_url?: string;
+  sent_at?: string;
 }
 
 interface Trend {
@@ -641,6 +648,32 @@ const Search = () => {
         .or(`name.ilike.%${trimmedQuery}%,description.ilike.%${trimmedQuery}%`)
         .limit(10);
 
+      // Fetch messages from public channels
+      const { data: channelIds } = await supabase
+        .from('chats')
+        .select('id')
+        .eq('is_channel', true);
+
+      let messageResults: any[] = [];
+      if (channelIds && channelIds.length > 0) {
+        const channelIdList = channelIds.map(c => c.id);
+        const { data: messageData } = await supabase
+          .from('messages')
+          .select(`
+            id, encrypted_content, sent_at, chat_id,
+            sender:profiles!sender_id(display_name, avatar_url),
+            chat:chats!chat_id(name, avatar_url, is_channel)
+          `)
+          .in('chat_id', channelIdList)
+          .ilike('encrypted_content', `%${trimmedQuery}%`)
+          .order('sent_at', { ascending: false })
+          .limit(10);
+
+        if (messageData) {
+          messageResults = messageData.filter((m: any) => m.chat?.is_channel === true);
+        }
+      }
+
       let groupsWithMembership = groupData || [];
       if (groupData && groupData.length > 0) {
         const groupIds = groupData.map((g: any) => g.id);
@@ -699,6 +732,17 @@ const Search = () => {
           image_url: p.image_url,
           post_images: p.post_images?.sort((a: any, b: any) => a.display_order - b.display_order) || [],
           author_profiles: p.profiles,
+        })),
+        ...messageResults.map((m: any) => ({
+          type: 'message' as const,
+          id: m.id,
+          content: m.encrypted_content,
+          chat_id: m.chat_id,
+          chat_name: m.chat?.name || 'Unknown Channel',
+          chat_avatar_url: m.chat?.avatar_url,
+          sender_name: m.sender?.display_name || 'Unknown',
+          sender_avatar_url: m.sender?.avatar_url,
+          sent_at: m.sent_at,
         })),
       ];
 
@@ -787,6 +831,7 @@ const Search = () => {
   const userResults = safeResults.filter(r => r.type === 'user');
   const groupResults = safeResults.filter(r => r.type === 'group');
   const postResults = safeResults.filter(r => r.type === 'post');
+  const messageResults = safeResults.filter(r => r.type === 'message');
   const hasAnyResults = safeResults.length > 0;
 
   return (
@@ -1063,6 +1108,55 @@ const Search = () => {
                               />
                             </div>
                           ) : null}
+                        </div>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
+
+            {/* Channel Messages Results */}
+            {messageResults.length > 0 && (
+              <div>
+                <h2 className="px-4 py-3 text-[20px] font-extrabold text-foreground flex items-center gap-2">
+                  <Radio className="h-5 w-5 text-primary" />
+                  Channel Messages
+                </h2>
+                <div className="divide-y divide-border">
+                  {messageResults.map((result) => (
+                    <div
+                      key={result.id}
+                      className="px-4 py-3 hover:bg-muted/50 transition-colors cursor-pointer"
+                      onClick={() => navigate(`/chat/${result.chat_id}`)}
+                    >
+                      <div className="flex items-start gap-3">
+                        <Avatar className="h-10 w-10 flex-shrink-0">
+                          <AvatarImage src={result.chat_avatar_url || ''} alt={result.chat_name} />
+                          <AvatarFallback className="bg-primary/10 text-primary">
+                            <Radio className="h-4 w-4" />
+                          </AvatarFallback>
+                        </Avatar>
+                        <div className="flex-1 min-w-0">
+                          <div className="flex items-center justify-between">
+                            <div className="flex items-center gap-1.5">
+                              <span className="font-bold text-[15px] text-foreground truncate">
+                                {result.chat_name}
+                              </span>
+                              <span className="text-[10px] px-1.5 py-0.5 rounded bg-primary/10 text-primary font-medium">
+                                Channel
+                              </span>
+                            </div>
+                            <span className="text-[13px] text-muted-foreground">
+                              {result.sent_at ? new Date(result.sent_at).toLocaleDateString() : ''}
+                            </span>
+                          </div>
+                          <p className="text-[13px] text-muted-foreground mt-0.5">
+                            from {result.sender_name}
+                          </p>
+                          <p className="text-[15px] text-foreground mt-1 leading-normal line-clamp-2 whitespace-pre-wrap">
+                            {result.content}
+                          </p>
                         </div>
                       </div>
                     </div>
