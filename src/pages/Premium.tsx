@@ -21,6 +21,7 @@ interface SubscriptionPlan {
   duration_days: number;
   features: string[];
   grants_verification: boolean;
+  tier: string;
 }
 
 interface UserSubscription {
@@ -33,95 +34,61 @@ interface UserSubscription {
   subscription_plans?: {
     name: string;
     duration_days: number;
+    tier?: string;
   };
 }
 
-const premiumBenefits = [
-  {
+// Tier-specific styling and icons
+const tierConfig = {
+  silver: {
+    gradient: 'from-slate-400 to-slate-500',
+    bgGradient: 'from-slate-100 to-slate-200 dark:from-slate-800 dark:to-slate-900',
+    borderColor: 'border-slate-400',
+    textColor: 'text-slate-600 dark:text-slate-300',
     icon: Shield,
-    title: 'Verified Badge',
-    description: 'Get the coveted verified checkmark on your profile',
-    color: 'text-primary'
+    label: 'Essentials'
   },
-  {
-    icon: Crown,
-    title: 'Premium Badge',
-    description: 'Show your premium status with an exclusive badge',
-    color: 'text-yellow-500'
-  },
-  {
-    icon: Ban,
-    title: 'Ad-Free Experience',
-    description: 'Browse the platform without any advertisements',
-    color: 'text-green-500'
-  },
-  {
-    icon: Image,
-    title: 'Create Stories',
-    description: 'Share 24-hour stories with your followers',
-    color: 'text-pink-500'
-  },
-  {
-    icon: Users,
-    title: 'Create Groups',
-    description: 'Create and manage group chats with friends',
-    color: 'text-blue-500'
-  },
-  {
-    icon: Radio,
-    title: 'Create Channels',
-    description: 'Broadcast to unlimited subscribers with channels',
-    color: 'text-purple-500'
-  },
-  {
-    icon: Gift,
-    title: 'Gift Marketplace',
-    description: 'Buy and sell rare collectible gifts',
-    color: 'text-orange-500'
-  },
-  {
-    icon: MessageSquare,
-    title: 'Create Red Envelopes',
-    description: 'Send Nexa gifts to multiple friends at once',
-    color: 'text-red-500'
-  },
-  {
-    icon: Zap,
-    title: 'Unlimited Red Envelope Claims',
-    description: 'Claim unlimited red envelopes daily (non-premium: 1/day)',
-    color: 'text-amber-500'
-  },
-  {
+  gold: {
+    gradient: 'from-yellow-400 to-amber-500',
+    bgGradient: 'from-yellow-50 to-amber-100 dark:from-yellow-900/20 dark:to-amber-900/30',
+    borderColor: 'border-yellow-500',
+    textColor: 'text-yellow-600 dark:text-yellow-400',
     icon: Star,
-    title: 'Pin 3 Gifts',
-    description: 'Pin up to 3 rare gifts on your profile (non-premium: 1)',
-    color: 'text-cyan-500'
+    label: 'Popular'
   },
-  {
-    icon: Sparkles,
-    title: 'AI Post Analysis',
-    description: 'Get AI-powered insights on any post',
-    color: 'text-indigo-500'
-  },
-  {
-    icon: Palette,
-    title: 'AI Chat Themes',
-    description: 'Generate custom AI themes and wallpapers for chats',
-    color: 'text-teal-500'
-  },
-  {
-    icon: Eye,
-    title: 'Leaderboard Privacy',
-    description: 'Hide your identity on the creator earnings leaderboard',
-    color: 'text-slate-500'
-  },
-  {
-    icon: MessageSquare,
-    title: 'AfuAI Chat Assistant',
-    description: 'Chat with AfuAI for help and insights anytime',
-    color: 'text-primary'
-  },
-];
+  platinum: {
+    gradient: 'from-violet-500 to-purple-600',
+    bgGradient: 'from-violet-50 to-purple-100 dark:from-violet-900/20 dark:to-purple-900/30',
+    borderColor: 'border-violet-500',
+    textColor: 'text-violet-600 dark:text-violet-400',
+    icon: Crown,
+    label: 'Ultimate'
+  }
+};
+
+// Feature icons mapping
+const featureIcons: Record<string, typeof Shield> = {
+  'Verified badge': Shield,
+  'Ad-free experience': Ban,
+  'Pin 1 gift on profile': Gift,
+  'Pin 2 gifts on profile': Gift,
+  'Pin 3 gifts on profile': Gift,
+  '1 red envelope claim per day': Gift,
+  '5 red envelope claims per day': Gift,
+  'Unlimited red envelope claims': Zap,
+  'Create red envelopes': MessageSquare,
+  'Basic chat themes': Palette,
+  'Custom chat themes': Palette,
+  'AI Chat Themes & Wallpapers': Palette,
+  'Create stories': Image,
+  'Create groups': Users,
+  'Create channels': Radio,
+  'AI Post Analysis': Sparkles,
+  'Gift Marketplace access': Gift,
+  'Leaderboard privacy': Eye,
+  'AfuAI Chat Assistant': MessageSquare,
+  'Priority support': Star
+};
 
 export default function Premium() {
   const { user } = useAuth();
@@ -176,7 +143,8 @@ export default function Premium() {
         *,
         subscription_plans (
           name,
-          duration_days
+          duration_days,
+          tier
         )
       `)
       .eq('user_id', user.id)
@@ -348,26 +316,31 @@ export default function Premium() {
         </div>
 
         <div className="grid md:grid-cols-3 gap-6">
-          {plans.map((plan, index) => {
-            const isPopular = index === 1; // Middle plan
+          {plans.map((plan) => {
+            const tier = (plan.tier || 'silver') as keyof typeof tierConfig;
+            const config = tierConfig[tier] || tierConfig.silver;
+            const TierIcon = config.icon;
             const canAfford = acoinBalance >= plan.acoin_price;
             const hasActiveSubscription = !!currentSubscription;
 
             return (
               <Card
                 key={plan.id}
-                className={`p-6 relative ${
-                  isPopular ? 'border-primary shadow-lg scale-105' : ''
-                } ${hasActiveSubscription ? 'opacity-60' : ''}`}
+                className={`p-6 relative overflow-hidden border-2 ${config.borderColor} ${hasActiveSubscription ? 'opacity-60' : ''}`}
               >
-                {isPopular && (
-                  <Badge className="absolute -top-3 left-1/2 -translate-x-1/2">
-                    Most Popular
-                  </Badge>
-                )}
+                {/* Tier Badge */}
+                <Badge className={`absolute -top-0 right-4 top-4 bg-gradient-to-r ${config.gradient} text-white border-0`}>
+                  {config.label}
+                </Badge>
 
-                <div className="text-center mb-6">
-                  <h3 className="text-xl font-bold mb-2">{plan.name}</h3>
+                {/* Header with Icon */}
+                <div className={`text-center mb-6 pt-4`}>
+                  <div className={`inline-flex p-4 rounded-full bg-gradient-to-br ${config.bgGradient} mb-4`}>
+                    <TierIcon className={`h-8 w-8 ${config.textColor}`} />
+                  </div>
+                  <h3 className={`text-2xl font-bold mb-2 bg-gradient-to-r ${config.gradient} bg-clip-text text-transparent`}>
+                    {plan.name}
+                  </h3>
                   <p className="text-sm text-muted-foreground mb-4">
                     {plan.description}
                   </p>
@@ -384,19 +357,21 @@ export default function Premium() {
                 <Separator className="my-6" />
 
                 <ul className="space-y-3 mb-6">
-                  {plan.features.map((feature, i) => (
-                    <li key={i} className="flex items-start gap-2">
-                      <Check className="h-5 w-5 text-primary flex-shrink-0 mt-0.5" />
-                      <span className="text-sm">{feature}</span>
-                    </li>
-                  ))}
+                  {plan.features.map((feature, i) => {
+                    const FeatureIcon = featureIcons[feature] || Check;
+                    return (
+                      <li key={i} className="flex items-start gap-2">
+                        <FeatureIcon className={`h-5 w-5 flex-shrink-0 mt-0.5 ${config.textColor}`} />
+                        <span className="text-sm">{feature}</span>
+                      </li>
+                    );
+                  })}
                 </ul>
 
                 <Button
                   onClick={() => handlePurchase(plan.id, plan.acoin_price)}
                   disabled={!canAfford || purchasing === plan.id || hasActiveSubscription}
-                  className="w-full"
-                  variant={isPopular ? 'default' : 'outline'}
+                  className={`w-full bg-gradient-to-r ${config.gradient} hover:opacity-90 text-white border-0`}
                 >
                   {purchasing === plan.id ? (
                     'Processing...'
@@ -405,7 +380,7 @@ export default function Premium() {
                   ) : !canAfford ? (
                     'Insufficient ACoin'
                   ) : (
-                    `Subscribe Now`
+                    `Get ${plan.name}`
                   )}
                 </Button>
 
@@ -424,27 +399,33 @@ export default function Premium() {
           })}
         </div>
 
-        {/* All Premium Benefits Section */}
+        {/* Tier Comparison Section */}
         <Card className="p-6 mt-8">
           <h3 className="font-bold text-xl mb-6 flex items-center gap-2">
             <Crown className="h-6 w-6 text-primary" />
-            All Premium Benefits
+            Compare Plans
           </h3>
-          <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-4">
-            {premiumBenefits.map((benefit, index) => (
-              <div 
-                key={index}
-                className="flex items-start gap-3 p-4 rounded-lg bg-muted/30 hover:bg-muted/50 transition-colors"
-              >
-                <div className={`p-2 bg-background rounded-lg ${benefit.color}`}>
-                  <benefit.icon className="h-5 w-5" />
+          <div className="grid md:grid-cols-3 gap-4">
+            {plans.map((plan) => {
+              const tier = (plan.tier || 'silver') as keyof typeof tierConfig;
+              const config = tierConfig[tier] || tierConfig.silver;
+              return (
+                <div key={plan.id} className={`p-4 rounded-lg border-2 ${config.borderColor} bg-gradient-to-br ${config.bgGradient}`}>
+                  <h4 className={`font-bold text-lg mb-3 ${config.textColor}`}>{plan.name}</h4>
+                  <ul className="space-y-2">
+                    {plan.features.map((feature, i) => {
+                      const FeatureIcon = featureIcons[feature] || Check;
+                      return (
+                        <li key={i} className="flex items-center gap-2 text-sm">
+                          <FeatureIcon className={`h-4 w-4 ${config.textColor}`} />
+                          <span>{feature}</span>
+                        </li>
+                      );
+                    })}
+                  </ul>
                 </div>
-                <div className="flex-1 min-w-0">
-                  <p className="font-medium">{benefit.title}</p>
-                  <p className="text-xs text-muted-foreground">{benefit.description}</p>
-                </div>
-              </div>
-            ))}
+              );
+            })}
           </div>
         </Card>
         
