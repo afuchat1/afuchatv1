@@ -2385,18 +2385,24 @@ const Feed = ({ defaultTab = 'foryou', guestMode = false }: FeedProps = {}) => {
         )}>
           <div className="max-w-4xl mx-auto">
             <div className="flex items-center justify-between px-4 py-3">
-              <ProfileDrawer
-                trigger={
-                  <button className="flex-shrink-0">
-                    <Avatar className="h-8 w-8">
-                      <AvatarImage src={userProfile?.avatar_url || undefined} />
-                      <AvatarFallback className="bg-primary text-primary-foreground text-xs">
-                        {userProfile?.display_name?.charAt(0)?.toUpperCase() || 'U'}
-                      </AvatarFallback>
-                    </Avatar>
-                  </button>
-                }
-              />
+              {user ? (
+                <ProfileDrawer
+                  trigger={
+                    <button className="flex-shrink-0">
+                      <Avatar className="h-8 w-8">
+                        <AvatarImage src={userProfile?.avatar_url || undefined} />
+                        <AvatarFallback className="bg-primary text-primary-foreground text-xs">
+                          {userProfile?.display_name?.charAt(0)?.toUpperCase() || 'U'}
+                        </AvatarFallback>
+                      </Avatar>
+                    </button>
+                  }
+                />
+              ) : (
+                <Link to="/auth/signin" className="flex-shrink-0 text-xs font-medium text-primary hover:underline">
+                  Sign In
+                </Link>
+              )}
               <img src={platformLogo} alt="AfuChat" className="h-8 w-8" />
               <div className="flex items-center gap-2">
                 <button
@@ -2407,7 +2413,7 @@ const Feed = ({ defaultTab = 'foryou', guestMode = false }: FeedProps = {}) => {
                 >
                   <RefreshCw className={`h-5 w-5 text-muted-foreground ${isRefreshing ? 'animate-spin' : ''}`} />
                 </button>
-                {premiumButton}
+                {user && premiumButton}
               </div>
             </div>
 

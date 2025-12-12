@@ -332,59 +332,88 @@ const Layout = ({ children }: LayoutProps) => {
                 />
               </Link>
               
-              {/* AfuAI Center Button */}
-              <Link
-                to="/ai-chat"
-                className="flex items-center justify-center w-12 h-12 transition-colors"
-              >
-                <Bot 
-                  className={cn(
-                    "h-7 w-7",
-                    isActive('/ai-chat') ? "text-primary" : "text-foreground"
-                  )} 
-                  strokeWidth={isActive('/ai-chat') ? 2.5 : 1.5} 
-                />
-              </Link>
-              
-              <Link
-                to="/notifications"
-                className="flex items-center justify-center w-12 h-12 transition-colors relative"
-              >
-                <div className="relative">
-                  <Bell 
+              {/* AfuAI Center Button - Auth required */}
+              {user ? (
+                <Link
+                  to="/ai-chat"
+                  className="flex items-center justify-center w-12 h-12 transition-colors"
+                >
+                  <Bot 
                     className={cn(
-                      "h-6 w-6",
-                      isActive('/notifications') ? "text-primary fill-primary" : "text-foreground"
+                      "h-7 w-7",
+                      isActive('/ai-chat') ? "text-primary" : "text-foreground"
                     )} 
-                    strokeWidth={isActive('/notifications') ? 2.5 : 1.5} 
+                    strokeWidth={isActive('/ai-chat') ? 2.5 : 1.5} 
                   />
-                  {unreadNotifications > 0 && (
-                    <span className="absolute -top-1.5 -right-1.5 flex items-center justify-center min-w-[18px] h-[18px] px-1 bg-destructive text-destructive-foreground text-[10px] font-bold rounded-full">
-                      {unreadNotifications > 99 ? '99+' : unreadNotifications}
-                    </span>
-                  )}
-                </div>
-              </Link>
+                </Link>
+              ) : (
+                <Link
+                  to="/auth/signin"
+                  className="flex items-center justify-center w-12 h-12 transition-colors"
+                >
+                  <Bot className="h-7 w-7 text-muted-foreground" strokeWidth={1.5} />
+                </Link>
+              )}
               
-              <Link
-                to="/chats"
-                className="flex items-center justify-center w-12 h-12 transition-colors relative"
-              >
-                <div className="relative">
-                  <MessageCircle 
-                    className={cn(
-                      "h-6 w-6",
-                      isActive('/chats') ? "text-primary fill-primary" : "text-foreground"
-                    )} 
-                    strokeWidth={isActive('/chats') ? 2.5 : 1.5} 
-                  />
-                  {unreadChats > 0 && (
-                    <span className="absolute -top-1.5 -right-1.5 flex items-center justify-center min-w-[18px] h-[18px] px-1 bg-destructive text-destructive-foreground text-[10px] font-bold rounded-full">
-                      {unreadChats > 99 ? '99+' : unreadChats}
-                    </span>
-                  )}
-                </div>
-              </Link>
+              {/* Notifications - Auth required */}
+              {user ? (
+                <Link
+                  to="/notifications"
+                  className="flex items-center justify-center w-12 h-12 transition-colors relative"
+                >
+                  <div className="relative">
+                    <Bell 
+                      className={cn(
+                        "h-6 w-6",
+                        isActive('/notifications') ? "text-primary fill-primary" : "text-foreground"
+                      )} 
+                      strokeWidth={isActive('/notifications') ? 2.5 : 1.5} 
+                    />
+                    {unreadNotifications > 0 && (
+                      <span className="absolute -top-1.5 -right-1.5 flex items-center justify-center min-w-[18px] h-[18px] px-1 bg-destructive text-destructive-foreground text-[10px] font-bold rounded-full">
+                        {unreadNotifications > 99 ? '99+' : unreadNotifications}
+                      </span>
+                    )}
+                  </div>
+                </Link>
+              ) : (
+                <Link
+                  to="/auth/signin"
+                  className="flex items-center justify-center w-12 h-12 transition-colors"
+                >
+                  <Bell className="h-6 w-6 text-muted-foreground" strokeWidth={1.5} />
+                </Link>
+              )}
+              
+              {/* Chats - Auth required */}
+              {user ? (
+                <Link
+                  to="/chats"
+                  className="flex items-center justify-center w-12 h-12 transition-colors relative"
+                >
+                  <div className="relative">
+                    <MessageCircle 
+                      className={cn(
+                        "h-6 w-6",
+                        isActive('/chats') ? "text-primary fill-primary" : "text-foreground"
+                      )} 
+                      strokeWidth={isActive('/chats') ? 2.5 : 1.5} 
+                    />
+                    {unreadChats > 0 && (
+                      <span className="absolute -top-1.5 -right-1.5 flex items-center justify-center min-w-[18px] h-[18px] px-1 bg-destructive text-destructive-foreground text-[10px] font-bold rounded-full">
+                        {unreadChats > 99 ? '99+' : unreadChats}
+                      </span>
+                    )}
+                  </div>
+                </Link>
+              ) : (
+                <Link
+                  to="/auth/signin"
+                  className="flex items-center justify-center w-12 h-12 transition-colors"
+                >
+                  <MessageCircle className="h-6 w-6 text-muted-foreground" strokeWidth={1.5} />
+                </Link>
+              )}
             </div>
           </nav>
           {/* Safe area padding for devices with home indicator */}
