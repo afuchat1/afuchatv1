@@ -1184,8 +1184,6 @@ const Feed = ({ defaultTab = 'foryou', guestMode = false }: FeedProps = {}) => {
   // Pull to refresh state
   const [isRefreshing, setIsRefreshing] = useState(false);
   const [pullDistance, setPullDistance] = useState(0);
-  const pullStartY = useRef(0);
-  const isPullingRef = useRef(false);
   
   // Scroll hide state for header
   const [isScrollingDown, setIsScrollingDown] = useState(false);
@@ -2256,10 +2254,62 @@ const Feed = ({ defaultTab = 'foryou', guestMode = false }: FeedProps = {}) => {
     return () => window.removeEventListener('feed-refresh', handleRefresh);
   }, [fetchPosts]);
 
-  // Pull to refresh - simplified, no document-level touch handlers
-  // Just use the refresh button instead of touch-based pull-to-refresh
-  // This avoids interfering with normal page scrolling
-
+  // Pull to refresh touch handlers
+  useEffect(() => {
+    let startY = 0;
+    let isPulling = false;
+    
+    const handleTouchStart = (e: TouchEvent) => {
+      if (window.scrollY <= 0 && !isRefreshing) {
+        startY = e.touches[0].pageY;
+        isPulling = true;
+      }
+    };
+    
+    const handleTouchMove = (e: TouchEvent) => {
+      if (!isPulling || isRefreshing) return;
+      
+      const currentY = e.touches[0].pageY;
+      const distance = Math.min(Math.max(0, currentY - startY), 120);
+      
+      if (distance > 0 && window.scrollY <= 0) {
+        e.preventDefault();
+        setPullDistance(distance);
+      }
+    };
+    
+    const handleTouchEnd = async () => {
+      if (!isPulling) return;
+      
+      const distance = pullDistance;
+      isPulling = false;
+      
+      if (distance >= 80 && !isRefreshing) {
+        setIsRefreshing(true);
+        try {
+          setCurrentPage(0);
+          setHasMore(true);
+          await fetchPosts(0, true);
+          toast.success('Feed refreshed!');
+        } finally {
+          setIsRefreshing(false);
+        }
+      }
+      
+      setPullDistance(0);
+      startY = 0;
+    };
+    
+    document.addEventListener('touchstart', handleTouchStart, { passive: true });
+    document.addEventListener('touchmove', handleTouchMove, { passive: false });
+    document.addEventListener('touchend', handleTouchEnd, { passive: true });
+    
+    return () => {
+      document.removeEventListener('touchstart', handleTouchStart);
+      document.removeEventListener('touchmove', handleTouchMove);
+      document.removeEventListener('touchend', handleTouchEnd);
+    };
+  }, [isRefreshing, pullDistance, fetchPosts]);
 
   const premiumButton = useMemo(() => {
     // Show stable placeholder during loading to prevent flashing
@@ -2328,59 +2378,67 @@ const Feed = ({ defaultTab = 'foryou', guestMode = false }: FeedProps = {}) => {
       />
       
       <Tabs value={activeTab} onValueChange={(v) => setActiveTab(v as 'foryou' | 'following')} className="w-full">
-        {/* Sticky Header with Tabs */}
-        <div className="sticky top-0 z-30 bg-background/95 backdrop-blur-md border-b border-border/30">
-          <div className="flex items-center justify-between px-4 py-3">
-            <ProfileDrawer
-              trigger={
-                <button className="flex-shrink-0">
-                  <Avatar className="h-8 w-8">
-                    <AvatarImage src={userProfile?.avatar_url || undefined} />
-                    <AvatarFallback className="bg-primary text-primary-foreground text-xs">
-                      {userProfile?.display_name?.charAt(0)?.toUpperCase() || 'U'}
-                    </AvatarFallback>
-                  </Avatar>
+        {/* Fixed Header with Tabs - works like bottom navigation */}
+        <div className={cn(
+          "fixed top-0 left-0 right-0 z-40 bg-background/95 backdrop-blur-md border-b border-border/30 transition-transform duration-300",
+          isScrollingDown ? "-translate-y-full" : "translate-y-0"
+        )}>
+          <div className="max-w-4xl mx-auto">
+            <div className="flex items-center justify-between px-4 py-3">
+              <ProfileDrawer
+                trigger={
+                  <button className="flex-shrink-0">
+                    <Avatar className="h-8 w-8">
+                      <AvatarImage src={userProfile?.avatar_url || undefined} />
+                      <AvatarFallback className="bg-primary text-primary-foreground text-xs">
+                        {userProfile?.display_name?.charAt(0)?.toUpperCase() || 'U'}
+                      </AvatarFallback>
+                    </Avatar>
+                  </button>
+                }
+              />
+              <img src={platformLogo} alt="AfuChat" className="h-8 w-8" />
+              <div className="flex items-center gap-2">
+                <button
+                  onClick={handleLoadNewPosts}
+                  disabled={isRefreshing}
+                  className="p-2 rounded-full hover:bg-muted transition-colors disabled:opacity-50"
+                  aria-label="Refresh feed"
+                >
+                  <RefreshCw className={`h-5 w-5 text-muted-foreground ${isRefreshing ? 'animate-spin' : ''}`} />
                 </button>
-              }
-            />
-            <img src={platformLogo} alt="AfuChat" className="h-8 w-8" />
-            <div className="flex items-center gap-2">
+                {premiumButton}
+              </div>
+            </div>
+
+            {newPostsCount > 0 && (
               <button
                 onClick={handleLoadNewPosts}
-                disabled={isRefreshing}
-                className="p-2 rounded-full hover:bg-muted transition-colors disabled:opacity-50"
-                aria-label="Refresh feed"
+                className="w-full py-3 px-4 bg-primary/10 hover:bg-primary/20 text-primary font-semibold transition-colors flex items-center justify-center gap-2"
               >
-                <RefreshCw className={`h-5 w-5 text-muted-foreground ${isRefreshing ? 'animate-spin' : ''}`} />
+                <span>Show {newPostsCount} new {newPostsCount === 1 ? 'post' : 'posts'}</span>
               </button>
-              {premiumButton}
-            </div>
+            )}
+
+            <TabsList className="grid grid-cols-2 w-full h-12 rounded-none bg-transparent p-0">
+              <TabsTrigger
+                value="foryou"
+                className="relative data-[state=active]:bg-transparent data-[state=active]:text-foreground data-[state=inactive]:text-muted-foreground data-[state=active]:shadow-none rounded-none font-bold h-full flex items-center gap-1.5 transition-colors data-[state=active]:after:absolute data-[state=active]:after:bottom-0 data-[state=active]:after:left-1/2 data-[state=active]:after:-translate-x-1/2 data-[state=active]:after:w-14 data-[state=active]:after:h-1 data-[state=active]:after:bg-primary data-[state=active]:after:rounded-full"
+              >
+                For you
+              </TabsTrigger>
+              <TabsTrigger
+                value="following"
+                className="relative data-[state=active]:bg-transparent data-[state=active]:text-foreground data-[state=inactive]:text-muted-foreground data-[state=active]:shadow-none rounded-none font-bold h-full transition-colors data-[state=active]:after:absolute data-[state=active]:after:bottom-0 data-[state=active]:after:left-1/2 data-[state=active]:after:-translate-x-1/2 data-[state=active]:after:w-14 data-[state=active]:after:h-1 data-[state=active]:after:bg-primary data-[state=active]:after:rounded-full"
+              >
+                Following
+              </TabsTrigger>
+            </TabsList>
           </div>
-
-          {newPostsCount > 0 && (
-            <button
-              onClick={handleLoadNewPosts}
-              className="w-full py-3 px-4 bg-primary/10 hover:bg-primary/20 text-primary font-semibold transition-colors flex items-center justify-center gap-2"
-            >
-              <span>Show {newPostsCount} new {newPostsCount === 1 ? 'post' : 'posts'}</span>
-            </button>
-          )}
-
-          <TabsList className="grid grid-cols-2 w-full h-12 rounded-none bg-transparent p-0">
-            <TabsTrigger
-              value="foryou"
-              className="relative data-[state=active]:bg-transparent data-[state=active]:text-foreground data-[state=inactive]:text-muted-foreground data-[state=active]:shadow-none rounded-none font-bold h-full flex items-center gap-1.5 transition-colors data-[state=active]:after:absolute data-[state=active]:after:bottom-0 data-[state=active]:after:left-1/2 data-[state=active]:after:-translate-x-1/2 data-[state=active]:after:w-14 data-[state=active]:after:h-1 data-[state=active]:after:bg-primary data-[state=active]:after:rounded-full"
-            >
-              For you
-            </TabsTrigger>
-            <TabsTrigger
-              value="following"
-              className="relative data-[state=active]:bg-transparent data-[state=active]:text-foreground data-[state=inactive]:text-muted-foreground data-[state=active]:shadow-none rounded-none font-bold h-full transition-colors data-[state=active]:after:absolute data-[state=active]:after:bottom-0 data-[state=active]:after:left-1/2 data-[state=active]:after:-translate-x-1/2 data-[state=active]:after:w-14 data-[state=active]:after:h-1 data-[state=active]:after:bg-primary data-[state=active]:after:rounded-full"
-            >
-              Following
-            </TabsTrigger>
-          </TabsList>
         </div>
+
+        {/* Spacer for fixed header */}
+        <div className="h-[108px]" />
 
         {/* Content area */}
         <TabsContent value={activeTab} className="m-0" ref={feedRef} forceMount>

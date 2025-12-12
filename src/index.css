@@ -282,12 +282,15 @@
   html {
     height: 100%;
     overflow-y: scroll;
+    scroll-behavior: smooth;
   }
   
   body {
     min-height: 100%;
     overflow-y: scroll !important;
     overflow-x: hidden !important;
+    scroll-behavior: smooth;
+    -webkit-overflow-scrolling: touch;
   }
 
   /* Ensure root element scrolls properly */
