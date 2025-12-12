@@ -3,7 +3,7 @@ import { supabase } from '@/integrations/supabase/client';
 import { motion } from 'framer-motion';
 import { PinnedGiftDetailSheet } from './PinnedGiftDetailSheet';
 import { GiftImage } from './GiftImage';
-import { usePremiumStatus } from '@/hooks/usePremiumStatus';
+import { useSubscription } from '@/hooks/useSubscription';
 
 interface PinnedGift {
   id: string;
@@ -24,10 +24,10 @@ export const PinnedGiftsDisplay = ({ userId, className = '' }: PinnedGiftsDispla
   const [pinnedGifts, setPinnedGifts] = useState<PinnedGift[]>([]);
   const [selectedGiftId, setSelectedGiftId] = useState<string | null>(null);
   const [detailsOpen, setDetailsOpen] = useState(false);
-  const { isPremium } = usePremiumStatus(userId);
+  const { getMaxPinnedGifts } = useSubscription(userId);
   
-  // Premium users can pin 3 gifts, non-premium only 1
-  const maxPinnedGifts = isPremium ? 3 : 1;
+  // Get max pinned gifts based on subscription tier
+  const maxPinnedGifts = getMaxPinnedGifts();
 
   useEffect(() => {
     fetchPinnedGifts();

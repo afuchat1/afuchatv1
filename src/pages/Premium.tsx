@@ -7,11 +7,12 @@ import { Badge } from '@/components/ui/badge';
 import { toast } from 'sonner';
 import { 
   Crown, Check, Coins, Calendar, Sparkles, Gift, Users, Radio, 
-  MessageSquare, Image, Ban, Eye, Palette, Shield, Star, Zap, ArrowRight, CheckCircle2
+  MessageSquare, Image, Ban, Eye, Palette, Shield, Star, Zap, ArrowRight, CheckCircle2, ChevronDown, ChevronUp
 } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { PageHeader } from '@/components/PageHeader';
-import { motion } from 'framer-motion';
+import { motion, AnimatePresence } from 'framer-motion';
+import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible';
 
 interface SubscriptionPlan {
   id: string;
@@ -95,6 +96,63 @@ const featureIcons: Record<string, typeof Shield> = {
   'Leaderboard privacy': Eye,
   'AfuAI Chat Assistant': MessageSquare,
   'Priority support': Star
+};
+
+// Expandable Features Component
+const ExpandableFeatures = ({ 
+  features, 
+  config, 
+  featureIcons 
+}: { 
+  features: string[]; 
+  config: typeof tierConfig.silver; 
+  featureIcons: Record<string, typeof Shield>;
+}) => {
+  const [isExpanded, setIsExpanded] = useState(false);
+  const displayedFeatures = isExpanded ? features : features.slice(0, 4);
+  const hasMoreFeatures = features.length > 4;
+
+  return (
+    <div className="mb-6">
+      <div className="space-y-2.5">
+        {displayedFeatures.map((feature, i) => {
+          const FeatureIcon = featureIcons[feature] || Check;
+          return (
+            <motion.div 
+              key={i} 
+              initial={i >= 4 ? { opacity: 0, height: 0 } : false}
+              animate={{ opacity: 1, height: 'auto' }}
+              className="flex items-center gap-3 group/feature"
+            >
+              <div className={`p-1.5 rounded-lg bg-gradient-to-br ${config.bgGradient} border ${config.borderColor} group-hover/feature:scale-110 transition-transform`}>
+                <FeatureIcon className={`h-3.5 w-3.5 ${config.textColor}`} />
+              </div>
+              <span className="text-sm font-medium text-foreground/90">{feature}</span>
+            </motion.div>
+          );
+        })}
+      </div>
+      
+      {hasMoreFeatures && (
+        <button
+          onClick={() => setIsExpanded(!isExpanded)}
+          className={`w-full mt-3 py-2 px-3 rounded-lg flex items-center justify-center gap-2 text-xs font-semibold transition-all ${config.textColor} bg-gradient-to-br ${config.bgGradient} border ${config.borderColor} hover:opacity-80`}
+        >
+          {isExpanded ? (
+            <>
+              <ChevronUp className="h-3.5 w-3.5" />
+              Show Less
+            </>
+          ) : (
+            <>
+              <ChevronDown className="h-3.5 w-3.5" />
+              Show All {features.length} Features
+            </>
+          )}
+        </button>
+      )}
+    </div>
+  );
 };
 
 export default function Premium() {
@@ -432,25 +490,12 @@ export default function Premium() {
                           </div>
                         </div>
 
-                        {/* Features list */}
-                        <div className="space-y-3 mb-6">
-                          {plan.features.slice(0, 5).map((feature, i) => {
-                            const FeatureIcon = featureIcons[feature] || Check;
-                            return (
-                              <div key={i} className="flex items-center gap-3 group/feature">
-                                <div className={`p-1.5 rounded-lg bg-gradient-to-br ${config.bgGradient} border ${config.borderColor} group-hover/feature:scale-110 transition-transform`}>
-                                  <FeatureIcon className={`h-3.5 w-3.5 ${config.textColor}`} />
-                                </div>
-                                <span className="text-sm font-medium text-foreground/90">{feature}</span>
-                              </div>
-                            );
-                          })}
-                          {plan.features.length > 5 && (
-                            <p className={`text-xs ${config.textColor} font-semibold pl-9`}>
-                              + {plan.features.length - 5} more exclusive features
-                            </p>
-                          )}
-                        </div>
+                        {/* Features list - Expandable */}
+                        <ExpandableFeatures 
+                          features={plan.features} 
+                          config={config} 
+                          featureIcons={featureIcons} 
+                        />
 
                         <Button
                           onClick={() => handlePurchase(plan.id, plan.acoin_price)}

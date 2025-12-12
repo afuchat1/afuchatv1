@@ -15,7 +15,7 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { Radio, Crown, Camera, Loader2 } from 'lucide-react';
-import { usePremiumStatus } from '@/hooks/usePremiumStatus';
+import { useSubscription } from '@/hooks/useSubscription';
 import { UserAvatar } from '@/components/avatar/UserAvatar';
 
 interface CreateChannelDialogProps {
@@ -27,7 +27,7 @@ interface CreateChannelDialogProps {
 export const CreateChannelDialog = ({ isOpen, onClose, onChannelCreated }: CreateChannelDialogProps) => {
   const { user } = useAuth();
   const navigate = useNavigate();
-  const { isPremium } = usePremiumStatus();
+  const { canCreateChannels, tier } = useSubscription();
   const [channelName, setChannelName] = useState('');
   const [description, setDescription] = useState('');
   const [avatarUrl, setAvatarUrl] = useState<string | null>(null);
@@ -75,8 +75,8 @@ export const CreateChannelDialog = ({ isOpen, onClose, onChannelCreated }: Creat
   };
 
   const handleCreateChannel = async () => {
-    if (!isPremium) {
-      toast.error('Premium required to create channels');
+    if (!canCreateChannels()) {
+      toast.error('Platinum subscription required to create channels');
       navigate('/premium');
       onClose();
       return;
@@ -141,12 +141,12 @@ export const CreateChannelDialog = ({ isOpen, onClose, onChannelCreated }: Creat
           <DialogTitle className="flex items-center gap-2">
             <Radio className="h-5 w-5 text-primary" />
             Create Channel
-            {!isPremium && <Crown className="h-4 w-4 text-yellow-500" />}
+            {!canCreateChannels() && <Crown className="h-4 w-4 text-violet-500" />}
           </DialogTitle>
           <DialogDescription>
-            {isPremium 
+            {canCreateChannels() 
               ? 'Create a broadcast channel where only admins can post'
-              : 'Premium subscription required to create channels'}
+              : 'Platinum subscription required to create channels'}
           </DialogDescription>
         </DialogHeader>
 

@@ -7,9 +7,11 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Gift } from 'lucide-react';
+import { Gift, Crown } from 'lucide-react';
 import { toast } from 'sonner';
 import { useQuery } from '@tanstack/react-query';
+import { useSubscription } from '@/hooks/useSubscription';
+import { useNavigate } from 'react-router-dom';
 
 interface SendRedEnvelopeDialogProps {
   chatId: string;
@@ -18,6 +20,8 @@ interface SendRedEnvelopeDialogProps {
 
 export const SendRedEnvelopeDialog = ({ chatId, onSuccess }: SendRedEnvelopeDialogProps) => {
   const { user } = useAuth();
+  const navigate = useNavigate();
+  const { canCreateRedEnvelopes, tier } = useSubscription();
   const [open, setOpen] = useState(false);
   const [totalAmount, setTotalAmount] = useState('');
   const [recipientCount, setRecipientCount] = useState('');
@@ -41,6 +45,13 @@ export const SendRedEnvelopeDialog = ({ chatId, onSuccess }: SendRedEnvelopeDial
   const handleSend = async () => {
     if (!user) {
       toast.error('Please sign in');
+      return;
+    }
+
+    if (!canCreateRedEnvelopes()) {
+      toast.error('Platinum subscription required to create red envelopes');
+      navigate('/premium');
+      setOpen(false);
       return;
     }
 
