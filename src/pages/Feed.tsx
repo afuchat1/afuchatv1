@@ -2256,37 +2256,65 @@ const Feed = ({ defaultTab = 'foryou', guestMode = false }: FeedProps = {}) => {
     return () => window.removeEventListener('feed-refresh', handleRefresh);
   }, [fetchPosts]);
 
-  // Pull to refresh touch handlers
+  // Pull to refresh touch handlers - use refs to avoid re-attaching handlers
+  const pullDistanceRef = useRef(0);
+  const isRefreshingRef = useRef(false);
+  
+  // Keep refs in sync with state
+  useEffect(() => {
+    pullDistanceRef.current = pullDistance;
+  }, [pullDistance]);
+  
+  useEffect(() => {
+    isRefreshingRef.current = isRefreshing;
+  }, [isRefreshing]);
+  
   useEffect(() => {
     const threshold = 80;
     const maxPull = 120;
     
     const handleTouchStart = (e: TouchEvent) => {
-      if (window.scrollY <= 0 && !isRefreshing) {
+      // Only activate pull-to-refresh when at the very top
+      if (window.scrollY <= 0 && !isRefreshingRef.current) {
         pullStartY.current = e.touches[0].pageY;
         isPullingRef.current = true;
+      } else {
+        isPullingRef.current = false;
       }
     };
     
     const handleTouchMove = (e: TouchEvent) => {
-      if (!isPullingRef.current || isRefreshing) return;
+      // Don't interfere with normal scrolling
+      if (!isPullingRef.current || isRefreshingRef.current) return;
+      
+      // If we've scrolled, stop pull-to-refresh
+      if (window.scrollY > 0) {
+        isPullingRef.current = false;
+        setPullDistance(0);
+        return;
+      }
       
       const currentY = e.touches[0].pageY;
-      const distance = Math.min(Math.max(0, currentY - pullStartY.current), maxPull);
+      const distance = currentY - pullStartY.current;
       
-      if (distance > 0 && window.scrollY <= 0) {
+      // Only prevent default and show indicator when pulling DOWN at top
+      if (distance > 10 && window.scrollY <= 0) {
         e.preventDefault();
-        setPullDistance(distance);
+        setPullDistance(Math.min(distance, maxPull));
+      } else if (distance < 0) {
+        // User is trying to scroll down, let them
+        isPullingRef.current = false;
+        setPullDistance(0);
       }
     };
     
     const handleTouchEnd = async () => {
       if (!isPullingRef.current) return;
       
-      const currentDistance = pullDistance;
+      const currentDistance = pullDistanceRef.current;
       isPullingRef.current = false;
       
-      if (currentDistance >= threshold && !isRefreshing) {
+      if (currentDistance >= threshold && !isRefreshingRef.current) {
         setIsRefreshing(true);
         try {
           sessionStorage.removeItem('feedShuffleSeed');
@@ -2306,17 +2334,17 @@ const Feed = ({ defaultTab = 'foryou', guestMode = false }: FeedProps = {}) => {
       pullStartY.current = 0;
     };
     
-    const options: AddEventListenerOptions = { passive: false };
-    document.addEventListener('touchstart', handleTouchStart, options);
-    document.addEventListener('touchmove', handleTouchMove, options);
-    document.addEventListener('touchend', handleTouchEnd, options);
+    // Use passive: true for touchstart to improve scroll performance
+    document.addEventListener('touchstart', handleTouchStart, { passive: true });
+    document.addEventListener('touchmove', handleTouchMove, { passive: false });
+    document.addEventListener('touchend', handleTouchEnd, { passive: true });
     
     return () => {
       document.removeEventListener('touchstart', handleTouchStart);
       document.removeEventListener('touchmove', handleTouchMove);
       document.removeEventListener('touchend', handleTouchEnd);
     };
-  }, [isRefreshing, pullDistance, fetchPosts]);
+  }, [fetchPosts]); // Only depend on fetchPosts, use refs for other values
 
 
   const premiumButton = useMemo(() => {
