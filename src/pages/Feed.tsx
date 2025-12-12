@@ -2376,14 +2376,6 @@ const Feed = ({ defaultTab = 'foryou', guestMode = false }: FeedProps = {}) => {
               </div>
             </div>
 
-            {newPostsCount > 0 && (
-              <button
-                onClick={handleLoadNewPosts}
-                className="w-full py-3 px-4 bg-primary/10 hover:bg-primary/20 text-primary font-semibold transition-colors flex items-center justify-center gap-2"
-              >
-                <span>Show {newPostsCount} new {newPostsCount === 1 ? 'post' : 'posts'}</span>
-              </button>
-            )}
 
             <TabsList className="grid grid-cols-2 w-full h-12 rounded-none bg-transparent p-0">
               <TabsTrigger

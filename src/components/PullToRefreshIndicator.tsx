@@ -14,7 +14,8 @@ export const PullToRefreshIndicator = ({
   progress,
   showSuccess = false,
 }: PullToRefreshIndicatorProps) => {
-  const isVisible = pullDistance > 0 || isRefreshing || showSuccess;
+  // Only show when actively pulling or refreshing - hide immediately when done
+  const isVisible = pullDistance > 0 || isRefreshing;
   
   return (
     <AnimatePresence>
