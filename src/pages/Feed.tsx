@@ -2477,7 +2477,7 @@ const Feed = ({ defaultTab = 'foryou', guestMode = false }: FeedProps = {}) => {
         </AnimatePresence>
 
         {/* Content area */}
-        <div className="flex-1 overflow-hidden">
+        <div className="flex-1">
           <div>
               <TabsContent value={activeTab} className="flex-1 m-0 -mt-px" ref={feedRef} forceMount>
           {/* Adsterra Banner Ad */}
