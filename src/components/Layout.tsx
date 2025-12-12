@@ -280,9 +280,8 @@ const Layout = ({ children }: LayoutProps) => {
       <OfflineIndicator />
 
       {/* Main Content */}
-      <main className="min-h-screen pb-20">
+      <main className="pb-20">
         <motion.div 
-          className="min-h-screen"
           initial={{ opacity: 0, y: 10 }}
           animate={{ opacity: 1, y: 0 }}
           exit={{ opacity: 0, y: -10 }}

@@ -83,7 +83,7 @@ const Home = () => {
     <>
       {user ? <ProfileCompletionBanner /> : <GuestAuthBanner />}
       <Layout>
-        <div className="relative pt-10 min-h-screen">
+        <div className="relative pt-10">
           <Feed />
           {user && <FloatingActionButton />}
           {user && (
