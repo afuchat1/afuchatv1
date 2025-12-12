@@ -400,60 +400,6 @@ export default function Premium() {
           })}
         </div>
 
-        {/* Tier Comparison Section */}
-        <Card className="p-6 mt-8">
-          <h3 className="font-bold text-xl mb-6 flex items-center gap-2">
-            <Crown className="h-6 w-6 text-primary" />
-            Compare Plans
-          </h3>
-          <div className="grid md:grid-cols-3 gap-4">
-            {plans.map((plan) => {
-              const tier = (plan.tier || 'silver') as keyof typeof tierConfig;
-              const config = tierConfig[tier] || tierConfig.silver;
-              return (
-                <div key={plan.id} className={`p-4 rounded-lg border-2 ${config.borderColor} bg-gradient-to-br ${config.bgGradient}`}>
-                  <h4 className={`font-bold text-lg mb-3 ${config.textColor}`}>{plan.name}</h4>
-                  <ul className="space-y-2">
-                    {plan.features.map((feature, i) => {
-                      const FeatureIcon = featureIcons[feature] || Check;
-                      return (
-                        <li key={i} className="flex items-center gap-2 text-sm">
-                          <FeatureIcon className={`h-4 w-4 ${config.textColor}`} />
-                          <span>{feature}</span>
-                        </li>
-                      );
-                    })}
-                  </ul>
-                </div>
-              );
-            })}
-          </div>
-        </Card>
-        
-        <Card className="p-6 mt-6 bg-muted/30">
-          <h3 className="font-semibold mb-4 flex items-center gap-2">
-            <Sparkles className="h-5 w-5 text-primary" />
-            How It Works
-          </h3>
-          <ul className="space-y-2 text-sm text-muted-foreground">
-            <li className="flex items-start gap-2">
-              <span className="font-bold text-foreground">1.</span>
-              <span>Convert your Nexa to ACoin in the Wallet section</span>
-            </li>
-            <li className="flex items-start gap-2">
-              <span className="font-bold text-foreground">2.</span>
-              <span>Choose a premium plan that suits your needs</span>
-            </li>
-            <li className="flex items-start gap-2">
-              <span className="font-bold text-foreground">3.</span>
-              <span>Pay with ACoin and instantly get verified status</span>
-            </li>
-            <li className="flex items-start gap-2">
-              <span className="font-bold text-foreground">4.</span>
-              <span>Enjoy all premium features throughout your subscription period</span>
-            </li>
-          </ul>
-        </Card>
       </div>
     </div>
   );
