@@ -1,7 +1,7 @@
 import * as React from 'react';
 import type { User, Session } from '@supabase/supabase-js';
 import { supabase } from '@/integrations/supabase/client';
-
+import { toast } from 'sonner';
 interface AuthContextType {
   user: User | null;
   session: Session | null;
@@ -67,8 +67,59 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
     // Set up auth state listener
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
-      (event, session) => {
+      async (event, session) => {
         if (!isMounted) return;
+        
+        // For OAuth sign-ins, check if user already has an account
+        if (event === 'SIGNED_IN' && session) {
+          const provider = session.user.app_metadata?.provider;
+          const isOAuthProvider = provider && provider !== 'email';
+          
+          if (isOAuthProvider) {
+            // Check if this user has a profile (meaning they signed up before)
+            const { data: profile, error } = await supabase
+              .from('profiles')
+              .select('id, created_at')
+              .eq('id', session.user.id)
+              .single();
+            
+            // Check if this is a brand new OAuth user by comparing timestamps
+            // If profile was just created (within last 10 seconds), it's a new user trying to login without signup
+            if (!error && profile) {
+              const profileCreatedAt = new Date(profile.created_at).getTime();
+              const userCreatedAt = new Date(session.user.created_at).getTime();
+              const now = Date.now();
+              
+              // If both profile and user were created within last 10 seconds, it's a new account
+              const isNewAccount = (now - profileCreatedAt < 10000) && (now - userCreatedAt < 10000);
+              
+              // Check for pending signup data - if exists, this is a legitimate signup flow
+              const pendingSignupData = sessionStorage.getItem('pendingSignupData');
+              
+              if (isNewAccount && !pendingSignupData) {
+                // This is a new user trying to login with OAuth without signing up first
+                // Sign them out and show error
+                await supabase.auth.signOut();
+                
+                // Delete the auto-created profile
+                await supabase.from('profiles').delete().eq('id', session.user.id);
+                
+                // Show error message
+                toast.error('No account found. Please sign up first before using OAuth login.');
+                
+                if (isMounted) {
+                  setSession(null);
+                  setUser(null);
+                  setLoading(false);
+                }
+                
+                // Redirect to signup
+                window.location.href = '/auth/signup';
+                return;
+              }
+            }
+          }
+        }
         
         setSession(session);
         setUser(session?.user ?? null);
