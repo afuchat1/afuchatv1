@@ -1339,16 +1339,14 @@ const Feed = ({ defaultTab = 'foryou', guestMode = false }: FeedProps = {}) => {
     sessionStorage.setItem('feedActiveTab', activeTab);
   }, [activeTab]);
 
-  // Restore scroll position after content is rendered
+  // Restore scroll position after content is rendered - use window scroll
   useEffect(() => {
-    if (posts.length > 0 && feedRef.current) {
+    if (posts.length > 0) {
       const savedPosition = sessionStorage.getItem('feedScrollPosition');
       if (savedPosition) {
         // Small delay to ensure content is rendered
         setTimeout(() => {
-          if (feedRef.current) {
-            feedRef.current.scrollTop = parseInt(savedPosition);
-          }
+          window.scrollTo(0, parseInt(savedPosition));
         }, 50);
       }
     }
@@ -1904,33 +1902,29 @@ const Feed = ({ defaultTab = 'foryou', guestMode = false }: FeedProps = {}) => {
     setCurrentPage(prev => prev + 1);
   }, [loadingMore, hasMore, loading, currentPage, fetchPosts]);
 
-  // Save scroll position and detect bottom for pagination
+  // Save scroll position and detect bottom for pagination - use window scroll
   useEffect(() => {
-    const handleScroll = () => {
-      if (feedRef.current) {
-        sessionStorage.setItem('feedScrollPosition', feedRef.current.scrollTop.toString());
-        
-        // Check if near bottom for pagination
-        const { scrollTop, scrollHeight, clientHeight } = feedRef.current;
-        const isNearBottom = scrollTop + clientHeight >= scrollHeight - 200;
-        
-        if (isNearBottom) {
-          handleLoadMore();
-        }
+    const handleWindowScroll = () => {
+      // Save scroll position
+      sessionStorage.setItem('feedScrollPosition', window.scrollY.toString());
+      
+      // Check if near bottom for pagination
+      const scrollTop = window.scrollY;
+      const scrollHeight = document.documentElement.scrollHeight;
+      const clientHeight = window.innerHeight;
+      const isNearBottom = scrollTop + clientHeight >= scrollHeight - 400;
+      
+      if (isNearBottom && !loadingMore && hasMore) {
+        handleLoadMore();
       }
     };
 
-    const currentRef = feedRef.current;
-    if (currentRef) {
-      currentRef.addEventListener('scroll', handleScroll);
-    }
+    window.addEventListener('scroll', handleWindowScroll, { passive: true });
 
     return () => {
-      if (currentRef) {
-        currentRef.removeEventListener('scroll', handleScroll);
-      }
+      window.removeEventListener('scroll', handleWindowScroll);
     };
-  }, [handleLoadMore]);
+  }, [handleLoadMore, loadingMore, hasMore]);
 
 
   useEffect(() => {
@@ -2234,11 +2228,6 @@ const Feed = ({ defaultTab = 'foryou', guestMode = false }: FeedProps = {}) => {
     };
   }, [user, addReply]);
   
-  useEffect(() => {
-      if (feedRef.current) {
-          // You can re-enable scrolling logic here if needed
-      }
-  }, [posts]);
 
   // Listen for feed refresh order event (when clicking home button while on home)
   useEffect(() => {
@@ -2248,9 +2237,7 @@ const Feed = ({ defaultTab = 'foryou', guestMode = false }: FeedProps = {}) => {
       setCurrentPage(0);
       setHasMore(true);
       fetchPosts(0, true);
-      if (feedRef.current) {
-        feedRef.current.scrollTop = 0;
-      }
+      window.scrollTo({ top: 0, behavior: 'smooth' });
     };
 
     window.addEventListener('refresh-feed-order', handleRefreshFeedOrder);
@@ -2379,9 +2366,7 @@ const Feed = ({ defaultTab = 'foryou', guestMode = false }: FeedProps = {}) => {
     setHasMore(true);
     fetchPosts(0, true);
     setNewPostsCount(0);
-    if (feedRef.current) {
-      feedRef.current.scrollTop = 0;
-    }
+    window.scrollTo({ top: 0, behavior: 'smooth' });
   };
 
 
