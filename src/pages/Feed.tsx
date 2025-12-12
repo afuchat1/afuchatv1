@@ -4,7 +4,7 @@ import { useNavigate, Link } from 'react-router-dom';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/contexts/AuthContext';
 import { toast } from 'sonner';
-import { MessageCircle, Heart, Send, Ellipsis, Gift, Eye, TrendingUp, Crown, RefreshCw } from 'lucide-react';
+import { MessageCircle, Heart, Send, Ellipsis, Gift, Eye, TrendingUp, Crown, RefreshCw, Users } from 'lucide-react';
 import { PullToRefreshIndicator } from '@/components/PullToRefreshIndicator';
 import platformLogo from '@/assets/platform-logo.png';
 import aiSparkIcon from '@/assets/ai-spark-icon.png';
@@ -2448,68 +2448,87 @@ const Feed = ({ defaultTab = 'foryou', guestMode = false }: FeedProps = {}) => {
 
         {/* Content area */}
         <TabsContent value={activeTab} className="m-0" ref={feedRef} forceMount>
-          {/* Adsterra Banner Ad */}
-          <AdsterraBannerAd />
-          
-          {currentPosts.length === 0 ? (
-            <div className="text-center text-muted-foreground py-6 sm:py-8 text-xs sm:text-sm px-4">
-              {activeTab === 'following' && user
-                ? 'Follow users to see their posts here'
-                : t('feed.noPostsYet')}
+          {/* Show login prompt for Following tab when not authenticated */}
+          {activeTab === 'following' && !user ? (
+            <div className="flex flex-col items-center justify-center py-20 px-6 text-center">
+              <Users className="h-16 w-16 text-muted-foreground/50 mb-4" />
+              <h3 className="text-xl font-semibold text-foreground mb-2">See posts from people you follow</h3>
+              <p className="text-muted-foreground mb-6 max-w-sm">
+                Sign in and follow users to see their posts here. Discover content from creators you care about.
+              </p>
+              <Link 
+                to="/auth/signin" 
+                className="inline-flex items-center justify-center px-6 py-3 bg-primary text-primary-foreground font-semibold rounded-full hover:bg-primary/90 transition-colors"
+              >
+                Sign in to follow
+              </Link>
             </div>
           ) : (
             <>
-              {currentPosts.map((post, index) => (
-                <div key={post.id}>
-                  <PostCard
-                    post={post}
-                    addReply={addReply}
-                    user={user as AuthUser | null}
-                    navigate={navigate}
-                    onAcknowledge={handleAcknowledge}
-                    onDeletePost={handleDeletePost}
-                    onReportPost={handleReportPost}
-                    onEditPost={handleEditPost}
-                    onQuotePost={handleQuotePost}
-                    userProfile={userProfile}
-                    expandedPosts={expandedPosts}
-                    setExpandedPosts={setExpandedPosts}
-                    guestMode={guestMode}
-                  />
+              {/* Adsterra Banner Ad */}
+              <AdsterraBannerAd />
+              
+              {currentPosts.length === 0 ? (
+                <div className="text-center text-muted-foreground py-6 sm:py-8 text-xs sm:text-sm px-4">
+                  {activeTab === 'following' && user
+                    ? 'Follow users to see their posts here'
+                    : t('feed.noPostsYet')}
+                </div>
+              ) : (
+                <>
+                  {currentPosts.map((post, index) => (
+                    <div key={post.id}>
+                      <PostCard
+                        post={post}
+                        addReply={addReply}
+                        user={user as AuthUser | null}
+                        navigate={navigate}
+                        onAcknowledge={handleAcknowledge}
+                        onDeletePost={handleDeletePost}
+                        onReportPost={handleReportPost}
+                        onEditPost={handleEditPost}
+                        onQuotePost={handleQuotePost}
+                        userProfile={userProfile}
+                        expandedPosts={expandedPosts}
+                        setExpandedPosts={setExpandedPosts}
+                        guestMode={guestMode}
+                      />
+                      
+                      {/* Single Adsterra Native Ad after the 10th post (or last post if fewer) */}
+                      {index === adNativeIndex && (
+                        <AdsterraNativeAdCard />
+                      )}
+                    </div>
+                  ))}
                   
-                  {/* Single Adsterra Native Ad after the 10th post (or last post if fewer) */}
-                  {index === adNativeIndex && (
-                    <AdsterraNativeAdCard />
+                  {/* Loading more indicator */}
+                  {loadingMore && (
+                    <div className="py-8 flex justify-center">
+                      <CustomLoader size="sm" text="Loading more..." />
+                    </div>
                   )}
-                </div>
-              ))}
-              
-              {/* Loading more indicator */}
-              {loadingMore && (
-                <div className="py-8 flex justify-center">
-                  <CustomLoader size="sm" text="Loading more..." />
-                </div>
-              )}
 
-              {/* Manual load more button as fallback */}
-              {hasMore && !loadingMore && currentPosts.length > 0 && (
-                <div className="py-6 flex justify-center">
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    onClick={handleLoadMore}
-                    className="text-xs sm:text-sm"
-                  >
-                    {t('feed.loadMore') || 'Load more posts'}
-                  </Button>
-                </div>
-              )}
-              
-              {/* End of feed indicator */}
-              {!hasMore && currentPosts.length > 0 && (
-                <div className="py-8 text-center text-muted-foreground text-sm">
-                  {t('feed.noMorePosts') || 'You\'ve reached the end'}
-                </div>
+                  {/* Manual load more button as fallback */}
+                  {hasMore && !loadingMore && currentPosts.length > 0 && (
+                    <div className="py-6 flex justify-center">
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={handleLoadMore}
+                        className="text-xs sm:text-sm"
+                      >
+                        {t('feed.loadMore') || 'Load more posts'}
+                      </Button>
+                    </div>
+                  )}
+                  
+                  {/* End of feed indicator */}
+                  {!hasMore && currentPosts.length > 0 && (
+                    <div className="py-8 text-center text-muted-foreground text-sm">
+                      {t('feed.noMorePosts') || 'You\'ve reached the end'}
+                    </div>
+                  )}
+                </>
               )}
             </>
           )}
