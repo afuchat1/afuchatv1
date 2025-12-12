@@ -6,6 +6,7 @@ import { useAuth } from '@/contexts/AuthContext';
 import { toast } from 'sonner';
 import { MessageCircle, Heart, Send, Ellipsis, Gift, Eye, TrendingUp, Crown, RefreshCw, Users } from 'lucide-react';
 import { PullToRefreshIndicator } from '@/components/PullToRefreshIndicator';
+import { usePullToRefresh } from '@/hooks/usePullToRefresh';
 import platformLogo from '@/assets/platform-logo.png';
 import aiSparkIcon from '@/assets/ai-spark-icon.png';
 import { usePremiumStatus } from '@/hooks/usePremiumStatus';
@@ -1181,9 +1182,6 @@ const Feed = ({ defaultTab = 'foryou', guestMode = false }: FeedProps = {}) => {
     setQuotePost(post);
   };
   
-  // Pull to refresh state
-  const [isRefreshing, setIsRefreshing] = useState(false);
-  const [pullDistance, setPullDistance] = useState(0);
   
   // Scroll hide state for header
   const [isScrollingDown, setIsScrollingDown] = useState(false);
@@ -2244,72 +2242,34 @@ const Feed = ({ defaultTab = 'foryou', guestMode = false }: FeedProps = {}) => {
     };
   }, [fetchPosts]);
 
+  // Pull to refresh - enhanced hook
+  const handlePullRefresh = useCallback(async () => {
+    setCurrentPage(0);
+    setHasMore(true);
+    await fetchPosts(0, true);
+  }, [fetchPosts]);
+
+  const { 
+    isRefreshing, 
+    pullDistance, 
+    progress: pullProgress,
+    showSuccess: refreshSuccess,
+    refresh: manualRefresh 
+  } = usePullToRefresh({
+    onRefresh: handlePullRefresh,
+    threshold: 70,
+    maxPull: 140,
+    disabled: false,
+  });
+
   // Listen for feed refresh event
   useEffect(() => {
     const handleRefresh = () => {
-      fetchPosts(0, true);
-      toast.success('Feed refreshed!');
+      manualRefresh();
     };
     window.addEventListener('feed-refresh', handleRefresh);
     return () => window.removeEventListener('feed-refresh', handleRefresh);
-  }, [fetchPosts]);
-
-  // Pull to refresh touch handlers
-  useEffect(() => {
-    let startY = 0;
-    let isPulling = false;
-    
-    const handleTouchStart = (e: TouchEvent) => {
-      if (window.scrollY <= 0 && !isRefreshing) {
-        startY = e.touches[0].pageY;
-        isPulling = true;
-      }
-    };
-    
-    const handleTouchMove = (e: TouchEvent) => {
-      if (!isPulling || isRefreshing) return;
-      
-      const currentY = e.touches[0].pageY;
-      const distance = Math.min(Math.max(0, currentY - startY), 120);
-      
-      if (distance > 0 && window.scrollY <= 0) {
-        e.preventDefault();
-        setPullDistance(distance);
-      }
-    };
-    
-    const handleTouchEnd = async () => {
-      if (!isPulling) return;
-      
-      const distance = pullDistance;
-      isPulling = false;
-      
-      if (distance >= 80 && !isRefreshing) {
-        setIsRefreshing(true);
-        try {
-          setCurrentPage(0);
-          setHasMore(true);
-          await fetchPosts(0, true);
-          toast.success('Feed refreshed!');
-        } finally {
-          setIsRefreshing(false);
-        }
-      }
-      
-      setPullDistance(0);
-      startY = 0;
-    };
-    
-    document.addEventListener('touchstart', handleTouchStart, { passive: true });
-    document.addEventListener('touchmove', handleTouchMove, { passive: false });
-    document.addEventListener('touchend', handleTouchEnd, { passive: true });
-    
-    return () => {
-      document.removeEventListener('touchstart', handleTouchStart);
-      document.removeEventListener('touchmove', handleTouchMove);
-      document.removeEventListener('touchend', handleTouchEnd);
-    };
-  }, [isRefreshing, pullDistance, fetchPosts]);
+  }, [manualRefresh]);
 
   const premiumButton = useMemo(() => {
     // Show stable placeholder during loading to prevent flashing
@@ -2353,12 +2313,10 @@ const Feed = ({ defaultTab = 'foryou', guestMode = false }: FeedProps = {}) => {
   const currentPosts = activeTab === 'foryou' ? posts : followingPosts;
   const adNativeIndex = currentPosts.length > 0 ? Math.min(9, currentPosts.length - 1) : -1;
 
-  const handleLoadNewPosts = () => {
-    setCurrentPage(0);
-    setHasMore(true);
-    fetchPosts(0, true);
+  const handleLoadNewPosts = async () => {
     setNewPostsCount(0);
     window.scrollTo({ top: 0, behavior: 'smooth' });
+    await manualRefresh();
   };
 
 
@@ -2368,7 +2326,8 @@ const Feed = ({ defaultTab = 'foryou', guestMode = false }: FeedProps = {}) => {
       <PullToRefreshIndicator 
         pullDistance={pullDistance} 
         isRefreshing={isRefreshing} 
-        progress={Math.min(pullDistance / 80, 1)} 
+        progress={pullProgress}
+        showSuccess={refreshSuccess}
       />
       
       <SEO
