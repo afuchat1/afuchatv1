@@ -19,6 +19,7 @@ import { toast } from 'sonner';
 import { Loader2, ShoppingCart, User } from 'lucide-react';
 import { motion } from 'framer-motion';
 import { GiftImage } from '@/components/gifts/GiftImage';
+import { invalidateGiftPricingCache } from '@/hooks/useGiftPricing';
 
 interface GiftMarketplaceListing {
   id: string;
@@ -149,6 +150,10 @@ export default function Shop() {
 
       toast.success(`You purchased ${selectedListing.gift.name}! Check your profile gifts.`);
       setSelectedListing(null);
+      
+      // Invalidate gift pricing cache so prices update everywhere
+      invalidateGiftPricingCache();
+      
       fetchMarketplaceListings();
       fetchUserXP();
     } catch (error) {

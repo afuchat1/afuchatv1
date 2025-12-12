@@ -91,19 +91,20 @@ export const GiftDetailSheet = ({ giftId, open, onOpenChange, recipientId, recip
       if (giftError) throw giftError;
       setGift(giftData);
 
-      const { data: statsData, error: statsError } = await supabase
+      const { data: statsData } = await supabase
         .from('gift_statistics')
         .select('*')
         .eq('gift_id', giftId)
-        .single();
+        .maybeSingle();
 
-      const currentPrice = Math.round(giftData.base_xp_cost * (statsData?.price_multiplier || 1));
+      // Use last_sale_price if available, otherwise base_xp_cost
+      const currentPrice = statsData?.last_sale_price || giftData.base_xp_cost;
       
       setStats({
         current_price: currentPrice,
         total_sent: statsData?.total_sent || 0,
         price_multiplier: statsData?.price_multiplier || 1,
-        price_history: generatePriceHistory(giftData.base_xp_cost, statsData?.price_multiplier || 1)
+        price_history: generatePriceHistory(giftData.base_xp_cost, currentPrice)
       });
 
       const { data: transactions, error: txError } = await supabase
@@ -132,23 +133,31 @@ export const GiftDetailSheet = ({ giftId, open, onOpenChange, recipientId, recip
     }
   };
 
-  const generatePriceHistory = (basePrice: number, currentMultiplier: number) => {
+  const generatePriceHistory = (basePrice: number, currentPrice: number) => {
     const history = [];
-    const daysBack = 30;
+    const daysBack = 7;
     
+    // Generate realistic price history trending toward current price
     for (let i = daysBack; i >= 0; i--) {
       const date = new Date();
       date.setDate(date.getDate() - i);
       
-      const randomFactor = 0.8 + (Math.random() * 0.4);
-      const multiplier = currentMultiplier * randomFactor;
-      const price = Math.round(basePrice * multiplier);
+      // Price gradually approaches current price
+      const progress = (daysBack - i) / daysBack;
+      const price = Math.round(basePrice + (currentPrice - basePrice) * progress * (0.8 + Math.random() * 0.4));
+      const multiplier = price / basePrice;
       
       history.push({
         date: date.toISOString().split('T')[0],
-        price,
+        price: Math.max(price, basePrice), // Never go below base price
         multiplier
       });
+    }
+    
+    // Ensure the last entry is the current price
+    if (history.length > 0) {
+      history[history.length - 1].price = currentPrice;
+      history[history.length - 1].multiplier = currentPrice / basePrice;
     }
     
     return history;
