@@ -937,62 +937,24 @@ const Profile = ({ mustExist = false }: ProfileProps) => {
 		}
 
 		try {
-			// Check for existing 1-on-1 chat with this user
-			const { data: existingChats, error: fetchError } = await supabase
-				.from('chat_members')
-				.select('chat_id, chats!inner(is_group)')
-				.eq('user_id', user.id);
+			// Use RPC to get or create chat - prevents duplicates
+			const { data: chatId, error } = await supabase
+				.rpc('get_or_create_chat', {
+					other_user_id: profileId
+				});
 
-			if (fetchError) {
-				console.error('Error fetching chats:', fetchError);
+			if (error) {
+				console.error('Error starting chat:', error);
 				toast.error(t('profile.failedToChat'));
 				return;
 			}
 
-			if (existingChats) {
-				for (const chat of existingChats) {
-					if (chat.chats?.is_group === false) {
-						const { data: members } = await supabase
-							.from('chat_members')
-							.select('user_id')
-							.eq('chat_id', chat.chat_id);
-
-						if (members && members.length === 2 && members.some(m => m.user_id === profileId)) {
-							navigate(`/chat/${chat.chat_id}`);
-							return;
-						}
-					}
-				}
-			}
-
-			// Create new chat
-			const { data: newChat, error: chatError } = await supabase
-				.from('chats')
-				.insert({ is_group: false, created_by: user.id })
-				.select()
-				.single();
-
-			if (chatError) {
-				console.error('Error creating chat:', chatError);
+			if (!chatId) {
 				toast.error(t('profile.failedToChat'));
 				return;
 			}
 
-			// Add both users as members
-			const { error: membersError } = await supabase
-				.from('chat_members')
-				.insert([
-					{ chat_id: newChat.id, user_id: user.id },
-					{ chat_id: newChat.id, user_id: profileId },
-				]);
-
-			if (membersError) {
-				console.error('Error adding members:', membersError);
-				toast.error(t('profile.failedToChat'));
-				return;
-			}
-
-			navigate(`/chat/${newChat.id}`);
+			navigate(`/chat/${chatId}`);
 		} catch (error) {
 			console.error('Error starting chat:', error);
 			toast.error(t('profile.failedToChat'));

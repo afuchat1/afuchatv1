@@ -3359,6 +3359,7 @@ export type Database = {
         Returns: Json
       }
       credit_daily_creator_earnings: { Args: never; Returns: Json }
+      delete_chat_for_both: { Args: { p_chat_id: string }; Returns: boolean }
       distribute_daily_creator_rewards: { Args: never; Returns: Json }
       expire_subscriptions: { Args: never; Returns: number }
       get_daily_engagement: {

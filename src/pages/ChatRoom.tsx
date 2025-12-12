@@ -7,7 +7,7 @@ import { Button } from '@/components/ui/button';
 import { TooltipProvider } from '@/components/ui/tooltip';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
 import { CustomLoader } from '@/components/ui/CustomLoader';
-import { ArrowLeft, Send, MoreVertical, MessageSquare, Mic, MicOff, Play, Pause, Volume2, X, Paperclip, Settings, LogOut } from 'lucide-react';
+import { ArrowLeft, Send, MoreVertical, MessageSquare, Mic, MicOff, Play, Pause, Volume2, X, Paperclip, Settings, LogOut, Trash2 } from 'lucide-react';
 import { toast } from 'sonner';
 import { messageSchema } from '@/lib/validation';
 import { ChatRedEnvelope } from '@/components/chat/ChatRedEnvelope';
@@ -1247,6 +1247,28 @@ const ChatRoom = ({ isEmbedded = false }: ChatRoomProps) => {
     }
   };
 
+  const handleDeleteChat = async () => {
+    if (!user || !chatId || chatInfo?.is_group) return;
+    
+    if (!window.confirm('Delete this chat? This will permanently remove the conversation for both you and the other user.')) {
+      return;
+    }
+    
+    try {
+      const { error } = await supabase.rpc('delete_chat_for_both', {
+        p_chat_id: chatId
+      });
+
+      if (error) throw error;
+
+      toast.success('Chat deleted');
+      navigate('/chats');
+    } catch (error: any) {
+      console.error('Error deleting chat:', error);
+      toast.error(error?.message || 'Failed to delete chat');
+    }
+  };
+
 
   if (loading) {
     return (
@@ -1338,7 +1360,9 @@ const ChatRoom = ({ isEmbedded = false }: ChatRoomProps) => {
               <Settings className="h-5 w-5" />
             </Button>
           )}
-          {chatInfo?.is_group && isMember && (
+          
+          {/* Dropdown menu for groups (leave) or 1-on-1 chats (delete) */}
+          {(chatInfo?.is_group && isMember) || (!chatInfo?.is_group && otherUser) ? (
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
                 <Button
@@ -1350,16 +1374,26 @@ const ChatRoom = ({ isEmbedded = false }: ChatRoomProps) => {
                 </Button>
               </DropdownMenuTrigger>
               <DropdownMenuContent align="end">
-                <DropdownMenuItem 
-                  onClick={handleLeaveGroup}
-                  className="text-destructive focus:text-destructive"
-                >
-                  <LogOut className="h-4 w-4 mr-2" />
-                  {t('chat.leaveGroup')}
-                </DropdownMenuItem>
+                {chatInfo?.is_group ? (
+                  <DropdownMenuItem 
+                    onClick={handleLeaveGroup}
+                    className="text-destructive focus:text-destructive"
+                  >
+                    <LogOut className="h-4 w-4 mr-2" />
+                    {t('chat.leaveGroup')}
+                  </DropdownMenuItem>
+                ) : (
+                  <DropdownMenuItem 
+                    onClick={handleDeleteChat}
+                    className="text-destructive focus:text-destructive"
+                  >
+                    <Trash2 className="h-4 w-4 mr-2" />
+                    Delete Chat
+                  </DropdownMenuItem>
+                )}
               </DropdownMenuContent>
             </DropdownMenu>
-          )}
+          ) : null}
         </header>
 
         {/* Messages container - only this scrolls */}
