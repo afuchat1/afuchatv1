@@ -275,7 +275,7 @@ const Layout = ({ children }: LayoutProps) => {
   const isChatRoom = location.pathname.startsWith('/chat/');
 
   return (
-    <div className="min-h-screen bg-background select-none">
+    <div className="bg-background select-none">
       <InstallPromptBanner />
       <OfflineIndicator />
 
