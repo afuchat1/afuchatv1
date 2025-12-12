@@ -344,7 +344,7 @@ export default function Premium() {
           )}
 
           {/* Plans */}
-          <div className="flex gap-5 overflow-x-auto pb-6 snap-x snap-mandatory -mx-4 px-4 md:mx-0 md:px-0 md:overflow-visible md:grid md:grid-cols-3">
+          <div className="flex gap-6 overflow-x-auto pb-6 snap-x snap-mandatory -mx-4 px-4 md:mx-0 md:px-0 md:overflow-visible md:grid md:grid-cols-3">
             {plans.map((plan, index) => {
               const tier = (plan.tier || 'silver') as keyof typeof tierConfig;
               const config = tierConfig[tier] || tierConfig.silver;
@@ -352,6 +352,7 @@ export default function Premium() {
               const canAfford = acoinBalance >= plan.acoin_price;
               const hasActiveSubscription = !!currentSubscription;
               const isPopular = tier === 'gold';
+              const isPlatinum = tier === 'platinum';
 
               return (
                 <motion.div
@@ -359,107 +360,130 @@ export default function Premium() {
                   initial={{ opacity: 0, y: 30 }}
                   animate={{ opacity: 1, y: 0 }}
                   transition={{ delay: 0.2 + index * 0.1 }}
-                  className="snap-center flex-shrink-0 w-[300px] md:w-auto"
+                  className={`snap-center flex-shrink-0 w-[300px] md:w-auto ${isPopular ? 'md:-mt-4 md:mb-4' : ''}`}
                 >
-                  <Card
-                    className={`relative overflow-hidden transition-all duration-300 hover:scale-[1.02] ${
-                      hasActiveSubscription ? 'opacity-60' : ''
-                    } ${isPopular ? `ring-2 ${config.ring} shadow-xl ${config.glowColor}` : 'hover:shadow-lg'}`}
-                  >
-                    {/* Gradient top border */}
-                    <div className={`h-1.5 bg-gradient-to-r ${config.gradient}`} />
-                    
-                    {/* Popular badge */}
-                    {isPopular && (
-                      <div className={`absolute -right-8 top-6 rotate-45 px-10 py-1 bg-gradient-to-r ${config.gradient} text-white text-xs font-semibold shadow-lg`}>
-                        Popular
-                      </div>
+                  <div className={`relative ${isPopular ? 'z-10' : ''}`}>
+                    {/* Glow effect for popular/platinum */}
+                    {(isPopular || isPlatinum) && (
+                      <div className={`absolute -inset-1 bg-gradient-to-r ${config.gradient} rounded-3xl blur-lg opacity-30 group-hover:opacity-50 transition-opacity`} />
                     )}
-
-                    <div className="p-6">
-                      {/* Header */}
-                      <div className="text-center mb-6">
-                        <div className={`inline-flex p-4 rounded-2xl bg-gradient-to-br ${config.bgGradient} mb-4 relative`}>
-                          <div className={`absolute inset-0 rounded-2xl bg-gradient-to-br ${config.bgGradient} blur-xl opacity-50`} />
-                          <TierIcon className={`h-8 w-8 ${config.textColor} relative`} />
-                        </div>
-                        
-                        <Badge variant="outline" className={`mb-3 ${config.borderColor} ${config.textColor}`}>
-                          {config.label}
-                        </Badge>
-                        
-                        <h3 className={`text-2xl font-bold mb-2 bg-gradient-to-r ${config.gradient} bg-clip-text text-transparent`}>
-                          {plan.name}
-                        </h3>
-                        
-                        <p className="text-sm text-muted-foreground line-clamp-2 min-h-[40px]">
-                          {plan.description}
-                        </p>
+                    
+                    <Card
+                      className={`relative overflow-hidden transition-all duration-500 group ${
+                        hasActiveSubscription ? 'opacity-60' : 'hover:-translate-y-2'
+                      } ${isPopular ? 'border-2 border-amber-400/50 shadow-2xl shadow-amber-500/20' : isPlatinum ? 'border-2 border-violet-400/50 shadow-xl shadow-violet-500/20' : 'border border-border hover:border-slate-400/50 hover:shadow-xl'} bg-card`}
+                    >
+                      {/* Animated gradient background */}
+                      <div className={`absolute inset-0 bg-gradient-to-br ${config.bgGradient} opacity-50`} />
+                      <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_top,_var(--tw-gradient-stops))] from-white/5 via-transparent to-transparent" />
+                      
+                      {/* Shimmer effect */}
+                      <div className="absolute inset-0 opacity-0 group-hover:opacity-100 transition-opacity duration-700">
+                        <div className="absolute inset-0 translate-x-[-100%] group-hover:translate-x-[100%] transition-transform duration-1000 bg-gradient-to-r from-transparent via-white/10 to-transparent" />
                       </div>
-
-                      {/* Price */}
-                      <div className="text-center py-4 mb-4 rounded-xl bg-muted/30">
-                        <div className="flex items-baseline justify-center gap-1">
-                          <Coins className={`h-5 w-5 ${config.textColor}`} />
-                          <span className="text-4xl font-bold">{plan.acoin_price.toLocaleString()}</span>
+                      
+                      {/* Popular/Best Value ribbon */}
+                      {isPopular && (
+                        <div className="absolute -right-12 top-8 rotate-45 px-14 py-1.5 bg-gradient-to-r from-amber-500 via-yellow-400 to-orange-500 text-white text-xs font-bold shadow-lg uppercase tracking-wider">
+                          Best Value
                         </div>
-                        <p className="text-xs text-muted-foreground mt-1">
-                          for {plan.duration_days} days
-                        </p>
-                      </div>
-
-                      {/* Features */}
-                      <ul className="space-y-3 mb-6">
-                        {plan.features.slice(0, 6).map((feature, i) => {
-                          const FeatureIcon = featureIcons[feature] || Check;
-                          return (
-                            <li key={i} className="flex items-start gap-3">
-                              <div className={`p-1 rounded-full ${config.bgGradient}`}>
-                                <FeatureIcon className={`h-3.5 w-3.5 ${config.textColor}`} />
-                              </div>
-                              <span className="text-sm text-foreground/80">{feature}</span>
-                            </li>
-                          );
-                        })}
-                        {plan.features.length > 6 && (
-                          <li className="text-xs text-muted-foreground pl-8">
-                            +{plan.features.length - 6} more features
-                          </li>
-                        )}
-                      </ul>
-
-                      {/* CTA Button */}
-                      <Button
-                        onClick={() => handlePurchase(plan.id, plan.acoin_price)}
-                        disabled={!canAfford || purchasing === plan.id || hasActiveSubscription}
-                        className={`w-full h-12 text-base font-semibold bg-gradient-to-r ${config.gradient} hover:opacity-90 text-white border-0 shadow-lg transition-all duration-300 ${
-                          !hasActiveSubscription && canAfford ? `hover:shadow-xl ${config.glowColor}` : ''
-                        }`}
-                      >
-                        {purchasing === plan.id ? (
-                          <div className="flex items-center gap-2">
-                            <div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />
-                            Processing...
-                          </div>
-                        ) : hasActiveSubscription ? (
-                          'Already Subscribed'
-                        ) : !canAfford ? (
-                          'Insufficient ACoin'
-                        ) : (
-                          <span className="flex items-center gap-2">
-                            Get {plan.name}
-                            <ArrowRight className="h-4 w-4" />
-                          </span>
-                        )}
-                      </Button>
-
-                      {!canAfford && !hasActiveSubscription && (
-                        <p className="text-xs text-center text-muted-foreground mt-3">
-                          Need <span className="font-semibold text-foreground">{(plan.acoin_price - acoinBalance).toLocaleString()}</span> more ACoin
-                        </p>
                       )}
-                    </div>
-                  </Card>
+                      
+                      {isPlatinum && (
+                        <div className="absolute -right-12 top-8 rotate-45 px-14 py-1.5 bg-gradient-to-r from-violet-600 via-purple-500 to-fuchsia-500 text-white text-xs font-bold shadow-lg uppercase tracking-wider">
+                          Premium
+                        </div>
+                      )}
+
+                      <div className="relative p-6">
+                        {/* Tier icon with glow */}
+                        <div className="flex justify-center mb-5">
+                          <div className="relative">
+                            <div className={`absolute inset-0 bg-gradient-to-br ${config.gradient} rounded-full blur-xl opacity-40 scale-150`} />
+                            <div className={`relative p-5 rounded-full bg-gradient-to-br ${config.gradient} shadow-lg`}>
+                              <TierIcon className="h-10 w-10 text-white drop-shadow-lg" />
+                            </div>
+                          </div>
+                        </div>
+                        
+                        {/* Plan name */}
+                        <div className="text-center mb-4">
+                          <h3 className={`text-2xl font-extrabold mb-1 bg-gradient-to-r ${config.gradient} bg-clip-text text-transparent`}>
+                            {plan.name}
+                          </h3>
+                          <p className="text-xs text-muted-foreground uppercase tracking-widest font-medium">
+                            {config.label}
+                          </p>
+                        </div>
+
+                        {/* Price display */}
+                        <div className={`relative text-center py-5 mb-5 rounded-2xl bg-gradient-to-br ${config.bgGradient} border ${config.borderColor}`}>
+                          <div className="absolute inset-0 bg-gradient-to-t from-black/5 to-transparent rounded-2xl" />
+                          <div className="relative">
+                            <div className="flex items-center justify-center gap-2 mb-1">
+                              <div className={`p-1.5 rounded-full bg-gradient-to-br ${config.gradient}`}>
+                                <Coins className="h-4 w-4 text-white" />
+                              </div>
+                              <span className="text-4xl font-black tracking-tight">{plan.acoin_price.toLocaleString()}</span>
+                            </div>
+                            <p className="text-xs text-muted-foreground font-medium">
+                              ACoin • {plan.duration_days} days
+                            </p>
+                          </div>
+                        </div>
+
+                        {/* Features list */}
+                        <div className="space-y-3 mb-6">
+                          {plan.features.slice(0, 5).map((feature, i) => {
+                            const FeatureIcon = featureIcons[feature] || Check;
+                            return (
+                              <div key={i} className="flex items-center gap-3 group/feature">
+                                <div className={`p-1.5 rounded-lg bg-gradient-to-br ${config.bgGradient} border ${config.borderColor} group-hover/feature:scale-110 transition-transform`}>
+                                  <FeatureIcon className={`h-3.5 w-3.5 ${config.textColor}`} />
+                                </div>
+                                <span className="text-sm font-medium text-foreground/90">{feature}</span>
+                              </div>
+                            );
+                          })}
+                          {plan.features.length > 5 && (
+                            <p className={`text-xs ${config.textColor} font-semibold pl-9`}>
+                              + {plan.features.length - 5} more exclusive features
+                            </p>
+                          )}
+                        </div>
+
+                        <Button
+                          onClick={() => handlePurchase(plan.id, plan.acoin_price)}
+                          disabled={!canAfford || purchasing === plan.id || hasActiveSubscription}
+                          className={`w-full h-12 text-base font-bold bg-gradient-to-r ${config.gradient} hover:opacity-90 text-white border-0 shadow-lg transition-all duration-300 rounded-xl ${
+                            !hasActiveSubscription && canAfford ? 'hover:shadow-xl hover:scale-[1.02]' : ''
+                          }`}
+                        >
+                          {purchasing === plan.id ? (
+                            <div className="flex items-center gap-2">
+                              <div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />
+                              Processing...
+                            </div>
+                          ) : hasActiveSubscription ? (
+                            'Already Subscribed'
+                          ) : !canAfford ? (
+                            'Insufficient ACoin'
+                          ) : (
+                            <span className="flex items-center justify-center gap-2">
+                              Get {plan.name}
+                              <ArrowRight className="h-4 w-4" />
+                            </span>
+                          )}
+                        </Button>
+
+                        {!canAfford && !hasActiveSubscription && (
+                          <p className="text-xs text-center text-muted-foreground mt-3">
+                            Need <span className={`font-bold ${config.textColor}`}>{(plan.acoin_price - acoinBalance).toLocaleString()}</span> more ACoin
+                          </p>
+                        )}
+                      </div>
+                    </Card>
+                  </div>
                 </motion.div>
               );
             })}
