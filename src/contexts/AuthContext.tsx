@@ -1,7 +1,6 @@
 import * as React from 'react';
 import type { User, Session } from '@supabase/supabase-js';
 import { supabase } from '@/integrations/supabase/client';
-import { toast } from 'sonner';
 interface AuthContextType {
   user: User | null;
   session: Session | null;
@@ -97,15 +96,11 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
               const pendingSignupData = sessionStorage.getItem('pendingSignupData');
               
               if (isNewAccount && !pendingSignupData) {
-                // This is a new user trying to login with OAuth without signing up first
-                // Sign them out and show error
+                // Sign them out and redirect silently
                 await supabase.auth.signOut();
                 
                 // Delete the auto-created profile
                 await supabase.from('profiles').delete().eq('id', session.user.id);
-                
-                // Show error message
-                toast.error('No account found. Please sign up first before using OAuth login.');
                 
                 if (isMounted) {
                   setSession(null);
@@ -113,7 +108,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
                   setLoading(false);
                 }
                 
-                // Redirect to signup
+                // Redirect to signup silently
                 window.location.href = '/auth/signup';
                 return;
               }
