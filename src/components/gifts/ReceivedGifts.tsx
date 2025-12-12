@@ -187,7 +187,14 @@ export const ReceivedGifts = ({ userId }: ReceivedGiftsProps) => {
 
       setGifts(formattedGifts);
 
-      const total = formattedGifts.reduce((sum, g) => sum + g.xp_cost, 0);
+      // Calculate total value using current dynamic prices (last_sale_price or base_xp_cost)
+      const statsMap = statsData ? new Map(statsData.map((s: any) => [s.gift_id, s])) : new Map();
+      const total = formattedGifts.reduce((sum, g) => {
+        const stats = statsMap.get(g.gift_id);
+        const baseCost = (g.gift as any).base_xp_cost || g.xp_cost;
+        const currentPrice = stats?.last_sale_price || baseCost;
+        return sum + currentPrice;
+      }, 0);
       setTotalValue(total);
     } catch (error) {
       console.error('Error fetching gifts:', error);
