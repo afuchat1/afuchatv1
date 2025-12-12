@@ -80,21 +80,17 @@ const Home = () => {
 
   // All devices: Use unified Layout (handles DesktopHybridLayout for non-mobile)
   return (
-    <>
+    <Layout>
       {user ? <ProfileCompletionBanner /> : <GuestAuthBanner />}
-      <Layout>
-        <div className="relative pt-10">
-          <Feed />
-          {user && <FloatingActionButton />}
-          {user && (
-            <NewPostModal
-              isOpen={isPostModalOpen}
-              onClose={() => setIsPostModalOpen(false)}
-            />
-          )}
-        </div>
-      </Layout>
-    </>
+      <Feed />
+      {user && <FloatingActionButton />}
+      {user && (
+        <NewPostModal
+          isOpen={isPostModalOpen}
+          onClose={() => setIsPostModalOpen(false)}
+        />
+      )}
+    </Layout>
   );
 };
 
