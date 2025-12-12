@@ -315,7 +315,7 @@ export default function Premium() {
           </p>
         </div>
 
-        <div className="grid md:grid-cols-3 gap-6">
+        <div className="flex gap-4 overflow-x-auto pb-4 snap-x snap-mandatory -mx-4 px-4 md:mx-0 md:px-0 md:overflow-visible md:flex-wrap md:justify-center">
           {plans.map((plan) => {
             const tier = (plan.tier || 'silver') as keyof typeof tierConfig;
             const config = tierConfig[tier] || tierConfig.silver;
@@ -326,43 +326,43 @@ export default function Premium() {
             return (
               <Card
                 key={plan.id}
-                className={`p-6 relative overflow-hidden border-2 ${config.borderColor} ${hasActiveSubscription ? 'opacity-60' : ''}`}
+                className={`p-5 relative overflow-hidden border-2 ${config.borderColor} ${hasActiveSubscription ? 'opacity-60' : ''} flex-shrink-0 w-[280px] md:w-[300px] snap-center`}
               >
                 {/* Tier Badge */}
-                <Badge className={`absolute -top-0 right-4 top-4 bg-gradient-to-r ${config.gradient} text-white border-0`}>
+                <Badge className={`absolute right-3 top-3 bg-gradient-to-r ${config.gradient} text-white border-0 text-xs`}>
                   {config.label}
                 </Badge>
 
                 {/* Header with Icon */}
-                <div className={`text-center mb-6 pt-4`}>
-                  <div className={`inline-flex p-4 rounded-full bg-gradient-to-br ${config.bgGradient} mb-4`}>
-                    <TierIcon className={`h-8 w-8 ${config.textColor}`} />
+                <div className="text-center mb-4 pt-2">
+                  <div className={`inline-flex p-3 rounded-full bg-gradient-to-br ${config.bgGradient} mb-3`}>
+                    <TierIcon className={`h-6 w-6 ${config.textColor}`} />
                   </div>
-                  <h3 className={`text-2xl font-bold mb-2 bg-gradient-to-r ${config.gradient} bg-clip-text text-transparent`}>
+                  <h3 className={`text-xl font-bold mb-1 bg-gradient-to-r ${config.gradient} bg-clip-text text-transparent`}>
                     {plan.name}
                   </h3>
-                  <p className="text-sm text-muted-foreground mb-4">
+                  <p className="text-xs text-muted-foreground mb-3 line-clamp-2">
                     {plan.description}
                   </p>
-                  <div className="flex items-baseline justify-center gap-2">
-                    <Coins className="h-5 w-5 text-primary" />
-                    <span className="text-4xl font-bold">{plan.acoin_price}</span>
-                    <span className="text-muted-foreground">ACoin</span>
+                  <div className="flex items-baseline justify-center gap-1">
+                    <Coins className="h-4 w-4 text-primary" />
+                    <span className="text-3xl font-bold">{plan.acoin_price}</span>
+                    <span className="text-sm text-muted-foreground">ACoin</span>
                   </div>
-                  <p className="text-xs text-muted-foreground mt-2">
+                  <p className="text-xs text-muted-foreground mt-1">
                     {plan.duration_days} days
                   </p>
                 </div>
 
-                <Separator className="my-6" />
+                <Separator className="my-4" />
 
-                <ul className="space-y-3 mb-6">
+                <ul className="space-y-2 mb-4 max-h-[180px] overflow-y-auto">
                   {plan.features.map((feature, i) => {
                     const FeatureIcon = featureIcons[feature] || Check;
                     return (
                       <li key={i} className="flex items-start gap-2">
-                        <FeatureIcon className={`h-5 w-5 flex-shrink-0 mt-0.5 ${config.textColor}`} />
-                        <span className="text-sm">{feature}</span>
+                        <FeatureIcon className={`h-4 w-4 flex-shrink-0 mt-0.5 ${config.textColor}`} />
+                        <span className="text-xs">{feature}</span>
                       </li>
                     );
                   })}
@@ -371,7 +371,8 @@ export default function Premium() {
                 <Button
                   onClick={() => handlePurchase(plan.id, plan.acoin_price)}
                   disabled={!canAfford || purchasing === plan.id || hasActiveSubscription}
-                  className={`w-full bg-gradient-to-r ${config.gradient} hover:opacity-90 text-white border-0`}
+                  className={`w-full bg-gradient-to-r ${config.gradient} hover:opacity-90 text-white border-0 text-sm`}
+                  size="sm"
                 >
                   {purchasing === plan.id ? (
                     'Processing...'
@@ -391,7 +392,7 @@ export default function Premium() {
                 )}
                 {hasActiveSubscription && (
                   <p className="text-xs text-center text-muted-foreground mt-2">
-                    Wait until your current subscription expires
+                    Wait until current subscription expires
                   </p>
                 )}
               </Card>
