@@ -2747,6 +2747,7 @@ export type Database = {
           id: string
           is_active: boolean | null
           name: string
+          tier: string | null
         }
         Insert: {
           acoin_price: number
@@ -2758,6 +2759,7 @@ export type Database = {
           id?: string
           is_active?: boolean | null
           name: string
+          tier?: string | null
         }
         Update: {
           acoin_price?: number
@@ -2769,6 +2771,7 @@ export type Database = {
           id?: string
           is_active?: boolean | null
           name?: string
+          tier?: string | null
         }
         Relationships: []
       }
