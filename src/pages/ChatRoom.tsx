@@ -54,6 +54,7 @@ interface Message {
   read_at?: string | null;
   edited_at?: string | null;
   reply_to_message_id?: string | null;
+  view_count?: number; // For channel messages
   message_reactions?: Array<{
     reaction: string;
     user_id: string;
@@ -627,8 +628,8 @@ const ChatRoom = ({ isEmbedded = false }: ChatRoomProps) => {
     }
     if (data) {
       setMessages(data as unknown as Message[]);
-      // Mark messages as delivered and read
-      if (user) {
+      // Mark messages as delivered and read (only for non-channels)
+      if (user && !chatInfo?.is_channel) {
         const messageIds = data
           .filter((msg) => msg.sender_id !== user.id)
           .map((msg) => msg.id);
@@ -637,8 +638,31 @@ const ChatRoom = ({ isEmbedded = false }: ChatRoomProps) => {
           await markMessagesAsRead(messageIds);
         }
       }
+      
+      // For channels, record message views
+      if (user && chatInfo?.is_channel) {
+        const messageIds = data.map((msg) => msg.id);
+        await recordMessageViews(messageIds);
+      }
     }
     setLoading(false);
+  };
+
+  const recordMessageViews = async (messageIds: string[]) => {
+    if (!user || messageIds.length === 0) return;
+    
+    // Insert view records for each message (conflicts are ignored due to unique constraint)
+    for (const messageId of messageIds) {
+      await supabase
+        .from('message_views')
+        .upsert(
+          {
+            message_id: messageId,
+            viewer_id: user.id,
+          },
+          { onConflict: 'message_id,viewer_id', ignoreDuplicates: true }
+        );
+    }
   };
 
   const markMessagesAsRead = async (messageIds: string[]) => {
@@ -1511,6 +1535,8 @@ const ChatRoom = ({ isEmbedded = false }: ChatRoomProps) => {
                       themeColors={currentTheme?.colors}
                       showReadReceipts={chatPreferences.readReceipts}
                       fontSize={chatPreferences.fontSize}
+                      isChannel={chatInfo?.is_channel || false}
+                      viewCount={message.view_count || 0}
                     />
                   );
                 });

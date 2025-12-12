@@ -1237,7 +1237,7 @@ const Search = () => {
                         className="px-4 py-3 hover:bg-muted/50 transition-colors cursor-pointer"
                         onClick={() => navigate(`/chat/${result.chat_id}`)}
                       >
-                        <div className="flex items-start gap-3">
+                        <div className="flex items-center gap-3">
                           <Avatar className="h-10 w-10 flex-shrink-0">
                             <AvatarImage src={result.chat_avatar_url || ''} alt={result.chat_name} />
                             <AvatarFallback className="bg-primary/10 text-primary">
@@ -1254,15 +1254,14 @@ const Search = () => {
                                   Channel
                                 </span>
                               </div>
-                              <span className="text-[13px] text-muted-foreground">
+                              <span className="text-[12px] text-muted-foreground flex-shrink-0">
                                 {result.sent_at ? new Date(result.sent_at).toLocaleDateString() : ''}
                               </span>
                             </div>
-                            <p className="text-[13px] text-muted-foreground mt-0.5">
-                              from {result.sender_name}
-                            </p>
-                            <p className="text-[15px] text-foreground mt-1 leading-normal line-clamp-2 whitespace-pre-wrap">
-                              {result.content}
+                            <p className="text-[14px] text-foreground mt-0.5 truncate">
+                              {result.content && result.content.length > 60 
+                                ? result.content.substring(0, 60) + '...' 
+                                : result.content}
                             </p>
                           </div>
                         </div>

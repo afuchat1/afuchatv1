@@ -1,5 +1,5 @@
 import { motion } from 'framer-motion';
-import { Check, CheckCheck, Play, Pause } from 'lucide-react';
+import { Check, CheckCheck, Play, Pause, Eye } from 'lucide-react';
 import { AttachmentPreview } from './AttachmentPreview';
 import { useState, useRef, useCallback } from 'react';
 import { toast } from 'sonner';
@@ -145,6 +145,8 @@ interface MessageBubbleProps {
   themeColors?: { primary: string; secondary: string; accent: string };
   showReadReceipts?: boolean;
   fontSize?: number;
+  isChannel?: boolean; // Channel messages don't show sender identity or read receipts
+  viewCount?: number; // View count for channel messages
 }
 
 export const MessageBubble = ({
@@ -163,6 +165,8 @@ export const MessageBubble = ({
   themeColors,
   showReadReceipts = true,
   fontSize = 16,
+  isChannel = false,
+  viewCount = 0,
 }: MessageBubbleProps) => {
   const [actionsSheetOpen, setActionsSheetOpen] = useState(false);
   const longPressTimerRef = useRef<NodeJS.Timeout | null>(null);
@@ -293,6 +297,16 @@ export const MessageBubble = ({
 
 
   const ReadStatus = () => {
+    // For channels, show view count instead of read receipts
+    if (isChannel) {
+      return (
+        <span className="flex items-center gap-0.5 text-[10px] opacity-70">
+          <Eye className="h-3 w-3" />
+          {viewCount > 0 ? viewCount : ''}
+        </span>
+      );
+    }
+    
     if (!isOwn || !showReadReceipts) return null;
     
     // No status entries yet = just sent (single gray check)
@@ -326,15 +340,21 @@ export const MessageBubble = ({
       onTouchEnd={handleTouchEnd}
       onContextMenu={handleContextMenu}
       style={{ touchAction: 'pan-y' }}
-      className={`flex w-full ${isOwn ? 'justify-end' : 'justify-start'} ${
+      className={`flex w-full ${
+        // For channels, all messages appear left-aligned (from the channel)
+        isChannel ? 'justify-start' : (isOwn ? 'justify-end' : 'justify-start')
+      } ${
         isLastInGroup ? 'mb-1' : 'mb-px'
       }`}
     >
       <div
         className={`${
-          isOwn
-            ? 'bg-primary text-primary-foreground'
-            : 'bg-muted text-foreground'
+          // For channels, all messages use receiver styling (muted background)
+          isChannel
+            ? 'bg-muted text-foreground'
+            : isOwn
+              ? 'bg-primary text-primary-foreground'
+              : 'bg-muted text-foreground'
         } ${getBubbleRadius()} max-w-[85%] overflow-hidden`}
       >
         {repliedMessage && (

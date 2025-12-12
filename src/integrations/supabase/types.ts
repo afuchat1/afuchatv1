@@ -1561,6 +1561,49 @@ export type Database = {
           },
         ]
       }
+      message_views: {
+        Row: {
+          id: string
+          message_id: string
+          viewed_at: string
+          viewer_id: string
+        }
+        Insert: {
+          id?: string
+          message_id: string
+          viewed_at?: string
+          viewer_id: string
+        }
+        Update: {
+          id?: string
+          message_id?: string
+          viewed_at?: string
+          viewer_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "message_views_message_id_fkey"
+            columns: ["message_id"]
+            isOneToOne: false
+            referencedRelation: "messages"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "message_views_viewer_id_fkey"
+            columns: ["viewer_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "message_views_viewer_id_fkey"
+            columns: ["viewer_id"]
+            isOneToOne: false
+            referencedRelation: "public_profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       messages: {
         Row: {
           attachment_name: string | null
@@ -1578,6 +1621,7 @@ export type Database = {
           sender_id: string | null
           sent_at: string | null
           user_id: string | null
+          view_count: number | null
         }
         Insert: {
           attachment_name?: string | null
@@ -1595,6 +1639,7 @@ export type Database = {
           sender_id?: string | null
           sent_at?: string | null
           user_id?: string | null
+          view_count?: number | null
         }
         Update: {
           attachment_name?: string | null
@@ -1612,6 +1657,7 @@ export type Database = {
           sender_id?: string | null
           sent_at?: string | null
           user_id?: string | null
+          view_count?: number | null
         }
         Relationships: [
           {
