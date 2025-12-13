@@ -2380,14 +2380,14 @@ const Feed = ({ defaultTab = 'foryou', guestMode = false }: FeedProps = {}) => {
                 Following
               </TabsTrigger>
             </TabsList>
-            
-            {/* Featured Products in Header */}
-            <FeaturedProducts />
           </div>
         </div>
 
-        {/* Spacer for fixed header with products */}
-        <div className="h-[180px]" />
+        {/* Spacer for fixed header */}
+        <div className="h-[108px]" />
+
+        {/* Featured Products */}
+        <FeaturedProducts />
 
         {/* Content area */}
         <TabsContent value={activeTab} className="m-0" ref={feedRef} forceMount>
