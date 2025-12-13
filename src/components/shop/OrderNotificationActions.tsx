@@ -58,7 +58,7 @@ export function OrderNotificationActions({ orderContext, isAdmin }: OrderNotific
         .maybeSingle();
 
       if (existingChat?.chat_id) {
-        navigate(`/chats/${existingChat.chat_id}`);
+        navigate(`/chat/${existingChat.chat_id}`);
       } else {
         // Create new chat
         const { data: newChat, error } = await supabase
@@ -85,7 +85,7 @@ export function OrderNotificationActions({ orderContext, isAdmin }: OrderNotific
           chat_id: newChat.id
         });
 
-        navigate(`/chats/${newChat.id}`);
+        navigate(`/chat/${newChat.id}`);
       }
     } catch (error) {
       console.error('Error contacting customer:', error);

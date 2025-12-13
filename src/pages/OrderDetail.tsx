@@ -171,7 +171,7 @@ export default function OrderDetail() {
         }
       });
 
-      navigate(`/chats/${chatId}`);
+      navigate(`/chat/${chatId}`);
     } catch (error) {
       console.error('Error contacting support:', error);
       toast.error('Failed to start chat with support');
