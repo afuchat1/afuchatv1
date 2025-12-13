@@ -5,7 +5,7 @@ import { useAuth } from '@/contexts/AuthContext';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
-import { ArrowLeft, Package, CheckCircle, Clock, XCircle, Truck, MessageCircle } from 'lucide-react';
+import { ArrowLeft, Package, CheckCircle, Clock, XCircle, Truck, MessageCircle, User, CreditCard } from 'lucide-react';
 import { format } from 'date-fns';
 import { toast } from 'sonner';
 import Layout from '@/components/Layout';
@@ -27,6 +27,12 @@ interface Order {
   payment_status: string;
   created_at: string;
   merchant_id: string;
+  buyer_id: string;
+  buyer?: {
+    display_name: string;
+    handle: string;
+    avatar_url: string;
+  };
   merchant: {
     name: string;
     user_id: string;
@@ -41,8 +47,18 @@ const statusConfig: Record<string, { label: string; icon: React.ReactNode; color
   },
   payment_recorded: { 
     label: 'Payment Recorded', 
-    icon: <CheckCircle className="h-4 w-4" />, 
+    icon: <CreditCard className="h-4 w-4" />, 
     color: 'bg-blue-500/10 text-blue-500' 
+  },
+  processing: { 
+    label: 'Processing', 
+    icon: <Package className="h-4 w-4" />, 
+    color: 'bg-orange-500/10 text-orange-500' 
+  },
+  shipped: { 
+    label: 'Shipped', 
+    icon: <Truck className="h-4 w-4" />, 
+    color: 'bg-purple-500/10 text-purple-500' 
   },
   fulfilled: { 
     label: 'Fulfilled', 
@@ -61,6 +77,8 @@ const statusConfig: Record<string, { label: string; icon: React.ReactNode; color
   },
 };
 
+const statusFlow = ['pending_payment', 'payment_recorded', 'processing', 'shipped', 'completed'];
+
 export default function OrderDetail() {
   const { orderNumber } = useParams();
   const navigate = useNavigate();
@@ -69,6 +87,9 @@ export default function OrderDetail() {
   const [items, setItems] = useState<OrderItem[]>([]);
   const [loading, setLoading] = useState(true);
   const [contactingSupport, setContactingSupport] = useState(false);
+  const [updatingStatus, setUpdatingStatus] = useState(false);
+
+  const isMerchant = user && order?.merchant?.user_id === user.id;
 
   useEffect(() => {
     if (user && orderNumber) {
@@ -88,6 +109,8 @@ export default function OrderDetail() {
           payment_status,
           created_at,
           merchant_id,
+          buyer_id,
+          buyer:profiles!merchant_orders_buyer_id_fkey(display_name, handle, avatar_url),
           merchant:merchants(name, user_id)
         `)
         .eq('order_number', orderNumber)
@@ -112,26 +135,43 @@ export default function OrderDetail() {
     }
   };
 
-  const handleContactSupport = async () => {
-    if (!user || !order) {
-      toast.error('Please sign in to contact support');
-      return;
+  const handleUpdateStatus = async (newStatus: string) => {
+    if (!order) return;
+    
+    setUpdatingStatus(true);
+    try {
+      const { error } = await supabase
+        .from('merchant_orders')
+        .update({ status: newStatus })
+        .eq('id', order.id);
+
+      if (error) throw error;
+
+      setOrder({ ...order, status: newStatus });
+      toast.success(`Order status updated to ${statusConfig[newStatus]?.label || newStatus}`);
+    } catch (error) {
+      console.error('Error updating status:', error);
+      toast.error('Failed to update order status');
+    } finally {
+      setUpdatingStatus(false);
     }
+  };
+
+  const handleContactBuyer = async () => {
+    if (!user || !order) return;
 
     setContactingSupport(true);
     try {
-      // Check if there's an existing customer chat with this merchant
       const { data: existingChat } = await supabase
         .from('merchant_customer_chats')
         .select('chat_id')
         .eq('merchant_id', order.merchant_id)
-        .eq('customer_id', user.id)
+        .eq('customer_id', order.buyer_id)
         .maybeSingle();
 
       let chatId = existingChat?.chat_id;
 
       if (!chatId) {
-        // Create a new chat for this customer-merchant relationship
         const { data: newChat, error: chatError } = await supabase
           .from('chats')
           .insert({
@@ -145,13 +185,63 @@ export default function OrderDetail() {
         if (chatError) throw chatError;
         chatId = newChat.id;
 
-        // Add both members
+        await supabase.from('chat_members').insert([
+          { chat_id: chatId, user_id: user.id },
+          { chat_id: chatId, user_id: order.buyer_id }
+        ]);
+
+        await supabase.from('merchant_customer_chats').insert({
+          merchant_id: order.merchant_id,
+          customer_id: order.buyer_id,
+          chat_id: chatId
+        });
+      }
+
+      navigate(`/chat/${chatId}`);
+    } catch (error) {
+      console.error('Error contacting buyer:', error);
+      toast.error('Failed to start chat with buyer');
+    } finally {
+      setContactingSupport(false);
+    }
+  };
+
+  const handleContactSupport = async () => {
+    if (!user || !order) {
+      toast.error('Please sign in to contact support');
+      return;
+    }
+
+    setContactingSupport(true);
+    try {
+      const { data: existingChat } = await supabase
+        .from('merchant_customer_chats')
+        .select('chat_id')
+        .eq('merchant_id', order.merchant_id)
+        .eq('customer_id', user.id)
+        .maybeSingle();
+
+      let chatId = existingChat?.chat_id;
+
+      if (!chatId) {
+        const { data: newChat, error: chatError } = await supabase
+          .from('chats')
+          .insert({
+            created_by: user.id,
+            is_group: false,
+            name: null
+          })
+          .select('id')
+          .single();
+
+        if (chatError) throw chatError;
+        chatId = newChat.id;
+
         await supabase.from('chat_members').insert([
           { chat_id: chatId, user_id: user.id },
           { chat_id: chatId, user_id: order.merchant.user_id }
         ]);
 
-        // Track the customer-merchant chat relationship
         await supabase.from('merchant_customer_chats').insert({
           merchant_id: order.merchant_id,
           customer_id: user.id,
@@ -159,7 +249,6 @@ export default function OrderDetail() {
         });
       }
 
-      // Send an order-context message
       await supabase.from('messages').insert({
         chat_id: chatId,
         sender_id: user.id,
@@ -203,6 +292,10 @@ export default function OrderDetail() {
   }
 
   const status = statusConfig[order.status] || statusConfig.pending_payment;
+  const currentStatusIndex = statusFlow.indexOf(order.status);
+  const nextStatus = currentStatusIndex >= 0 && currentStatusIndex < statusFlow.length - 1 
+    ? statusFlow[currentStatusIndex + 1] 
+    : null;
 
   return (
     <Layout>
@@ -214,13 +307,53 @@ export default function OrderDetail() {
               <ArrowLeft className="h-5 w-5" />
             </Button>
             <div>
-              <h1 className="font-semibold">Order Details</h1>
+              <h1 className="font-semibold">{isMerchant ? 'Manage Order' : 'Order Details'}</h1>
               <p className="text-xs text-muted-foreground">{order.order_number}</p>
             </div>
           </div>
         </div>
 
         <div className="p-4 space-y-4">
+          {/* Merchant: Buyer Info Card */}
+          {isMerchant && order.buyer && (
+            <Card className="border-primary/20 bg-primary/5">
+              <CardHeader className="pb-2">
+                <CardTitle className="text-base flex items-center gap-2">
+                  <User className="h-4 w-4" />
+                  Customer Information
+                </CardTitle>
+              </CardHeader>
+              <CardContent className="p-4 pt-0">
+                <div className="flex items-center gap-3">
+                  {order.buyer.avatar_url ? (
+                    <img 
+                      src={order.buyer.avatar_url} 
+                      alt={order.buyer.display_name}
+                      className="w-12 h-12 rounded-full object-cover"
+                    />
+                  ) : (
+                    <div className="w-12 h-12 rounded-full bg-muted flex items-center justify-center">
+                      <User className="h-6 w-6 text-muted-foreground" />
+                    </div>
+                  )}
+                  <div className="flex-1">
+                    <p className="font-medium">{order.buyer.display_name}</p>
+                    <p className="text-sm text-muted-foreground">@{order.buyer.handle}</p>
+                  </div>
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={handleContactBuyer}
+                    disabled={contactingSupport}
+                  >
+                    <MessageCircle className="h-4 w-4 mr-1" />
+                    Chat
+                  </Button>
+                </div>
+              </CardContent>
+            </Card>
+          )}
+
           {/* Status Card */}
           <Card>
             <CardContent className="p-4">
@@ -240,7 +373,40 @@ export default function OrderDetail() {
                 <p className="text-muted-foreground">{order.merchant.name}</p>
               </div>
 
-              {order.status === 'pending_payment' && (
+              {/* Merchant: Status Management */}
+              {isMerchant && order.status !== 'completed' && order.status !== 'cancelled' && (
+                <div className="space-y-3 mt-4">
+                  <p className="text-sm font-medium text-center">Update Order Status</p>
+                  <div className="grid grid-cols-2 gap-2">
+                    {nextStatus && (
+                      <Button
+                        onClick={() => handleUpdateStatus(nextStatus)}
+                        disabled={updatingStatus}
+                        className="col-span-2"
+                      >
+                        {updatingStatus ? <CustomLoader size="sm" /> : (
+                          <>
+                            {statusConfig[nextStatus]?.icon}
+                            <span className="ml-2">Mark as {statusConfig[nextStatus]?.label}</span>
+                          </>
+                        )}
+                      </Button>
+                    )}
+                    <Button
+                      variant="destructive"
+                      onClick={() => handleUpdateStatus('cancelled')}
+                      disabled={updatingStatus}
+                      className={nextStatus ? '' : 'col-span-2'}
+                    >
+                      <XCircle className="h-4 w-4 mr-1" />
+                      Cancel Order
+                    </Button>
+                  </div>
+                </div>
+              )}
+
+              {/* Buyer: Payment Instructions */}
+              {!isMerchant && order.status === 'pending_payment' && (
                 <div className="bg-yellow-500/10 border border-yellow-500/20 rounded-lg p-4 mt-4">
                   <h3 className="font-medium text-yellow-600 mb-2">Payment Instructions</h3>
                   <p className="text-sm text-muted-foreground">
@@ -250,22 +416,24 @@ export default function OrderDetail() {
                 </div>
               )}
 
-              {/* Contact Seller Button */}
-              <Button
-                variant="outline"
-                className="w-full mt-4"
-                onClick={handleContactSupport}
-                disabled={contactingSupport}
-              >
-                {contactingSupport ? (
-                  <CustomLoader size="sm" />
-                ) : (
-                  <>
-                    <MessageCircle className="h-4 w-4 mr-2" />
-                    Contact {order.merchant.name}
-                  </>
-                )}
-              </Button>
+              {/* Buyer: Contact Seller Button */}
+              {!isMerchant && (
+                <Button
+                  variant="outline"
+                  className="w-full mt-4"
+                  onClick={handleContactSupport}
+                  disabled={contactingSupport}
+                >
+                  {contactingSupport ? (
+                    <CustomLoader size="sm" />
+                  ) : (
+                    <>
+                      <MessageCircle className="h-4 w-4 mr-2" />
+                      Contact {order.merchant.name}
+                    </>
+                  )}
+                </Button>
+              )}
             </CardContent>
           </Card>
 
