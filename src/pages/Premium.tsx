@@ -282,6 +282,8 @@ export default function Premium() {
   const handleCancelSubscription = async () => {
     if (!currentSubscription || !user) return;
 
+    const planToSwitch = switchToPlan; // Capture before state changes
+
     try {
       // Deactivate current subscription (no refund)
       const { error } = await supabase
@@ -292,10 +294,26 @@ export default function Premium() {
 
       if (error) throw error;
 
+      // Clear current subscription state immediately
+      setCurrentSubscription(null);
+
       // If switching to a new plan, purchase it
-      if (switchToPlan) {
-        await handlePurchase(switchToPlan.id, switchToPlan.acoin_price);
-        toast.success(`Switched to ${switchToPlan.name} successfully!`);
+      if (planToSwitch) {
+        setPurchasing(planToSwitch.id);
+        
+        const { data, error: purchaseError } = await supabase.rpc('purchase_subscription', {
+          p_plan_id: planToSwitch.id
+        });
+
+        if (purchaseError) throw purchaseError;
+
+        const result = data as any;
+        if (result.success) {
+          toast.success(`Switched to ${planToSwitch.name} successfully!`);
+        } else {
+          toast.error(result.message);
+        }
+        setPurchasing(null);
       } else {
         toast.success('Subscription cancelled successfully');
       }
@@ -304,7 +322,8 @@ export default function Premium() {
       await fetchUserData();
     } catch (error) {
       console.error('Cancel subscription error:', error);
-      toast.error('Failed to cancel subscription');
+      toast.error('Failed to process request');
+      setPurchasing(null);
     } finally {
       setCancelDialogOpen(false);
       setSwitchToPlan(null);
