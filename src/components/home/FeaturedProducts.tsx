@@ -73,9 +73,9 @@ export default function FeaturedProducts() {
   }
 
   return (
-    <div className="px-4 pt-3 pb-1">
+    <div className="px-4 pt-2 pb-0 mb-1">
       {/* Section Header */}
-      <div className="flex items-center justify-between mb-4">
+      <div className="flex items-center justify-between mb-2">
         <div className="flex items-center gap-2">
           {merchant?.logo_url ? (
             <img 
@@ -103,14 +103,14 @@ export default function FeaturedProducts() {
       </div>
 
       {/* Products Horizontal Scroll */}
-      <div className="flex gap-3 overflow-x-auto pb-1 -mx-4 px-4 scrollbar-hide touch-pan-x">
+      <div className="flex gap-3 overflow-x-auto overscroll-x-contain pb-0 -mx-4 px-4 scrollbar-hide touch-pan-x snap-x snap-mandatory">
         {products.map((product, index) => (
           <motion.div
             key={product.id}
             initial={{ opacity: 0, scale: 0.95 }}
             animate={{ opacity: 1, scale: 1 }}
             transition={{ delay: index * 0.05 }}
-            className="flex-shrink-0 w-36"
+            className="flex-shrink-0 w-36 snap-start"
           >
             <Card 
               className="overflow-hidden cursor-pointer hover:shadow-md transition-shadow"
