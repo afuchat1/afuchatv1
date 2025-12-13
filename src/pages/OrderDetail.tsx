@@ -135,6 +135,82 @@ export default function OrderDetail() {
     }
   };
 
+  const getOrCreateSystemNotificationChat = async (userId: string): Promise<string | null> => {
+    try {
+      const { data: existingChat } = await supabase
+        .from('chats')
+        .select('id')
+        .eq('is_system_notifications', true)
+        .eq('created_by', userId)
+        .maybeSingle();
+
+      if (existingChat) return existingChat.id;
+
+      const { data: newChat, error } = await supabase
+        .from('chats')
+        .insert({
+          name: 'ShopShack Updates',
+          is_system_notifications: true,
+          is_group: false,
+          created_by: userId
+        })
+        .select('id')
+        .single();
+
+      if (error) throw error;
+
+      await supabase.from('chat_members').insert({
+        chat_id: newChat.id,
+        user_id: userId
+      });
+
+      return newChat.id;
+    } catch (error) {
+      console.error('Error creating system notification chat:', error);
+      return null;
+    }
+  };
+
+  const sendStatusNotification = async (newStatus: string) => {
+    if (!order) return;
+
+    const statusLabel = statusConfig[newStatus]?.label || newStatus;
+    
+    try {
+      // Notify buyer
+      const buyerChatId = await getOrCreateSystemNotificationChat(order.buyer_id);
+      if (buyerChatId) {
+        await supabase.from('messages').insert({
+          chat_id: buyerChatId,
+          sender_id: order.buyer_id,
+          encrypted_content: `📦 **Order Status Updated**\n\nOrder: ${order.order_number}\nNew Status: ${statusLabel}\n\n[VIEW_ORDER:${order.order_number}]`,
+          order_context: {
+            order_number: order.order_number,
+            status: newStatus,
+            type: 'status_update'
+          }
+        });
+      }
+
+      // Notify merchant
+      const merchantChatId = await getOrCreateSystemNotificationChat(order.merchant.user_id);
+      if (merchantChatId) {
+        await supabase.from('messages').insert({
+          chat_id: merchantChatId,
+          sender_id: order.merchant.user_id,
+          encrypted_content: `📦 **Order Status Updated**\n\nOrder: ${order.order_number}\nNew Status: ${statusLabel}\n\n[VIEW_ORDER:${order.order_number}]`,
+          order_context: {
+            order_number: order.order_number,
+            status: newStatus,
+            type: 'status_update'
+          }
+        });
+      }
+    } catch (error) {
+      console.error('Error sending status notification:', error);
+    }
+  };
+
   const handleUpdateStatus = async (newStatus: string) => {
     if (!order) return;
     
@@ -148,6 +224,10 @@ export default function OrderDetail() {
       if (error) throw error;
 
       setOrder({ ...order, status: newStatus });
+      
+      // Send notifications to both parties
+      await sendStatusNotification(newStatus);
+      
       toast.success(`Order status updated to ${statusConfig[newStatus]?.label || newStatus}`);
     } catch (error) {
       console.error('Error updating status:', error);

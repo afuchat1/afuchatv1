@@ -15,7 +15,7 @@ import Layout from '@/components/Layout';
 import { CustomLoader } from '@/components/ui/CustomLoader';
 import { formatPriceForCountry } from '@/lib/currencyUtils';
 
-const SHOPSHACK_ADMIN_NOTIFICATIONS_CHAT_ID = 'a0000000-0000-0000-0000-000000000001';
+
 
 interface CartProduct {
   id: string;
@@ -171,8 +171,49 @@ export default function Checkout() {
     }
   };
 
+  const getOrCreateSystemNotificationChat = async (userId: string): Promise<string | null> => {
+    try {
+      // Check if user already has a system notifications chat
+      const { data: existingChat } = await supabase
+        .from('chats')
+        .select('id')
+        .eq('is_system_notifications', true)
+        .eq('created_by', userId)
+        .maybeSingle();
+
+      if (existingChat) {
+        return existingChat.id;
+      }
+
+      // Create system notifications chat for this user
+      const { data: newChat, error } = await supabase
+        .from('chats')
+        .insert({
+          name: 'ShopShack Updates',
+          is_system_notifications: true,
+          is_group: false,
+          created_by: userId
+        })
+        .select('id')
+        .single();
+
+      if (error) throw error;
+
+      // Add user as member
+      await supabase.from('chat_members').insert({
+        chat_id: newChat.id,
+        user_id: userId
+      });
+
+      return newChat.id;
+    } catch (error) {
+      console.error('Error creating system notification chat:', error);
+      return null;
+    }
+  };
+
   const sendSystemNotification = async (orderNumber: string, total: number) => {
-    if (!user) return;
+    if (!user || !merchant) return;
 
     try {
       // Get user profile for notification
@@ -184,22 +225,47 @@ export default function Checkout() {
 
       const customerName = userProfile?.display_name || userProfile?.handle || 'Customer';
 
-      // Send notification to ShopShack Admin Notifications Chat (only visible to ShopShack)
-      await supabase.from('messages').insert({
-        chat_id: SHOPSHACK_ADMIN_NOTIFICATIONS_CHAT_ID,
-        sender_id: merchant?.user_id || user.id,
-        encrypted_content: `🆕 **New Order Received!**\n\n📦 Order: ${orderNumber}\n👤 Customer: ${customerName}\n💰 Total: UGX ${total.toLocaleString()}\n💳 Payment: ${paymentMethod === 'mobile_money' ? 'Mobile Money' : 'Cash on Delivery'}\n\n[ACTION_BUTTONS:view_order:${orderNumber}]`,
-        order_context: {
-          order_number: orderNumber,
-          customer_id: user.id,
-          customer_name: customerName,
-          total: total,
-          payment_method: paymentMethod,
-          type: 'new_order'
-        }
-      });
+      // Get or create system notification chat for buyer
+      const buyerChatId = await getOrCreateSystemNotificationChat(user.id);
+      
+      // Get or create system notification chat for merchant
+      const merchantChatId = await getOrCreateSystemNotificationChat(merchant.user_id);
+
+      // Send notification to buyer's system chat
+      if (buyerChatId) {
+        await supabase.from('messages').insert({
+          chat_id: buyerChatId,
+          sender_id: user.id,
+          encrypted_content: `✅ **Order Placed Successfully!**\n\n📦 Order: ${orderNumber}\n🏪 Merchant: ${merchant.name}\n💰 Total: UGX ${total.toLocaleString()}\n💳 Payment: ${paymentMethod === 'mobile_money' ? 'Mobile Money' : 'Cash on Delivery'}\n\n[VIEW_ORDER:${orderNumber}]`,
+          order_context: {
+            order_number: orderNumber,
+            merchant_id: merchant.id,
+            merchant_name: merchant.name,
+            total: total,
+            payment_method: paymentMethod,
+            type: 'order_placed'
+          }
+        });
+      }
+
+      // Send notification to merchant's system chat
+      if (merchantChatId) {
+        await supabase.from('messages').insert({
+          chat_id: merchantChatId,
+          sender_id: merchant.user_id,
+          encrypted_content: `🆕 **New Order Received!**\n\n📦 Order: ${orderNumber}\n👤 Customer: ${customerName}\n💰 Total: UGX ${total.toLocaleString()}\n💳 Payment: ${paymentMethod === 'mobile_money' ? 'Mobile Money' : 'Cash on Delivery'}\n\n[VIEW_ORDER:${orderNumber}]`,
+          order_context: {
+            order_number: orderNumber,
+            customer_id: user.id,
+            customer_name: customerName,
+            total: total,
+            payment_method: paymentMethod,
+            type: 'new_order'
+          }
+        });
+      }
     } catch (error) {
-      console.error('Error sending admin notification:', error);
+      console.error('Error sending order notifications:', error);
     }
   };
 

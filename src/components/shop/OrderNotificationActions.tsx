@@ -22,8 +22,43 @@ interface OrderNotificationActionsProps {
   isAdmin?: boolean;
 }
 
-const SHOPSHACK_ADMIN_NOTIFICATIONS_CHAT_ID = 'a0000000-0000-0000-0000-000000000001';
 const SHOPSHACK_USER_ID = '629333cf-087e-4283-8a09-a44282dda98b';
+
+const getOrCreateSystemNotificationChat = async (userId: string): Promise<string | null> => {
+  try {
+    const { data: existingChat } = await supabase
+      .from('chats')
+      .select('id')
+      .eq('is_system_notifications', true)
+      .eq('created_by', userId)
+      .maybeSingle();
+
+    if (existingChat) return existingChat.id;
+
+    const { data: newChat, error } = await supabase
+      .from('chats')
+      .insert({
+        name: 'ShopShack Updates',
+        is_system_notifications: true,
+        is_group: false,
+        created_by: userId
+      })
+      .select('id')
+      .single();
+
+    if (error) throw error;
+
+    await supabase.from('chat_members').insert({
+      chat_id: newChat.id,
+      user_id: userId
+    });
+
+    return newChat.id;
+  } catch (error) {
+    console.error('Error creating system notification chat:', error);
+    return null;
+  }
+};
 
 export function OrderNotificationActions({ orderContext, isAdmin }: OrderNotificationActionsProps) {
   const navigate = useNavigate();
@@ -102,6 +137,9 @@ export function OrderNotificationActions({ orderContext, isAdmin }: OrderNotific
   const getStatusLabel = (status: string) => {
     const labels: Record<string, string> = {
       'payment_recorded': 'Payment Confirmed',
+      'processing': 'Processing',
+      'shipped': 'Shipped',
+      'completed': 'Completed',
       'cancelled': 'Cancelled',
       'fulfilled': 'Fulfilled',
       'refunded': 'Refunded',
@@ -114,6 +152,9 @@ export function OrderNotificationActions({ orderContext, isAdmin }: OrderNotific
   const getStatusEmoji = (status: string) => {
     const emojis: Record<string, string> = {
       'payment_recorded': '💳',
+      'processing': '⚙️',
+      'shipped': '🚚',
+      'completed': '✅',
       'cancelled': '❌',
       'fulfilled': '📦',
       'refunded': '💰',
@@ -138,48 +179,35 @@ export function OrderNotificationActions({ orderContext, isAdmin }: OrderNotific
       const emoji = getStatusEmoji(newStatus);
       const label = getStatusLabel(newStatus);
 
-      // Send status update notification to admin notifications chat
-      await supabase.from('messages').insert({
-        chat_id: SHOPSHACK_ADMIN_NOTIFICATIONS_CHAT_ID,
-        sender_id: SHOPSHACK_USER_ID,
-        encrypted_content: `${emoji} Order ${orderContext.order_number} status updated to: ${label}`,
-        order_context: {
-          ...orderContext,
-          status: newStatus,
-          type: 'status_update'
-        }
-      });
-
-      // Send notification to customer's support chat if customer_id exists
-      if (orderContext.customer_id) {
-        // Find or create a support chat with this customer
-        const { data: merchant } = await supabase
-          .from('merchants')
-          .select('id')
-          .eq('user_id', SHOPSHACK_USER_ID)
-          .single();
-
-        if (merchant) {
-          const { data: existingChat } = await supabase
-            .from('merchant_customer_chats')
-            .select('chat_id')
-            .eq('merchant_id', merchant.id)
-            .eq('customer_id', orderContext.customer_id)
-            .maybeSingle();
-
-          if (existingChat?.chat_id) {
-            // Send notification to customer's support chat
-            await supabase.from('messages').insert({
-              chat_id: existingChat.chat_id,
-              sender_id: SHOPSHACK_USER_ID,
-              encrypted_content: `${emoji} **Order Update**\n\nYour order **${orderContext.order_number}** has been updated to: **${label}**`,
-              order_context: {
-                ...orderContext,
-                status: newStatus,
-                type: 'status_update'
-              }
-            });
+      // Send status update to merchant's system notification chat
+      const merchantChatId = await getOrCreateSystemNotificationChat(SHOPSHACK_USER_ID);
+      if (merchantChatId) {
+        await supabase.from('messages').insert({
+          chat_id: merchantChatId,
+          sender_id: SHOPSHACK_USER_ID,
+          encrypted_content: `${emoji} **Order Status Updated**\n\nOrder: ${orderContext.order_number}\nNew Status: ${label}\n\n[VIEW_ORDER:${orderContext.order_number}]`,
+          order_context: {
+            ...orderContext,
+            status: newStatus,
+            type: 'status_update'
           }
+        });
+      }
+
+      // Send notification to customer's system notification chat
+      if (orderContext.customer_id) {
+        const customerChatId = await getOrCreateSystemNotificationChat(orderContext.customer_id);
+        if (customerChatId) {
+          await supabase.from('messages').insert({
+            chat_id: customerChatId,
+            sender_id: orderContext.customer_id,
+            encrypted_content: `${emoji} **Order Update**\n\nYour order **${orderContext.order_number}** has been updated to: **${label}**\n\n[VIEW_ORDER:${orderContext.order_number}]`,
+            order_context: {
+              ...orderContext,
+              status: newStatus,
+              type: 'status_update'
+            }
+          });
         }
       }
 
