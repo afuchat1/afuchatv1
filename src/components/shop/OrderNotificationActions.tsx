@@ -135,10 +135,10 @@ export function OrderNotificationActions({ orderContext, isAdmin }: OrderNotific
 
       if (error) throw error;
 
-      // Send status update notification to the notifications chat
       const emoji = getStatusEmoji(newStatus);
       const label = getStatusLabel(newStatus);
-      
+
+      // Send status update notification to admin notifications chat
       await supabase.from('messages').insert({
         chat_id: SHOPSHACK_ADMIN_NOTIFICATIONS_CHAT_ID,
         sender_id: SHOPSHACK_USER_ID,
@@ -149,6 +149,39 @@ export function OrderNotificationActions({ orderContext, isAdmin }: OrderNotific
           type: 'status_update'
         }
       });
+
+      // Send notification to customer's support chat if customer_id exists
+      if (orderContext.customer_id) {
+        // Find or create a support chat with this customer
+        const { data: merchant } = await supabase
+          .from('merchants')
+          .select('id')
+          .eq('user_id', SHOPSHACK_USER_ID)
+          .single();
+
+        if (merchant) {
+          const { data: existingChat } = await supabase
+            .from('merchant_customer_chats')
+            .select('chat_id')
+            .eq('merchant_id', merchant.id)
+            .eq('customer_id', orderContext.customer_id)
+            .maybeSingle();
+
+          if (existingChat?.chat_id) {
+            // Send notification to customer's support chat
+            await supabase.from('messages').insert({
+              chat_id: existingChat.chat_id,
+              sender_id: SHOPSHACK_USER_ID,
+              encrypted_content: `${emoji} **Order Update**\n\nYour order **${orderContext.order_number}** has been updated to: **${label}**`,
+              order_context: {
+                ...orderContext,
+                status: newStatus,
+                type: 'status_update'
+              }
+            });
+          }
+        }
+      }
 
       toast.success(`Order marked as ${label}`);
     } catch (error) {
