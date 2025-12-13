@@ -11,7 +11,7 @@ import { toast } from 'sonner';
 import Layout from '@/components/Layout';
 import { CustomLoader } from '@/components/ui/CustomLoader';
 
-const SHOPSHACH_USER_ID = '629333cf-087e-4283-8a09-a44282dda98b';
+const SHOPSHACK_USER_ID = '629333cf-087e-4283-8a09-a44282dda98b';
 interface OrderItem {
   id: string;
   product_name: string;
@@ -118,20 +118,20 @@ export default function OrderDetail() {
 
     setContactingSupport(true);
     try {
-      // Find a 1-on-1 chat between user and ShopShach
+      // Find a 1-on-1 chat between user and ShopShack
       const { data: userChats } = await supabase
         .from('chat_members')
         .select('chat_id')
         .eq('user_id', user.id);
 
-      const { data: shopshachChats } = await supabase
+      const { data: shopshackChats } = await supabase
         .from('chat_members')
         .select('chat_id')
-        .eq('user_id', SHOPSHACH_USER_ID);
+        .eq('user_id', SHOPSHACK_USER_ID);
 
       const userChatIds = userChats?.map(c => c.chat_id) || [];
-      const shopshachChatIds = shopshachChats?.map(c => c.chat_id) || [];
-      const commonChatIds = userChatIds.filter(id => shopshachChatIds.includes(id));
+      const shopshackChatIds = shopshackChats?.map(c => c.chat_id) || [];
+      const commonChatIds = userChatIds.filter(id => shopshackChatIds.includes(id));
 
       let chatId: string | null = null;
 
@@ -166,14 +166,22 @@ export default function OrderDetail() {
         // Add both members
         await supabase.from('chat_members').insert([
           { chat_id: chatId, user_id: user.id },
-          { chat_id: chatId, user_id: SHOPSHACH_USER_ID }
+          { chat_id: chatId, user_id: SHOPSHACK_USER_ID }
         ]);
 
-        // Send initial order inquiry message
+        // Create support ticket
+        await supabase.from('support_tickets').insert({
+          order_id: order.id,
+          user_id: user.id,
+          chat_id: chatId,
+          status: 'open'
+        });
+
+        // Send initial support ticket message
         await supabase.from('messages').insert({
           chat_id: chatId,
           sender_id: user.id,
-          encrypted_content: `Hi! I have an inquiry about my order ${order?.order_number}. Total: UGX ${order?.total_amount.toLocaleString()}`
+          encrypted_content: `🎫 **Support Ticket Created**\n\nOrder: ${order?.order_number}\nTotal: UGX ${order?.total_amount.toLocaleString()}\n\nHow can we help you today?`
         });
       }
 

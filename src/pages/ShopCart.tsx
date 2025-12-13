@@ -10,8 +10,6 @@ import { motion } from 'framer-motion';
 import Layout from '@/components/Layout';
 import { CustomLoader } from '@/components/ui/CustomLoader';
 
-const SHOPSHACH_USER_ID = '629333cf-087e-4283-8a09-a44282dda98b';
-
 interface CartProduct {
   id: string;
   product_id: string;
@@ -38,7 +36,6 @@ export default function ShopCart() {
   const [cartItems, setCartItems] = useState<CartProduct[]>([]);
   const [merchant, setMerchant] = useState<Merchant | null>(null);
   const [loading, setLoading] = useState(true);
-  const [isOrdering, setIsOrdering] = useState(false);
 
   useEffect(() => {
     if (user && merchantId) {
@@ -72,7 +69,6 @@ export default function ShopCart() {
       }
 
       if (cartRes.data) {
-        // Filter to only this merchant's products
         const filtered = cartRes.data.filter(
           (item: any) => item.product?.merchant_id === merchantId
         );
@@ -108,94 +104,8 @@ export default function ShopCart() {
     toast.success('Item removed from cart');
   };
 
-  const placeOrder = async () => {
-    if (!merchant || !user || cartItems.length === 0) return;
-
-    setIsOrdering(true);
-    try {
-      const { data, error } = await supabase.rpc('create_order_from_cart', {
-        p_merchant_id: merchant.id
-      });
-
-      if (error) throw error;
-
-      const result = data as { success: boolean; order_number?: string; total_amount?: number; message?: string };
-      
-      if (result.success) {
-        // Auto-create chat with ShopShach for order support
-        try {
-          // Find existing chat
-          const { data: userChats } = await supabase
-            .from('chat_members')
-            .select('chat_id')
-            .eq('user_id', user.id);
-
-          const { data: shopshachChats } = await supabase
-            .from('chat_members')
-            .select('chat_id')
-            .eq('user_id', SHOPSHACH_USER_ID);
-
-          const userChatIds = userChats?.map(c => c.chat_id) || [];
-          const shopshachChatIds = shopshachChats?.map(c => c.chat_id) || [];
-          const commonChatIds = userChatIds.filter(id => shopshachChatIds.includes(id));
-
-          let chatId: string | null = null;
-
-          if (commonChatIds.length > 0) {
-            const { data: chat } = await supabase
-              .from('chats')
-              .select('id')
-              .in('id', commonChatIds)
-              .eq('is_group', false)
-              .maybeSingle();
-
-            if (chat) chatId = chat.id;
-          }
-
-          // Create new chat if doesn't exist
-          if (!chatId) {
-            const { data: newChat } = await supabase
-              .from('chats')
-              .insert({
-                created_by: user.id,
-                is_group: false
-              })
-              .select('id')
-              .single();
-
-            if (newChat) {
-              chatId = newChat.id;
-              await supabase.from('chat_members').insert([
-                { chat_id: chatId, user_id: user.id },
-                { chat_id: chatId, user_id: SHOPSHACH_USER_ID }
-              ]);
-            }
-          }
-
-          // Send order confirmation message
-          if (chatId) {
-            await supabase.from('messages').insert({
-              chat_id: chatId,
-              sender_id: user.id,
-              encrypted_content: `🛒 New Order Placed!\n\nOrder: ${result.order_number}\nTotal: UGX ${result.total_amount?.toLocaleString()}\n\nPlease contact me here for payment and delivery details.`
-            });
-          }
-        } catch (chatError) {
-          console.error('Error creating order chat:', chatError);
-          // Don't fail the order if chat creation fails
-        }
-
-        toast.success(`Order ${result.order_number} placed successfully!`);
-        navigate(`/orders/${result.order_number}`);
-      } else {
-        toast.error(result.message || 'Failed to place order');
-      }
-    } catch (error: any) {
-      console.error('Order error:', error);
-      toast.error('Failed to place order');
-    } finally {
-      setIsOrdering(false);
-    }
+  const proceedToCheckout = () => {
+    navigate(`/shop/${merchantId}/checkout`);
   };
 
   const subtotal = cartItems.reduce(
@@ -333,22 +243,11 @@ export default function ShopCart() {
             <Button 
               className="w-full" 
               size="lg"
-              onClick={placeOrder}
-              disabled={isOrdering}
+              onClick={proceedToCheckout}
             >
-              {isOrdering ? (
-                <CustomLoader size="sm" />
-              ) : (
-                <>
-                  <CreditCard className="h-4 w-4 mr-2" />
-                  Place Order • UGX {subtotal.toLocaleString()}
-                </>
-              )}
+              <CreditCard className="h-4 w-4 mr-2" />
+              Proceed to Checkout
             </Button>
-            
-            <p className="text-xs text-muted-foreground text-center">
-              Pay directly to merchant after order confirmation
-            </p>
           </div>
         )}
       </div>

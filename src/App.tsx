@@ -96,6 +96,7 @@ const FlightDetail = lazy(() => import("./pages/FlightDetail"));
 const HotelDetail = lazy(() => import("./pages/HotelDetail"));
 const MerchantShop = lazy(() => import("./pages/MerchantShop"));
 const ShopCart = lazy(() => import("./pages/ShopCart"));
+const Checkout = lazy(() => import("./pages/Checkout"));
 const MyOrders = lazy(() => import("./pages/MyOrders"));
 const OrderDetail = lazy(() => import("./pages/OrderDetail"));
 const ProductDetail = lazy(() => import("./pages/ProductDetail"));
@@ -214,6 +215,7 @@ const AppRoutes = () => {
       {/* Merchant Shop Routes */}
       <Route path="/shop/:merchantId" element={<MerchantShop />} />
       <Route path="/shop/:merchantId/cart" element={<ShopCart />} />
+      <Route path="/shop/:merchantId/checkout" element={<Checkout />} />
       <Route path="/product/:productId" element={<ProductDetail />} />
       <Route path="/orders" element={<MyOrders />} />
       <Route path="/orders/:orderNumber" element={<OrderDetail />} />

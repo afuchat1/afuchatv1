@@ -622,6 +622,7 @@ export type Database = {
           is_favorite: boolean | null
           is_group: boolean | null
           is_pinned: boolean | null
+          is_system_notifications: boolean | null
           is_verified: boolean | null
           member_limit: number | null
           name: string | null
@@ -640,6 +641,7 @@ export type Database = {
           is_favorite?: boolean | null
           is_group?: boolean | null
           is_pinned?: boolean | null
+          is_system_notifications?: boolean | null
           is_verified?: boolean | null
           member_limit?: number | null
           name?: string | null
@@ -658,6 +660,7 @@ export type Database = {
           is_favorite?: boolean | null
           is_group?: boolean | null
           is_pinned?: boolean | null
+          is_system_notifications?: boolean | null
           is_verified?: boolean | null
           member_limit?: number | null
           name?: string | null
@@ -3086,6 +3089,65 @@ export type Database = {
           tier?: string | null
         }
         Relationships: []
+      }
+      support_tickets: {
+        Row: {
+          chat_id: string | null
+          created_at: string
+          id: string
+          order_id: string | null
+          status: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          chat_id?: string | null
+          created_at?: string
+          id?: string
+          order_id?: string | null
+          status?: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          chat_id?: string | null
+          created_at?: string
+          id?: string
+          order_id?: string | null
+          status?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "support_tickets_chat_id_fkey"
+            columns: ["chat_id"]
+            isOneToOne: false
+            referencedRelation: "chats"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "support_tickets_order_id_fkey"
+            columns: ["order_id"]
+            isOneToOne: false
+            referencedRelation: "merchant_orders"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "support_tickets_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "support_tickets_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "public_profiles"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       supported_languages: {
         Row: {
