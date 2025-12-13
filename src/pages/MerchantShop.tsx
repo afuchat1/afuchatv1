@@ -12,6 +12,7 @@ import { motion } from 'framer-motion';
 import Layout from '@/components/Layout';
 import { CustomLoader } from '@/components/ui/CustomLoader';
 import { formatPriceForCountry } from '@/lib/currencyUtils';
+import shopshachLogo from '@/assets/shopshach-logo.png';
 
 interface Product {
   id: string;
@@ -194,11 +195,7 @@ export default function MerchantShop() {
                 <ArrowLeft className="h-5 w-5" />
               </Button>
               <div className="flex items-center gap-2">
-                {merchant.logo_url ? (
-                  <img src={merchant.logo_url} alt={merchant.name} className="h-8 w-8 rounded-full object-cover" />
-                ) : (
-                  <Store className="h-8 w-8 text-primary" />
-                )}
+                <img src={shopshachLogo} alt={merchant.name} className="h-8 w-8 rounded-full object-cover" />
                 <div>
                   <h1 className="font-semibold">{merchant.name}</h1>
                   <p className="text-xs text-muted-foreground">{products.length} products</p>
