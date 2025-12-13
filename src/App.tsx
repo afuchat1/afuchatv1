@@ -94,6 +94,10 @@ const EventDetail = lazy(() => import("./pages/EventDetail"));
 const ServiceDetail = lazy(() => import("./pages/ServiceDetail"));
 const FlightDetail = lazy(() => import("./pages/FlightDetail"));
 const HotelDetail = lazy(() => import("./pages/HotelDetail"));
+const MerchantShop = lazy(() => import("./pages/MerchantShop"));
+const ShopCart = lazy(() => import("./pages/ShopCart"));
+const MyOrders = lazy(() => import("./pages/MyOrders"));
+const OrderDetail = lazy(() => import("./pages/OrderDetail"));
 import Layout from "./components/Layout";
 
 const queryClient = new QueryClient({
@@ -205,6 +209,12 @@ const AppRoutes = () => {
       <Route path="/travel/hotel/:id" element={<Layout><HotelDetail /></Layout>} />
       <Route path="/events" element={<Layout><Events /></Layout>} />
       <Route path="/events/:id" element={<Layout><EventDetail /></Layout>} />
+      
+      {/* Merchant Shop Routes */}
+      <Route path="/shop/:merchantId" element={<MerchantShop />} />
+      <Route path="/shop/:merchantId/cart" element={<ShopCart />} />
+      <Route path="/orders" element={<MyOrders />} />
+      <Route path="/orders/:orderNumber" element={<OrderDetail />} />
 
       <Route path="/profile/:userId" element={<ProfileRedirect />} />
 
