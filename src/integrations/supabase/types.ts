@@ -3735,6 +3735,7 @@ export type Database = {
       }
       calculate_grade: { Args: { xp_amount: number }; Returns: string }
       can_claim_red_envelope: { Args: { p_user_id: string }; Returns: boolean }
+      cancel_active_subscription: { Args: never; Returns: Json }
       check_and_unlock_accessories: {
         Args: { p_user_id: string }
         Returns: Json
