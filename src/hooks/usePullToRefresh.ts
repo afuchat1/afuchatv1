@@ -7,28 +7,30 @@ interface UsePullToRefreshOptions {
   maxPull?: number;
   disabled?: boolean;
   successMessage?: string;
+  minPullToActivate?: number;
 }
 
 export const usePullToRefresh = ({
   onRefresh,
-  threshold = 70,
-  maxPull = 140,
+  threshold = 100,
+  maxPull = 160,
   disabled = false,
   successMessage = 'Refreshed!',
+  minPullToActivate = 20,
 }: UsePullToRefreshOptions) => {
   const [isRefreshing, setIsRefreshing] = useState(false);
   const [pullDistance, setPullDistance] = useState(0);
   const [showSuccess, setShowSuccess] = useState(false);
   
   const startY = useRef(0);
+  const startX = useRef(0);
   const currentPullDistance = useRef(0);
   const isPullingRef = useRef(false);
   const isRefreshingRef = useRef(false);
   const onRefreshRef = useRef(onRefresh);
   const rafId = useRef<number>();
-  const velocityRef = useRef(0);
-  const lastYRef = useRef(0);
-  const lastTimeRef = useRef(0);
+  const isHorizontalScrollRef = useRef(false);
+  const hasDecidedDirectionRef = useRef(false);
 
   // Keep ref updated
   useEffect(() => {
@@ -49,8 +51,8 @@ export const usePullToRefresh = ({
         return;
       }
       
-      // Spring physics - ease back to 0
-      const springForce = current * 0.15;
+      // Faster spring back for snappier feel
+      const springForce = current * 0.25;
       currentPullDistance.current = current - springForce;
       setPullDistance(Math.max(0, currentPullDistance.current));
       
@@ -64,13 +66,13 @@ export const usePullToRefresh = ({
     if (disabled) return;
 
     const handleTouchStart = (e: TouchEvent) => {
-      // Only trigger if at top of page
-      if (window.scrollY <= 5 && !isRefreshingRef.current) {
+      // Only trigger if at very top of page and not refreshing
+      if (window.scrollY <= 2 && !isRefreshingRef.current) {
         startY.current = e.touches[0].pageY;
-        lastYRef.current = e.touches[0].pageY;
-        lastTimeRef.current = Date.now();
+        startX.current = e.touches[0].pageX;
         isPullingRef.current = true;
-        velocityRef.current = 0;
+        isHorizontalScrollRef.current = false;
+        hasDecidedDirectionRef.current = false;
         
         // Cancel any existing animation
         if (rafId.current) {
@@ -83,30 +85,41 @@ export const usePullToRefresh = ({
       if (!isPullingRef.current || isRefreshingRef.current) return;
 
       const currentY = e.touches[0].pageY;
-      const currentTime = Date.now();
+      const currentX = e.touches[0].pageX;
+      const deltaY = currentY - startY.current;
+      const deltaX = currentX - startX.current;
       
-      // Calculate velocity for smoother feel
-      const deltaTime = currentTime - lastTimeRef.current;
-      if (deltaTime > 0) {
-        velocityRef.current = (currentY - lastYRef.current) / deltaTime;
+      // Determine scroll direction on first significant movement
+      if (!hasDecidedDirectionRef.current && (Math.abs(deltaY) > 10 || Math.abs(deltaX) > 10)) {
+        hasDecidedDirectionRef.current = true;
+        // If horizontal movement is greater, it's a horizontal scroll (e.g., product carousel)
+        if (Math.abs(deltaX) > Math.abs(deltaY) * 1.5) {
+          isHorizontalScrollRef.current = true;
+          isPullingRef.current = false;
+          return;
+        }
       }
-      lastYRef.current = currentY;
-      lastTimeRef.current = currentTime;
       
-      // Apply resistance curve for more natural feel
-      const rawDistance = currentY - startY.current;
-      const resistance = 0.5; // Higher = more resistance
-      const resistedDistance = rawDistance > 0 
-        ? Math.pow(rawDistance, 1 - resistance * 0.3) * 2
-        : 0;
+      // Skip if determined to be horizontal scroll
+      if (isHorizontalScrollRef.current) return;
+      
+      // Only proceed if pulling down and at top
+      if (deltaY <= minPullToActivate || window.scrollY > 2) {
+        return;
+      }
+      
+      // Apply strong resistance curve for deliberate pull feel
+      const rawDistance = deltaY - minPullToActivate;
+      const resistance = 0.6; // Higher resistance = harder to pull
+      const resistedDistance = Math.pow(Math.max(0, rawDistance), 1 - resistance * 0.4) * 1.5;
       
       const distance = Math.min(Math.max(0, resistedDistance), maxPull);
 
-      if (distance > 0 && window.scrollY <= 5) {
+      if (distance > 0) {
         e.preventDefault();
         currentPullDistance.current = distance;
         
-        // Use RAF for smooth 60fps updates
+        // Use RAF for smooth updates
         if (rafId.current) {
           cancelAnimationFrame(rafId.current);
         }
@@ -117,10 +130,12 @@ export const usePullToRefresh = ({
     };
 
     const handleTouchEnd = async () => {
-      if (!isPullingRef.current) return;
+      if (!isPullingRef.current && !currentPullDistance.current) return;
 
       const distance = currentPullDistance.current;
       isPullingRef.current = false;
+      isHorizontalScrollRef.current = false;
+      hasDecidedDirectionRef.current = false;
 
       if (distance >= threshold && !isRefreshingRef.current) {
         // Trigger refresh
@@ -128,8 +143,8 @@ export const usePullToRefresh = ({
         isRefreshingRef.current = true;
         
         // Keep indicator visible during refresh
-        currentPullDistance.current = 60;
-        setPullDistance(60);
+        currentPullDistance.current = 50;
+        setPullDistance(50);
         
         try {
           await onRefreshRef.current();
@@ -138,7 +153,7 @@ export const usePullToRefresh = ({
           setShowSuccess(true);
           setTimeout(() => {
             setShowSuccess(false);
-          }, 800);
+          }, 600);
           
         } catch (error) {
           console.error('Pull to refresh error:', error);
@@ -148,7 +163,7 @@ export const usePullToRefresh = ({
           isRefreshingRef.current = false;
           
           // Animate back to 0
-          currentPullDistance.current = 60;
+          currentPullDistance.current = 50;
           animatePullBack();
         }
       } else {
@@ -157,7 +172,7 @@ export const usePullToRefresh = ({
       }
       
       startY.current = 0;
-      velocityRef.current = 0;
+      startX.current = 0;
     };
 
     const options: AddEventListenerOptions = { passive: false };
@@ -176,7 +191,7 @@ export const usePullToRefresh = ({
         cancelAnimationFrame(rafId.current);
       }
     };
-  }, [disabled, maxPull, threshold, animatePullBack]);
+  }, [disabled, maxPull, threshold, minPullToActivate, animatePullBack]);
 
   const progress = Math.min(pullDistance / threshold, 1);
 
@@ -186,12 +201,12 @@ export const usePullToRefresh = ({
     
     setIsRefreshing(true);
     isRefreshingRef.current = true;
-    setPullDistance(60);
+    setPullDistance(50);
     
     try {
       await onRefreshRef.current();
       setShowSuccess(true);
-      setTimeout(() => setShowSuccess(false), 800);
+      setTimeout(() => setShowSuccess(false), 600);
     } catch (error) {
       console.error('Manual refresh error:', error);
       toast.error('Failed to refresh');

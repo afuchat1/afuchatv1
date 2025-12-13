@@ -2262,8 +2262,9 @@ const Feed = ({ defaultTab = 'foryou', guestMode = false }: FeedProps = {}) => {
     refresh: manualRefresh 
   } = usePullToRefresh({
     onRefresh: handlePullRefresh,
-    threshold: 70,
-    maxPull: 140,
+    threshold: 100,
+    maxPull: 160,
+    minPullToActivate: 25,
     disabled: false,
   });
 
