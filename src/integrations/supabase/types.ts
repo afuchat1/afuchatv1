@@ -1428,6 +1428,45 @@ export type Database = {
           },
         ]
       }
+      merchant_customer_chats: {
+        Row: {
+          chat_id: string
+          created_at: string | null
+          customer_id: string
+          id: string
+          merchant_id: string
+        }
+        Insert: {
+          chat_id: string
+          created_at?: string | null
+          customer_id: string
+          id?: string
+          merchant_id: string
+        }
+        Update: {
+          chat_id?: string
+          created_at?: string | null
+          customer_id?: string
+          id?: string
+          merchant_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "merchant_customer_chats_chat_id_fkey"
+            columns: ["chat_id"]
+            isOneToOne: false
+            referencedRelation: "chats"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "merchant_customer_chats_merchant_id_fkey"
+            columns: ["merchant_id"]
+            isOneToOne: false
+            referencedRelation: "merchants"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       merchant_order_items: {
         Row: {
           created_at: string | null
@@ -1882,6 +1921,7 @@ export type Database = {
           edited_at: string | null
           encrypted_content: string
           id: string
+          order_context: Json | null
           read_at: string | null
           reply_to_message_id: string | null
           sender_id: string | null
@@ -1900,6 +1940,7 @@ export type Database = {
           edited_at?: string | null
           encrypted_content: string
           id?: string
+          order_context?: Json | null
           read_at?: string | null
           reply_to_message_id?: string | null
           sender_id?: string | null
@@ -1918,6 +1959,7 @@ export type Database = {
           edited_at?: string | null
           encrypted_content?: string
           id?: string
+          order_context?: Json | null
           read_at?: string | null
           reply_to_message_id?: string | null
           sender_id?: string | null
@@ -3089,65 +3131,6 @@ export type Database = {
           tier?: string | null
         }
         Relationships: []
-      }
-      support_tickets: {
-        Row: {
-          chat_id: string | null
-          created_at: string
-          id: string
-          order_id: string | null
-          status: string
-          updated_at: string
-          user_id: string
-        }
-        Insert: {
-          chat_id?: string | null
-          created_at?: string
-          id?: string
-          order_id?: string | null
-          status?: string
-          updated_at?: string
-          user_id: string
-        }
-        Update: {
-          chat_id?: string | null
-          created_at?: string
-          id?: string
-          order_id?: string | null
-          status?: string
-          updated_at?: string
-          user_id?: string
-        }
-        Relationships: [
-          {
-            foreignKeyName: "support_tickets_chat_id_fkey"
-            columns: ["chat_id"]
-            isOneToOne: false
-            referencedRelation: "chats"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "support_tickets_order_id_fkey"
-            columns: ["order_id"]
-            isOneToOne: false
-            referencedRelation: "merchant_orders"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "support_tickets_user_id_fkey"
-            columns: ["user_id"]
-            isOneToOne: false
-            referencedRelation: "profiles"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "support_tickets_user_id_fkey"
-            columns: ["user_id"]
-            isOneToOne: false
-            referencedRelation: "public_profiles"
-            referencedColumns: ["id"]
-          },
-        ]
       }
       supported_languages: {
         Row: {

@@ -5,6 +5,8 @@ import { useState, useRef, useCallback } from 'react';
 import { toast } from 'sonner';
 import { Link } from 'react-router-dom';
 import { MessageActionsSheet } from './MessageActionsSheet';
+import { OrderNotificationActions } from '@/components/shop/OrderNotificationActions';
+import { useAuth } from '@/contexts/AuthContext';
 
 // Helper function to parse message content with clickable links, mentions, and hashtags
 const parseMessageContent = (content: string): React.ReactNode => {
@@ -93,6 +95,15 @@ export interface Message {
   sent_at: string;
   edited_at?: string | null;
   reply_to_message_id?: string | null;
+  order_context?: {
+    order_number?: string;
+    order_id?: string;
+    customer_id?: string;
+    customer_name?: string;
+    total?: number;
+    type?: 'new_order' | 'cancellation' | 'refund_request' | 'status_update';
+    payment_method?: string;
+  } | null;
   message_reactions?: Reaction[];
   reply_to_message?: Array<{
     audio_url?: string;
@@ -168,12 +179,17 @@ export const MessageBubble = ({
   isChannel = false,
   viewCount = 0,
 }: MessageBubbleProps) => {
+  const { user } = useAuth();
   const [actionsSheetOpen, setActionsSheetOpen] = useState(false);
   const longPressTimerRef = useRef<NodeJS.Timeout | null>(null);
   const isLongPressRef = useRef(false);
   const time = new Date(message.sent_at).toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' });
   const isVoice = !!message.audio_url;
   const hasAttachment = !!message.attachment_url;
+  const hasOrderContext = !!message.order_context;
+  
+  // Check if current user is ShopShack admin
+  const isShopShackAdmin = user?.id === '629333cf-087e-4283-8a09-a44282dda98b';
 
   const formatAudioTime = (seconds: number) => {
     const mins = Math.floor(seconds / 60);
@@ -457,8 +473,14 @@ export const MessageBubble = ({
         ) : (
           <div className="px-2 py-1">
             <span className="leading-snug whitespace-pre-wrap break-words" style={{ fontSize: `${fontSize}px` }}>
-              {parseMessageContent(message.encrypted_content)}
+              {parseMessageContent(message.encrypted_content.replace(/\[ACTION_BUTTONS:[^\]]+\]/g, ''))}
             </span>
+            {hasOrderContext && message.order_context && (
+              <OrderNotificationActions 
+                orderContext={message.order_context}
+                isAdmin={isShopShackAdmin}
+              />
+            )}
             <span className="inline-flex items-center gap-0.5 ml-1.5 align-bottom float-right translate-y-0.5">
               <span className="text-[10px] opacity-70">{time}</span>
               <ReadStatus />

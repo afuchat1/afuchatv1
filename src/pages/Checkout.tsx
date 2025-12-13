@@ -16,6 +16,7 @@ import { CustomLoader } from '@/components/ui/CustomLoader';
 import { formatPriceForCountry } from '@/lib/currencyUtils';
 
 const SHOPSHACK_USER_ID = '629333cf-087e-4283-8a09-a44282dda98b';
+const SHOPSHACK_ADMIN_NOTIFICATIONS_CHAT_ID = 'a0000000-0000-0000-0000-000000000001';
 
 interface CartProduct {
   id: string;
@@ -174,66 +175,31 @@ export default function Checkout() {
     if (!user) return;
 
     try {
-      // Find or create the ShopShack Updates system notifications chat
-      const { data: existingChat } = await supabase
-        .from('chats')
-        .select('id')
-        .eq('is_system_notifications', true)
-        .eq('name', 'ShopShack Updates')
-        .maybeSingle();
+      // Get user profile for notification
+      const { data: userProfile } = await supabase
+        .from('profiles')
+        .select('display_name, handle')
+        .eq('id', user.id)
+        .single();
 
-      let systemChatId = existingChat?.id;
+      const customerName = userProfile?.display_name || userProfile?.handle || 'Customer';
 
-      if (!systemChatId) {
-        // Create system notifications chat
-        const { data: newChat } = await supabase
-          .from('chats')
-          .insert({
-            created_by: SHOPSHACK_USER_ID,
-            name: 'ShopShack Updates',
-            is_channel: true,
-            is_system_notifications: true,
-            avatar_url: null,
-            description: 'Order updates and notifications from ShopShack'
-          })
-          .select('id')
-          .single();
-
-        if (newChat) {
-          systemChatId = newChat.id;
-          // Add user as member
-          await supabase.from('chat_members').insert([
-            { chat_id: systemChatId, user_id: SHOPSHACK_USER_ID, is_admin: true },
-            { chat_id: systemChatId, user_id: user.id }
-          ]);
+      // Send notification to ShopShack Admin Notifications Chat (only visible to ShopShack)
+      await supabase.from('messages').insert({
+        chat_id: SHOPSHACK_ADMIN_NOTIFICATIONS_CHAT_ID,
+        sender_id: SHOPSHACK_USER_ID,
+        encrypted_content: `🆕 **New Order Received!**\n\n📦 Order: ${orderNumber}\n👤 Customer: ${customerName}\n💰 Total: UGX ${total.toLocaleString()}\n💳 Payment: ${paymentMethod === 'mobile_money' ? 'Mobile Money' : 'Cash on Delivery'}\n\n[ACTION_BUTTONS:view_order:${orderNumber}]`,
+        order_context: {
+          order_number: orderNumber,
+          customer_id: user.id,
+          customer_name: customerName,
+          total: total,
+          payment_method: paymentMethod,
+          type: 'new_order'
         }
-      } else {
-        // Ensure user is a member
-        const { data: membership } = await supabase
-          .from('chat_members')
-          .select('id')
-          .eq('chat_id', systemChatId)
-          .eq('user_id', user.id)
-          .maybeSingle();
-
-        if (!membership) {
-          await supabase.from('chat_members').insert({
-            chat_id: systemChatId,
-            user_id: user.id
-          });
-        }
-      }
-
-      // Send order notification message
-      if (systemChatId) {
-        await supabase.from('messages').insert({
-          chat_id: systemChatId,
-          sender_id: SHOPSHACK_USER_ID,
-          encrypted_content: `📦 **Order Placed!**\n\nOrder: ${orderNumber}\nTotal: UGX ${total.toLocaleString()}\nPayment: ${paymentMethod === 'mobile_money' ? 'Mobile Money' : 'Cash on Delivery'}\n\nWe'll update you when your order status changes.`
-        });
-      }
+      });
     } catch (error) {
-      console.error('Error sending system notification:', error);
+      console.error('Error sending admin notification:', error);
     }
   };
 

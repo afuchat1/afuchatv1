@@ -12,6 +12,7 @@ import Layout from '@/components/Layout';
 import { CustomLoader } from '@/components/ui/CustomLoader';
 
 const SHOPSHACK_USER_ID = '629333cf-087e-4283-8a09-a44282dda98b';
+
 interface OrderItem {
   id: string;
   product_name: string;
@@ -27,6 +28,7 @@ interface Order {
   status: string;
   payment_status: string;
   created_at: string;
+  merchant_id: string;
   merchant: {
     name: string;
   };
@@ -86,6 +88,7 @@ export default function OrderDetail() {
           status,
           payment_status,
           created_at,
+          merchant_id,
           merchant:merchants(name)
         `)
         .eq('order_number', orderNumber)
@@ -111,51 +114,31 @@ export default function OrderDetail() {
   };
 
   const handleContactSupport = async () => {
-    if (!user) {
+    if (!user || !order) {
       toast.error('Please sign in to contact support');
       return;
     }
 
     setContactingSupport(true);
     try {
-      // Find a 1-on-1 chat between user and ShopShack
-      const { data: userChats } = await supabase
-        .from('chat_members')
+      // Check if there's an existing customer chat with this merchant
+      const { data: existingChat } = await supabase
+        .from('merchant_customer_chats')
         .select('chat_id')
-        .eq('user_id', user.id);
+        .eq('merchant_id', order.merchant_id)
+        .eq('customer_id', user.id)
+        .maybeSingle();
 
-      const { data: shopshackChats } = await supabase
-        .from('chat_members')
-        .select('chat_id')
-        .eq('user_id', SHOPSHACK_USER_ID);
+      let chatId = existingChat?.chat_id;
 
-      const userChatIds = userChats?.map(c => c.chat_id) || [];
-      const shopshackChatIds = shopshackChats?.map(c => c.chat_id) || [];
-      const commonChatIds = userChatIds.filter(id => shopshackChatIds.includes(id));
-
-      let chatId: string | null = null;
-
-      // Check if any common chat is a 1-on-1 (not group)
-      if (commonChatIds.length > 0) {
-        const { data: chat } = await supabase
-          .from('chats')
-          .select('id')
-          .in('id', commonChatIds)
-          .eq('is_group', false)
-          .maybeSingle();
-
-        if (chat) {
-          chatId = chat.id;
-        }
-      }
-
-      // Create new chat if doesn't exist
       if (!chatId) {
+        // Create a new chat for this customer-merchant relationship
         const { data: newChat, error: chatError } = await supabase
           .from('chats')
           .insert({
             created_by: user.id,
-            is_group: false
+            is_group: false,
+            name: null
           })
           .select('id')
           .single();
@@ -169,21 +152,25 @@ export default function OrderDetail() {
           { chat_id: chatId, user_id: SHOPSHACK_USER_ID }
         ]);
 
-        // Create support ticket
-        await supabase.from('support_tickets').insert({
-          order_id: order.id,
-          user_id: user.id,
-          chat_id: chatId,
-          status: 'open'
-        });
-
-        // Send initial support ticket message
-        await supabase.from('messages').insert({
-          chat_id: chatId,
-          sender_id: user.id,
-          encrypted_content: `🎫 **Support Ticket Created**\n\nOrder: ${order?.order_number}\nTotal: UGX ${order?.total_amount.toLocaleString()}\n\nHow can we help you today?`
+        // Track the customer-merchant chat relationship
+        await supabase.from('merchant_customer_chats').insert({
+          merchant_id: order.merchant_id,
+          customer_id: user.id,
+          chat_id: chatId
         });
       }
+
+      // Send an order-context message
+      await supabase.from('messages').insert({
+        chat_id: chatId,
+        sender_id: user.id,
+        encrypted_content: `📦 **Order Support Request**\n\nOrder: ${order.order_number}\nTotal: UGX ${order.total_amount.toLocaleString()}\nStatus: ${statusConfig[order.status]?.label || order.status}\n\nHow can we help you today?`,
+        order_context: {
+          order_id: order.id,
+          order_number: order.order_number,
+          status: order.status
+        }
+      });
 
       navigate(`/chats/${chatId}`);
     } catch (error) {
