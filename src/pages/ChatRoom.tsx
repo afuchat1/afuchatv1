@@ -55,6 +55,15 @@ interface Message {
   edited_at?: string | null;
   reply_to_message_id?: string | null;
   view_count?: number; // For channel messages
+  order_context?: {
+    order_number?: string;
+    order_id?: string;
+    customer_id?: string;
+    customer_name?: string;
+    total?: number;
+    type?: 'new_order' | 'cancellation' | 'refund_request' | 'status_update';
+    payment_method?: string;
+  } | null;
   message_reactions?: Array<{
     reaction: string;
     user_id: string;
@@ -407,6 +416,7 @@ const ChatRoom = ({ isEmbedded = false }: ChatRoomProps) => {
               sent_at: payload.new.sent_at,
               reply_to_message_id: payload.new.reply_to_message_id,
               reply_to_message: replyData,
+              order_context: payload.new.order_context,
               profiles: profile,
               message_status: [],
               message_reactions: [],
