@@ -100,6 +100,8 @@ const Checkout = lazy(() => import("./pages/Checkout"));
 const MyOrders = lazy(() => import("./pages/MyOrders"));
 const OrderDetail = lazy(() => import("./pages/OrderDetail"));
 const ProductDetail = lazy(() => import("./pages/ProductDetail"));
+const MerchantOrders = lazy(() => import("./pages/MerchantOrders"));
+const MerchantOrderDetail = lazy(() => import("./pages/MerchantOrderDetail"));
 import Layout from "./components/Layout";
 
 const queryClient = new QueryClient({
@@ -220,6 +222,10 @@ const AppRoutes = () => {
       <Route path="/orders" element={<MyOrders />} />
       <Route path="/orders/:orderNumber" element={<OrderDetail />} />
       <Route path="/order/:orderNumber" element={<OrderDetail />} />
+      
+      {/* Merchant Order Management Routes */}
+      <Route path="/merchant/orders" element={<MerchantOrders />} />
+      <Route path="/merchant/orders/:orderNumber" element={<MerchantOrderDetail />} />
 
       <Route path="/profile/:userId" element={<ProfileRedirect />} />
 
