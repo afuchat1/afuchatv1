@@ -41,3 +41,6 @@ verify_jwt = false
 
 [functions.distribute-creator-rewards]
 verify_jwt = false
+
+[functions.sync-merchant-products]
+verify_jwt = true

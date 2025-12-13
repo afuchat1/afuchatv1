@@ -1425,6 +1425,269 @@ export type Database = {
           },
         ]
       }
+      merchant_order_items: {
+        Row: {
+          created_at: string | null
+          id: string
+          order_id: string
+          product_id: string | null
+          product_name: string
+          product_price: number
+          quantity: number
+          subtotal: number
+        }
+        Insert: {
+          created_at?: string | null
+          id?: string
+          order_id: string
+          product_id?: string | null
+          product_name: string
+          product_price: number
+          quantity: number
+          subtotal: number
+        }
+        Update: {
+          created_at?: string | null
+          id?: string
+          order_id?: string
+          product_id?: string | null
+          product_name?: string
+          product_price?: number
+          quantity?: number
+          subtotal?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "merchant_order_items_order_id_fkey"
+            columns: ["order_id"]
+            isOneToOne: false
+            referencedRelation: "merchant_orders"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "merchant_order_items_product_id_fkey"
+            columns: ["product_id"]
+            isOneToOne: false
+            referencedRelation: "merchant_products"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      merchant_orders: {
+        Row: {
+          buyer_id: string
+          commission_amount: number
+          commission_rate: number
+          created_at: string | null
+          id: string
+          merchant_id: string
+          notes: string | null
+          order_number: string
+          payment_status: string
+          status: string
+          total_amount: number
+          updated_at: string | null
+        }
+        Insert: {
+          buyer_id: string
+          commission_amount: number
+          commission_rate: number
+          created_at?: string | null
+          id?: string
+          merchant_id: string
+          notes?: string | null
+          order_number: string
+          payment_status?: string
+          status?: string
+          total_amount: number
+          updated_at?: string | null
+        }
+        Update: {
+          buyer_id?: string
+          commission_amount?: number
+          commission_rate?: number
+          created_at?: string | null
+          id?: string
+          merchant_id?: string
+          notes?: string | null
+          order_number?: string
+          payment_status?: string
+          status?: string
+          total_amount?: number
+          updated_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "merchant_orders_buyer_id_fkey"
+            columns: ["buyer_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "merchant_orders_buyer_id_fkey"
+            columns: ["buyer_id"]
+            isOneToOne: false
+            referencedRelation: "public_profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "merchant_orders_merchant_id_fkey"
+            columns: ["merchant_id"]
+            isOneToOne: false
+            referencedRelation: "merchants"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      merchant_products: {
+        Row: {
+          category: string | null
+          created_at: string | null
+          description: string | null
+          external_id: string
+          id: string
+          image_url: string | null
+          is_available: boolean | null
+          merchant_id: string
+          name: string
+          price: number
+          stock: number | null
+          updated_at: string | null
+        }
+        Insert: {
+          category?: string | null
+          created_at?: string | null
+          description?: string | null
+          external_id: string
+          id?: string
+          image_url?: string | null
+          is_available?: boolean | null
+          merchant_id: string
+          name: string
+          price: number
+          stock?: number | null
+          updated_at?: string | null
+        }
+        Update: {
+          category?: string | null
+          created_at?: string | null
+          description?: string | null
+          external_id?: string
+          id?: string
+          image_url?: string | null
+          is_available?: boolean | null
+          merchant_id?: string
+          name?: string
+          price?: number
+          stock?: number | null
+          updated_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "merchant_products_merchant_id_fkey"
+            columns: ["merchant_id"]
+            isOneToOne: false
+            referencedRelation: "merchants"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      merchant_wallet: {
+        Row: {
+          id: string
+          merchant_id: string
+          total_commission_owed: number | null
+          total_commission_paid: number | null
+          total_sales: number | null
+          updated_at: string | null
+        }
+        Insert: {
+          id?: string
+          merchant_id: string
+          total_commission_owed?: number | null
+          total_commission_paid?: number | null
+          total_sales?: number | null
+          updated_at?: string | null
+        }
+        Update: {
+          id?: string
+          merchant_id?: string
+          total_commission_owed?: number | null
+          total_commission_paid?: number | null
+          total_sales?: number | null
+          updated_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "merchant_wallet_merchant_id_fkey"
+            columns: ["merchant_id"]
+            isOneToOne: true
+            referencedRelation: "merchants"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      merchants: {
+        Row: {
+          api_endpoint: string
+          api_key: string | null
+          commission_rate: number
+          created_at: string | null
+          description: string | null
+          id: string
+          is_active: boolean | null
+          last_sync_at: string | null
+          logo_url: string | null
+          name: string
+          updated_at: string | null
+          user_id: string
+        }
+        Insert: {
+          api_endpoint: string
+          api_key?: string | null
+          commission_rate?: number
+          created_at?: string | null
+          description?: string | null
+          id?: string
+          is_active?: boolean | null
+          last_sync_at?: string | null
+          logo_url?: string | null
+          name: string
+          updated_at?: string | null
+          user_id: string
+        }
+        Update: {
+          api_endpoint?: string
+          api_key?: string | null
+          commission_rate?: number
+          created_at?: string | null
+          description?: string | null
+          id?: string
+          is_active?: boolean | null
+          last_sync_at?: string | null
+          logo_url?: string | null
+          name?: string
+          updated_at?: string | null
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "merchants_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: true
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "merchants_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: true
+            referencedRelation: "public_profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       message_reactions: {
         Row: {
           created_at: string | null
@@ -2645,6 +2908,55 @@ export type Database = {
         }
         Relationships: []
       }
+      shopping_cart: {
+        Row: {
+          created_at: string | null
+          id: string
+          product_id: string
+          quantity: number
+          updated_at: string | null
+          user_id: string
+        }
+        Insert: {
+          created_at?: string | null
+          id?: string
+          product_id: string
+          quantity?: number
+          updated_at?: string | null
+          user_id: string
+        }
+        Update: {
+          created_at?: string | null
+          id?: string
+          product_id?: string
+          quantity?: number
+          updated_at?: string | null
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "shopping_cart_product_id_fkey"
+            columns: ["product_id"]
+            isOneToOne: false
+            referencedRelation: "merchant_products"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "shopping_cart_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "shopping_cart_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "public_profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       stories: {
         Row: {
           caption: string | null
@@ -3400,6 +3712,7 @@ export type Database = {
         }[]
       }
       create_new_chat: { Args: { other_user_id: string }; Returns: string }
+      create_order_from_cart: { Args: { p_merchant_id: string }; Returns: Json }
       create_red_envelope: {
         Args: {
           p_chat_id?: string
@@ -3414,6 +3727,7 @@ export type Database = {
       delete_chat_for_both: { Args: { p_chat_id: string }; Returns: boolean }
       distribute_daily_creator_rewards: { Args: never; Returns: Json }
       expire_subscriptions: { Args: never; Returns: number }
+      generate_order_number: { Args: never; Returns: string }
       get_daily_engagement: {
         Args: { p_date?: string; p_user_id: string }
         Returns: Json

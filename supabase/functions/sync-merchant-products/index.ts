@@ -1,0 +1,136 @@
+import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
+import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
+
+const corsHeaders = {
+  'Access-Control-Allow-Origin': '*',
+  'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
+};
+
+serve(async (req) => {
+  if (req.method === 'OPTIONS') {
+    return new Response(null, { headers: corsHeaders });
+  }
+
+  try {
+    const supabaseUrl = Deno.env.get('SUPABASE_URL')!;
+    const supabaseServiceKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!;
+    const supabase = createClient(supabaseUrl, supabaseServiceKey);
+
+    const { merchant_id } = await req.json();
+
+    console.log('Syncing products for merchant:', merchant_id);
+
+    // Get merchant details
+    const { data: merchant, error: merchantError } = await supabase
+      .from('merchants')
+      .select('*')
+      .eq('id', merchant_id)
+      .single();
+
+    if (merchantError || !merchant) {
+      console.error('Merchant not found:', merchantError);
+      return new Response(
+        JSON.stringify({ success: false, error: 'Merchant not found' }),
+        { headers: { ...corsHeaders, 'Content-Type': 'application/json' }, status: 404 }
+      );
+    }
+
+    console.log('Fetching products from:', merchant.api_endpoint);
+
+    // Fetch products from merchant API
+    const headers: Record<string, string> = {
+      'Content-Type': 'application/json',
+    };
+    
+    if (merchant.api_key) {
+      headers['Authorization'] = `Bearer ${merchant.api_key}`;
+    }
+
+    const apiResponse = await fetch(merchant.api_endpoint, { headers });
+    
+    if (!apiResponse.ok) {
+      console.error('API fetch failed:', apiResponse.status, apiResponse.statusText);
+      return new Response(
+        JSON.stringify({ success: false, error: 'Failed to fetch products from merchant API' }),
+        { headers: { ...corsHeaders, 'Content-Type': 'application/json' }, status: 502 }
+      );
+    }
+
+    const productsData = await apiResponse.json();
+    console.log('Received products:', productsData.length || 'unknown count');
+
+    // Handle different response formats
+    const products = Array.isArray(productsData) ? productsData : productsData.products || [];
+
+    if (!Array.isArray(products)) {
+      console.error('Invalid products format');
+      return new Response(
+        JSON.stringify({ success: false, error: 'Invalid products format from API' }),
+        { headers: { ...corsHeaders, 'Content-Type': 'application/json' }, status: 400 }
+      );
+    }
+
+    let synced = 0;
+    let errors = 0;
+
+    for (const product of products) {
+      try {
+        const productData = {
+          merchant_id: merchant.id,
+          external_id: String(product.id),
+          name: product.name,
+          description: product.description || null,
+          price: parseFloat(product.price) || 0,
+          stock: parseInt(product.stock) || 0,
+          category: product.category || null,
+          image_url: product.image_url || product.imageUrl || product.image || null,
+          is_available: (parseInt(product.stock) || 0) > 0,
+          updated_at: new Date().toISOString(),
+        };
+
+        const { error: upsertError } = await supabase
+          .from('merchant_products')
+          .upsert(productData, { 
+            onConflict: 'merchant_id,external_id',
+            ignoreDuplicates: false 
+          });
+
+        if (upsertError) {
+          console.error('Error upserting product:', product.id, upsertError);
+          errors++;
+        } else {
+          synced++;
+        }
+      } catch (e) {
+        console.error('Error processing product:', product.id, e);
+        errors++;
+      }
+    }
+
+    // Update last sync time
+    await supabase
+      .from('merchants')
+      .update({ last_sync_at: new Date().toISOString() })
+      .eq('id', merchant.id);
+
+    console.log(`Sync complete: ${synced} synced, ${errors} errors`);
+
+    return new Response(
+      JSON.stringify({ 
+        success: true, 
+        synced, 
+        errors,
+        total: products.length 
+      }),
+      { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+    );
+
+  } catch (error: unknown) {
+    const errorMessage = error instanceof Error ? error.message : 'Unknown error';
+    console.error('Sync error:', error);
+    return new Response(
+      JSON.stringify({ success: false, error: errorMessage }),
+      { headers: { ...corsHeaders, 'Content-Type': 'application/json' }, status: 500 }
+    );
+  }
+});
