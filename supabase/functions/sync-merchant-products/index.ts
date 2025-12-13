@@ -49,7 +49,7 @@ serve(async (req) => {
     };
     
     if (apiKey) {
-      headers['Authorization'] = `Bearer ${apiKey}`;
+      headers['X-API-Key'] = apiKey;
     }
 
     const apiResponse = await fetch(productsUrl, { headers });
