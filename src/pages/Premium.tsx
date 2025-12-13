@@ -280,50 +280,32 @@ export default function Premium() {
   };
 
   const handleCancelSubscription = async () => {
-    if (!currentSubscription || !user) return;
-
-    const planToSwitch = switchToPlan; // Capture before state changes
+    if (!user) return;
 
     try {
-      // Deactivate current subscription (no refund)
-      const { error } = await supabase
-        .from('user_subscriptions')
-        .update({ is_active: false })
-        .eq('id', currentSubscription.id)
-        .eq('user_id', user.id);
+      // First cancel any active subscription via secure RPC (no refunds)
+      const { data, error } = await supabase.rpc('cancel_active_subscription');
 
       if (error) throw error;
 
-      // Clear current subscription state immediately
-      setCurrentSubscription(null);
-
-      // If switching to a new plan, purchase it
-      if (planToSwitch) {
-        setPurchasing(planToSwitch.id);
-        
-        const { data, error: purchaseError } = await supabase.rpc('purchase_subscription', {
-          p_plan_id: planToSwitch.id
-        });
-
-        if (purchaseError) throw purchaseError;
-
-        const result = data as any;
-        if (result.success) {
-          toast.success(`Switched to ${planToSwitch.name} successfully!`);
-        } else {
-          toast.error(result.message);
-        }
-        setPurchasing(null);
-      } else {
-        toast.success('Subscription cancelled successfully');
+      const result = data as any;
+      if (!result?.success) {
+        toast.error(result?.message || 'Failed to cancel subscription');
+        return;
       }
 
-      // Refresh data
+      // If switching to a new plan, purchase it after successful cancel
+      if (switchToPlan) {
+        await handlePurchase(switchToPlan.id, switchToPlan.acoin_price);
+        toast.success(`Switched to ${switchToPlan.name} successfully!`);
+      } else {
+        toast.success(result.message || 'Subscription cancelled successfully');
+      }
+
       await fetchUserData();
     } catch (error) {
       console.error('Cancel subscription error:', error);
-      toast.error('Failed to process request');
-      setPurchasing(null);
+      toast.error('Failed to process subscription change');
     } finally {
       setCancelDialogOpen(false);
       setSwitchToPlan(null);
