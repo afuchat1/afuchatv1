@@ -15,7 +15,6 @@ import Layout from '@/components/Layout';
 import { CustomLoader } from '@/components/ui/CustomLoader';
 import { formatPriceForCountry } from '@/lib/currencyUtils';
 
-const SHOPSHACK_USER_ID = '629333cf-087e-4283-8a09-a44282dda98b';
 const SHOPSHACK_ADMIN_NOTIFICATIONS_CHAT_ID = 'a0000000-0000-0000-0000-000000000001';
 
 interface CartProduct {
@@ -34,6 +33,7 @@ interface Merchant {
   id: string;
   name: string;
   commission_rate: number;
+  user_id: string;
 }
 
 type CheckoutStep = 'address' | 'payment' | 'review' | 'confirmation';
@@ -83,7 +83,7 @@ export default function Checkout() {
           .eq('user_id', user!.id),
         supabase
           .from('merchants')
-          .select('id, name, commission_rate')
+          .select('id, name, commission_rate, user_id')
           .eq('id', merchantId)
           .single()
       ]);
@@ -187,7 +187,7 @@ export default function Checkout() {
       // Send notification to ShopShack Admin Notifications Chat (only visible to ShopShack)
       await supabase.from('messages').insert({
         chat_id: SHOPSHACK_ADMIN_NOTIFICATIONS_CHAT_ID,
-        sender_id: SHOPSHACK_USER_ID,
+        sender_id: merchant?.user_id || user.id,
         encrypted_content: `🆕 **New Order Received!**\n\n📦 Order: ${orderNumber}\n👤 Customer: ${customerName}\n💰 Total: UGX ${total.toLocaleString()}\n💳 Payment: ${paymentMethod === 'mobile_money' ? 'Mobile Money' : 'Cash on Delivery'}\n\n[ACTION_BUTTONS:view_order:${orderNumber}]`,
         order_context: {
           order_number: orderNumber,

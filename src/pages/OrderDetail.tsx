@@ -11,8 +11,6 @@ import { toast } from 'sonner';
 import Layout from '@/components/Layout';
 import { CustomLoader } from '@/components/ui/CustomLoader';
 
-const SHOPSHACK_USER_ID = '629333cf-087e-4283-8a09-a44282dda98b';
-
 interface OrderItem {
   id: string;
   product_name: string;
@@ -31,6 +29,7 @@ interface Order {
   merchant_id: string;
   merchant: {
     name: string;
+    user_id: string;
   };
 }
 
@@ -89,7 +88,7 @@ export default function OrderDetail() {
           payment_status,
           created_at,
           merchant_id,
-          merchant:merchants(name)
+          merchant:merchants(name, user_id)
         `)
         .eq('order_number', orderNumber)
         .single();
@@ -149,7 +148,7 @@ export default function OrderDetail() {
         // Add both members
         await supabase.from('chat_members').insert([
           { chat_id: chatId, user_id: user.id },
-          { chat_id: chatId, user_id: SHOPSHACK_USER_ID }
+          { chat_id: chatId, user_id: order.merchant.user_id }
         ]);
 
         // Track the customer-merchant chat relationship
