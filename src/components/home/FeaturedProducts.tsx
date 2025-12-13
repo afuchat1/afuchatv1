@@ -132,7 +132,7 @@ export default function FeaturedProducts() {
           >
             <Card 
               className="overflow-hidden cursor-pointer hover:shadow-md transition-shadow"
-              onClick={() => navigate(`/shop/${product.merchant_id}`)}
+              onClick={() => navigate(`/product/${product.id}`)}
             >
               <div className="aspect-square bg-muted relative">
                 {product.image_url ? (

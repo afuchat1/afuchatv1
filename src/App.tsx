@@ -98,6 +98,7 @@ const MerchantShop = lazy(() => import("./pages/MerchantShop"));
 const ShopCart = lazy(() => import("./pages/ShopCart"));
 const MyOrders = lazy(() => import("./pages/MyOrders"));
 const OrderDetail = lazy(() => import("./pages/OrderDetail"));
+const ProductDetail = lazy(() => import("./pages/ProductDetail"));
 import Layout from "./components/Layout";
 
 const queryClient = new QueryClient({
@@ -213,6 +214,7 @@ const AppRoutes = () => {
       {/* Merchant Shop Routes */}
       <Route path="/shop/:merchantId" element={<MerchantShop />} />
       <Route path="/shop/:merchantId/cart" element={<ShopCart />} />
+      <Route path="/product/:productId" element={<ProductDetail />} />
       <Route path="/orders" element={<MyOrders />} />
       <Route path="/orders/:orderNumber" element={<OrderDetail />} />
 

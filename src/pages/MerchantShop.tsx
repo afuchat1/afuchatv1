@@ -245,7 +245,10 @@ export default function MerchantShop() {
               transition={{ delay: index * 0.05 }}
             >
               <Card className="overflow-hidden">
-                <div className="aspect-square bg-muted relative">
+                <div 
+                  className="aspect-square bg-muted relative cursor-pointer"
+                  onClick={() => navigate(`/product/${product.id}`)}
+                >
                   {product.image_url ? (
                     <img 
                       src={product.image_url} 
