@@ -99,6 +99,30 @@ export function OrderNotificationActions({ orderContext, isAdmin }: OrderNotific
     }
   };
 
+  const getStatusLabel = (status: string) => {
+    const labels: Record<string, string> = {
+      'payment_recorded': 'Payment Confirmed',
+      'cancelled': 'Cancelled',
+      'fulfilled': 'Fulfilled',
+      'refunded': 'Refunded',
+      'refund_rejected': 'Refund Rejected',
+      'pending': 'Pending'
+    };
+    return labels[status] || status;
+  };
+
+  const getStatusEmoji = (status: string) => {
+    const emojis: Record<string, string> = {
+      'payment_recorded': '💳',
+      'cancelled': '❌',
+      'fulfilled': '📦',
+      'refunded': '💰',
+      'refund_rejected': '🚫',
+      'pending': '⏳'
+    };
+    return emojis[status] || '✅';
+  };
+
   const handleUpdateStatus = async (newStatus: string) => {
     if (!orderContext.order_number) return;
     
@@ -111,19 +135,22 @@ export function OrderNotificationActions({ orderContext, isAdmin }: OrderNotific
 
       if (error) throw error;
 
-      // Send status update notification
+      // Send status update notification to the notifications chat
+      const emoji = getStatusEmoji(newStatus);
+      const label = getStatusLabel(newStatus);
+      
       await supabase.from('messages').insert({
         chat_id: SHOPSHACK_ADMIN_NOTIFICATIONS_CHAT_ID,
         sender_id: SHOPSHACK_USER_ID,
-        encrypted_content: `✅ Order ${orderContext.order_number} status updated to: ${newStatus}`,
+        encrypted_content: `${emoji} Order ${orderContext.order_number} status updated to: ${label}`,
         order_context: {
           ...orderContext,
-          type: 'status_update',
-          new_status: newStatus
+          status: newStatus,
+          type: 'status_update'
         }
       });
 
-      toast.success(`Order marked as ${newStatus}`);
+      toast.success(`Order marked as ${label}`);
     } catch (error) {
       console.error('Error updating order:', error);
       toast.error('Failed to update order');
