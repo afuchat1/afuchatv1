@@ -10,6 +10,8 @@ import { motion } from 'framer-motion';
 import Layout from '@/components/Layout';
 import { CustomLoader } from '@/components/ui/CustomLoader';
 
+const SHOPSHACH_USER_ID = '629333cf-087e-4283-8a09-a44282dda98b';
+
 interface CartProduct {
   id: string;
   product_id: string;
@@ -107,7 +109,7 @@ export default function ShopCart() {
   };
 
   const placeOrder = async () => {
-    if (!merchant || cartItems.length === 0) return;
+    if (!merchant || !user || cartItems.length === 0) return;
 
     setIsOrdering(true);
     try {
@@ -117,9 +119,72 @@ export default function ShopCart() {
 
       if (error) throw error;
 
-      const result = data as { success: boolean; order_number?: string; message?: string };
+      const result = data as { success: boolean; order_number?: string; total_amount?: number; message?: string };
       
       if (result.success) {
+        // Auto-create chat with ShopShach for order support
+        try {
+          // Find existing chat
+          const { data: userChats } = await supabase
+            .from('chat_members')
+            .select('chat_id')
+            .eq('user_id', user.id);
+
+          const { data: shopshachChats } = await supabase
+            .from('chat_members')
+            .select('chat_id')
+            .eq('user_id', SHOPSHACH_USER_ID);
+
+          const userChatIds = userChats?.map(c => c.chat_id) || [];
+          const shopshachChatIds = shopshachChats?.map(c => c.chat_id) || [];
+          const commonChatIds = userChatIds.filter(id => shopshachChatIds.includes(id));
+
+          let chatId: string | null = null;
+
+          if (commonChatIds.length > 0) {
+            const { data: chat } = await supabase
+              .from('chats')
+              .select('id')
+              .in('id', commonChatIds)
+              .eq('is_group', false)
+              .maybeSingle();
+
+            if (chat) chatId = chat.id;
+          }
+
+          // Create new chat if doesn't exist
+          if (!chatId) {
+            const { data: newChat } = await supabase
+              .from('chats')
+              .insert({
+                created_by: user.id,
+                is_group: false
+              })
+              .select('id')
+              .single();
+
+            if (newChat) {
+              chatId = newChat.id;
+              await supabase.from('chat_members').insert([
+                { chat_id: chatId, user_id: user.id },
+                { chat_id: chatId, user_id: SHOPSHACH_USER_ID }
+              ]);
+            }
+          }
+
+          // Send order confirmation message
+          if (chatId) {
+            await supabase.from('messages').insert({
+              chat_id: chatId,
+              sender_id: user.id,
+              encrypted_content: `🛒 New Order Placed!\n\nOrder: ${result.order_number}\nTotal: UGX ${result.total_amount?.toLocaleString()}\n\nPlease contact me here for payment and delivery details.`
+            });
+          }
+        } catch (chatError) {
+          console.error('Error creating order chat:', chatError);
+          // Don't fail the order if chat creation fails
+        }
+
         toast.success(`Order ${result.order_number} placed successfully!`);
         navigate(`/orders/${result.order_number}`);
       } else {

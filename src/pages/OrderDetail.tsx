@@ -5,11 +5,13 @@ import { useAuth } from '@/contexts/AuthContext';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
-import { ArrowLeft, Package, CheckCircle, Clock, XCircle, Truck } from 'lucide-react';
+import { ArrowLeft, Package, CheckCircle, Clock, XCircle, Truck, MessageCircle } from 'lucide-react';
 import { format } from 'date-fns';
+import { toast } from 'sonner';
 import Layout from '@/components/Layout';
 import { CustomLoader } from '@/components/ui/CustomLoader';
 
+const SHOPSHACH_USER_ID = '629333cf-087e-4283-8a09-a44282dda98b';
 interface OrderItem {
   id: string;
   product_name: string;
@@ -65,6 +67,7 @@ export default function OrderDetail() {
   const [order, setOrder] = useState<Order | null>(null);
   const [items, setItems] = useState<OrderItem[]>([]);
   const [loading, setLoading] = useState(true);
+  const [contactingSupport, setContactingSupport] = useState(false);
 
   useEffect(() => {
     if (user && orderNumber) {
@@ -104,6 +107,82 @@ export default function OrderDetail() {
       console.error('Error fetching order:', error);
     } finally {
       setLoading(false);
+    }
+  };
+
+  const handleContactSupport = async () => {
+    if (!user) {
+      toast.error('Please sign in to contact support');
+      return;
+    }
+
+    setContactingSupport(true);
+    try {
+      // Find a 1-on-1 chat between user and ShopShach
+      const { data: userChats } = await supabase
+        .from('chat_members')
+        .select('chat_id')
+        .eq('user_id', user.id);
+
+      const { data: shopshachChats } = await supabase
+        .from('chat_members')
+        .select('chat_id')
+        .eq('user_id', SHOPSHACH_USER_ID);
+
+      const userChatIds = userChats?.map(c => c.chat_id) || [];
+      const shopshachChatIds = shopshachChats?.map(c => c.chat_id) || [];
+      const commonChatIds = userChatIds.filter(id => shopshachChatIds.includes(id));
+
+      let chatId: string | null = null;
+
+      // Check if any common chat is a 1-on-1 (not group)
+      if (commonChatIds.length > 0) {
+        const { data: chat } = await supabase
+          .from('chats')
+          .select('id')
+          .in('id', commonChatIds)
+          .eq('is_group', false)
+          .maybeSingle();
+
+        if (chat) {
+          chatId = chat.id;
+        }
+      }
+
+      // Create new chat if doesn't exist
+      if (!chatId) {
+        const { data: newChat, error: chatError } = await supabase
+          .from('chats')
+          .insert({
+            created_by: user.id,
+            is_group: false
+          })
+          .select('id')
+          .single();
+
+        if (chatError) throw chatError;
+        chatId = newChat.id;
+
+        // Add both members
+        await supabase.from('chat_members').insert([
+          { chat_id: chatId, user_id: user.id },
+          { chat_id: chatId, user_id: SHOPSHACH_USER_ID }
+        ]);
+
+        // Send initial order inquiry message
+        await supabase.from('messages').insert({
+          chat_id: chatId,
+          sender_id: user.id,
+          encrypted_content: `Hi! I have an inquiry about my order ${order?.order_number}. Total: UGX ${order?.total_amount.toLocaleString()}`
+        });
+      }
+
+      navigate(`/chats/${chatId}`);
+    } catch (error) {
+      console.error('Error contacting support:', error);
+      toast.error('Failed to start chat with support');
+    } finally {
+      setContactingSupport(false);
     }
   };
 
@@ -176,6 +255,23 @@ export default function OrderDetail() {
                   </p>
                 </div>
               )}
+
+              {/* Contact Seller Button */}
+              <Button
+                variant="outline"
+                className="w-full mt-4"
+                onClick={handleContactSupport}
+                disabled={contactingSupport}
+              >
+                {contactingSupport ? (
+                  <CustomLoader size="sm" />
+                ) : (
+                  <>
+                    <MessageCircle className="h-4 w-4 mr-2" />
+                    Contact {order.merchant.name}
+                  </>
+                )}
+              </Button>
             </CardContent>
           </Card>
 
