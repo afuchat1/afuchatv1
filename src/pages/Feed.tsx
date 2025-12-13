@@ -45,6 +45,7 @@ import { ProfileDrawer } from '@/components/ProfileDrawer';
 import { QuotedPostCard } from '@/components/feed/QuotedPostCard';
 import { cn } from '@/lib/utils';
 import { AIPostSummary } from '@/components/feed/AIPostSummary';
+import FeaturedProducts from '@/components/home/FeaturedProducts';
 // --- INTERFACES ---
 
 // NEW: Define AuthUser interface for type safety (must match the one in PostActionsSheet.tsx)
@@ -2385,6 +2386,9 @@ const Feed = ({ defaultTab = 'foryou', guestMode = false }: FeedProps = {}) => {
 
         {/* Spacer for fixed header */}
         <div className="h-[108px]" />
+
+        {/* Featured Products */}
+        <FeaturedProducts />
 
         {/* Content area */}
         <TabsContent value={activeTab} className="m-0" ref={feedRef} forceMount>
