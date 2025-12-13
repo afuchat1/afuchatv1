@@ -44,6 +44,7 @@ import { QuotedPostCard } from '@/components/feed/QuotedPostCard';
 import { cn } from '@/lib/utils';
 import { AIPostSummary } from '@/components/feed/AIPostSummary';
 import FeaturedProducts from '@/components/home/FeaturedProducts';
+import { FeedSkeleton } from '@/components/feed/FeedSkeleton';
 // --- INTERFACES ---
 
 // NEW: Define AuthUser interface for type safety (must match the one in PostActionsSheet.tsx)
@@ -2323,8 +2324,8 @@ const Feed = ({ defaultTab = 'foryou', guestMode = false }: FeedProps = {}) => {
 
   if (loading && posts.length === 0 && followingPosts.length === 0) {
     return (
-      <div className="flex items-center justify-center min-h-screen">
-        <CustomLoader size="lg" text={t('common.loading') || 'Loading...'} />
+      <div className="max-w-4xl mx-auto pb-20 pt-28">
+        <FeedSkeleton />
       </div>
     );
   }
