@@ -1234,10 +1234,15 @@ const Feed = ({ defaultTab = 'foryou', guestMode = false }: FeedProps = {}) => {
     const cachedFollowing = sessionStorage.getItem('feedFollowingPosts');
     const cachedTab = sessionStorage.getItem('feedActiveTab');
     
+    let hasCachedData = false;
+    
     if (cachedPosts) {
       try {
-        setPosts(JSON.parse(cachedPosts));
-        setLoading(false); // Show cached content immediately
+        const parsed = JSON.parse(cachedPosts);
+        if (parsed && parsed.length > 0) {
+          setPosts(parsed);
+          hasCachedData = true;
+        }
       } catch (e) {
         console.error('Failed to parse cached posts:', e);
         sessionStorage.removeItem('feedPosts');
@@ -1246,7 +1251,11 @@ const Feed = ({ defaultTab = 'foryou', guestMode = false }: FeedProps = {}) => {
     
     if (cachedFollowing) {
       try {
-        setFollowingPosts(JSON.parse(cachedFollowing));
+        const parsed = JSON.parse(cachedFollowing);
+        if (parsed && parsed.length > 0) {
+          setFollowingPosts(parsed);
+          hasCachedData = true;
+        }
       } catch (e) {
         console.error('Failed to parse cached following posts:', e);
         sessionStorage.removeItem('feedFollowingPosts');
@@ -1255,6 +1264,11 @@ const Feed = ({ defaultTab = 'foryou', guestMode = false }: FeedProps = {}) => {
     
     if (cachedTab) {
       setActiveTab(cachedTab as 'foryou' | 'following');
+    }
+    
+    // Show cached content immediately if available
+    if (hasCachedData) {
+      setLoading(false);
     }
     
     // Clean up old viewed posts data (keep only last 500 views)
@@ -1270,7 +1284,8 @@ const Feed = ({ defaultTab = 'foryou', guestMode = false }: FeedProps = {}) => {
       }
     }
     
-    // Fetch fresh data in background
+    // Fetch fresh data in background - always clear shuffle seed for fresh order on page load
+    sessionStorage.removeItem('feedShuffleSeed');
     setCurrentPage(0);
     setHasMore(true);
     fetchPosts(0, true);
