@@ -26,3 +26,5 @@ jobs:
         with:
           node-version: 22
       - run: npm run check
+      - uses: denoland/setup-deno@v2
+      - run: deno check ../../supabase/functions/visual-image-search/index.ts
