@@ -22,7 +22,7 @@ Do not configure any `OCR_TEST_SECRET` or equivalent bypass. Never put a Supabas
 - One model inference per authenticated OCR request; no retry loop.
 - 3 MiB image cap and approximately 4 MiB JSON body cap.
 - AI model errors return a generic 503 response without leaking image data or provider details.
-- Workers AI has a daily Free allocation; inference may fail after the account's quota is exhausted. Monitor usage and do not treat quota errors as empty OCR results.
+- Workers AI Free includes 10,000 Neurons per day; further inferences fail after the allowance is exhausted. The live model smoke test used about 21.43 Neurons for a small synthetic image, but actual images vary. Monitor usage and do not treat quota errors as empty OCR results. See https://developers.cloudflare.com/workers-ai/platform/pricing/ and https://developers.cloudflare.com/ai/models/@cf/moondream/moondream3.1-9B-A2B/.
 - Uses Workers AI rather than running Tesseract WASM inference inside the Free Worker CPU budget.
 
 ## Local checks
