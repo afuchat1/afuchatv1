@@ -1,0 +1,11 @@
+name = "afusearch-ocr"
+main = "src/index.js"
+compatibility_date = "2026-10-21"
+workers_dev = true
+
+[ai]
+binding = "AI"
+
+# SUPABASE_URL and SUPABASE_PUBLISHABLE_KEY are non-secret configuration.
+# Never configure an OCR test-secret bypass. The Worker validates the caller's
+# Supabase user bearer token before every OCR inference.
