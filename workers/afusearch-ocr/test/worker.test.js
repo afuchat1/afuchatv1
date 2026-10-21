@@ -55,6 +55,16 @@ test('invalid user session is rejected without invoking AI', async () => {
   });
 });
 
+
+test('rejects a successful auth response without a user id', async () => {
+  await withFetch(async () => new Response(JSON.stringify({}), { status: 200 }), async () => {
+    const response = await worker.fetch(req('/ocr', {
+      method: 'POST', headers: authHeaders, body: JSON.stringify({ image: dataUri }),
+    }), env());
+    assert.equal(response.status, 401);
+  });
+});
+
 test('auth service errors fail closed', async () => {
   await withFetch(async () => { throw new Error('network details'); }, async () => {
     const response = await worker.fetch(req('/ocr', {
@@ -134,6 +144,17 @@ test('does not expose AI provider errors', async () => {
     const response = await worker.fetch(req('/ocr', {
       method: 'POST', headers: authHeaders, body: JSON.stringify({ image: dataUri }),
     }), env(async () => { throw new Error('sensitive provider details'); }));
+    assert.equal(response.status, 503);
+    assert.deepEqual(await response.json(), { error: 'ocr_temporarily_unavailable' });
+  });
+});
+
+
+test('rejects malformed model responses instead of treating them as empty OCR', async () => {
+  await withFetch(authFetch, async () => {
+    const response = await worker.fetch(req('/ocr', {
+      method: 'POST', headers: authHeaders, body: JSON.stringify({ image: dataUri }),
+    }), env(async () => ({ caption: 'not an OCR answer' })));
     assert.equal(response.status, 503);
     assert.deepEqual(await response.json(), { error: 'ocr_temporarily_unavailable' });
   });
