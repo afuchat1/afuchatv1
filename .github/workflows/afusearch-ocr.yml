@@ -1,0 +1,30 @@
+name: AfuSearch OCR Worker checks
+
+on:
+  pull_request:
+    branches: [main]
+    paths:
+      - 'workers/afusearch-ocr/**'
+      - 'supabase/functions/visual-image-search/**'
+      - '.github/workflows/afusearch-ocr.yml'
+  push:
+    branches: [main, 'feat/afusearch-ocr-production-hardening']
+    paths:
+      - 'workers/afusearch-ocr/**'
+      - 'supabase/functions/visual-image-search/**'
+      - '.github/workflows/afusearch-ocr.yml'
+
+jobs:
+  worker-tests:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: workers/afusearch-ocr
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - run: npm run check
+      - uses: denoland/setup-deno@v2
+      - run: deno check ../../supabase/functions/visual-image-search/index.ts
