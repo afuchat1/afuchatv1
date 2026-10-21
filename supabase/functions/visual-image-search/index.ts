@@ -16,8 +16,8 @@ const SUPABASE_URL = Deno.env.get("SUPABASE_URL") ?? "";
 const SERVICE_ROLE_KEY = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") ?? "";
 const OCR_SERVICE_URL = "https://afusearch-ocr.afuchatgroup.workers.dev/ocr";
 const MAX_INPUT_BYTES = 8 * 1024 * 1024;
-const MAX_INDEX_PER_WARMUP = 6;
-const MAX_WARMUP_DEPTH = 20;
+const MAX_INDEX_PER_WARMUP = 2;
+const MAX_WARMUP_DEPTH = 1;
 const INDEX_BATCH_SIZE = 2;
 const MAX_CANDIDATE_POSTS = 200;
 const MAX_SCAN_PAGES = 50;
@@ -313,7 +313,7 @@ function startIndexWarmup(
     // Drain existing OCR work first. Once it is empty, index the next small
     // public-image batch and OCR that batch, avoiding an ever-growing backlog.
     const indexedCount = pendingBefore === 0 ? await indexPublicImages(admin) : 0;
-    const ocrCount = await processPendingOcr(admin, authorization, 6);
+    const ocrCount = await processPendingOcr(admin, authorization, 2);
     const pendingAfter = await countPendingOcr(admin);
     shouldContinue = pendingBefore > 0 || pendingAfter > 0 || indexedCount >= MAX_INDEX_PER_WARMUP;
     console.log(`[visual-image-search] warmup depth=${warmupDepth}, indexed=${indexedCount}, OCR-processed=${ocrCount}, pending=${pendingAfter}`);
