@@ -104,7 +104,9 @@ async function verifyUser(request, env) {
       headers: { apikey: env.SUPABASE_PUBLISHABLE_KEY, authorization },
       signal: AbortSignal.timeout(5000),
     });
-    return response.ok;
+    if (!response.ok) return false;
+    const user = await response.json().catch(() => null);
+    return typeof user?.id === 'string' && user.id.length > 0;
   } catch {
     return false;
   }
@@ -149,9 +151,8 @@ export default {
         max_tokens: 2048,
         stream: false,
       });
-      const text = typeof result?.answer === 'string'
-        ? result.answer.replace(/[\u0000-\u0008\u000B\u000C\u000E-\u001F]/g, ' ').trim().slice(0, 5000)
-        : '';
+      if (typeof result?.answer !== 'string') return json({ error: 'ocr_temporarily_unavailable' }, 503);
+      const text = result.answer.replace(/[\u0000-\u0008\u000B\u000C\u000E-\u001F]/g, ' ').trim().slice(0, 5000);
       return json({ ok: true, text, hasText: text.length > 0 });
     } catch {
       return json({ error: 'ocr_temporarily_unavailable' }, 503);
